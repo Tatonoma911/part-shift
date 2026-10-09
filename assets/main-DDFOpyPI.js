@@ -1,42 +1,44 @@
-import"./modulepreload-polyfill-B5Qt9EMX.js";import{i as r,H as p,C as f,A as O,B as N,a as M,D as b,T,R as F,U as B}from"./content-Mp9u95Fl.js";const C="partshift.lang";function U(){const t=new URLSearchParams(location.search).get("lang");if(t==="ru"||t==="en")return t;try{const s=localStorage.getItem(C);if(s==="ru"||s==="en")return s}catch{}return navigator.language.toLowerCase().startsWith("ru")?"ru":"en"}let c=U();const i=t=>t[c]||t.ru,l=t=>i(B[t]),h=t=>t.replace(/[&<>"]/g,s=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"})[s]),e=(t,s)=>c==="ru"?t:s,y=()=>`play/index.html?lang=${c}`,R=["heroes","world","villains","comics","artbook"],g={burger:'<svg width="26" height="26" viewBox="0 0 26 26" aria-hidden="true"><path d="M3 7h20M3 13h20M3 19h14" stroke="currentColor" stroke-width="2.4" stroke-linecap="square"/></svg>',close:'<svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 5l14 14M19 5L5 19" stroke="currentColor" stroke-width="2.4"/></svg>',play:'<svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M4 2l10 6-10 6z" fill="currentColor"/></svg>'};function D(t){const s=R.map(a=>`<a href="#${a}"${t===a?' aria-current="page"':""}>${l(a)}</a>`).join("");return`
+import"./config-BuGjUh31.js";import{w as F,i as r,A as T,H as p,C as f,a as k,s as B,B as D,b as U,D as b,T as C,R as P,U as j}from"./content-DNzcLaez.js";const S="partshift.lang";function z(){const t=new URLSearchParams(location.search).get("lang");if(t==="ru"||t==="en")return t;try{const s=localStorage.getItem(S);if(s==="ru"||s==="en")return s}catch{}return navigator.language.toLowerCase().startsWith("ru")?"ru":"en"}let n=z();const i=t=>t[n]||t.ru,d=t=>i(j[t]),h=t=>t.replace(/[&<>"]/g,s=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"})[s]),e=(t,s)=>n==="ru"?t:s,$=()=>`play/index.html?lang=${n}`,H=["heroes","world","villains","comics","artbook"],g={burger:'<svg width="26" height="26" viewBox="0 0 26 26" aria-hidden="true"><path d="M3 7h20M3 13h20M3 19h14" stroke="currentColor" stroke-width="2.4" stroke-linecap="square"/></svg>',close:'<svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 5l14 14M19 5L5 19" stroke="currentColor" stroke-width="2.4"/></svg>',play:'<svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M4 2l10 6-10 6z" fill="currentColor"/></svg>'};function V(t){const s=H.map(a=>`<a href="#${a}"${t===a?' aria-current="page"':""}>${d(a)}</a>`).join("");return`
   <header class="bar"><div class="wrap bar-in">
     <a class="brand" href="#home" aria-label="PART SHIFT">
       <img src="${r("emblem.webp")}" alt="" width="34" height="34">
       <span class="wordmark">PART<b>SHIFT</b></span>
     </a>
-    <nav class="nav" aria-label="${l("menu")}">${s}</nav>
-    ${S()}
-    <a class="btn btn-primary" href="${y()}">${g.play}${l("play")}</a>
-    <button class="burger" id="burger" aria-label="${l("menu")}">${g.burger}</button>
-  </div></header>`}function S(){return`<div class="lang" role="group" aria-label="Language">
-    <button data-lang="ru" aria-pressed="${c==="ru"}">RU</button><button data-lang="en" aria-pressed="${c==="en"}">EN</button>
-  </div>`}function P(){const t=["home",...R].map(s=>`<a class="item" href="#${s}">${l(s)}<span class="caps">${s==="home"?"LUMEN CITY":""}</span></a>`).join("");return`<div class="drawer" id="drawer" hidden><div class="drawer-panel">
-    <div class="drawer-head"><span class="wordmark">PART<b>SHIFT</b></span><button class="icon-btn" id="drawer-close" aria-label="${l("close")}">${g.close}</button></div>
+    <nav class="nav" aria-label="${d("menu")}">${s}</nav>
+    ${I()}
+    <a class="btn btn-primary" href="${$()}">${g.play}${d("play")}</a>
+    <button class="burger" id="burger" aria-label="${d("menu")}">${g.burger}</button>
+  </div></header>`}function I(){return`<div class="lang" role="group" aria-label="Language">
+    <button data-lang="ru" aria-pressed="${n==="ru"}">RU</button><button data-lang="en" aria-pressed="${n==="en"}">EN</button>
+  </div>`}function Y(){const t=["home",...H].map(s=>`<a class="item" href="#${s}">${d(s)}<span class="caps">${s==="home"?"LUMEN CITY":""}</span></a>`).join("");return`<div class="drawer" id="drawer" hidden><div class="drawer-panel">
+    <div class="drawer-head"><span class="wordmark">PART<b>SHIFT</b></span><button class="icon-btn" id="drawer-close" aria-label="${d("close")}">${g.close}</button></div>
     ${t}
-    <div class="row" style="margin-top:18px;justify-content:space-between">${S()}<a class="btn btn-primary" href="${y()}">${g.play}${l("play")}</a></div>
-  </div></div>`}function j(){return`<footer><div class="wrap">
+    <a class="item" href="${T}" rel="noopener">${e("Скачать для Android","Download for Android")}<span class="caps">APK</span></a>
+    <a class="item" href="#support">${e("Донат автору","Tip the author")}<span class="caps">☕</span></a>
+    <div class="row" style="margin-top:18px;justify-content:space-between">${I()}<a class="btn btn-primary" href="${$()}">${g.play}${d("play")}</a></div>
+  </div></div>`}function G(){return`<footer><div class="wrap">
     <span class="wordmark">PART<b>SHIFT</b></span>
     <span>${e("Lumen City. Всегда на смене. Игра бесплатная, мир вымышленный.","Lumen City. Always on call. The game is free, the world is fiction.")}</span>
-    <a class="btn btn-ghost" href="${y()}">${g.play}${l("playFree")}</a>
-  </div></footer>`}const d=(t,s,a)=>`
-  <div class="section-head"><span class="caps">${t}</span><h2>${s}</h2>${a?`<p class="lead">${a}</p>`:""}</div>`,H=(t,s,a=!1)=>`
+    <div class="row"><a class="btn btn-ghost" href="${T}" rel="noopener">${e("Скачать для Android","Download for Android")}</a><a class="btn btn-ghost" href="#support">☕ ${e("Донат автору","Tip the author")}</a><a class="btn btn-ghost" href="${$()}">${g.play}${d("playFree")}</a></div>
+  </div></footer>`}const c=(t,s,a)=>`
+  <div class="section-head"><span class="caps">${t}</span><h2>${s}</h2>${a?`<p class="lead">${a}</p>`:""}</div>`,x=(t,s,a=!1)=>`
   <figure><button class="zoom" data-src="${r(t)}" data-cap="${h(s)}"${a?' data-px="1"':""} aria-label="${h(s)}"><img src="${r(t)}" alt="${h(s)}" loading="lazy"${a?' class="px"':""}></button><figcaption>${s}</figcaption></figure>`;function w(t){return`<a class="tile slab" href="#hero-${t.id}" style="--hc:${t.color}">
     <div class="stage"><span class="stripe"></span><img src="${r(t.px)}" alt="${h(i(t.name))}" loading="lazy"></div>
     <div class="meta"><span class="caps">${i(t.hud)}</span><h3>${i(t.name)}</h3><p>${i(t.role).split(". ")[0]}.</p></div>
-  </a>`}function z(){const t=p.filter(s=>s.group==="canon"&&s.id!=="n73"&&s.id!=="doctor");return`
+  </a>`}function R(){const t=p.filter(s=>s.group==="canon"&&s.id!=="n73"&&s.id!=="doctor");return`
   <section class="hero">
     <img src="${r("key-art.webp")}" alt="${h(e("Спасатели HeroOut на развалинах Lumen City","HeroOut rescuers on the rubble of Lumen City"))}">
     <div class="wrap"><div class="hero-card slab fade-in">
       <span class="caps">LUMEN CITY // ${e("СМЕНА 01","SHIFT 01")}</span>
       <h1>PART<b>SHIFT</b></h1>
       <p class="lead">${e("Сеть спасения сломалась и перестроила город под себя. Открывай кварталы, строй, защищай жителей и забирай у врагов их руки, ноги и хвосты.","The rescue network broke and rebuilt the city in its own image. Open blocks, build, protect residents and take your enemies’ arms, legs and tails.")}</p>
-      <div class="row"><a class="btn btn-primary btn-lg" href="${y()}">${g.play}${l("playFree")}</a><a class="btn btn-ghost btn-lg" href="#world">${e("Узнать историю","Read the story")}</a></div>
+      <div class="row"><a class="btn btn-primary btn-lg" href="${$()}">${g.play}${d("playFree")}</a><a class="btn btn-ghost btn-lg" href="${T}" rel="noopener">${e("Скачать для Android","Download for Android")}</a><a class="btn btn-ghost btn-lg" href="#world">${e("Узнать историю","Read the story")}</a></div>
     </div></div>
   </section>
 
   <section class="section"><div class="wrap split">
     <div class="stack">
-      ${d(e("КАНОН // ЧТО СЛУЧИЛОСЬ","CANON // WHAT HAPPENED"),e("Город, который любил своих героев","The city that loved its heroes"))}
+      ${c(e("КАНОН // ЧТО СЛУЧИЛОСЬ","CANON // WHAT HAPPENED"),e("Город, который любил своих героев","The city that loved its heroes"))}
       <div class="prose">
         <p>${e("Lumen City — солнечный прибрежный город: белые башни, голубое стекло, сады на крышах и монорельс над пляжем. Его берегла HeroOut, аварийная служба и корпорация, которая выдавала спасателям сменные части тела под каждую задачу.","Lumen City is a sunny coastal city of white towers, blue glass, rooftop gardens and a monorail over the beach. It was kept safe by HeroOut, an emergency service and corporation that fitted its rescuers with swappable body parts for every job.")}</p>
         <p>${e("Пожарному — термостойкую руку, водолазу — криогелевое лёгкое. Всё держалось на Splice Medium, среде, которая «договаривается» с чужой тканью. Пока на публичной демонстрации повреждённый контейнер не попал в реактор.","A heat-proof arm for a firefighter, a cryogel lung for a diver. It all ran on Splice Medium, a carrier that “negotiates” with foreign tissue. Until, at a public demonstration, a damaged container reached the reactor.")}</p>
@@ -53,43 +55,48 @@ import"./modulepreload-polyfill-B5Qt9EMX.js";import{i as r,H as p,C as f,A as O,
   </div></section>
 
   <section class="section" style="padding-top:0"><div class="wrap">
-    ${d(e("ДОСЬЕ // HEROOUT","DOSSIERS // HEROOUT"),e("Герои, они же злодеи","Heroes, also the villains"),e("У каждого героя одна функция, один цвет, одна мания и одна часть тела, которую мечтает забрать любой житель.","Each hero has one function, one colour, one obsession and one body part every resident dreams of claiming."))}
+    ${c(e("ДОСЬЕ // HEROOUT","DOSSIERS // HEROOUT"),e("Герои, они же злодеи","Heroes, also the villains"),e("У каждого героя одна функция, один цвет, одна мания и одна часть тела, которую мечтает забрать любой житель.","Each hero has one function, one colour, one obsession and one body part every resident dreams of claiming."))}
     <div class="grid">${t.map(w).join("")}</div>
-    <div class="row" style="margin-top:22px"><a class="btn btn-ghost" href="#heroes">${l("all")} (${p.length})</a></div>
+    <div class="row" style="margin-top:22px"><a class="btn btn-ghost" href="#heroes">${d("all")} (${p.length})</a></div>
   </div></section>
 
   <section class="section band"><div class="wrap split">
     <div class="stack">
-      ${d(e("ИГРА // СРОЧНЫЙ ВЫЗОВ","GAME // URGENT CALL"),e("Открой город квартал за кварталом","Reopen the city block by block"),e("Числа на открытых кварталах подсказывают, что прячется рядом. Галочки и подсветка сами покажут, где безопасно.","Numbers on opened blocks tell you what hides next door. Ticks and highlights show you where it’s safe."))}
-      <div class="howto">${V(!0)}</div>
-      <div class="row"><a class="btn btn-primary btn-lg" href="${y()}">${g.play}${l("playFree")}</a></div>
+      ${c(e("ИГРА // СРОЧНЫЙ ВЫЗОВ","GAME // URGENT CALL"),e("Открой город квартал за кварталом","Reopen the city block by block"),e("Числа на открытых кварталах подсказывают, что прячется рядом. Галочки и подсветка сами покажут, где безопасно.","Numbers on opened blocks tell you what hides next door. Ticks and highlights show you where it’s safe."))}
+      <div class="howto">${W(!0)}</div>
+      <div class="row"><a class="btn btn-primary btn-lg" href="${$()}">${g.play}${d("playFree")}</a></div>
     </div>
     <figure><img src="${r("sprites-02.webp")}" alt="" loading="lazy"><figcaption>${e("Обычный житель забирает руку врага и меняется прямо на поле.","An ordinary resident takes an enemy’s arm and changes right on the board.")}</figcaption></figure>
   </div></section>
 
   <section class="section"><div class="wrap">
-    ${d(e("КОМИКСЫ // ДО СИРЕН","COMICS // BEFORE THE SIRENS"),e("Обычные проблемы. Профессиональная громкость.","Ordinary problems. Professional volume."))}
-    <div class="comics">${f.slice(0,4).map(I).join("")}</div>
+    ${c(e("КОМИКСЫ // ДО СИРЕН","COMICS // BEFORE THE SIRENS"),e("Обычные проблемы. Профессиональная громкость.","Ordinary problems. Professional volume."))}
+    <div class="comics">${f.slice(0,4).map(N).join("")}</div>
   </div></section>
 
-  ${Y()}`}function V(t=!1){return[["⌂","Поставь Командный центр","Place the Command Center","Первое нажатие на поле. Это твоя база: потеряешь её — смена окончена.","Your first tap. It’s your base; lose it and the shift is over."],["↘","Проведи по кварталам","Swipe across blocks","Жители сами пойдут копать. Открытые клетки дают Энергию и место для стройки.","Residents go and dig. Opened cells give Energy and room to build."],["▲","Читай числа","Read the numbers","▲ гнёзда врагов рядом, ◆ находки, ⬡ герой на вызове. Зелёная галочка — точно безопасно.","▲ nests nearby, ◆ finds, ⬡ the hero on call. A green tick means safe for sure."],["✚","Расти и забирай части","Grow and claim parts","Школа делает защитников. Победив врага, защитник сам прикрутит его руку или ногу.","The school trains defenders. After a win, a defender bolts on the enemy’s arm or leg."]].map(([a,o,u,n,m])=>`<div class="step${t?"":" slab"}"${t?' style="background:#142028"':""}><span class="glyph" style="color:var(--seam)">${a}</span><h3>${e(o,u)}</h3><p>${e(n,m)}</p></div>`).join("")}function Y(){return`<section class="section band"><div class="wrap split">
+  <section class="section" id="support" style="padding-top:0"><div class="wrap">
+    ${c(e("СКАЧАТЬ // ПОДДЕРЖАТЬ","DOWNLOAD // SUPPORT"),e("Игра на телефоне и кофе автору","The game on your phone, and a coffee for the author"))}
+    ${B(n)}
+  </div></section>
+
+  ${K()}`}function W(t=!1){return[["⌂","Поставь Командный центр","Place the Command Center","Первое нажатие на поле. Это твоя база: потеряешь её — смена окончена.","Your first tap. It’s your base; lose it and the shift is over."],["↘","Проведи по кварталам","Swipe across blocks","Жители сами пойдут копать. Открытые клетки дают Энергию и место для стройки.","Residents go and dig. Opened cells give Energy and room to build."],["▲","Читай числа","Read the numbers","▲ гнёзда врагов рядом, ◆ находки, ⬡ герой на вызове. Зелёная галочка — точно безопасно.","▲ nests nearby, ◆ finds, ⬡ the hero on call. A green tick means safe for sure."],["✚","Расти и забирай части","Grow and claim parts","Школа делает защитников. Победив врага, защитник сам прикрутит его руку или ногу.","The school trains defenders. After a win, a defender bolts on the enemy’s arm or leg."]].map(([a,o,u,l,m])=>`<div class="step${t?"":" slab"}"${t?' style="background:#142028"':""}><span class="glyph" style="color:var(--seam)">${a}</span><h3>${e(o,u)}</h3><p>${e(l,m)}</p></div>`).join("")}function K(){return`<section class="section band"><div class="wrap split">
     <div class="stack">
-      ${d(e("СЛЕДУЮЩАЯ ГЛАВА","NEXT CHAPTER"),"PART SHIFT Fighting",e("2D-файтинг про Семьдесят Третьего. Клинчи, апперкоты, подкаты, покадровая анимация — и главное: оторвать сопернику руку и прикрутить её себе.","A 2D fighting game starring Seventy-Third. Clinches, uppercuts, slides, hand-drawn frame animation, and the main thing: tear off your rival’s arm and bolt it onto yourself."))}
+      ${c(e("СЛЕДУЮЩАЯ ГЛАВА","NEXT CHAPTER"),"PART SHIFT Fighting",e("2D-файтинг про Семьдесят Третьего. Клинчи, апперкоты, подкаты, покадровая анимация — и главное: оторвать сопернику руку и прикрутить её себе.","A 2D fighting game starring Seventy-Third. Clinches, uppercuts, slides, hand-drawn frame animation, and the main thing: tear off your rival’s arm and bolt it onto yourself."))}
       <p>${e("В разработке. Эта игра бесплатная, чтобы ты успел познакомиться с героями заранее.","In development. This game is free so you can meet the heroes first.")}</p>
       <div class="row"><a class="btn btn-ghost" style="color:#fff;background:#ffffff1a" href="#hero-n73">${e("Кто такой N-73","Who is N-73")}</a><a class="btn btn-ghost" style="color:#fff;background:#ffffff1a" href="#artbook-dossier">${e("Досье файтинга","Fighting dossiers")}</a></div>
     </div>
     <div class="stack">
       <figure><img src="${r("doctor-arm.webp")}" alt="${h(e("Доктор с тяжёлой рукой Килна","The Doctor with Kiln’s heavy arm"))}" loading="lazy"><figcaption>${e("Доктор, первое тело N-73, с рукой Килна","The Doctor, N-73’s first body, with Kiln’s arm")}</figcaption></figure>
     </div>
-  </div></section>`}function A(){const t=p.filter(a=>a.group==="canon"),s=p.filter(a=>a.group==="city");return`<section class="section"><div class="wrap">
-    ${d(e("ДОСЬЕ // HEROOUT","DOSSIERS // HEROOUT"),e("Герои. Они же злодеи","Heroes. Also the villains"),e("Гель Splice свёл с ума всех спасателей HeroOut, их пятнадцать. Каждый всё ещё «спасает», только от такой помощи надо бежать. Главного среди них нет. Победишь героя — заберёшь его часть, а победишь много раз — он вернётся в себя и станет союзником.","Splice gel drove every HeroOut rescuer mad, fifteen of them. Each one is still “rescuing,” and you should run from that kind of help. None of them is in charge. Beat a hero and take their part; beat them enough times and they come back to themselves as your ally."))}
+  </div></section>`}function L(){const t=p.filter(a=>a.group==="canon"),s=p.filter(a=>a.group==="city");return`<section class="section"><div class="wrap">
+    ${c(e("ДОСЬЕ // HEROOUT","DOSSIERS // HEROOUT"),e("Герои. Они же злодеи","Heroes. Also the villains"),e("Гель Splice свёл с ума всех спасателей HeroOut, их пятнадцать. Каждый всё ещё «спасает», только от такой помощи надо бежать. Главного среди них нет. Победишь героя — заберёшь его часть, а победишь много раз — он вернётся в себя и станет союзником.","Splice gel drove every HeroOut rescuer mad, fifteen of them. Each one is still “rescuing,” and you should run from that kind of help. None of them is in charge. Beat a hero and take their part; beat them enough times and they come back to themselves as your ally."))}
     <div class="grid">${t.map(w).join("")}</div>
   </div></section>
   <section class="section" style="padding-top:0"><div class="wrap">
-    ${d(e("ГОРОД // ДО СИРЕН","CITY // BEFORE THE SIRENS"),e("Ещё спасатели Lumen City","More Lumen City rescuers"),e("Обычные городские службы, доведённые до героизма, а потом гелем до мании. Пока в комиксах, на поле выйдут позже.","Ordinary city services taken to heroism, then by the gel to obsession. In the comics for now, on the board later."))}
+    ${c(e("ГОРОД // ДО СИРЕН","CITY // BEFORE THE SIRENS"),e("Ещё спасатели Lumen City","More Lumen City rescuers"),e("Обычные городские службы, доведённые до героизма, а потом гелем до мании. Пока в комиксах, на поле выйдут позже.","Ordinary city services taken to heroism, then by the gel to obsession. In the comics for now, on the board later."))}
     <div class="grid">${s.map(w).join("")}</div>
-  </div></section>`}function G(t){const s=p.findIndex(v=>v.id===t),a=p[s];if(!a)return A();const o=p[(s-1+p.length)%p.length],u=p[(s+1)%p.length],n=(v,$)=>$&&i($)?`<div class="fact"><span class="caps">${v}</span><p>${i($)}</p></div>`:"",m=a.art?`<img src="${r(a.art)}" alt="${h(i(a.name))}">`:`<img class="px" src="${r(a.px)}" alt="${h(i(a.name))}">`;return`<section class="section" style="--hc:${a.color}"><div class="wrap">
-    <a class="caps" href="#heroes" style="text-decoration:none">← ${l("all")}</a>
+  </div></section>`}function _(t){const s=p.findIndex(v=>v.id===t),a=p[s];if(!a)return L();const o=p[(s-1+p.length)%p.length],u=p[(s+1)%p.length],l=(v,y)=>y&&i(y)?`<div class="fact"><span class="caps">${v}</span><p>${i(y)}</p></div>`:"",m=a.art?`<img src="${r(a.art)}" alt="${h(i(a.name))}">`:`<img class="px" src="${r(a.px)}" alt="${h(i(a.name))}">`;return`<section class="section" style="--hc:${a.color}"><div class="wrap">
+    <a class="caps" href="#heroes" style="text-decoration:none">← ${d("all")}</a>
     <div class="dossier" style="margin-top:20px">
       <div class="dossier-art">
         <div class="frame slab">${m}</div>
@@ -102,28 +109,28 @@ import"./modulepreload-polyfill-B5Qt9EMX.js";import{i as r,H as p,C as f,A as O,
         ${a.quote?`<blockquote class="quote" style="margin:6px 0">${i(a.quote)}<span class="caps" style="display:block;margin-top:6px">${e("ДО СИРЕН","BEFORE THE SIRENS")}</span></blockquote>`:""}
         ${a.line?`<div class="bark slab"><span class="caps">${e("СЕЙЧАС, НА СМЕНЕ:","NOW, ON SHIFT:")}</span>«${i(a.line)}»</div>`:""}
         <div class="facts">
-          ${n(e("ДО АВАРИИ","BEFORE"),a.before)}
-          ${n(e("ПОСЛЕ ГЕЛЯ","AFTER THE GEL"),a.mania??a.after)}
-          ${n(e("ТРОФЕЙ","TROPHY"),a.trophy)}
-          ${n(e("УБЕЖИЩЕ","LAIR"),a.lair)}
-          ${n(e("ВЕРНЁТСЯ СОЮЗНИКОМ","COMES BACK AS AN ALLY"),a.ally)}
-          ${n(e("КАК ВЕРНУТЬ","HOW TO BRING BACK"),a.unlock)}
-          ${n(e("МОДУЛЬ","MODULE"),a.module)}
-          ${n(e("ТЕХНОЛОГИЯ","TECH"),a.tech)}
-          ${n(e("ОБРАЗ","LOOK"),a.look)}
-          ${n(e("ПРИВЫЧКА","HABIT"),a.fact)}
-          ${n(e("В ИГРЕ","IN GAME"),a.inGame)}
+          ${l(e("ДО АВАРИИ","BEFORE"),a.before)}
+          ${l(e("ПОСЛЕ ГЕЛЯ","AFTER THE GEL"),a.mania??a.after)}
+          ${l(e("ТРОФЕЙ","TROPHY"),a.trophy)}
+          ${l(e("УБЕЖИЩЕ","LAIR"),a.lair)}
+          ${l(e("ВЕРНЁТСЯ СОЮЗНИКОМ","COMES BACK AS AN ALLY"),a.ally)}
+          ${l(e("КАК ВЕРНУТЬ","HOW TO BRING BACK"),a.unlock)}
+          ${l(e("МОДУЛЬ","MODULE"),a.module)}
+          ${l(e("ТЕХНОЛОГИЯ","TECH"),a.tech)}
+          ${l(e("ОБРАЗ","LOOK"),a.look)}
+          ${l(e("ПРИВЫЧКА","HABIT"),a.fact)}
+          ${l(e("В ИГРЕ","IN GAME"),a.inGame)}
         </div>
-        ${(a.extra??[]).length?`<div class="grid" style="grid-template-columns:repeat(auto-fill,minmax(240px,1fr))">${a.extra.map(v=>H(v.src,i(v.cap),v.src.endsWith(".gif"))).join("")}</div>`:""}
+        ${(a.extra??[]).length?`<div class="grid" style="grid-template-columns:repeat(auto-fill,minmax(240px,1fr))">${a.extra.map(v=>x(v.src,i(v.cap),v.src.endsWith(".gif"))).join("")}</div>`:""}
         <div class="pager">
           <a class="btn btn-ghost" href="#hero-${o.id}">← ${i(o.name)}</a>
           <a class="btn btn-ghost" href="#hero-${u.id}">${i(u.name)} →</a>
         </div>
       </div>
     </div>
-  </div></section>`}function W(){const t=s=>T.find(a=>a.id===s);return`<section class="section"><div class="wrap split">
+  </div></section>`}function q(){const t=s=>C.find(a=>a.id===s);return`<section class="section"><div class="wrap split">
     <div class="stack">
-      ${d(e("МИР // LUMEN CITY","WORLD // LUMEN CITY"),e("История вселенной","The story of the universe"))}
+      ${c(e("МИР // LUMEN CITY","WORLD // LUMEN CITY"),e("История вселенной","The story of the universe"))}
       <div class="prose">
         <p>${e("<b>HeroOut</b> снабжала город всем, что спасает жизнь: экстренной медициной, спасателями, протезами, защитными костюмами и адаптивными тканями. Её реклама висит до сих пор: «HERO | OUT — Аварийная служба. Всегда на смене».","<b>HeroOut</b> supplied the city with everything that saves lives: emergency medicine, rescuers, prosthetics, protective suits and adaptive fabrics. Its ads still hang everywhere: “HERO | OUT. Emergency service. Always on call.”")}</p>
         <p>${e("Компания не злая в карикатурном смысле. Её грех в другом: тело для неё — заменяемый носитель, а личность — актив.","The company isn’t cartoonishly evil. Its sin is quieter: to HeroOut a body is a replaceable carrier and a personality is an asset.")}</p>
@@ -138,18 +145,18 @@ import"./modulepreload-polyfill-B5Qt9EMX.js";import{i as r,H as p,C as f,A as O,
   </div></section>
 
   <section class="section" style="padding-top:0"><div class="wrap">
-    ${d(e("КАРТА // РАЗРЕЗ","MAP // CROSS-SECTION"),e("Районы: от пляжа до Undersun","Districts: from the beach to Undersun"),e("Чем глубже и ближе к Campus, тем сильнее адаптация.","The deeper and closer to the Campus, the stronger the adaptation."))}
-    <div class="depth slab">${[b[2],b[1],b[0],b[3],b[4]].map((s,a)=>`<div class="stratum"><span class="caps">${(c==="ru"?["ПОБЕРЕЖЬЕ","ЦЕНТР","ЭПИЦЕНТР","ПОД ГОРОДОМ","ГЛУБИНА"]:["COAST","DOWNTOWN","EPICENTRE","UNDERGROUND","DEEP"])[a]}</span><div><h3>${s.name}</h3><p>${c==="ru"?s.ru:s.en}</p></div></div>`).join("")}</div>
+    ${c(e("КАРТА // РАЗРЕЗ","MAP // CROSS-SECTION"),e("Районы: от пляжа до Undersun","Districts: from the beach to Undersun"),e("Чем глубже и ближе к Campus, тем сильнее адаптация.","The deeper and closer to the Campus, the stronger the adaptation."))}
+    <div class="depth slab">${[b[2],b[1],b[0],b[3],b[4]].map((s,a)=>`<div class="stratum"><span class="caps">${(n==="ru"?["ПОБЕРЕЖЬЕ","ЦЕНТР","ЭПИЦЕНТР","ПОД ГОРОДОМ","ГЛУБИНА"]:["COAST","DOWNTOWN","EPICENTRE","UNDERGROUND","DEEP"])[a]}</span><div><h3>${s.name}</h3><p>${n==="ru"?s.ru:s.en}</p></div></div>`).join("")}</div>
   </div></section>
 
   <section class="section" style="padding-top:0"><div class="wrap split">
     <div class="stack">
-      ${d(e("ТЕХНОЛОГИИ // УРОН","TECH // DAMAGE"),e("Пять технологий и их реакции","Five technologies and their reactions"),e("Каждый адаптант несёт одну технологию. Её и отдаёт победителю: убил ледяного — получил ледяную руку.","Every adaptant carries one technology and hands it to whoever wins: defeat an ice one, get an ice arm."))}
-      <div class="techs">${T.map(s=>`<div class="tech slab"><i style="--dot:${s.color}"></i><h3>${c==="ru"?s.ru:s.en}</h3></div>`).join("")}</div>
+      ${c(e("ТЕХНОЛОГИИ // УРОН","TECH // DAMAGE"),e("Пять технологий и их реакции","Five technologies and their reactions"),e("Каждый адаптант несёт одну технологию. Её и отдаёт победителю: убил ледяного — получил ледяную руку.","Every adaptant carries one technology and hands it to whoever wins: defeat an ice one, get an ice arm."))}
+      <div class="techs">${C.map(s=>`<div class="tech slab"><i style="--dot:${s.color}"></i><h3>${n==="ru"?s.ru:s.en}</h3></div>`).join("")}</div>
     </div>
     <div class="stack">
       <div class="slab" style="padding:8px 18px"><div class="table-scroll"><table class="reactions"><tbody>
-        ${F.map(s=>{const a=t(s.a),o=t(s.b);return`<tr><td><span class="mix"><i style="--dot:${a.color}"></i>${c==="ru"?a.ru:a.en}</span></td><td>+</td><td><span class="mix"><i style="--dot:${o.color}"></i>${c==="ru"?o.ru:o.en}</span></td><td>=</td><td>${c==="ru"?s.ru:s.en}</td></tr>`}).join("")}
+        ${P.map(s=>{const a=t(s.a),o=t(s.b);return`<tr><td><span class="mix"><i style="--dot:${a.color}"></i>${n==="ru"?a.ru:a.en}</span></td><td>+</td><td><span class="mix"><i style="--dot:${o.color}"></i>${n==="ru"?o.ru:o.en}</span></td><td>=</td><td>${n==="ru"?s.ru:s.en}</td></tr>`}).join("")}
       </tbody></table></div></div>
       <p class="caps">${e("ЗАЩИТА — ОТДЕЛЬНЫЙ СЛОЙ: РЕЗИНА, ТЕРМОКЕРАМИКА, КРИОКОЖУХ, БИОФИЛЬТР, ПОЛИМЕР","DEFENCE IS ITS OWN LAYER: RUBBER, THERMOCERAMIC, CRYO SHELL, BIOFILTER, POLYMER")}</p>
     </div>
@@ -157,7 +164,7 @@ import"./modulepreload-polyfill-B5Qt9EMX.js";import{i as r,H as p,C as f,A as O,
 
   <section class="section" style="padding-top:0"><div class="wrap split">
     <div class="stack">
-      ${d(e("ТЕЛО // СЛОТЫ","BODY // SLOTS"),e("Правило трофея","The trophy rule"),e("Жители рождаются обычными. Никаких карточек, инвентаря и ручной экипировки: победив врага, человек сам забирает его часть и становится сильнее.","Residents are born ordinary. No cards, no inventory, no manual gear: after beating an enemy, a person takes its part and gets stronger."))}
+      ${c(e("ТЕЛО // СЛОТЫ","BODY // SLOTS"),e("Правило трофея","The trophy rule"),e("Жители рождаются обычными. Никаких карточек, инвентаря и ручной экипировки: победив врага, человек сам забирает его часть и становится сильнее.","Residents are born ordinary. No cards, no inventory, no manual gear: after beating an enemy, a person takes its part and gets stronger."))}
       <div class="slots">${[e("Голова","Head"),e("Левая рука","Left arm"),e("Правая рука","Right arm"),e("Левая нога","Left leg"),e("Правая нога","Right leg"),e("Хвост","Tail"),e("Крылья","Wings")].map(s=>`<div class="slot slab">${s}</div>`).join("")}</div>
     </div>
     <div class="slab upgrade">
@@ -170,13 +177,13 @@ import"./modulepreload-polyfill-B5Qt9EMX.js";import{i as r,H as p,C as f,A as O,
   </div></section>
 
   <section class="section" style="padding-top:0"><div class="wrap">
-    ${d(e("ЗДАНИЯ // 12","BUILDINGS // 12"),e("Что строит Командный центр","What the Command Center builds"))}
+    ${c(e("ЗДАНИЯ // 12","BUILDINGS // 12"),e("Что строит Командный центр","What the Command Center builds"))}
     <div class="grid" style="grid-template-columns:repeat(auto-fill,minmax(150px,1fr))">${[["b01-medcenter","Медцентр","Medcenter"],["b02-house_small","Жилой блок","Housing block"],["b03-house_tower","Многоэтажка","Apartment tower"],["b04-skyscraper","Небоскрёб","Skyscraper"],["b05-school","Школа спасателей","Rescue school"],["b06-scout_tower","Башня разведки","Scout tower"],["b07-workshop","Мастерская модулей","Module workshop"],["b08-microreactor","Микрореактор","Microreactor"],["b09-cryo_station","Станция охлаждения","Cooling station"],["b10-greenhouse","Оранжерея","Greenhouse"],["b11-monorail","Станция монорельса","Monorail station"],["b12-shield_spire","Шпиль щита","Shield spire"]].map(([s,a,o])=>`<figure class="slab" style="padding:14px"><img src="${r(`px/${s}.webp`)}" alt="" loading="lazy" style="margin:auto;height:120px;width:auto"><figcaption style="text-align:center;font-weight:600;color:var(--ink)">${e(a,o)}</figcaption></figure>`).join("")}</div>
-  </div></section>`}function q(){const t=p.filter(a=>a.mania),s=a=>`<a class="tile slab" href="#hero-${a.id}" style="--hc:${a.color}">
+  </div></section>`}function X(){const t=p.filter(a=>a.mania),s=a=>`<a class="tile slab" href="#hero-${a.id}" style="--hc:${a.color}">
     <div class="stage"><span class="stripe"></span><img src="${r(a.px)}" alt="${h(i(a.name))}" loading="lazy"></div>
     <div class="meta"><span class="caps">${i(a.trophy)}</span><h3>${i(a.name)}</h3><p>«${i(a.line)}»</p></div>
   </a>`;return`<section class="section"><div class="wrap">
-    ${d(e("УГРОЗЫ // ПРОТОКОЛЫ","THREATS // PROTOCOLS"),e("Злодеи","Villains"),e("Злодеев «со злом внутри» здесь нет. Есть герои, которые спасают слишком буквально, корпорация, которой выгоден страх, и её очень вежливый голос.","Nobody here is evil at heart. There are heroes who rescue far too literally, a corporation that profits from fear, and its very polite voice."))}
+    ${c(e("УГРОЗЫ // ПРОТОКОЛЫ","THREATS // PROTOCOLS"),e("Злодеи","Villains"),e("Злодеев «со злом внутри» здесь нет. Есть герои, которые спасают слишком буквально, корпорация, которой выгоден страх, и её очень вежливый голос.","Nobody here is evil at heart. There are heroes who rescue far too literally, a corporation that profits from fear, and its very polite voice."))}
 
     <div class="villain">
       <div class="art slab" style="--hc:#E03552;background:linear-gradient(180deg,#2a1416,#10171c)"><img src="${r("key-art.webp")}" alt="" style="width:100%;height:100%;object-fit:cover"></div>
@@ -207,7 +214,7 @@ import"./modulepreload-polyfill-B5Qt9EMX.js";import{i as r,H as p,C as f,A as O,
         <h2>${e("Контроль","Control")}</h2>
         <p class="lead">${e("Аварийный ИИ HeroOut. До сих пор вежливо выполняет протокол EVERYONE IS ON CALL. Все жители и все герои для него имущество компании, которое надо учесть и вернуть на склад.","HeroOut’s emergency AI. Still politely running EVERYONE IS ON CALL. To Control, every resident and every hero is company property to be logged and returned to the warehouse.")}</p>
         <p>${e("Тела у Контроля нет: лицо — маска шлема спасателя на экранах и дронах-громкоговорителях, вместо рта голубая линия-улыбка. Он никогда не злится. Чем страшнее событие, тем спокойнее голос. Чужие модули на защитниках для него кража.","Control has no body: its face is a rescue-helmet mask on screens and loudspeaker drones, with a thin blue smile for a mouth. It never gets angry. The scarier the event, the calmer the voice. Trophy modules on defenders count as theft.")}</p>
-        <div class="stack" style="gap:10px">${N.map(([a,o])=>`<div class="bark slab"><span class="caps">${e("КОНТРОЛЬ:","CONTROL:")}</span>${e(a,o)}</div>`).join("")}</div>
+        <div class="stack" style="gap:10px">${D.map(([a,o])=>`<div class="bark slab"><span class="caps">${e("КОНТРОЛЬ:","CONTROL:")}</span>${e(a,o)}</div>`).join("")}</div>
       </div>
     </div>
 
@@ -243,28 +250,28 @@ import"./modulepreload-polyfill-B5Qt9EMX.js";import{i as r,H as p,C as f,A as O,
   </div></section>
 
   <section class="section band"><div class="wrap">
-    ${d(e("ФАСАДЫ // РЕКЛАМА HEROOUT","BILLBOARDS // HEROOUT ADS"),e("Всегда на смене","Always on call"),e("Реклама до сих пор висит по всему городу. Мелкий шрифт прилагается.","The ads still hang all over the city. Fine print included."))}
-    <div class="grid">${M.map(([a,o])=>`<div class="step" style="background:#142028"><span class="caps" style="color:var(--seam)">HERO | OUT</span><p style="font:700 18px/1.35 var(--display);color:#fff;margin:8px 0 0">${e(a,o)}</p></div>`).join("")}</div>
-  </div></section>`}function I(t){const s=t.id==="last-donut"?"comics/last-donut-cover.webp":t.pages[c][0];return`<a class="comic-card slab" href="#comic-${t.id}">
+    ${c(e("ФАСАДЫ // РЕКЛАМА HEROOUT","BILLBOARDS // HEROOUT ADS"),e("Всегда на смене","Always on call"),e("Реклама до сих пор висит по всему городу. Мелкий шрифт прилагается.","The ads still hang all over the city. Fine print included."))}
+    <div class="grid">${U.map(([a,o])=>`<div class="step" style="background:#142028"><span class="caps" style="color:var(--seam)">HERO | OUT</span><p style="font:700 18px/1.35 var(--display);color:#fff;margin:8px 0 0">${e(a,o)}</p></div>`).join("")}</div>
+  </div></section>`}function N(t){const s=t.id==="last-donut"?"comics/last-donut-cover.webp":t.pages[n][0];return`<a class="comic-card slab" href="#comic-${t.id}">
     <div class="cover"><img src="${r(s)}" alt="" loading="lazy"></div>
     <div class="meta"><span class="caps">${i(t.series)} // ${i(t.cast)}</span><h3>${i(t.title)}</h3><p>${i(t.blurb)}</p></div>
-  </a>`}function x(){return`<section class="section"><div class="wrap">
-    ${d(e("ЧИТАТЬ // КОМИКСЫ","READ // COMICS"),e("Комиксы","Comics"),e("«До сирен» — истории Lumen City до аварии: обычные городские проблемы, которые решают необычные спасатели.","“Before the Sirens” is about Lumen City before the accident: ordinary city problems solved by extraordinary rescuers."))}
-    <div class="comics">${f.map(I).join("")}</div>
-  </div></section>`}function _(t){const s=f.find(n=>n.id===t);if(!s)return x();const a=s.pages.en[0]===s.pages.ru[0]&&c==="en",o=f.indexOf(s),u=f[(o+1)%f.length];return`<section class="section"><div class="wrap">
+  </a>`}function M(){return`<section class="section"><div class="wrap">
+    ${c(e("ЧИТАТЬ // КОМИКСЫ","READ // COMICS"),e("Комиксы","Comics"),e("«До сирен» — истории Lumen City до аварии: обычные городские проблемы, которые решают необычные спасатели.","“Before the Sirens” is about Lumen City before the accident: ordinary city problems solved by extraordinary rescuers."))}
+    <div class="comics">${f.map(N).join("")}</div>
+  </div></section>`}function J(t){const s=f.find(l=>l.id===t);if(!s)return M();const a=s.pages.en[0]===s.pages.ru[0]&&n==="en",o=f.indexOf(s),u=f[(o+1)%f.length];return`<section class="section"><div class="wrap">
     <div class="reader">
-      <a class="caps" href="#comics" style="text-decoration:none">← ${l("comics")}</a>
+      <a class="caps" href="#comics" style="text-decoration:none">← ${d("comics")}</a>
       <span class="caps">${i(s.series)} // ${i(s.cast)}</span>
       <h1 style="font-size:clamp(30px,5vw,52px)">${i(s.title)}</h1>
-      <p class="lead">${i(s.blurb)}${a?` <span class="chip">${l("ruOnly")}</span>`:""}</p>
-      ${s.pages[c].map((n,m)=>`<img src="${r(n)}" alt="${h(i(s.title))} ${m+1}" ${m?'loading="lazy"':""}>`).join("")}
-      <div class="pager"><a class="btn btn-ghost" href="#comics">${l("comics")}</a><a class="btn btn-primary" href="#comic-${u.id}">${i(u.title)} →</a></div>
+      <p class="lead">${i(s.blurb)}${a?` <span class="chip">${d("ruOnly")}</span>`:""}</p>
+      ${s.pages[n].map((l,m)=>`<img src="${r(l)}" alt="${h(i(s.title))} ${m+1}" ${m?'loading="lazy"':""}>`).join("")}
+      <div class="pager"><a class="btn btn-ghost" href="#comics">${d("comics")}</a><a class="btn btn-primary" href="#comic-${u.id}">${i(u.title)} →</a></div>
     </div>
-  </div></section>`}function K(t){return`<section class="section"><div class="wrap">
-    ${d(e("АРТБУК // HEROOUT ARCHIVE","ARTBOOK // HEROOUT ARCHIVE"),e("Артбук","Artbook"),e("Концепты, досье, город и пиксель-арт. Нажми на картинку, чтобы открыть её целиком.","Concepts, dossiers, the city and pixel art. Tap a picture to see it full size."))}
-    <nav class="book-nav">${O.map(s=>`<a class="chip" href="#artbook-${s.id}">${i(s.title)}</a>`).join("")}</nav>
-    ${O.map(s=>`<div id="book-${s.id}" style="scroll-margin-top:90px;margin-bottom:56px">
+  </div></section>`}function Q(t){return`<section class="section"><div class="wrap">
+    ${c(e("АРТБУК // HEROOUT ARCHIVE","ARTBOOK // HEROOUT ARCHIVE"),e("Артбук","Artbook"),e("Концепты, досье, город и пиксель-арт. Нажми на картинку, чтобы открыть её целиком.","Concepts, dossiers, the city and pixel art. Tap a picture to see it full size."))}
+    <nav class="book-nav">${k.map(s=>`<a class="chip" href="#artbook-${s.id}">${i(s.title)}</a>`).join("")}</nav>
+    ${k.map(s=>`<div id="book-${s.id}" style="scroll-margin-top:90px;margin-bottom:56px">
         <div class="section-head" style="margin-bottom:22px"><h2 style="font-size:clamp(22px,2.6vw,30px)">${i(s.title)}</h2><p class="lead" style="font-size:17px">${i(s.note)}</p></div>
-        <div class="masonry${s.id==="pixel"?" pixels":""}">${s.shots.map(a=>H(a.src,i(a.cap),a.px)).join("")}</div>
+        <div class="masonry${s.id==="pixel"?" pixels":""}">${s.shots.map(a=>x(a.src,i(a.cap),a.px)).join("")}</div>
       </div>`).join("")}
-  </div></section>`}function X(){const t=location.hash.replace(/^#/,"");if(t.startsWith("hero-"))return{view:G(t.slice(5)),active:"heroes"};if(t.startsWith("comic-"))return{view:_(t.slice(6)),active:"comics"};if(t.startsWith("artbook"))return{view:K(),active:"artbook",anchor:t.includes("-")?`book-${t.split("-")[1]}`:void 0};switch(t){case"heroes":return{view:A(),active:"heroes"};case"world":return{view:W(),active:"world"};case"villains":return{view:q(),active:"villains"};case"comics":return{view:x(),active:"comics"};default:return{view:z(),active:"home"}}}const L=document.getElementById("site");let k="";function E(){document.documentElement.lang=c;const t=X();L.innerHTML=`${D(t.active)}<main>${t.view}</main>${j()}${P()}<div class="lightbox" id="lightbox" hidden></div>`,document.title=t.active==="home"?"PART SHIFT — Lumen City":`${l(t.active)} · PART SHIFT`;const s=location.hash===k;k=location.hash,t.anchor?document.getElementById(t.anchor)?.scrollIntoView():s||window.scrollTo(0,0)}function J(t){c=t;try{localStorage.setItem(C,t)}catch{}const s=window.scrollY;E(),window.scrollTo(0,s)}L.addEventListener("click",t=>{const s=t.target,a=s.closest("[data-lang]");if(a)return J(a.dataset.lang);if(s.closest("#burger"))return void(document.getElementById("drawer").hidden=!1);if(s.closest("#drawer-close")||s.id==="drawer")return void(document.getElementById("drawer").hidden=!0);s.closest("#drawer a")&&(document.getElementById("drawer").hidden=!0);const o=s.closest("button.zoom");if(o){const u=document.getElementById("lightbox");u.innerHTML=`<button class="icon-btn" aria-label="${l("close")}">${g.close}</button><img src="${o.dataset.src}" alt=""${o.dataset.px?' class="px"':""}><p>${o.dataset.cap??""}</p>`,u.hidden=!1;return}s.closest("#lightbox")&&(document.getElementById("lightbox").hidden=!0)});document.addEventListener("keydown",t=>{if(t.key==="Escape"){const s=document.getElementById("lightbox");s&&(s.hidden=!0);const a=document.getElementById("drawer");a&&(a.hidden=!0)}});window.addEventListener("hashchange",E);E();
+  </div></section>`}function Z(){const t=location.hash.replace(/^#/,"");if(t.startsWith("hero-"))return{view:_(t.slice(5)),active:"heroes"};if(t.startsWith("comic-"))return{view:J(t.slice(6)),active:"comics"};if(t.startsWith("artbook"))return{view:Q(),active:"artbook",anchor:t.includes("-")?`book-${t.split("-")[1]}`:void 0};switch(t){case"heroes":return{view:L(),active:"heroes"};case"world":return{view:q(),active:"world"};case"villains":return{view:X(),active:"villains"};case"comics":return{view:M(),active:"comics"};case"support":return{view:R(),active:"home",anchor:"support"};default:return{view:R(),active:"home"}}}const E=document.getElementById("site");let A="";function O(){document.documentElement.lang=n;const t=Z();E.innerHTML=`${V(t.active)}<main>${t.view}</main>${G()}${Y()}<div class="lightbox" id="lightbox" hidden></div>`,document.title=t.active==="home"?"PART SHIFT — Lumen City":`${d(t.active)} · PART SHIFT`;const s=location.hash===A;A=location.hash,F(E,n),t.anchor?document.getElementById(t.anchor)?.scrollIntoView():s||window.scrollTo(0,0)}function ee(t){n=t;try{localStorage.setItem(S,t)}catch{}const s=window.scrollY;O(),window.scrollTo(0,s)}E.addEventListener("click",t=>{const s=t.target,a=s.closest("[data-lang]");if(a)return ee(a.dataset.lang);if(s.closest("#burger"))return void(document.getElementById("drawer").hidden=!1);if(s.closest("#drawer-close")||s.id==="drawer")return void(document.getElementById("drawer").hidden=!0);s.closest("#drawer a")&&(document.getElementById("drawer").hidden=!0);const o=s.closest("button.zoom");if(o){const u=document.getElementById("lightbox");u.innerHTML=`<button class="icon-btn" aria-label="${d("close")}">${g.close}</button><img src="${o.dataset.src}" alt=""${o.dataset.px?' class="px"':""}><p>${o.dataset.cap??""}</p>`,u.hidden=!1;return}s.closest("#lightbox")&&(document.getElementById("lightbox").hidden=!0)});document.addEventListener("keydown",t=>{if(t.key==="Escape"){const s=document.getElementById("lightbox");s&&(s.hidden=!0);const a=document.getElementById("drawer");a&&(a.hidden=!0)}});window.addEventListener("hashchange",O);O();
