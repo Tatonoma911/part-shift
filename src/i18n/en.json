@@ -106,5 +106,9 @@
   "pause.plan_banner": "Paused: plan while time stands still",
   "build.confirm_hint": "Tap ✓ to build or pick another cell",
   "tutorial.progress": "Tutorial {n}/{total}",
-  "menu.quit_to_menu": "Main menu"
+  "menu.quit_to_menu": "Main menu",
+  "settings.on": "on",
+  "settings.off": "off",
+  "settings.sfx": "Sounds",
+  "settings.music": "Music"
 }

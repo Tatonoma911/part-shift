@@ -13,6 +13,9 @@ const jobs = [
   { from: join(root, 'art/export/x2/buildings'), to: 'src/assets/art/buildings', pick: (f) => BUILDINGS.includes(f.replace('.png', '')) },
   { from: join(root, 'art/anim/x2'), to: 'src/assets/art/anim', pick: (f) => f.endsWith('.png') || f === 'anim.json' },
   { from: join(root, 'art/export/icons'), to: 'src/assets/art/icons', pick: (f) => f.endsWith('@2x.png') },
+  { from: join(root, 'audio/sfx'), to: 'src/assets/audio/sfx', pick: (f) => f.endsWith('.mp3') },
+  { from: join(root, 'audio/music'), to: 'src/assets/audio/music', pick: (f) => f.endsWith('.mp3') },
+  { from: join(root, 'audio'), to: 'src/assets/audio', pick: (f) => f === 'sounds.json' },
   { from: join(root, 'art/export/portraits'), to: 'src/assets/art/portraits', pick: (f) => ['demon.png', 'bld_command.png'].includes(f) },
 ];
 for (const { from, to, pick } of jobs) {

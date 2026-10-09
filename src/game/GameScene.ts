@@ -5,6 +5,7 @@ import type { AssistMode, GameState } from '../core/state';
 import { World, type GameEvent } from '../core/world';
 import { t } from '../i18n';
 import { BUILDING_ANCHOR, createArt, preloadArt } from './assets';
+import { sound } from './audio';
 import { BoardView } from './BoardView';
 import { BOARD, C, CELL, DOCK, GOAL_Y, HUD, INK, STEP, VIEW } from './layout';
 import { markTutorialDone, TutorialGuide, tutorialDone } from './Tutorial';
@@ -53,6 +54,7 @@ function loadState(): GameState | null {
 function stop(fn: () => void) {
   return (_p: Phaser.Input.Pointer, _x: number, _y: number, ev: Ev) => {
     ev.stopPropagation();
+    sound.play('ui_tap');
     fn();
   };
 }
@@ -128,7 +130,7 @@ export class GameScene extends Phaser.Scene {
       : saved
         ? new World({ state: saved })
         : new World({ seed: seedParam || Math.floor(Math.random() * 1e9), assist });
-    (window as unknown as { partShift: unknown }).partShift = { world: this.world, scene: this };
+    (window as unknown as { partShift: unknown }).partShift = { world: this.world, scene: this, sound };
     this.shownEnergy = this.world.player(ME).energy;
     this.lastThreat = this.world.threatLevel;
 
@@ -163,6 +165,11 @@ export class GameScene extends Phaser.Scene {
     document.addEventListener('visibilitychange', () => {
       if (document.hidden) this.save();
     });
+    // Audio may only start after a gesture; capture so buttons that stop propagation count too.
+    const unlock = () => sound.unlock();
+    window.addEventListener('pointerdown', unlock, { capture: true });
+    window.addEventListener('keydown', unlock, { capture: true });
+    if (this.world.s.outcome === 'playing') sound.playMusic('theme_lumen');
     this.setMode('dig');
   }
 
@@ -220,6 +227,8 @@ export class GameScene extends Phaser.Scene {
 
   private onEvent(e: GameEvent): void {
     if (e.owner !== undefined && e.owner !== ME && e.owner >= 0) return;
+    if (e.type === 'victory' || e.type === 'defeat') sound.stopMusic();
+    sound.play(e.type);
     if (e.type === 'center_hit') {
       if (this.time.now - this.lastCenterHit > 6000) this.say(t('event.command_under_attack'), 3000, true);
       this.lastCenterHit = this.time.now;
@@ -640,18 +649,35 @@ export class GameScene extends Phaser.Scene {
 
   private setPaused(on: boolean): void {
     if (this.world.s.outcome !== 'playing') return;
+    if (on !== this.paused) sound.play(on ? 'pause' : 'resume');
     this.paused = on;
     this.overlay?.destroy();
     this.overlay = null;
     if (!on) return;
     this.save();
+    const onOff = (v: boolean) => t(v ? 'settings.on' : 'settings.off');
     this.overlay = this.sheet({
       title: t('pause.title'),
       lines: [t('pause.hint')],
       actions: [
         { label: t('pause.resume'), act: () => this.setPaused(false), primary: true },
+        {
+          label: `${t('settings.sfx')}: ${onOff(sound.prefs.sfx)}`,
+          act: () => {
+            sound.setPrefs({ sfx: !sound.prefs.sfx });
+            this.setPaused(true);
+          },
+        },
+        {
+          label: `${t('settings.music')}: ${onOff(sound.prefs.music)}`,
+          act: () => {
+            sound.setPrefs({ music: !sound.prefs.music });
+            this.setPaused(true);
+          },
+        },
         { label: t('pause.restart'), act: () => this.restart() },
       ],
+      animate: false,
     });
   }
 
@@ -696,7 +722,7 @@ export class GameScene extends Phaser.Scene {
   }
 
   /** Bottom sheet over the dimmed board (UI_SPEC §5). */
-  private sheet(o: { title: string; lines: string[]; actions: { label: string; act: () => void; primary?: boolean }[]; badge?: string; portrait?: string; grey?: boolean }): Phaser.GameObjects.Container {
+  private sheet(o: { title: string; lines: string[]; actions: { label: string; act: () => void; primary?: boolean }[]; badge?: string; portrait?: string; grey?: boolean; animate?: boolean }): Phaser.GameObjects.Container {
     const c = this.add.container(0, 0).setDepth(30);
     const shade = this.add.rectangle(0, 0, VIEW.width, VIEW.height, 0x0a1218, 0.55).setOrigin(0).setInteractive();
     shade.on('pointerdown', (_p: Phaser.Input.Pointer, _x: number, _y: number, ev: Ev) => ev.stopPropagation());
@@ -745,9 +771,11 @@ export class GameScene extends Phaser.Scene {
       c.add(img);
     }
     c.add(body);
-    body.y += 60;
-    body.alpha = 0;
-    this.tweens.add({ targets: body, y: top, alpha: 1, duration: 260, ease: 'Cubic.out' });
+    if (o.animate !== false) {
+      body.y += 60;
+      body.alpha = 0;
+      this.tweens.add({ targets: body, y: top, alpha: 1, duration: 260, ease: 'Cubic.out' });
+    }
     return c;
   }
 

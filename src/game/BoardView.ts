@@ -4,6 +4,7 @@ import { cellKey } from '../core/grid';
 import type { Building, Unit } from '../core/state';
 import type { GameEvent, World } from '../core/world';
 import { animSets, BUILDING_ANCHOR, originOf } from './assets';
+import { sound } from './audio';
 import { C, CELL, CHANNEL, STEP, TECH_COLOR } from './layout';
 import { glyph, TXT } from './ui';
 
@@ -24,6 +25,7 @@ interface UnitView {
   lastCd: number;
   oneShot: boolean;
   windup: boolean;
+  anim: string;
 }
 
 export interface ViewState {
@@ -647,7 +649,7 @@ export class BoardView {
       if (!v) {
         const set = this.setOf(u);
         const spr = this.scene.add.sprite(fx, fy, set).setOrigin(...originOf(set));
-        v = { spr, set, lastX: u.x, lastY: u.y, lastCd: u.attackCooldown, oneShot: false, windup: false };
+        v = { spr, set, lastX: u.x, lastY: u.y, lastCd: u.attackCooldown, oneShot: false, windup: false, anim: '' };
         if (u.kind === 'defender') v.ring = this.scene.add.image(fx, fy, 'tile.defender_ring').setOrigin(0.5, 0.75);
         if (u.owner >= 0 && u.owner !== ME) spr.setTint(0xffb080);
         this.units.set(u.id, v);
@@ -671,6 +673,8 @@ export class BoardView {
           else if ((u.task.type === 'dig' || u.task.type === 'harvest') && u.path.length === 0) anim = 'dig';
           else if (u.task.type === 'build' && u.path.length === 0) anim = 'build';
         } else if (moved) anim = 'walk';
+        if (anim === 'dig' && v.anim !== 'dig' && u.owner === ME) sound.play('dig_start');
+        v.anim = anim;
         v.spr.play(`${v.set}.${anim}`, true);
       }
       v.spr.setPosition(fx, fy).setDepth(D.unit + fy / 4000);

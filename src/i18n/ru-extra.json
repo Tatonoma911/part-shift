@@ -14,5 +14,7 @@
   "legend.safe": "Можно копать",
   "pause.plan_banner": "Пауза: планируйте, время стоит",
   "build.confirm_hint": "Нажмите ✓, чтобы построить, или выберите другую клетку",
-  "tutorial.progress": "Обучение {n}/{total}"
+  "tutorial.progress": "Обучение {n}/{total}",
+  "settings.on": "вкл",
+  "settings.off": "выкл"
 }
