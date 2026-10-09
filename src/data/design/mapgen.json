@@ -1,6 +1,6 @@
 {
-  "version": "0.1",
-  "mode": "demon_hunt",
+  "version": "0.4",
+  "mode": "call",
   "seedable": true,
   "generateAfterCommandCenterPlaced": true,
   "safeRadius": 2,
@@ -12,11 +12,12 @@
   "counts": {
     "nest": 6,
     "heavyNestChance": 0.15,
-    "demon_hatch": 1,
     "cache": 4,
     "energy_vein": 3,
     "rubble": 18,
-    "survivor": 2
+    "survivor": 2,
+    "hero_lair": 3,
+    "boss_hatch": 1
   },
   "energyVein": {
     "energy": 120,
@@ -34,10 +35,11 @@
       4
     ]
   },
-  "demonMinDistance": 9,
   "constraints": [
     "all non-water cells reachable from command center",
     "no site on water",
-    "no other site adjacent to demon_hatch"
-  ]
+    "no other site adjacent to boss_hatch"
+  ],
+  "heroLairMinDistance": 5,
+  "bossMinDistance": 9
 }

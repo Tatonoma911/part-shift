@@ -1,0 +1,83 @@
+{
+  "version": "0.5",
+  "_doc": "design/META.md §7",
+  "default": "call",
+  "modes": [
+    {
+      "id": "call",
+      "name_ru": "Срочный вызов",
+      "solo": true,
+      "usesDifficulty": true,
+      "overrides": {}
+    },
+    {
+      "id": "quick",
+      "name_ru": "Короткий вызов",
+      "solo": true,
+      "online": false,
+      "usesDifficulty": false,
+      "difficultyBase": "shift",
+      "targetMinutes": [
+        4,
+        6
+      ],
+      "unlock": "after tutorial (always available)",
+      "overrides": {
+        "config.board": {
+          "width": 10,
+          "height": 12
+        },
+        "config.economy.startEnergy": 100,
+        "config.dig.digSeconds": 6,
+        "config.population": {
+          "spawnSeconds": 8,
+          "initialResidents": 3,
+          "cap": 8
+        },
+        "difficulty.threatSecondsPerLevel": 75,
+        "difficulty.bossSelfWakeSeconds": 300,
+        "difficulty.callTargetHpFactor": 1.0,
+        "difficulty.assistMode": "scanner",
+        "difficulty.noGuessBoard": true,
+        "mapgen.counts": {
+          "nest": 3,
+          "heavyNestChance": 0.0,
+          "cache": 2,
+          "energy_vein": 2,
+          "rubble": 8,
+          "survivor": 1,
+          "hero_lair": 0,
+          "boss_hatch": 1
+        },
+        "mapgen.bossMinDistance": 6,
+        "mapgen.heroLairMinDistance": 4,
+        "mapgen.water": {
+          "fraction": 0.06,
+          "blobs": [
+            1,
+            2
+          ]
+        },
+        "bossPool": [
+          "lineman",
+          "frostline",
+          "mason",
+          "sweep",
+          "beacon",
+          "hive"
+        ],
+        "maxSchools": 1,
+        "buildings.allowed": [
+          "home",
+          "reactor",
+          "cooler",
+          "school",
+          "medcenter"
+        ]
+      },
+      "records": "own best time and best score",
+      "scoreMultiplier": "meta.json runScore.multiplierByMode.quick",
+      "_timeline": "0:00 start · ~0:45 first nest fight · threat L1 1:15, L2 2:30, L3 3:45 · call target wakes 5:00 (warning 4:00) · novice win 5–6 min, experienced 3:30–4:30"
+    }
+  ]
+}

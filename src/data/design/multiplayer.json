@@ -1,12 +1,12 @@
 {
-  "version": "0.2",
+  "version": "0.5",
   "players": {
     "min": 2,
     "max": 4
   },
   "modes": [
     {
-      "id": "coop_demon_hunt",
+      "id": "coop_call",
       "order": 1,
       "sharedVictory": true,
       "loseWhen": "all_commands_destroyed"
@@ -16,25 +16,26 @@
       "order": 2,
       "sharedVictory": false,
       "loseWhen": "own_command_destroyed",
-      "demonSelfWakeSeconds": 900,
-      "demonTarget": "nearest_command"
+      "bossSelfWakeSeconds": 900,
+      "bossTarget": "nearest_command"
     }
   ],
   "pause": false,
   "board": {
     "2": {
-      "width": 18,
-      "height": 22
+      "width": 20,
+      "height": 26
     },
     "3": {
-      "width": 22,
-      "height": 26
+      "width": 24,
+      "height": 30
     },
     "4": {
-      "width": 22,
-      "height": 26
+      "width": 26,
+      "height": 34
     },
-    "pinchZoom": true
+    "pinchZoom": true,
+    "_note": "[Антон] коопу карта вдвое больше одиночной (14×18=252 → 20×26=520 на двоих)"
   },
   "fairStart": {
     "serverPlacesCommands": true,
@@ -42,8 +43,9 @@
     "mirroredRadius": 4
   },
   "scaling": {
-    "demonHpPerExtraPlayer": 0.6,
-    "nestsPerPlayer": 6
+    "see": "coop.nestsPerPlayer, coop.callTargetHpPerExtraPlayer (also applies to last_command)",
+    "nestsPerPlayer": 6,
+    "bossHpPerExtraPlayer": 0.6
   },
   "territoryOverlap": false,
   "canDigInRivalTerritory": true,
@@ -51,7 +53,128 @@
     "enabled": true,
     "pick": "strongest"
   },
-  "energyTransfer": false,
+  "energyTransfer": "coop: coop.energyTransfer; last_command: false",
   "disconnectGraceSeconds": 60,
-  "adsDuringMatch": false
+  "adsDuringMatch": false,
+  "_doc": "design/MVP_RULES.md §14.4",
+  "coop": {
+    "_doc": "[Антон 2026-10-09] вдвое больше карта, вдвое быстрее усиление злодеев, злодеи агрессивнее; без разговора и помощи друг другу должно быть тяжело",
+    "difficultyBase": "shift",
+    "threatSecondsPerLevel": 60,
+    "lairSelfOpenThreatLevels": [
+      3,
+      6,
+      8
+    ],
+    "bossSelfWakeSeconds": 600,
+    "enemyDamageFactor": 1.25,
+    "enemyAggression": {
+      "raids": {
+        "fromOpenedNestsEverySeconds": 45,
+        "size": 3,
+        "target": "nearest player building",
+        "growsPerThreatLevel": 1,
+        "maxSize": 8
+      },
+      "heroesTarget": "player with the weakest defense near them (fewest residents within 4)",
+      "pursueRadius": 6,
+      "_soloComparison": "in solo enemies guard their site and fight what comes close"
+    },
+    "splitPressure": {
+      "raidsAlternatePlayers": true,
+      "_note": "raids go to different players in turn, so one player cannot hide behind another"
+    },
+    "spliceShield": {
+      "appliesTo": "heroes",
+      "singlePlayerDamageFactor": 0.5,
+      "teamWindowSeconds": 4,
+      "_note": "герой получает полный урон, только если его в последние 4 с били жители минимум двух игроков; одного игрока он почти не замечает"
+    },
+    "teamworkBonus": {
+      "sameTargetPlayersMin": 2,
+      "damageFactor": 1.2,
+      "radius": 3
+    },
+    "roles": {
+      "pickInLobby": true,
+      "duplicatesAllowed": false,
+      "autoAssignIfNotPicked": true,
+      "list": [
+        {
+          "id": "scout",
+          "name_ru": "Разведчик",
+          "mods": {
+            "digTimeFactor": 0.7,
+            "scannerChargesAdd": 2,
+            "scanMarksVisibleToTeam": true,
+            "residentDamageFactor": 0.85
+          }
+        },
+        {
+          "id": "assault",
+          "name_ru": "Штурмовик",
+          "mods": {
+            "residentDamageFactor": 1.25,
+            "residentHpAdd": 10,
+            "digTimeFactor": 1.25
+          }
+        },
+        {
+          "id": "support",
+          "name_ru": "Тыл",
+          "mods": {
+            "energyProductionFactor": 1.5,
+            "buildCostFactor": 0.8,
+            "canBuildMedcenterAuraForTeam": true,
+            "residentDamageFactor": 0.85
+          }
+        },
+        {
+          "id": "engineer",
+          "name_ru": "Инженер",
+          "mods": {
+            "buildingsHpFactor": 1.5,
+            "rubbleWorkFactor": 0.5,
+            "canRepairTeammateBuildings": true,
+            "turretUnlocked": false,
+            "residentDamageFactor": 0.9
+          }
+        }
+      ],
+      "_note": "на двоих берут 2 из 4 ролей; у каждой роли слабость, которую закрывает другая"
+    },
+    "energyTransfer": {
+      "enabled": true,
+      "minAmount": 25,
+      "cooldownSeconds": 10
+    },
+    "assistMarksShared": "only Разведчик's scan marks are visible to everyone; others see only their own marks",
+    "pings": {
+      "enabled": true,
+      "gesture": "long press on a revealed cell or enemy",
+      "types": [
+        "danger",
+        "help",
+        "here",
+        "target"
+      ],
+      "cooldownSeconds": 3,
+      "_note": "не все говорят голосом: метки обязательны"
+    },
+    "alerts": {
+      "teammateCommandUnderAttack": "toast + edge pointer for everyone",
+      "teammateLowResidents": 3
+    },
+    "rescueCommand": {
+      "enabled": true,
+      "windowSeconds": 60,
+      "teammateResidentsNeeded": 3,
+      "holdSeconds": 10,
+      "restoredHpPercent": 40,
+      "_note": "разрушенный центр можно поднять, если союзник приведёт к руинам 3 жителей на 10 с; иначе игрок становится зрителем"
+    },
+    "callTargetHpPerExtraPlayer": 0.6,
+    "nestsPerPlayer": 6,
+    "heroLairsPerPlayer": 2
+  }
 }

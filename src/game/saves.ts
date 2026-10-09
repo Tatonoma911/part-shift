@@ -32,7 +32,7 @@ export function loadSlot(slot: number): GameState | null {
   if (!raw) return null;
   try {
     const s = JSON.parse(raw) as GameState;
-    if (s.version !== 1 || s.outcome !== 'playing') return null;
+    if (s.version !== 2 || s.outcome !== 'playing') return null;
     // Saves from before the scanner existed.
     for (const p of s.players) p.assist ??= { mode: 'full', charges: config.assist.scanner.maxCharges, recharge: config.assist.scanner.rechargeSeconds, scanLeft: 0 };
     return s;

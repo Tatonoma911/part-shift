@@ -7,12 +7,8 @@
     "2": 1,
     "3": 1
   },
-  "lairSelfOpenThreatLevels": [
-    2,
-    4,
-    6
-  ],
-  "n73Appears": "только когда открыты остальные 14: на сложности «Ночная смена» входит в bossPool",
+  "lairSelfOpenThreatLevels": "difficulty.json per level ([2,4,5])",
+  "n73Appears": "только когда открыты остальные 14: на «Аврале» входит в bossPool",
   "allySlots": [
     {
       "unlockedHeroes": 0,
@@ -909,5 +905,6 @@
     ],
     "_note": "[Антон] Демон — один из героев, не главный злодей; сильнейший герой района выбирается случайно из этого пула и не повторяет героя 3 уровня в убежище"
   },
-  "_names": "screen names come from text/ru.json enemy.{id}.name; name_ru is a working copy"
+  "_names": "screen names come from text/ru.json enemy.{id}.name; name_ru is a working copy",
+  "callTargetHpFactor": "difficulty.json per level (Смена 1.4)"
 }

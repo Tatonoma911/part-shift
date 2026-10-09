@@ -1,13 +1,13 @@
 {
   "place.command": "Нажмите на квартал, чтобы поставить Командный центр.",
   "legend.threat": "Гнёзда",
-  "legend.demon": "Демон",
+  "legend.demon": "Цель вызова",
   "legend.finds": "Находки",
   "tutorial.dig": "Проведите по закрытым кварталам, чтобы отправить жителей на расчистку.",
-  "tutorial.attack": "Нажмите на врага или открытое гнездо, чтобы отправить туда всех защитников.",
+  "tutorial.attack": "Нажмите на врага или открытое гнездо, чтобы отправить туда всех жителей.",
   "hud.label.energy": "Энергия",
   "hud.label.residents": "Жители",
-  "hud.label.squad": "Отряд",
+  "hud.label.squad": "Школа",
   "hud.shift_label": "Смена 01 // Sunward",
   "hud.queue": "В очереди: {count}",
   "hud.squad_chip": "Отряд: {count}",
@@ -66,5 +66,7 @@
   "account.error.operation-not-supported-in-this-environment": "Здесь вход не работает. Откройте игру в обычном браузере.",
   "account.error.popup-blocked": "Браузер заблокировал окно входа. Разрешите всплывающие окна и попробуйте снова.",
   "account.error.generic": "Не получилось. Попробуйте ещё раз.",
-  "pause.account": "Аккаунт и сохранения"
+  "pause.account": "Аккаунт и сохранения",
+  "event.boss_dead": "Цель вызова остановлена. Ждём, пока остынет земля",
+  "hint.nest_grows_stronger": "Гнездо крепнет, пока вы ждёте. Чем позже бой, тем злее враги"
 }

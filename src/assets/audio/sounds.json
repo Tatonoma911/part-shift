@@ -1,5 +1,5 @@
 {
-  "version": 1,
+  "version": 2,
   "formats": [
     "ogg",
     "mp3"
@@ -351,9 +351,521 @@
       "priority": 7,
       "group": "alert",
       "note": "duck music to 0 and stop it"
+    },
+    "hero_spawn_thermo": {
+      "files": [
+        "sfx/hero_spawn_thermo"
+      ],
+      "volume": 0.9,
+      "cooldownMs": 0,
+      "maxInstances": 1,
+      "priority": 6,
+      "group": "alert",
+      "note": "pick by the hero's tech from design/data/heroes.json"
+    },
+    "hero_ability_thermo": {
+      "files": [
+        "sfx/hero_ability_thermo"
+      ],
+      "volume": 0.7,
+      "cooldownMs": 300,
+      "maxInstances": 2,
+      "priority": 4,
+      "group": "combat",
+      "note": "hero uses its ability (ram, grab, cryo kick, heal, flare...); pick by tech"
+    },
+    "hero_spawn_cryo": {
+      "files": [
+        "sfx/hero_spawn_cryo"
+      ],
+      "volume": 0.9,
+      "cooldownMs": 0,
+      "maxInstances": 1,
+      "priority": 6,
+      "group": "alert",
+      "note": "pick by the hero's tech from design/data/heroes.json"
+    },
+    "hero_ability_cryo": {
+      "files": [
+        "sfx/hero_ability_cryo"
+      ],
+      "volume": 0.7,
+      "cooldownMs": 300,
+      "maxInstances": 2,
+      "priority": 4,
+      "group": "combat",
+      "note": "hero uses its ability (ram, grab, cryo kick, heal, flare...); pick by tech"
+    },
+    "hero_spawn_volt": {
+      "files": [
+        "sfx/hero_spawn_volt"
+      ],
+      "volume": 0.9,
+      "cooldownMs": 0,
+      "maxInstances": 1,
+      "priority": 6,
+      "group": "alert",
+      "note": "pick by the hero's tech from design/data/heroes.json"
+    },
+    "hero_ability_volt": {
+      "files": [
+        "sfx/hero_ability_volt"
+      ],
+      "volume": 0.7,
+      "cooldownMs": 300,
+      "maxInstances": 2,
+      "priority": 4,
+      "group": "combat",
+      "note": "hero uses its ability (ram, grab, cryo kick, heal, flare...); pick by tech"
+    },
+    "hero_spawn_toxin": {
+      "files": [
+        "sfx/hero_spawn_toxin"
+      ],
+      "volume": 0.9,
+      "cooldownMs": 0,
+      "maxInstances": 1,
+      "priority": 6,
+      "group": "alert",
+      "note": "pick by the hero's tech from design/data/heroes.json"
+    },
+    "hero_ability_toxin": {
+      "files": [
+        "sfx/hero_ability_toxin"
+      ],
+      "volume": 0.7,
+      "cooldownMs": 300,
+      "maxInstances": 2,
+      "priority": 4,
+      "group": "combat",
+      "note": "hero uses its ability (ram, grab, cryo kick, heal, flare...); pick by tech"
+    },
+    "hero_spawn_impact": {
+      "files": [
+        "sfx/hero_spawn_impact"
+      ],
+      "volume": 0.9,
+      "cooldownMs": 0,
+      "maxInstances": 1,
+      "priority": 6,
+      "group": "alert",
+      "note": "pick by the hero's tech from design/data/heroes.json"
+    },
+    "hero_ability_impact": {
+      "files": [
+        "sfx/hero_ability_impact"
+      ],
+      "volume": 0.7,
+      "cooldownMs": 300,
+      "maxInstances": 2,
+      "priority": 4,
+      "group": "combat",
+      "note": "hero uses its ability (ram, grab, cryo kick, heal, flare...); pick by tech"
+    },
+    "hero_spawn_kinetic": {
+      "files": [
+        "sfx/hero_spawn_kinetic"
+      ],
+      "volume": 0.9,
+      "cooldownMs": 0,
+      "maxInstances": 1,
+      "priority": 6,
+      "group": "alert",
+      "note": "pick by the hero's tech from design/data/heroes.json"
+    },
+    "hero_ability_kinetic": {
+      "files": [
+        "sfx/hero_ability_kinetic"
+      ],
+      "volume": 0.7,
+      "cooldownMs": 300,
+      "maxInstances": 2,
+      "priority": 4,
+      "group": "combat",
+      "note": "hero uses its ability (ram, grab, cryo kick, heal, flare...); pick by tech"
+    },
+    "hero_defeated": {
+      "files": [
+        "sfx/hero_defeated"
+      ],
+      "volume": 1.0,
+      "cooldownMs": 0,
+      "maxInstances": 1,
+      "priority": 6,
+      "group": "alert"
+    },
+    "hero_part_taken": {
+      "files": [
+        "sfx/hero_part_taken"
+      ],
+      "volume": 0.9,
+      "cooldownMs": 0,
+      "maxInstances": 1,
+      "priority": 6,
+      "group": "combat",
+      "note": "a defender takes a named hero limb; play instead of part_attached"
+    },
+    "hero_unlocked": {
+      "files": [
+        "sfx/hero_unlocked"
+      ],
+      "volume": 0.9,
+      "cooldownMs": 0,
+      "maxInstances": 1,
+      "priority": 7,
+      "group": "ui",
+      "note": "hero unlock screen"
+    },
+    "quarantine_siren": {
+      "files": [
+        "sfx/quarantine_siren"
+      ],
+      "volume": 0.45,
+      "cooldownMs": 20000,
+      "maxInstances": 1,
+      "priority": 3,
+      "group": "world",
+      "note": "distant city siren: first hero_spawn of a run and when a hero lair is opened; never more than once per 20 s"
+    },
+    "beacon_place": {
+      "files": [
+        "sfx/beacon_place"
+      ],
+      "volume": 0.6,
+      "cooldownMs": 80,
+      "maxInstances": 2,
+      "priority": 3,
+      "group": "ui",
+      "note": "player puts a warning beacon (long press) on a quarantine cell"
+    },
+    "beacon_remove": {
+      "files": [
+        "sfx/beacon_remove"
+      ],
+      "volume": 0.5,
+      "cooldownMs": 80,
+      "maxInstances": 2,
+      "priority": 2,
+      "group": "ui"
+    },
+    "cell_reveal": {
+      "files": [
+        "sfx/cell_reveal_1",
+        "sfx/cell_reveal_2",
+        "sfx/cell_reveal_3"
+      ],
+      "volume": 0.3,
+      "cooldownMs": 40,
+      "maxInstances": 3,
+      "priority": 1,
+      "group": "world",
+      "note": "quarantine film lifts off a cell (auto cascade, scan proof); dig_done stays for a dug cell"
+    },
+    "scan": {
+      "files": [
+        "sfx/scan"
+      ],
+      "volume": 0.6,
+      "cooldownMs": 500,
+      "maxInstances": 1,
+      "priority": 3,
+      "group": "ui"
+    },
+    "voice_control": {
+      "files": [
+        "sfx/voice_control_1",
+        "sfx/voice_control_2",
+        "sfx/voice_control_3",
+        "sfx/voice_control_4"
+      ],
+      "volume": 0.7,
+      "cooldownMs": 0,
+      "maxInstances": 1,
+      "priority": 4,
+      "group": "voice",
+      "note": "with every Контроль announcement; the PA chime is built in"
+    },
+    "voice_hero_standard": {
+      "files": [
+        "sfx/voice_hero_standard_1",
+        "sfx/voice_hero_standard_2",
+        "sfx/voice_hero_standard_3"
+      ],
+      "volume": 0.7,
+      "cooldownMs": 0,
+      "maxInstances": 1,
+      "priority": 4,
+      "group": "voice",
+      "note": "bubble over this hero; one variant per bubble"
+    },
+    "voice_hero_patch": {
+      "files": [
+        "sfx/voice_hero_patch_1",
+        "sfx/voice_hero_patch_2",
+        "sfx/voice_hero_patch_3"
+      ],
+      "volume": 0.7,
+      "cooldownMs": 0,
+      "maxInstances": 1,
+      "priority": 4,
+      "group": "voice",
+      "note": "bubble over this hero; one variant per bubble"
+    },
+    "voice_hero_canopy": {
+      "files": [
+        "sfx/voice_hero_canopy_1",
+        "sfx/voice_hero_canopy_2",
+        "sfx/voice_hero_canopy_3"
+      ],
+      "volume": 0.7,
+      "cooldownMs": 0,
+      "maxInstances": 1,
+      "priority": 4,
+      "group": "voice",
+      "note": "bubble over this hero; one variant per bubble"
+    },
+    "voice_hero_current": {
+      "files": [
+        "sfx/voice_hero_current_1",
+        "sfx/voice_hero_current_2",
+        "sfx/voice_hero_current_3"
+      ],
+      "volume": 0.7,
+      "cooldownMs": 0,
+      "maxInstances": 1,
+      "priority": 4,
+      "group": "voice",
+      "note": "bubble over this hero; one variant per bubble"
+    },
+    "voice_hero_lineman": {
+      "files": [
+        "sfx/voice_hero_lineman_1",
+        "sfx/voice_hero_lineman_2",
+        "sfx/voice_hero_lineman_3"
+      ],
+      "volume": 0.7,
+      "cooldownMs": 0,
+      "maxInstances": 1,
+      "priority": 4,
+      "group": "voice",
+      "note": "bubble over this hero; one variant per bubble"
+    },
+    "voice_hero_frostline": {
+      "files": [
+        "sfx/voice_hero_frostline_1",
+        "sfx/voice_hero_frostline_2",
+        "sfx/voice_hero_frostline_3"
+      ],
+      "volume": 0.7,
+      "cooldownMs": 0,
+      "maxInstances": 1,
+      "priority": 4,
+      "group": "voice",
+      "note": "bubble over this hero; one variant per bubble"
+    },
+    "voice_hero_mason": {
+      "files": [
+        "sfx/voice_hero_mason_1",
+        "sfx/voice_hero_mason_2",
+        "sfx/voice_hero_mason_3"
+      ],
+      "volume": 0.7,
+      "cooldownMs": 0,
+      "maxInstances": 1,
+      "priority": 4,
+      "group": "voice",
+      "note": "bubble over this hero; one variant per bubble"
+    },
+    "voice_hero_sweep": {
+      "files": [
+        "sfx/voice_hero_sweep_1",
+        "sfx/voice_hero_sweep_2",
+        "sfx/voice_hero_sweep_3"
+      ],
+      "volume": 0.7,
+      "cooldownMs": 0,
+      "maxInstances": 1,
+      "priority": 4,
+      "group": "voice",
+      "note": "bubble over this hero; one variant per bubble"
+    },
+    "voice_hero_beacon": {
+      "files": [
+        "sfx/voice_hero_beacon_1",
+        "sfx/voice_hero_beacon_2",
+        "sfx/voice_hero_beacon_3"
+      ],
+      "volume": 0.7,
+      "cooldownMs": 0,
+      "maxInstances": 1,
+      "priority": 4,
+      "group": "voice",
+      "note": "bubble over this hero; one variant per bubble"
+    },
+    "voice_hero_hive": {
+      "files": [
+        "sfx/voice_hero_hive_1",
+        "sfx/voice_hero_hive_2",
+        "sfx/voice_hero_hive_3"
+      ],
+      "volume": 0.7,
+      "cooldownMs": 0,
+      "maxInstances": 1,
+      "priority": 4,
+      "group": "voice",
+      "note": "bubble over this hero; one variant per bubble"
+    },
+    "voice_hero_kiln": {
+      "files": [
+        "sfx/voice_hero_kiln_1",
+        "sfx/voice_hero_kiln_2",
+        "sfx/voice_hero_kiln_3"
+      ],
+      "volume": 0.7,
+      "cooldownMs": 0,
+      "maxInstances": 1,
+      "priority": 4,
+      "group": "voice",
+      "note": "bubble over this hero; one variant per bubble"
+    },
+    "voice_hero_seraph": {
+      "files": [
+        "sfx/voice_hero_seraph_1",
+        "sfx/voice_hero_seraph_2",
+        "sfx/voice_hero_seraph_3"
+      ],
+      "volume": 0.7,
+      "cooldownMs": 0,
+      "maxInstances": 1,
+      "priority": 4,
+      "group": "voice",
+      "note": "bubble over this hero; one variant per bubble"
+    },
+    "voice_hero_doctor": {
+      "files": [
+        "sfx/voice_hero_doctor_1",
+        "sfx/voice_hero_doctor_2",
+        "sfx/voice_hero_doctor_3"
+      ],
+      "volume": 0.7,
+      "cooldownMs": 0,
+      "maxInstances": 1,
+      "priority": 4,
+      "group": "voice",
+      "note": "bubble over this hero; one variant per bubble"
+    },
+    "voice_hero_demon": {
+      "files": [
+        "sfx/voice_hero_demon_1",
+        "sfx/voice_hero_demon_2",
+        "sfx/voice_hero_demon_3"
+      ],
+      "volume": 0.7,
+      "cooldownMs": 0,
+      "maxInstances": 1,
+      "priority": 4,
+      "group": "voice",
+      "note": "bubble over this hero; one variant per bubble"
+    },
+    "voice_hero_n73": {
+      "files": [
+        "sfx/voice_hero_n73_1",
+        "sfx/voice_hero_n73_2",
+        "sfx/voice_hero_n73_3"
+      ],
+      "volume": 0.7,
+      "cooldownMs": 0,
+      "maxInstances": 1,
+      "priority": 4,
+      "group": "voice",
+      "note": "bubble over this hero; one variant per bubble"
+    },
+    "voice_survivor": {
+      "files": [
+        "sfx/voice_survivor_1",
+        "sfx/voice_survivor_2",
+        "sfx/voice_survivor_3",
+        "sfx/voice_survivor_4"
+      ],
+      "volume": 0.6,
+      "cooldownMs": 0,
+      "maxInstances": 1,
+      "priority": 3,
+      "group": "voice",
+      "note": "survivor bubble"
     }
   },
   "music": {
+    "run_calm": {
+      "files": [
+        "music/run_calm"
+      ],
+      "volume": 1.0,
+      "loop": true,
+      "bpm": 92,
+      "bars": 32,
+      "loopSeconds": 83.4783,
+      "layer": "run",
+      "state": "calm"
+    },
+    "run_heroes": {
+      "files": [
+        "music/run_heroes"
+      ],
+      "volume": 1.0,
+      "loop": true,
+      "bpm": 92,
+      "bars": 32,
+      "loopSeconds": 83.4783,
+      "layer": "run",
+      "state": "heroes"
+    },
+    "run_danger": {
+      "files": [
+        "music/run_danger"
+      ],
+      "volume": 1.0,
+      "loop": true,
+      "bpm": 92,
+      "bars": 32,
+      "loopSeconds": 83.4783,
+      "layer": "run",
+      "state": "danger"
+    },
+    "demon": {
+      "files": [
+        "music/demon"
+      ],
+      "volume": 0.9,
+      "loop": true,
+      "bpm": 92,
+      "bars": 24,
+      "loopSeconds": 62.6087
+    },
+    "menu": {
+      "files": [
+        "music/menu"
+      ],
+      "volume": 1.0,
+      "loop": true,
+      "bpm": 72,
+      "bars": 16,
+      "loopSeconds": 53.3333
+    },
+    "victory": {
+      "files": [
+        "music/victory"
+      ],
+      "volume": 0.9,
+      "loop": false
+    },
+    "defeat": {
+      "files": [
+        "music/defeat"
+      ],
+      "volume": 1.0,
+      "loop": false
+    },
     "theme_lumen": {
       "files": [
         "music/theme_lumen"
@@ -362,7 +874,8 @@
       "loop": true,
       "bpm": 104,
       "bars": 32,
-      "loopSeconds": 73.8462
+      "loopSeconds": 73.8462,
+      "note": "deprecated chiptune loop, replaced by run_* and menu (audio/MUSIC.md); delete once the code no longer asks for it"
     }
   }
 }

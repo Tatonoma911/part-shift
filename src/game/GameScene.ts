@@ -37,19 +37,37 @@ type Ev = Phaser.Types.Input.EventData;
 const TOASTS: Record<string, { text: (e: GameEvent) => string; bad?: boolean }> = {
   nest_open: { text: () => t('event.nest_opened'), bad: true },
   heavy_nest_open: { text: () => t('event.heavy_nest_opened'), bad: true },
-  demon_awake: { text: () => t('event.demon_awake'), bad: true },
-  demon_warning: { text: () => t('event.demon_warning'), bad: true },
+  boss_awake: { text: (e) => heroLine('event.boss_awake', e.text), bad: true },
+  boss_warning: { text: () => t('event.boss_warning'), bad: true },
+  hero_warning: { text: () => t('event.hero_warning'), bad: true },
+  hero_spawn: { text: (e) => (e.owner === 1 ? '' : heroLine('event.hero_appears', e.text)), bad: true },
+  hero_defeated: { text: (e) => t('event.hero_defeated', { hero: heroName(e.text) }) },
+  hero_part_taken: { text: (e) => t('trophy.module_acquired', { part: t(`part.${e.text}.label`) }) },
   demon_windup: { text: () => t('enemy.demon.windup'), bad: true },
-  demon_die: { text: () => t('event.demon_dead') },
+  boss_dead: { text: () => t('event.boss_dead') },
+  survivor_joined: { text: () => t('event.survivor_slot') },
+  hint: { text: (e) => t(e.text ?? '') },
   threat_level_up: { text: (e) => t('event.threat_rising', { level: e.amount ?? 0 }), bad: true },
   cache_open: { text: (e) => t('event.cache_reward', { energy: e.amount ?? 0 }) },
   nest_destroyed: { text: (e) => t('event.nest_destroyed', { energy: e.amount ?? 0 }) },
   building_lost: { text: (e) => t('event.building_lost', { building: t(`building.${e.text}.name`) }), bad: true },
   part_attached: { text: (e) => t('trophy.module_acquired', { part: t(`part.${e.text}.label`) }) },
   part_recycled: { text: (e) => t('part.recycled', { energy: e.amount ?? 0 }) },
-  defender_trained: { text: () => t('unit.trained') },
   build_refused: { text: (e) => t(e.text ?? 'build.invalid_cell'), bad: true },
 };
+
+/** Screen name of a hero (writer's text), e.g. «Килн». */
+const FEMALE_HEROES = new Set(['seraph', 'frostline', 'canopy']);
+
+function heroName(id: string | undefined): string {
+  return id ? t(`enemy.${id}.name`) : '';
+}
+
+/** Writer's line with {hero}; heroines get the `_female` variant when the writer has one. */
+function heroLine(key: string, id: string | undefined): string {
+  const female = id && FEMALE_HEROES.has(id) && t(`${key}_female`, { hero: heroName(id) });
+  return female && !female.startsWith(key) ? female : t(key, { hero: heroName(id) });
+}
 
 function stop(fn: () => void) {
   return (_p: Phaser.Input.Pointer, _x: number, _y: number, ev: Ev) => {
@@ -493,40 +511,39 @@ export class GameScene extends Phaser.Scene {
   private updateHud(deltaMs: number): void {
     const w = this.world;
     const mine = w.s.units.filter((u) => u.owner === ME);
-    const slots = w.s.buildings.filter((b) => b.owner === ME && b.complete).reduce((n, b) => n + b.slots.length, 0);
     const residents = mine.filter((u) => u.kind === 'resident').length;
-    const defenders = mine.filter((u) => u.kind === 'defender').length;
     // The counter rolls toward the real value so energy visibly "arrives".
     const real = Math.floor(w.player(ME).energy);
     const diff = real - this.shownEnergy;
     this.shownEnergy = Math.abs(diff) < 1 ? real : this.shownEnergy + diff * Math.min(1, deltaMs / 120);
     this.hud.energy.setText(String(Math.round(this.shownEnergy)));
-    this.hud.residents.setText(`${residents}/${slots}`);
-    this.hud.squad.setText(`${defenders}/${w.defenderCapacity(ME)}`);
+    this.hud.residents.setText(`${residents}/${w.residentCap(ME)}`);
+    // Shield = school training level of every resident (config.school).
+    this.hud.squad.setText(`${w.trainingLevel(ME)}/${w.cfg.school.trainingLevelsMax}`);
 
     const level = w.threatLevel;
     if (level > this.lastThreat) this.tweens.add({ targets: this.hud.ringBox, scale: 1.25, duration: 300, yoyo: true });
     this.lastThreat = level;
     const g = this.hud.ring;
     g.clear();
-    const col = w.s.demon.awake ? C.violet : C.coral;
+    const col = w.s.boss.awake ? C.violet : C.coral;
     g.fillStyle(col, 1);
     g.fillCircle(0, 0, 30);
     g.lineStyle(9, 0xdbe6ea, 1);
     g.strokeCircle(0, 0, 42);
-    g.lineStyle(9, w.s.demon.awake ? C.violet : C.amber, 1);
+    g.lineStyle(9, w.s.boss.awake ? C.violet : C.amber, 1);
     g.beginPath();
     g.arc(0, 0, 42, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * Math.max(0.001, 1 - w.threatProgress), false);
     g.strokePath();
     this.hud.threat.setText(String(level));
 
-    let goal = t('mode.demon_hunt.goal');
+    let goal = t('mode.call.goal', { hero: heroName(w.s.boss.hero) });
     let bg = C.graphite;
     if (this.paused) {
       goal = t('pause.plan_banner');
       bg = C.amber;
-    } else if (w.s.demon.warned && !w.s.demon.awake && !w.s.demon.dead) {
-      goal = t('event.demon_warning');
+    } else if (w.s.boss.warned && !w.s.boss.awake && !w.s.boss.dead) {
+      goal = t('event.boss_warning');
       bg = C.violet;
     }
     if (this.hud.goal.text !== goal) this.hud.goal.setText(goal);
@@ -541,7 +558,7 @@ export class GameScene extends Phaser.Scene {
   private createDock(): void {
     const g = this.add.graphics().setDepth(20);
     plate(g, DOCK.x, DOCK.y, DOCK.w, DOCK.h, 28);
-    // No attack mode: defenders fight on their own, a tap on a foe directs them (MVP_RULES §6).
+    // No attack mode: residents fight on their own, a tap on a foe directs them (MVP_RULES §6).
     const modes: Mode[] = ['dig', 'build'];
     const icons = { dig: 'icon.dig', build: 'icon.build' };
     const pad = 22;
@@ -803,7 +820,7 @@ export class GameScene extends Phaser.Scene {
     }
     this.overlay?.destroy();
     this.overlay = this.sheet({
-      portrait: victory ? 'portrait.demon' : 'portrait.bld_command',
+      portrait: victory && this.textures.exists(`portrait.${w.s.boss.hero}`) ? `portrait.${w.s.boss.hero}` : victory ? 'portrait.demon' : 'portrait.bld_command',
       grey: !victory,
       badge,
       title: victory ? t('win.title') : t('lose.title'),
@@ -829,7 +846,9 @@ export class GameScene extends Phaser.Scene {
       nests: p.stats.nests,
       caches: p.stats.caches,
       buildings: w.s.buildings.filter((b) => b.owner === ME).length,
-      defenders: w.s.units.filter((u) => u.owner === ME && u.kind === 'defender').length,
+      residents: w.s.units.filter((u) => u.owner === ME && u.kind === 'resident').length,
+      heroes: p.stats.heroes.length,
+      boss: w.s.boss.hero,
       ...(this.guide ? { step: this.guide.stepIndex } : {}),
     };
   }
@@ -926,7 +945,7 @@ export class GameScene extends Phaser.Scene {
     };
     const lines: string[] = [];
     if (cl.threat) lines.push(t(`cell.near.threat.${plural(cl.threat)}`, { count: cl.threat }));
-    if (cl.demon) lines.push(t('cell.near.demon.one', { count: cl.demon }));
+    if (cl.demon) lines.push(t('cell.near.boss.one', { count: cl.demon }));
     if (cl.finds) lines.push(t(`cell.near.finds.${plural(cl.finds)}`, { count: cl.finds }));
     return lines.length ? lines.join('\n') : t('cell.near.clear');
   }
@@ -958,7 +977,7 @@ export class GameScene extends Phaser.Scene {
       return;
     }
     if (p.middleButtonDown()) return;
-    // Tap an enemy or an opened nest: all defenders attack it (any mode).
+    // Tap an enemy or an opened nest: all residents attack it (any mode).
     const foe = this.board.enemyAt(wp.x, wp.y);
     if (foe) {
       w.apply({ type: 'attack', target: `u:${foe.id}` }, ME);
@@ -967,12 +986,6 @@ export class GameScene extends Phaser.Scene {
     const site = c.revealed ? w.site(x, y) : undefined;
     if (site && !site.destroyed) {
       if (w.apply({ type: 'attack', target: `s:${x},${y}` }, ME).ok) this.say(t('tutorial.attack'));
-      return;
-    }
-    const b = w.building(c.building);
-    if (b && b.owner === ME && b.type === 'school' && b.complete) {
-      w.apply({ type: 'setRecruit', building: b.id, on: !b.recruit }, ME);
-      this.say(t(b.recruit ? 'building.school.train_on' : 'building.school.train_off'));
       return;
     }
     if (c.revealed && w.player(ME).order && c.content === 'ground') w.apply({ type: 'cancelOrder' }, ME);

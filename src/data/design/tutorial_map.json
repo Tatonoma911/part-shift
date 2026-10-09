@@ -1,5 +1,5 @@
 {
-  "version": "0.1",
+  "version": "0.4",
   "id": "tutorial_first_shift",
   "name_key": "tutorial.title",
   "width": 8,
@@ -13,7 +13,6 @@
     "config.population.spawnSeconds": 8,
     "config.economy.startEnergy": 300,
     "config.threat.enabled": false,
-    "config.demon.enabled": false,
     "commandInvulnerable": true,
     "assist.mode": "full",
     "defenders.trainSeconds": 4,
@@ -28,7 +27,10 @@
       "partSlot": "arm"
     },
     "nestTech": "cryo",
-    "config.dig.autoQueueZeroNeighbors": true
+    "config.dig.autoQueueZeroNeighbors": true,
+    "config.boss.enabled": false,
+    "config.economy.cacheEnergy": 60,
+    "boons.enabled": false
   },
   "steps": [
     {
@@ -66,10 +68,9 @@
       "id": 6,
       "text": "tutorial.step6",
       "highlightBuild": [
-        "home",
-        "school"
+        "reactor"
       ],
-      "until": "defenders_trained:2"
+      "until": "building_built:reactor"
     },
     {
       "id": 7,
@@ -92,7 +93,7 @@
   ],
   "finish": {
     "text": "tutorial.final",
-    "next": "demon_hunt_easy"
+    "next": "call_easy"
   },
   "commandPlacement": {
     "anyCell": true,

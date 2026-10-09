@@ -1,34 +1,36 @@
 {
-  "version": "0.1",
+  "version": "0.4",
   "units": [
     {
       "id": "resident",
       "name_ru": "Житель",
-      "hp": 12,
-      "defense": 0,
-      "damage": 0,
-      "speed": 3.2,
-      "canFight": false,
-      "takesParts": false
-    },
-    {
-      "id": "defender",
-      "name_ru": "Защитник",
-      "hp": 48,
-      "defense": 2,
-      "damage": 8,
-      "attackSeconds": 0.8,
+      "hp": 40,
+      "defense": 1,
+      "damage": 6,
+      "attackSeconds": 0.9,
       "range": 1,
-      "speed": 2.8,
+      "speed": 3.0,
+      "attackTech": "kinetic",
       "canFight": true,
+      "canDig": true,
+      "canBuild": true,
       "takesParts": true,
       "slots": [
         "arm_left",
         "arm_right",
         "leg_left",
         "leg_right",
-        "tail"
-      ]
+        "tail",
+        "wings"
+      ],
+      "resist": {
+        "thermo": 1.0,
+        "cryo": 1.0,
+        "volt": 1.0,
+        "toxin": 1.0,
+        "impact": 1.0
+      },
+      "_note": "[Антон] every resident is both digger and fighter; no separate defender unit"
     }
   ]
 }

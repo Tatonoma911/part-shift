@@ -38,7 +38,7 @@ describe('digging', () => {
     expect(w.clues(1, 1).finds).toBe(1);
   });
 
-  it('cache gives energy at once, survivor adds a resident and a permanent slot', () => {
+  it('cache gives energy at once, survivor adds a resident and a permanent place', () => {
     const w = handWorld(['..cs...', '.......', '......n']);
     w.apply({ type: 'placeCommand', x: 0, y: 1 });
     const e0 = w.player(0).energy;
@@ -47,9 +47,9 @@ describe('digging', () => {
     expect(w.player(0).energy).toBeGreaterThanOrEqual(e0 + 60);
     w.apply({ type: 'queueDig', x: 3, y: 0 });
     run(w, 25);
-    const cmd = w.building(w.player(0).command)!;
-    expect(cmd.slots.length).toBe(3);
-    expect(residents(w).length).toBeGreaterThanOrEqual(2);
+    expect(w.player(0).capBonus).toBe(1);
+    expect(w.residentCap(0)).toBe(config.population.cap + 1);
+    expect(residents(w).length).toBeGreaterThanOrEqual(3);
   });
 
   it('rubble is cleared for energy when the player marks it', () => {
@@ -65,24 +65,34 @@ describe('digging', () => {
 });
 
 describe('population and buildings', () => {
-  it('the command center fills its second slot after 20 s', () => {
+  it('starts with two residents and adds one every spawnSeconds up to the cap', () => {
     const w = handWorld(['.......', '.......', '......n']);
     w.apply({ type: 'placeCommand', x: 0, y: 0 });
-    expect(residents(w)).toHaveLength(1);
+    expect(residents(w)).toHaveLength(config.population.initialResidents);
     run(w, config.population.spawnSeconds + 0.5);
-    expect(residents(w)).toHaveLength(2);
+    expect(residents(w)).toHaveLength(config.population.initialResidents + 1);
+    run(w, config.population.spawnSeconds * 20);
+    expect(residents(w)).toHaveLength(config.population.cap);
   });
 
-  it('builds a home: pays, a resident builds it, then it births a resident', () => {
-    const w = handWorld(['.......', '.......', '.......', '......n']);
+  it('builds a home: pays, a resident builds it, then new residents appear at it near the digging', () => {
+    const w = handWorld(['..........', '..........', '..........', '..........', '.........n']);
+    for (const c of w.s.cells) c.revealed = c.content === 'ground';
     w.apply({ type: 'placeCommand', x: 1, y: 1 });
-    expect(w.apply({ type: 'build', building: 'home', x: 2, y: 2 }).ok).toBe(true);
-    expect(w.player(0).energy).toBe(config.economy.startEnergy - 40);
-    run(w, 8);
+    expect(w.apply({ type: 'build', building: 'home', x: 4, y: 3 }).ok).toBe(true);
+    expect(w.player(0).energy).toBe(w.cfg.economy.startEnergy - 40);
+    run(w, 9);
     const home = w.s.buildings.find((b) => b.type === 'home')!;
     expect(home.complete).toBe(true);
-    run(w, config.population.spawnSeconds + 1);
-    expect(residents(w).some((r) => r.home === home.id)).toBe(true);
+    w.cell(9, 3).revealed = false;
+    w.apply({ type: 'queueDig', x: 9, y: 3 });
+    w.drainEvents();
+    const ev: { type: string; x?: number }[] = [];
+    for (let t = 0; t < config.population.spawnSeconds + 1; t += 0.05) {
+      w.step(0.05);
+      ev.push(...w.drainEvents());
+    }
+    expect(ev.find((e) => e.type === 'resident_born')?.x).toBe(4);
   });
 
   it('refuses with a reason: no energy, outside territory, occupied, not opened', () => {
@@ -97,7 +107,7 @@ describe('population and buildings', () => {
     expect(w.apply({ type: 'build', building: 'home', x: 2, y: 2 })).toEqual({ ok: false, reason: 'build.cell_occupied' });
   });
 
-  it('a reactor with an operator makes energy, twice as fast next to a cooler', () => {
+  it('a reactor makes energy by itself, twice as fast next to a cooler', () => {
     const make = (cooler: boolean) => {
       const w = handWorld(['.......', '.......', '.......', '......n']);
       for (const c of w.s.cells) c.revealed = c.content === 'ground'; // nothing to dig: only the reactor pays
@@ -105,32 +115,30 @@ describe('population and buildings', () => {
       w.player(0).energy = 1000;
       w.apply({ type: 'build', building: 'reactor', x: 0, y: 0 });
       if (cooler) w.apply({ type: 'build', building: 'cooler', x: 0, y: 1 });
-      run(w, 40); // build both, operator walks in
+      run(w, 30); // build both
       const e = w.player(0).energy;
-      run(w, 20);
+      run(w, 30);
       return w.player(0).energy - e;
     };
     const plain = make(false);
     const cooled = make(true);
-    expect(plain).toBeGreaterThanOrEqual(3); // 1 per 5 s
-    expect(plain).toBeLessThanOrEqual(5);
-    expect(cooled).toBeGreaterThanOrEqual(7); // 1 per 2.5 s
+    expect(plain).toBeGreaterThanOrEqual(9); // 1 per 3 s
+    expect(plain).toBeLessThanOrEqual(11);
+    expect(cooled).toBeGreaterThanOrEqual(19); // 1 per 1.5 s
   });
 
-  it('a school trains a free resident into a defender for 10 energy and frees the dwelling slot', () => {
+  it('each school raises the training level of every resident', () => {
     const w = handWorld(['.......', '.......', '.......', '......n']);
+    for (const c of w.s.cells) c.revealed = c.content === 'ground';
     w.apply({ type: 'placeCommand', x: 1, y: 1 });
-    w.player(0).energy = 110;
+    const r = residents(w)[0];
+    const hp0 = w.stats(r).hp;
+    w.player(0).energy = 1000;
     w.apply({ type: 'build', building: 'school', x: 2, y: 2 });
-    run(w, 12);
-    expect(w.defenderCapacity(0)).toBe(5);
-    run(w, config.defenders.trainSeconds + 3);
-    const d = w.s.units.find((u) => u.kind === 'defender')!;
-    expect(d).toBeTruthy();
-    expect(d.hp).toBe(48);
-    expect(w.player(0).energy).toBe(0);
-    const cmd = w.building(w.player(0).command)!;
-    expect(cmd.slots.some((s) => s.unit === null)).toBe(true);
+    run(w, 14);
+    expect(w.trainingLevel(0)).toBe(1);
+    expect(w.stats(r).hp).toBe(hp0 + config.school.perLevel.hp);
+    expect(w.stats(r).damage).toBe(6 + config.school.perLevel.damage);
   });
 });
 
