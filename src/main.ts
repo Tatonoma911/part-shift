@@ -5,7 +5,9 @@ import { chooseLayout, VIEW } from './game/layout';
 import { fontsReady } from './game/ui';
 
 fontsReady().then(() => {
-  chooseLayout(window.innerWidth, window.innerHeight);
+  // Pick the layout from the game's own box, so an embedding page (site /play) decides.
+  const box = document.getElementById('app')?.getBoundingClientRect();
+  chooseLayout(box?.width || window.innerWidth, box?.height || window.innerHeight);
   new Phaser.Game({
     type: Phaser.AUTO,
     parent: 'app',
