@@ -136,5 +136,7 @@
   "settings.replay_tutorial": "Replay the tutorial",
   "assist.mode.full": "Always",
   "assist.mode.scanner": "Scan button",
-  "assist.mode.off": "Off"
+  "assist.mode.off": "Off",
+  "menu.guide": "Field guide",
+  "settings.reset_hints": "Reset tips"
 }
