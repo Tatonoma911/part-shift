@@ -16,6 +16,7 @@ import type { GameStart } from './GameScene';
 import { C, INK, LANDSCAPE, VIEW } from './layout';
 import { menuIcon, type MenuIconId } from './menuIcons';
 import { preloadMetaArt } from './meta/art';
+import { loadMeta } from './meta/store';
 import { metaPreview } from './meta/preview';
 import { clearSlot, lastSlot, loadSettings, loadSlot, saveSettings, SLOTS } from './saves';
 import { tutorialDone } from './Tutorial';
@@ -95,7 +96,8 @@ export class MenuScene extends Phaser.Scene {
       this.registry.set('introShown', true);
       this.story(false);
     } else {
-      askAnalyticsConsent();
+      // Statistics are asked about once a shift has been played, not over the first menu (AR-09).
+      if (loadMeta().stats.runs_played) askAnalyticsConsent();
       sound.playMusic('menu');
     }
   }
@@ -111,8 +113,6 @@ export class MenuScene extends Phaser.Scene {
       .catch(() => undefined)
       .finally(() => {
         analytics.where('menu');
-        // First launch asks about statistics after the comic, not over it.
-        askAnalyticsConsent();
         this.storyPlaying = false;
         if (this.scene.isActive()) {
           this.input.enabled = true;
@@ -208,14 +208,17 @@ export class MenuScene extends Phaser.Scene {
       const name = (hasText(`enemy.${id}.name`) ? t(`enemy.${id}.name`) : id).toUpperCase();
       const tagT = this.add.text(0, 0, name, TXT.num(18, INK.white)).setOrigin(0.5, 0.5);
       const callT = this.add.text(0, 0, t('menu.on_call').toUpperCase(), { ...TXT.caps(INK.coral), fontSize: '12px' }).setOrigin(0.5, 0.5);
-      const w = Math.max(tagT.width, callT.width) + 36;
+      if (tagT.width > 200) tagT.setScale(200 / tagT.width);
+      const w = Math.max(tagT.displayWidth, callT.width) + 36;
       const tg = this.add.graphics();
       chip(tg, -w / 2, -26, w, 52, C.graphite, 0.92, 12);
       tg.fillStyle(C.coral, 1);
       tg.fillCircle(-w / 2 + 14, 12, 4);
       tagT.setPosition(0, -9);
       callT.setPosition(6, 13);
-      this.add.container(x, 284 + ay, [tg, tagT, callT]);
+      // Long names (СЕМЬДЕСЯТ ТРЕТИЙ) stay inside the screen (AR-07).
+      const tx = Phaser.Math.Clamp(x, ax + w / 2 + 12, ax + 780 - w / 2 - 12);
+      this.add.container(tx, 284 + ay, [tg, tagT, callT]);
 
       // Easter egg: tap a hero to hear one of their lines.
       hero.setInteractive({ useHandCursor: true }).on('pointerdown', () => {
