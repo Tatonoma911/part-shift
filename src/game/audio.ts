@@ -7,7 +7,7 @@ import manifest from '../assets/audio/sounds.json';
  * Only the MP3 copies ship (every browser plays them); the music loop uses
  * loopEnd = loopSeconds so the MP3 padding doesn't leave a gap.
  */
-const urls = import.meta.glob('../assets/audio/**/*.mp3', { eager: true, query: '?url', import: 'default' }) as Record<string, string>;
+const urls = import.meta.glob(['../assets/audio/**/*.mp3', '!../assets/audio/music/theme_lumen.mp3'], { eager: true, query: '?url', import: 'default' }) as Record<string, string>;
 
 interface SfxDef {
   files: string[];

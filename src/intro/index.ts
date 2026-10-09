@@ -8,7 +8,7 @@ import { introSeen, playIntroComic } from './intro-comic.js';
  * artifact build inlines them; its sounds reuse the game's mp3s.
  */
 const files = import.meta.glob('../assets/comic/**/*.{jpg,png}', { eager: true, query: '?url', import: 'default' }) as Record<string, string>;
-const audio = import.meta.glob('../assets/audio/**/*.mp3', { eager: true, query: '?url', import: 'default' }) as Record<string, string>;
+const audio = import.meta.glob(['../assets/audio/**/*.mp3', '!../assets/audio/music/theme_lumen.mp3'], { eager: true, query: '?url', import: 'default' }) as Record<string, string>;
 
 function assetMap(): Record<string, string> {
   const map: Record<string, string> = {};
