@@ -134,7 +134,7 @@ describe('allies (heroes back on the team)', () => {
     (w as unknown as { damage(v: unknown, n: number): void }).damage(seraph, 5);
     w.step(0.05);
     expect(w.s.units.some((u) => u.kind === 'ally' && u.hp > 0)).toBe(false);
-    for (let i = 0; i < 31 * 20; i++) w.step(0.05);
+    for (let i = 0; i < 61 * 20; i++) w.step(0.05);
     expect(w.s.units.some((u) => u.kind === 'ally' && u.hero === 'seraph' && u.hp > 0)).toBe(true);
   });
 
@@ -146,5 +146,34 @@ describe('allies (heroes back on the team)', () => {
     const hp = r.hp;
     (w as unknown as { damage(v: unknown, n: number): void }).damage(r, 10);
     expect(hp - r.hp).toBeCloseTo(8);
+  });
+
+  it('Доктор brings a lost resident back only below the resident cap', () => {
+    const w = team(['doctor']);
+    for (const site of w.s.sites) site.spawnTimer = Infinity;
+    const p = w.player(0);
+    const residents = () => w.s.units.filter((u) => u.kind === 'resident' && u.hp > 0).length;
+    while (residents() < w.residentCap(0)) (w as unknown as { spawnResident(o: number, x: number, y: number): void }).spawnResident(0, 6, 8);
+    p.stats.lost += 1;
+    const full = residents();
+    for (let i = 0; i < 40 * 20; i++) w.step(0.05);
+    expect(residents()).toBeLessThanOrEqual(full);
+  });
+});
+
+describe('accidental nest opens (META.md accidental_opens)', () => {
+  beforeEach(() => store.clear());
+
+  it('a nest dug after the «Да, вскрыть» confirm does not break the clean-run challenge', () => {
+    const tally = new RunTally(0);
+    tally.onEvent({ type: 'nest_open', x: 0, y: 0, owner: 0, amount: 1 });
+    const w = new World({ seed: 3 });
+    w.apply({ type: 'placeCommand', x: 6, y: 8 });
+    tally.commit(w, 'win');
+    expect(loadMeta().stats['challenge.win_without_accidental_open']).toBe(1);
+    const sloppy = new RunTally(0);
+    sloppy.onEvent({ type: 'heavy_nest_open', x: 0, y: 0, owner: 0, amount: 0 });
+    sloppy.commit(w, 'win');
+    expect(loadMeta().stats.accidental_opens).toBe(1);
   });
 });

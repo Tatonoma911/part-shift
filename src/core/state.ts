@@ -39,6 +39,8 @@ export interface Cell {
   building?: number;
   /** Player's "danger here" flag. */
   marked?: boolean;
+  /** The player confirmed digging this known danger ("Да, вскрыть"): opening it is deliberate. */
+  deliberate?: boolean;
   /** Seconds left of steam-burnt ground. */
   hot?: number;
   /** Hero lair / boss hatch: the hero waiting inside (heroes.json id). */

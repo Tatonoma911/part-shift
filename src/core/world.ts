@@ -96,7 +96,7 @@ export const HERO_ABILITY: Record<string, { every: number; range: number; amount
 const isSiteCell = (c: Cell) => c.content === 'nest' || c.content === 'heavy_nest' || c.content === 'hero_lair' || c.content === 'boss_hatch';
 const isEnemy = (u: Unit) => u.owner < 0;
 /** Allies are heroes at a fraction of their enemy strength; down, they return to the center after a while. */
-const ALLY = { hpFactor: 0.4, damageFactor: 0.6, respawnSeconds: 30 };
+const ALLY = heroRules.allyRules;
 /** difficulty.json noGuess.maxAttempts; after that the board is accepted as is. */
 const NO_GUESS_ATTEMPTS = 200;
 const siteKey = (x: number, y: number) => `s:${x},${y}`;
@@ -407,6 +407,7 @@ export class World {
         }
         p.autoQueue = p.autoQueue.filter((q) => q !== k);
         p.queue.push(k);
+        if (cmd.force && known) c.deliberate = true;
         return ok;
       }
       case 'cancelDig': {
@@ -1505,7 +1506,8 @@ export class World {
     this.s.sites.push(site);
     const first = this.byThreat(def.initialSpawnByThreat)?.count ?? def.initialSpawn ?? 0;
     for (let i = 0; i < first; i++) this.spawnEnemy(site);
-    this.emit(kind === 'heavy_nest' ? 'heavy_nest_open' : 'nest_open', { x, y, text: c.tech });
+    // amount 1: opened on purpose after the confirm (meta accidental_opens counts the rest).
+    this.emit(kind === 'heavy_nest' ? 'heavy_nest_open' : 'nest_open', { x, y, text: c.tech, amount: c.deliberate ? 1 : 0 });
     this.startRally(x, y);
   }
 
@@ -2053,7 +2055,7 @@ export class World {
       damage: Math.round(e.damage * ALLY.damageFactor),
       defense: e.defense,
       attackSeconds: e.attackSeconds,
-      range: 1,
+      range: ALLY.range,
       speed: Math.max(e.speed, residentStats.speed),
     });
     u.hero = id;
@@ -2071,7 +2073,13 @@ export class World {
   /** Fights like a resident (orders included), otherwise stays by the command center. */
   private allyAi(u: Unit, dt: number): void {
     const s = this.s;
-    const target = this.combatTarget(u);
+    const home = this.building(s.players[u.owner].command);
+    // Allies keep close to the center (allyRules.leashRadiusFromCommand), orders included.
+    let target = this.combatTarget(u);
+    if (target && home) {
+      const at = this.targetPos(target) as { x: number; y: number } | undefined;
+      if (!at || dist(at.x, at.y, home.x, home.y) > ALLY.leashRadiusFromCommand) target = null;
+    }
     if (target) {
       if (u.target !== target) u.path = [];
       u.target = target;
@@ -2128,11 +2136,13 @@ export class World {
           break;
         case 'pullEnemies': {
           // Draws the nearest foe's attention onto himself, away from the residents.
-          const e = fire ? foes(5).sort((e1, e2) => dist(e1.x, e1.y, u.x, u.y) - dist(e2.x, e2.y, u.x, u.y))[0] : undefined;
+          const e = fire ? foes(Number(a.radius ?? 5)).sort((e1, e2) => dist(e1.x, e1.y, u.x, u.y) - dist(e2.x, e2.y, u.x, u.y))[0] : undefined;
           if (e) {
             e.target = `u:${u.id}`;
             e.raid = undefined;
             e.path = [];
+            // Holds the foe on him for a while (enemyAi only retargets when the timer runs out).
+            e.repathTimer = Number(a.durationSeconds ?? 4);
           }
           break;
         }
@@ -2146,13 +2156,15 @@ export class World {
             }
           }
           break;
-        case 'fieldSurgery':
-          // Brings back one resident lost since the last surgery.
-          if (fire && p.stats.lost > Number(timers.doctorLost ?? 0)) {
+        case 'fieldSurgery': {
+          // Brings back one resident lost since the last surgery (the resident cap still applies).
+          const count = s.units.filter((o) => o.owner === p.id && o.kind === 'resident').length;
+          if (fire && p.stats.lost > Number(timers.doctorLost ?? 0) && count < this.residentCap(p.id)) {
             timers.doctorLost = p.stats.lost;
             this.spawnResident(p.id, Math.round(u.x), Math.round(u.y));
           }
           break;
+        }
       }
       // Семьдесят третий: turns a nearby adaptant into a resident now and then.
       if (fire && a.convertAdaptantEverySeconds) {

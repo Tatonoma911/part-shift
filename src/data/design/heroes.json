@@ -23,7 +23,7 @@
       "slots": 3
     }
   ],
-  "allyRespawnSeconds": 60,
+  "allyRespawnSeconds": "see allyRules.respawnSeconds",
   "heroes": [
     {
       "id": "standard",
@@ -303,7 +303,14 @@
       "ally": {
         "passive": "pullEnemies",
         "everySeconds": 10,
-        "desc": "в бою подтягивает врага к жителям; удары жителей рядом с ним дают разряд"
+        "desc": "в бою подтягивает врага к жителям; удары жителей рядом с ним дают разряд",
+        "pullEnemies": {
+          "mode": "taunt",
+          "radius": 5,
+          "everySeconds": 10,
+          "durationSeconds": 4,
+          "_note": "no drag; enemies in radius switch to him; residents' hits next to him add a volt discharge"
+        }
       },
       "unlock": {
         "type": "lifetime_stat",
@@ -769,7 +776,8 @@
       "ally": {
         "passive": "fieldSurgery",
         "reviveEverySeconds": 90,
-        "desc": "раз в 90 с поднимает только что погибшего жителя; приращение части лечит жителя полностью"
+        "desc": "раз в 90 с поднимает только что погибшего жителя; приращение части лечит жителя полностью",
+        "reviveRule": "every 90 s, if any resident died since last trigger, a new full-HP resident appears next to the Doctor; respects population cap"
       },
       "unlock": {
         "type": "run_challenge",
@@ -906,5 +914,17 @@
     "_note": "[Антон] Демон — один из героев, не главный злодей; сильнейший герой района выбирается случайно из этого пула и не повторяет героя 3 уровня в убежище"
   },
   "_names": "screen names come from text/ru.json enemy.{id}.name; name_ru is a working copy",
-  "callTargetHpFactor": "difficulty.json per level (Смена 1.4)"
+  "callTargetHpFactor": "difficulty.json per level (Смена 1.4)",
+  "allyRules": {
+    "_doc": "from Программист 2 PR #15, fixed by design",
+    "hpFactor": 0.5,
+    "damageFactor": 0.6,
+    "defense": "as enemy form",
+    "attackSeconds": "as enemy form",
+    "range": 1,
+    "respawnSeconds": 60,
+    "respawnAt": "command center",
+    "leashRadiusFromCommand": 5,
+    "takesParts": false
+  }
 }

@@ -177,6 +177,7 @@ export const heroRules = heroesJson as unknown as {
   lairsPerMapByTier: Record<string, number>;
   lairSelfOpenThreatLevels: number[];
   bossPool: { heroes: string[] };
+  allyRules: { hpFactor: number; damageFactor: number; range: number; respawnSeconds: number; leashRadiusFromCommand: number };
 };
 
 /** Hero parts are tier 3 (MVP_RULES §8.1) and share the parts table shape. */

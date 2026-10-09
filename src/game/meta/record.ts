@@ -24,9 +24,6 @@ const COUNT: Record<string, string> = {
   build_done: 'buildings_built',
   part_recycled: 'parts_recycled',
   resident_die: 'residents_lost',
-  // No separate "open on purpose" action yet: every nest dug into counts against the clean-run challenge.
-  nest_open: 'accidental_opens',
-  heavy_nest_open: 'accidental_opens',
 };
 
 export class RunTally {
@@ -41,6 +38,11 @@ export class RunTally {
     const key = COUNT[e.type];
     if (key) this.add(key);
     switch (e.type) {
+      case 'nest_open':
+      case 'heavy_nest_open':
+        // amount 1 = dug after the «Да, вскрыть» confirm; only the others break the clean-run challenge.
+        if (!e.amount) this.add('accidental_opens');
+        break;
       case 'reaction':
         this.add('reactions_total');
         if (e.text) this.add(`reaction_${e.text}`);
