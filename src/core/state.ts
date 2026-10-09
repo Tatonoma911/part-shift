@@ -125,6 +125,8 @@ export interface Unit {
   calm?: number;
   /** Raiders: the building they march on ("b:id"); dropped once a resident hits them. */
   raid?: string;
+  /** Raiders wait at their exit until the siren has run (raidRules.minSecondsSirenToFirstHit). */
+  holdUntil?: number;
   /** Residents: badly hurt, walking back to heal (config.residents.retreat). */
   retreat?: boolean;
   kills: number;

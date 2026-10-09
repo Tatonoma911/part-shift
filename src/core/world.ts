@@ -34,6 +34,7 @@ import {
   type Tech,
   type UnitStats,
   buildingDamage,
+  raidRules,
 } from './data';
 import { cellAt, cellKey, cheb, dist, inBounds, neighbors, parseKey, walkableForEnemy, walkableForPlayer } from './grid';
 import { generateField } from './mapgen';
@@ -1094,7 +1095,22 @@ export class World {
     const target = this.raidTarget(source.x, source.y, -1);
     if (!target) return;
     const tech = this.cell(source.x, source.y).tech;
-    const spots = [{ x: source.x, y: source.y }, ...neighbors(s, source.x, source.y)].filter((n) => !(n.x === source!.x && n.y === source!.y) && walkableForEnemy(s, n.x, n.y));
+    // A nest right next to the city: the raid surfaces farther out, so the siren gives time to react (QA B-3).
+    const rr = raidRules;
+    let exit = { x: source.x, y: source.y };
+    if (near(source.x, source.y) < rr.spawnMinDistanceFromBuildings) {
+      const tp = this.targetPos(target);
+      const d = Math.max(1e-6, dist(source.x, source.y, tp.x, tp.y));
+      const ideal = { x: tp.x + ((source.x - tp.x) / d) * rr.spawnMinDistanceFromBuildings, y: tp.y + ((source.y - tp.y) / d) * rr.spawnMinDistanceFromBuildings };
+      let best = Infinity;
+      for (let y = 0; y < s.height; y++)
+        for (let x = 0; x < s.width; x++) {
+          if (!walkableForEnemy(s, x, y) || near(x, y) < rr.spawnMinDistanceFromBuildings) continue;
+          const dd = dist(x, y, ideal.x, ideal.y);
+          if (dd < best) [best, exit] = [dd, { x, y }];
+        }
+    }
+    const spots = [exit, ...neighbors(s, exit.x, exit.y)].filter((n) => !(n.x === source!.x && n.y === source!.y) && walkableForEnemy(s, n.x, n.y));
     if (!spots.length) return;
     const e = this.enemyDef('adaptant');
     for (let i = 0; i < size; i++) {
@@ -1108,6 +1124,7 @@ export class World {
         u.hp = this.stats(u).hp;
       }
       u.raid = target;
+      u.holdUntil = s.time + rr.minSecondsSirenToFirstHit;
       this.emit('enemy_spawn', { x: spot.x, y: spot.y, text: `adaptant_${tech ?? 'thermo'}`, unit: u.id });
     }
     const b = this.targetPos(target);
@@ -1149,7 +1166,7 @@ export class World {
     return false;
   }
 
-  private targetPos(t: string): { x: number; y: number } {
+  targetPos(t: string): { x: number; y: number } {
     if (t.startsWith('u:')) return this.unit(Number(t.slice(2)))!;
     if (t.startsWith('s:')) return parseKey(t.slice(2));
     return this.building(Number(t.slice(2)))!;
@@ -1159,6 +1176,11 @@ export class World {
     const s = this.s;
     u.repathTimer -= dt;
     if (u.raid && !this.targetAlive(u.raid)) u.raid = this.raidTarget(u.x, u.y, u.owner);
+    // The siren runs first: raiders gather at their exit and only strike back if someone hits them.
+    if (u.holdUntil !== undefined) {
+      if (u.raid && s.time < u.holdUntil) return;
+      u.holdUntil = undefined;
+    }
     if (u.raid) {
       if (u.target !== u.raid) u.path = [];
       u.target = u.raid;
@@ -1321,6 +1343,7 @@ export class World {
     // Raiders keep to the buildings until a resident hits them (raidRules.raidersPreferBuildings).
     if (v.raid && by && !isEnemy(by)) {
       v.raid = undefined;
+      v.holdUntil = undefined;
       v.target = `u:${by.id}`;
       v.path = [];
     }

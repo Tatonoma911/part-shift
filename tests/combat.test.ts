@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { buildings, config, enemies, heroes, residentStats } from '../src/core/data';
+import { buildings, config, enemies, heroes, raidRules, residentStats } from '../src/core/data';
 import type { Unit } from '../src/core/state';
 import { World } from '../src/core/world';
 import { handWorld, residents, run } from './helpers';
@@ -245,7 +245,13 @@ describe('heroes and the call target', () => {
     w.step(0.05);
     const ev = w.drainEvents();
     expect(ev.find((e) => e.type === 'raid_incoming')).toMatchObject({ x: 3, y: 2, amount: w.difficulty.raids!.size });
-    expect(w.s.units.filter((u) => u.raid === `b:${home.id}`).length).toBe(w.difficulty.raids!.size);
+    const raiders = w.s.units.filter((u) => u.raid === `b:${home.id}`);
+    expect(raiders.length).toBe(w.difficulty.raids!.size);
+    // QA B-3: the siren runs its full time before the raid moves.
+    const at = raiders.map((u) => [u.x, u.y]);
+    run(w, raidRules.minSecondsSirenToFirstHit - 0.5);
+    expect(raiders.map((u) => [u.x, u.y])).toEqual(at);
+    expect(home.hp).toBe(10);
     run(w, 30);
     expect(w.s.buildings.includes(home)).toBe(false);
     expect(w.cell(3, 2).ruin).toBe('home');
@@ -294,6 +300,22 @@ describe('heroes and the call target', () => {
     expect(w.player(0).rally).toBeUndefined();
     run(w, 20);
     expect(e.hp).toBeLessThan(40);
+  });
+
+  it('QA B-3: a raid from a nest next to the city surfaces 6 cells out', () => {
+    const w = squad(['............', '............', '............', '............', '....n.......'], 1);
+    w.s.units = w.s.units.filter((u) => u.owner >= 0);
+    w.player(0).energy = 999;
+    expect(w.apply({ type: 'build', building: 'home', x: 3, y: 2 }).ok).toBe(true);
+    Object.assign(w.s.buildings.find((b) => b.type === 'home')!, { complete: true, built: 99 });
+    internals(w).reveal(4, 4, 0);
+    w.s.units = w.s.units.filter((u) => u.owner >= 0);
+    for (const site of w.s.sites) site.spawnTimer = Infinity;
+    w.s.time = w.difficulty.raids!.firstAfterSeconds - 0.05;
+    w.step(0.05);
+    const raiders = w.s.units.filter((u) => u.raid);
+    expect(raiders.length).toBeGreaterThan(0);
+    for (const u of raiders) for (const b of w.s.buildings) expect(Math.hypot(u.x - b.x, u.y - b.y)).toBeGreaterThanOrEqual(raidRules.spawnMinDistanceFromBuildings - 1.5);
   });
 
   it('losing the command center is a defeat', () => {
