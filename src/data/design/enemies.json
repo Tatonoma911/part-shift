@@ -17,7 +17,35 @@
         "cryo",
         "volt",
         "toxin"
-      ]
+      ],
+      "spawnByThreat": [
+        {
+          "fromLevel": 0,
+          "spawnSeconds": 7,
+          "maxAlive": 4
+        },
+        {
+          "fromLevel": 2,
+          "spawnSeconds": 5,
+          "maxAlive": 6
+        },
+        {
+          "fromLevel": 4,
+          "spawnSeconds": 4,
+          "maxAlive": 8
+        }
+      ],
+      "initialSpawnByThreat": [
+        {
+          "fromLevel": 0,
+          "count": 2
+        },
+        {
+          "fromLevel": 2,
+          "count": 3
+        }
+      ],
+      "_b2": "early nests weaker; spawnByThreat overrides spawnSeconds/maxAlive"
     },
     {
       "id": "heavy_nest",
@@ -76,8 +104,8 @@
     {
       "id": "adaptant",
       "name_ru": "Адаптант",
-      "hp": 40,
-      "damage": 10,
+      "hp": 36,
+      "damage": 8,
       "defense": 1,
       "attackSeconds": 1,
       "range": 1,
@@ -124,7 +152,8 @@
           "toxin": 0.5,
           "impact": 1.0
         }
-      }
+      },
+      "_b2": "QA B-2: was 40/10; 1v1 with an untrained resident now ~even (6.1 s vs 5.7 s)"
     },
     {
       "id": "heavy_adaptant",

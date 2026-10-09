@@ -53,7 +53,7 @@ const TOASTS: Record<string, { text: (e: GameEvent) => string; bad?: boolean }> 
   hero_part_taken: { text: (e) => t('trophy.module_acquired', { part: t(`part.${e.text}.label`) }) },
   demon_windup: { text: () => t('enemy.demon.windup'), bad: true },
   boss_dead: { text: () => t('event.boss_dead') },
-  raid_incoming: { text: (e) => t('event.raid_incoming', { n: e.amount ?? 0 }), bad: true },
+  raid_incoming: { text: (e) => t(`event.raid_incoming.${plural(e.amount ?? 0)}`, { count: e.amount ?? 0 }), bad: true },
   survivor_joined: { text: () => t('event.survivor_slot') },
   hint: { text: (e) => t(e.text ?? '') },
   threat_level_up: { text: (e) => t('event.threat_rising', { level: e.amount ?? 0 }), bad: true },
@@ -66,9 +66,18 @@ const TOASTS: Record<string, { text: (e: GameEvent) => string; bad?: boolean }> 
 };
 
 /** Screen name of a hero (writer's text), e.g. «Килн». */
-const FEMALE_HEROES = new Set(['seraph', 'frostline', 'canopy']);
+const FEMALE_HEROES = new Set(['seraph', 'frostline', 'canopy', 'beacon']);
 /** «Течение» is grammatically neuter in Russian: «Течение вышло» (QA-034). */
 const NEUTER_HEROES = new Set(['current']);
+
+/** Russian plural form key: 1 → one, 2–4 → few, else many (English keys use the same names). */
+function plural(n: number): 'one' | 'few' | 'many' {
+  const m10 = n % 10;
+  const m100 = n % 100;
+  if (m10 === 1 && m100 !== 11) return 'one';
+  if (m10 >= 2 && m10 <= 4 && (m100 < 12 || m100 > 14)) return 'few';
+  return 'many';
+}
 
 function heroName(id: string | undefined): string {
   return id ? t(`enemy.${id}.name`) : '';
@@ -1060,13 +1069,6 @@ export class GameScene extends Phaser.Scene {
   /** "Next to this block: 2 nests" with Russian plural forms. */
   private nearText(x: number, y: number): string {
     const cl = this.world.clues(x, y);
-    const plural = (n: number) => {
-      const m10 = n % 10;
-      const m100 = n % 100;
-      if (m10 === 1 && m100 !== 11) return 'one';
-      if (m10 >= 2 && m10 <= 4 && (m100 < 12 || m100 > 14)) return 'few';
-      return 'many';
-    };
     const lines: string[] = [];
     if (cl.threat) lines.push(t(`cell.near.threat.${plural(cl.threat)}`, { count: cl.threat }));
     if (cl.demon) lines.push(t('cell.near.boss.one', { count: cl.demon }));

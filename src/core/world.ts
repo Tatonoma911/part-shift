@@ -447,12 +447,17 @@ export class World {
         if (lair && (lair.kind === 'hero_lair' || lair.kind === 'boss_hatch')) {
           const hero = lair.alive.map((id) => this.unit(id)).find((h) => h && h.hp > 0);
           if (!hero) return bad();
+          if (p.order !== `u:${hero.id}`) this.startRally(hero.x, hero.y, playerId, true);
           p.order = `u:${hero.id}`;
           return ok;
         }
         if (!this.targetAlive(cmd.target)) return bad();
         // Tapping the same target again keeps the order: players tap repeatedly to insist [Антон].
         // The order lifts with a tap on open ground (cancelOrder) or when the target falls.
+        if (p.order !== cmd.target) {
+          const at = this.targetPos(cmd.target);
+          this.startRally(at.x, at.y, playerId, true);
+        }
         p.order = cmd.target;
         return ok;
       }
@@ -571,6 +576,7 @@ export class World {
       else this.enemyAi(u, dt);
     }
     this.nests(dt);
+    this.towers(dt);
     this.production(dt);
     this.orbs(dt);
     this.hotGround(dt);
@@ -730,6 +736,8 @@ export class World {
 
   private residentAi(u: Unit, dt: number): void {
     const s = this.s;
+    if (this.retreating(u, dt)) return;
+    if (this.rallying(u, dt)) return;
     const target = this.cfg.residents.allFight ? this.combatTarget(u) : null;
     if (target) {
       if (u.task.type !== 'idle' && u.task.type !== 'rest') this.setTask(u, { type: 'idle' });
@@ -797,6 +805,95 @@ export class World {
         return;
       }
     }
+  }
+
+  /**
+   * Residents near a fresh threat gather 2 cells from it on the command center's side first,
+   * then go in together (config.residents.rally, QA B-2). `owner` undefined: every player near it.
+   * A player's own order calls `everyone`: the whole crew goes, not only those within the radius.
+   */
+  private startRally(x: number, y: number, owner?: number, everyone = false): void {
+    const s = this.s;
+    const r = this.cfg.residents.rally;
+    for (const p of s.players) {
+      if (!p.alive || (owner !== undefined && p.id !== owner)) continue;
+      const cmd = this.building(p.command);
+      if (!cmd) continue;
+      const members = s.units
+        .filter((u) => u.owner === p.id && u.kind === 'resident' && u.hp > 0 && !u.retreat && (everyone || dist(u.x, u.y, x, y) <= r.radius))
+        .map((u) => u.id);
+      if (members.length < 2) continue;
+      // The gather point: 2 steps from the threat toward the center, on opened walkable ground.
+      const d = Math.max(1e-6, dist(x, y, cmd.x, cmd.y));
+      const step = Math.min(2, d);
+      const gx = Math.round(x + ((cmd.x - x) / d) * step);
+      const gy = Math.round(y + ((cmd.y - y) / d) * step);
+      const path = findPath(s.width, s.height, { x: cmd.x, y: cmd.y }, (ax, ay) => walkableForPlayer(s, ax, ay), (ax, ay) => ax === gx && ay === gy, { x: gx, y: gy });
+      const at = path?.[path.length - 1] ?? { x: cmd.x, y: cmd.y };
+      p.rally = { x: at.x, y: at.y, start: s.time, members };
+    }
+  }
+
+  /** True while this resident walks to the gather point and waits for the others. */
+  private rallying(u: Unit, dt: number): boolean {
+    const s = this.s;
+    const p = s.players[u.owner];
+    const r = p.rally;
+    if (!r || !r.members.includes(u.id)) return false;
+    const alive = r.members.map((id) => this.unit(id)).filter((m): m is Unit => !!m && m.hp > 0 && !m.retreat);
+    const gathered = alive.filter((m) => dist(m.x, m.y, r.x, r.y) <= 1.2).length;
+    const foeAtPoint = s.units.some((e) => isEnemy(e) && e.hp > 0 && dist(e.x, e.y, r.x, r.y) <= 1.5);
+    const ready = gathered >= Math.min(4, alive.length) || s.time - r.start >= 4 || foeAtPoint;
+    if (ready || alive.length === 0) {
+      p.rally = undefined;
+      return false;
+    }
+    // A foe right on top of the resident still gets hit.
+    const close = s.units.find((e) => isEnemy(e) && e.hp > 0 && dist(e.x, e.y, u.x, u.y) <= 1.5);
+    if (close) {
+      this.fight(u, `u:${close.id}`, dt, (x, y) => walkableForPlayer(s, x, y));
+      return true;
+    }
+    if (u.task.type !== 'idle' && u.task.type !== 'rest') this.setTask(u, { type: 'idle' });
+    u.target = undefined;
+    if (dist(u.x, u.y, r.x, r.y) > 0.6 && (u.path.length === 0 || u.repathTimer <= 0)) {
+      u.repathTimer = 0.5;
+      const path = findPath(s.width, s.height, { x: Math.round(u.x), y: Math.round(u.y) }, (x, y) => walkableForPlayer(s, x, y), (x, y) => x === r.x && y === r.y, r);
+      u.path = path ? path.slice(1) : [];
+    }
+    u.repathTimer -= dt;
+    this.move(u, dt);
+    return true;
+  }
+
+  /** Below 25 % HP a resident walks to the nearest healer (the center or a medcenter) and waits there until 80 %. */
+  private retreating(u: Unit, dt: number): boolean {
+    const s = this.s;
+    const r = this.cfg.residents.retreat;
+    const max = this.maxHp(u);
+    if (!u.retreat && u.hp < max * r.atHpFraction) u.retreat = true;
+    if (u.retreat && u.hp >= max * r.returnAtHpFraction) u.retreat = false;
+    if (!u.retreat) return false;
+    const healers = s.buildings.filter((b) => b.owner === u.owner && b.complete && (buildingDefs[b.type].healAura || buildingDefs[b.type].aura?.healAmount));
+    const home = healers.sort((a, b) => dist(a.x, a.y, u.x, u.y) - dist(b.x, b.y, u.x, u.y))[0];
+    if (!home) {
+      u.retreat = false;
+      return false;
+    }
+    u.target = undefined;
+    if (u.task.type !== 'idle' && u.task.type !== 'rest') this.setTask(u, { type: 'idle' });
+    if (cheb(Math.round(u.x), Math.round(u.y), home.x, home.y) <= 1) {
+      u.path = [];
+      return true;
+    }
+    if (u.path.length === 0 || u.repathTimer <= 0) {
+      u.repathTimer = 0.5;
+      const path = this.playerPath(u, (x, y) => cheb(x, y, home.x, home.y) <= 1 && !(x === home.x && y === home.y));
+      u.path = path ? path.slice(1) : [];
+    }
+    u.repathTimer -= dt;
+    this.move(u, dt);
+    return true;
   }
 
   private finishBuilding(b: Building): void {
@@ -1009,6 +1106,7 @@ export class World {
       this.emit('enemy_spawn', { x: spot.x, y: spot.y, text: `adaptant_${tech ?? 'thermo'}`, unit: u.id });
     }
     const b = this.targetPos(target);
+    this.startRally(source.x, source.y, this.building(Number(target.slice(2)))!.owner);
     this.emit('raid_incoming', { x: b.x, y: b.y, owner: this.building(Number(target.slice(2)))!.owner, amount: size, text: source.tunnel ? `${source.x},${source.y}` : undefined });
   }
 
@@ -1340,13 +1438,28 @@ export class World {
     const def = this.siteDef(kind);
     const site: SiteState = { x, y, kind, hp: def.hp!, maxHp: def.hp!, spawnTimer: this.spawnInterval(kind), alive: [], destroyed: false };
     this.s.sites.push(site);
-    for (let i = 0; i < (def.initialSpawn ?? 0); i++) this.spawnEnemy(site);
+    const first = this.byThreat(def.initialSpawnByThreat)?.count ?? def.initialSpawn ?? 0;
+    for (let i = 0; i < first; i++) this.spawnEnemy(site);
     this.emit(kind === 'heavy_nest' ? 'heavy_nest_open' : 'nest_open', { x, y, text: c.tech });
+    this.startRally(x, y);
+  }
+
+  /** The row of a `fromLevel` table that applies at the current threat level. */
+  private byThreat<T extends { fromLevel: number }>(rows: T[] | undefined): T | undefined {
+    const L = this.threatLevel;
+    return rows ? [...rows].reverse().find((r) => L >= r.fromLevel) : undefined;
+  }
+
+  private maxAlive(kind: SiteState['kind']): number {
+    const def = this.siteDef(kind);
+    return this.byThreat(def.spawnByThreat)?.maxAlive ?? def.maxAlive ?? 0;
   }
 
   private spawnInterval(kind: SiteState['kind']): number {
     const def = this.siteDef(kind);
     if (def.respawnAfterDeathSeconds) return def.respawnAfterDeathSeconds;
+    const row = this.byThreat(def.spawnByThreat);
+    if (row) return Math.max(this.cfg.threat.minSpawnInterval, row.spawnSeconds);
     if (!def.spawnSeconds) return Infinity;
     const t = this.cfg.threat;
     return Math.max(t.minSpawnInterval, def.spawnSeconds * Math.pow(t.spawnIntervalFactorPerLevel, this.threatLevel));
@@ -1357,7 +1470,7 @@ export class World {
       if (site.destroyed || (site.kind !== 'nest' && site.kind !== 'heavy_nest')) continue;
       if (site.rush) site.rush = Math.max(0, site.rush - dt) || undefined;
       const def = this.siteDef(site.kind);
-      if (site.alive.length >= (def.maxAlive ?? 0)) {
+      if (site.alive.length >= this.maxAlive(site.kind)) {
         if (def.respawnAfterDeathSeconds) site.spawnTimer = def.respawnAfterDeathSeconds;
         continue;
       }
@@ -1464,6 +1577,7 @@ export class World {
     // amount 1 marks the call target (its own boss_awake toast follows).
     this.emit('hero_spawn', { x, y, text: heroId, amount: kind === 'boss_hatch' ? 1 : 0 });
     if (kind === 'boss_hatch') this.emit('boss_awake', { x, y, text: heroId });
+    this.startRally(x, y);
   }
 
   /** Unopened lairs open by themselves at threat levels 2/4/6 (heroes.json lairSelfOpenThreatLevels). */
@@ -1712,6 +1826,32 @@ export class World {
     return b;
   }
 
+  /** The command center shoots the nearest enemy in range and heals residents next to it (buildings.json autoAttack, healAura). */
+  private towers(dt: number): void {
+    const s = this.s;
+    for (const b of s.buildings) {
+      const def = buildingDefs[b.type];
+      if (!b.complete) continue;
+      if (def.healAura) {
+        for (const u of s.units) {
+          if (u.owner !== b.owner || u.hp <= 0 || cheb(Math.round(u.x), Math.round(u.y), b.x, b.y) > def.healAura.radius) continue;
+          u.hp = Math.min(this.maxHp(u), u.hp + def.healAura.hpPerSecond * dt);
+        }
+      }
+      const a = def.autoAttack;
+      if (!a) continue;
+      b.attackCd = Math.max(0, (b.attackCd ?? 0) - dt);
+      if (b.attackCd > 0) continue;
+      const foe = s.units
+        .filter((e) => isEnemy(e) && e.hp > 0 && dist(e.x, e.y, b.x, b.y) <= a.range + 0.5)
+        .sort((e1, e2) => dist(e1.x, e1.y, b.x, b.y) - dist(e2.x, e2.y, b.x, b.y))[0];
+      if (!foe) continue;
+      b.attackCd = a.attackSeconds;
+      this.damage(foe, Math.max(this.cfg.combat.minDamage, a.damage - this.stats(foe).defense));
+      this.emit('hit', { x: foe.x, y: foe.y, text: a.tech ?? 'kinetic', amount: a.damage });
+    }
+  }
+
   private production(dt: number): void {
     const s = this.s;
     for (const b of s.buildings) {
@@ -1806,7 +1946,10 @@ export class World {
       if (b.hp > 0) continue;
       s.buildings = s.buildings.filter((o) => o !== b);
       this.cell(b.x, b.y).building = undefined;
-      if (b.type !== 'command' && b.complete && buildingDamage.ruins.leavesRuins) this.cell(b.x, b.y).ruin = b.type;
+      if (b.type !== 'command' && b.complete && buildingDamage.ruins.leavesRuins) {
+        this.cell(b.x, b.y).ruin = b.type;
+        this.emit('ruins', { x: b.x, y: b.y, owner: b.owner, text: b.type });
+      }
       this.rev++;
       for (const u of s.units) if (u.task.type === 'build' && u.task.building === b.id) this.setTask(u, { type: 'idle' });
       this.emit('building_lost', { x: b.x, y: b.y, owner: b.owner, text: b.type });

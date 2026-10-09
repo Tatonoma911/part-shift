@@ -8,11 +8,22 @@
       "buildable": false,
       "cost": 0,
       "buildSeconds": 0,
-      "hp": 80,
-      "defense": 1,
+      "hp": 250,
+      "defense": 2,
       "territoryRadius": 2,
       "isKeep": true,
-      "spawnPoint": true
+      "spawnPoint": true,
+      "autoAttack": {
+        "damage": 8,
+        "attackSeconds": 1.2,
+        "range": 2,
+        "tech": "kinetic"
+      },
+      "healAura": {
+        "radius": 1,
+        "hpPerSecond": 2
+      },
+      "_b2": "was 80 HP, no attack: one early nest ended the run"
     },
     {
       "id": "home",

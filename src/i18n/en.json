@@ -296,6 +296,10 @@
   "feedback.short": "Write at least a few words",
   "settings.feedback": "Write to the author",
   "order.attack": "All residents: attack!",
-  "event.raid_incoming": "Raid: {n} adaptants are coming to smash a building",
-  "voice.control_prefix": "CONTROL:"
+  "voice.control_prefix": "CONTROL:",
+  "event.raid_incoming.one": "Raid: {count} adaptant is coming to smash a building",
+  "event.raid_incoming.few": "Raid: {count} adaptants are coming to smash a building",
+  "event.raid_incoming.many": "Raid: {count} adaptants are coming to smash a building",
+  "event.ruins": "Building destroyed. Rebuild on the ruins for half price",
+  "building.ruins.name": "Ruins"
 }

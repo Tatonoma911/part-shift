@@ -1,6 +1,6 @@
 {
  "_doc": "text/VOICE.md. Какие строки ru.json показывать на какие события игры. Пул = список ключей, берётся случайный, не повторяя последний показанный из этого пула.",
- "version": "0.3",
+ "version": "0.4",
  "channels": {
   "control": {
    "view": "radio",
@@ -687,6 +687,25 @@
     "results.control_lose.1",
     "results.control_lose.2",
     "results.control_lose.3"
+   ]
+  },
+  {
+   "event": "raid_incoming",
+   "channel": "control",
+   "priority": true,
+   "pool": [
+    "control.bark.raid.1",
+    "control.bark.raid.2",
+    "control.bark.raid.3"
+   ]
+  },
+  {
+   "event": "ruins",
+   "channel": "control",
+   "chance": 0.6,
+   "pool": [
+    "control.bark.ruins.1",
+    "control.bark.ruins.2"
    ]
   }
  ]

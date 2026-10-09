@@ -150,7 +150,25 @@
     "tapEnemyDirects": true,
     "attackModeButton": false,
     "returnToWorkAfterSeconds": 3,
-    "heroKillDrops": "arm to killing blow, second part to next-highest damage dealer"
+    "heroKillDrops": "arm to killing blow, second part to next-highest damage dealer",
+    "rally": {
+      "_doc": "QA B-2: residents must not trickle in one by one. MVP_RULES §4.3",
+      "trigger": [
+        "nest or lair opened",
+        "raid warning",
+        "player taps an enemy"
+      ],
+      "radius": 6,
+      "gatherPoint": "cell 2 steps from the threat toward the command center",
+      "engageWhen": "gathered >= min(4, residents in radius) or 4 s passed or an enemy reaches the gather point",
+      "diggersFinishCurrentCellFirst": false
+    },
+    "retreat": {
+      "atHpFraction": 0.25,
+      "to": "nearest home shelter or command center",
+      "returnAtHpFraction": 0.8,
+      "_note": "command heals 2 HP/s at radius 1, home shelter protects"
+    }
   },
   "school": {
     "trainingLevelsMax": 3,

@@ -1,8 +1,7 @@
 import Phaser from 'phaser';
 import type { GameEvent, World } from '../core/world';
 import voiceJson from '../data/text/voice.json';
-import { lang, t } from '../i18n';
-import en from '../i18n/en.json';
+import { hasLangText, lang, t } from '../i18n';
 import { sound } from './audio';
 import { UI_DEPTH } from './cameras';
 import { BOARD, C, INK } from './layout';
@@ -36,7 +35,6 @@ interface Channel {
 
 const TRIGGERS = voiceJson.triggers as Trigger[];
 const CHANNELS = voiceJson.channels as Record<string, Channel>;
-const EN = en as Record<string, string>;
 
 /** Engine event → voice.json event name, where they differ. */
 const ALIAS: Record<string, string> = {
@@ -136,7 +134,7 @@ export class Voice {
     let pool: string[] | undefined = tr.pool;
     if (!pool && hero) pool = tr.poolByHero?.[hero] ?? (tr.byHero ? [tr.byHero.replace('{hero}', hero)] : undefined);
     if (!pool?.length) return null;
-    pool = pool.filter((k) => (lang === 'en' ? k in EN : t(k) !== k));
+    pool = pool.filter((k) => hasLangText(lang, k));
     if (!pool.length) return null;
     const id = `${tr.event}:${tr.channel}`;
     const fresh = pool.length > 1 ? pool.filter((k) => k !== this.last.get(id)) : pool;
@@ -157,7 +155,7 @@ export class Voice {
       case 'control':
         this.minute.push(now);
         this.lastShown.control = now;
-        this.banner(t(key, { hero: e.text ? t(`enemy.${e.text}.name`) : '', n: e.amount ?? '' }), ch.showSeconds ?? 4.5, false);
+        this.banner(t(key, { hero: e.text ? t(`enemy.${e.text}.name`) : '', n: e.amount ?? '', count: e.amount ?? '' }), ch.showSeconds ?? 4.5, false);
         sound.play('voice_control');
         return;
       case 'ad':
