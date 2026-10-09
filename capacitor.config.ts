@@ -6,6 +6,8 @@ const config: CapacitorConfig = {
   appName: 'Part Shift',
   webDir: 'dist',
   backgroundColor: '#dfeef3',
+  // dist/index.html is the universe site; the app opens straight into the game.
+  server: { appStartPath: '/mobile/index.html' },
   plugins: {
     // Edge-to-edge WebView; real insets arrive as --safe-area-inset-* CSS variables (used in index.html).
     SystemBars: { insetsHandling: 'css' },
