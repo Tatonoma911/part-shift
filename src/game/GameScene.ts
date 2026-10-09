@@ -14,6 +14,7 @@ import { clearSlot, loadSettings, loadSlot, saveSlot, touchSlot } from './saves'
 import { BOARD, C, CELL, DOCK, GOAL, GUIDE, HUD, INK, LANDSCAPE, STEP, VIEW } from './layout';
 import { markTutorialDone, TutorialGuide } from './Tutorial';
 import { brackets, chip, glyph, plate, TXT } from './ui';
+import { setBackHandler } from '../platform/native';
 
 const BEST_KEY = 'partshift.best.v1';
 const LONG_PRESS_MS = 480;
@@ -188,10 +189,14 @@ export class GameScene extends Phaser.Scene {
     this.input.keyboard?.on('keydown-ONE', () => this.setMode('dig'));
     this.input.keyboard?.on('keydown-TWO', () => this.setMode('build'));
     const onHide = () => {
-      if (document.hidden) this.save();
+      if (!document.hidden) return;
+      // Leaving the tab or the app (home button, a call) pauses the run, which also saves it.
+      if (!this.paused) this.setPaused(true);
+      this.save();
     };
     document.addEventListener('visibilitychange', onHide);
     this.events.once('shutdown', () => document.removeEventListener('visibilitychange', onHide));
+    setBackHandler(() => this.onBack());
     if (this.world.s.outcome === 'playing') sound.playMusic('theme_lumen');
     this.setMode('dig');
     // The tutorial teaches by itself; coach cards and the guide come with free play.
@@ -704,6 +709,20 @@ export class GameScene extends Phaser.Scene {
   }
 
   // ---------------------------------------------------------------- overlays
+
+  /** Android back: drop the building ghost, else pause; on the pause menu or an end screen, back to the main menu. */
+  private onBack(): boolean {
+    // The field guide and coach cards are DOM overlays without a close hook yet: back waits for their own button.
+    if (learning().isOpen) return true;
+    if (this.ghost) {
+      this.setGhost(null);
+    } else if (this.overlay || this.paused || this.world.s.outcome !== 'playing') {
+      this.toMenu();
+    } else {
+      this.setPaused(true);
+    }
+    return true;
+  }
 
   private setPaused(on: boolean): void {
     if (this.world.s.outcome !== 'playing') return;
