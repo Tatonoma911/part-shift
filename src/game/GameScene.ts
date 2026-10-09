@@ -9,6 +9,9 @@ import { BUILDING_ANCHOR } from './assets';
 import { sound } from './audio';
 import { SoundDirector } from './soundDirector';
 import { Voice } from './voice';
+import { RunTally } from './meta/record';
+import { showResults } from './meta/ResultsScreen';
+import { loadMeta, pickAllies } from './meta/store';
 import { learning, setLearningHooks } from './learn';
 import { volumeHeight, volumeSliders } from './volume';
 import { BoardView } from './BoardView';
@@ -113,6 +116,10 @@ export class GameScene extends Phaser.Scene {
   /** Hero pop-up in the board's top-left corner (free play only). */
   private comm: Comm | null = null;
   private voice: Voice | null = null;
+  /** This run's counters for the meta progress (Досье); not in the tutorial. */
+  private tally: RunTally | null = null;
+  /** The end screen is up: a second victory/defeat call must not stack another one. */
+  private ended = false;
 
   private mode: Mode = 'dig';
   private buildType: string = BUILDABLE[0];
@@ -258,6 +265,8 @@ export class GameScene extends Phaser.Scene {
     // The city's voice: Контроль, ads, hero bubbles (not in the tutorial, it has its own coach).
     this.voice = this.guide ? null : new Voice(this, this.world, ME, (at) => this.board.speakerAt(at));
     this.voice?.start(!saved);
+    this.tally = this.guide ? null : new RunTally(ME);
+    this.ended = false;
     this.music.start();
     this.setMode('dig');
     // The tutorial teaches by itself; coach cards and the guide come with free play.
@@ -376,6 +385,7 @@ export class GameScene extends Phaser.Scene {
     if (e.owner !== undefined && e.owner !== ME && e.owner >= 0) return;
     this.music.onEvent(e);
     this.voice?.onEvent(e);
+    this.tally?.onEvent(e);
     if (!this.guide) this.coachOn(e);
     this.comm?.onEvent(e);
     if (e.type === 'center_hit') {
@@ -875,6 +885,8 @@ export class GameScene extends Phaser.Scene {
   }
 
   private showEnd(victory: boolean): void {
+    if (this.ended) return;
+    this.ended = true;
     this.trackEnd(victory ? 'victory' : 'defeat');
     if (!this.guide) clearSlot(this.slot);
     const w = this.world;
@@ -900,6 +912,26 @@ export class GameScene extends Phaser.Scene {
       const ch = this.start.challenge;
       if (ch) lines.splice(2, 0, t(rec.score > ch.score ? 'end.challenge_won' : 'end.challenge_lost', { name: ch.name, mine: rec.score, theirs: ch.score }));
       if (shouldNudge()) lines.push(t('donate.nudge'));
+    }
+    // Free play: "Итоги смены" with the meta progress (design/META.md §5); the tutorial keeps the plain sheet.
+    if (this.tally) {
+      const { view } = this.tally.commit(w, victory ? 'win' : 'lose');
+      this.tally = null;
+      this.overlay?.destroy();
+      this.overlay = showResults(this, view, {
+        again: () => this.restart(),
+        dossier: () => {
+          sound.stopMusic(0.3);
+          this.scene.start('dossier');
+        },
+        menu: () => this.toMenu(),
+        takeNext: (id) => pickAllies(loadMeta(), [id]),
+        extra: [
+          ...(rec ? [{ label: t('end.share'), act: () => void this.shareShot() }, { label: t('end.board'), act: () => openBoard({ tab: this.start.daily ? 'day' : 'week' }) }] : []),
+          { label: t('end.coffee'), act: () => openDonate(victory ? 'win' : 'lose') },
+        ],
+      });
+      return;
     }
     const boardBtn: { label: string; act: () => void; half: boolean; ref?: (tx: Phaser.GameObjects.Text) => void } = {
       label: t('end.board'),

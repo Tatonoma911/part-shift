@@ -295,6 +295,7 @@
   "feedback.queued": "Saved. The message goes to the author as soon as the game is online.",
   "feedback.short": "Write at least a few words",
   "settings.feedback": "Write to the author",
+  "dossier.returned": "Back on the team: {have} of {need}",
   "order.cancelled": "Order lifted: residents are back to work",
   "order.attack": "All residents: attack!",
   "voice.control_prefix": "CONTROL:",

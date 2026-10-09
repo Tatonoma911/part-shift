@@ -13,6 +13,8 @@ import { preloadComm } from './Comm';
 import { sound } from './audio';
 import type { GameStart } from './GameScene';
 import { C, INK, LANDSCAPE, VIEW } from './layout';
+import { preloadMetaArt } from './meta/art';
+import { metaPreview } from './meta/preview';
 import { clearSlot, lastSlot, loadSettings, loadSlot, saveSettings, SLOTS } from './saves';
 import { tutorialDone } from './Tutorial';
 import { setBackHandler } from '../platform/native';
@@ -42,6 +44,7 @@ export class MenuScene extends Phaser.Scene {
 
   preload(): void {
     preloadArt(this);
+    preloadMetaArt(this);
     preloadComm(this);
     const bar = this.add.graphics();
     this.load.on('progress', (v: number) => {
@@ -67,6 +70,7 @@ export class MenuScene extends Phaser.Scene {
     }
     this.drawBackdrop();
     this.show('main');
+    metaPreview(this);
     analytics.where('menu');
     analytics.track('menu_view', { tutorial_done: tutorialDone(), has_run: lastSlot() !== null });
     // Android back: skips the intro comic, sub-pages return to the main page; on the main page the app goes to the background.
@@ -281,6 +285,8 @@ export class MenuScene extends Phaser.Scene {
         button(t('menu.continue'), () => this.play({ slot: last }), true, `${t('menu.slot', { n: last })} · ${this.fmt(s.time)}`);
       } else if (!tutorialDone()) button(t('menu.tutorial'), () => this.play({ tutorial: true }), true);
       button(t('menu.new_run'), () => this.show('slots'), !last && tutorialDone());
+      // Meta progress: returned heroes, stats, records, rank (design/META.md §6).
+      button(t('dossier.title'), () => this.scene.start('dossier'));
       if (last || tutorialDone()) button(t('menu.tutorial'), () => this.play({ tutorial: true }));
       button(t('menu.guide'), () => learning().openGuide());
       button(t('menu.settings'), () => this.show('settings'));

@@ -3,6 +3,7 @@ import { account } from './account/cloud';
 import { watchAccountConflicts } from './account/panel';
 import { GameScene } from './game/GameScene';
 import { MenuScene } from './game/MenuScene';
+import { DossierScene } from './game/meta/DossierScene';
 import { chooseLayout, LANDSCAPE, VIEW } from './game/layout';
 import { fontsReady } from './game/ui';
 import { initNative } from './platform/native';
@@ -28,7 +29,7 @@ Promise.all([fontsReady(), account.boot()]).then(() => {
     height: VIEW.height,
     scale: { mode: Phaser.Scale.FIT, autoCenter: Phaser.Scale.CENTER_BOTH },
     input: { activePointers: 2 },
-    scene: [MenuScene, GameScene],
+    scene: [MenuScene, GameScene, DossierScene],
   });
   account.markLive();
   bootSocial();
