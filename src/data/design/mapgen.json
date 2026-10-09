@@ -1,0 +1,43 @@
+{
+  "version": "0.1",
+  "mode": "demon_hunt",
+  "seedable": true,
+  "generateAfterCommandCenterPlaced": true,
+  "safeRadius": 2,
+  "starterNest": {
+    "count": 1,
+    "minDistance": 3,
+    "maxDistance": 4
+  },
+  "counts": {
+    "nest": 6,
+    "heavyNestChance": 0.15,
+    "demon_hatch": 1,
+    "cache": 4,
+    "energy_vein": 3,
+    "rubble": 18,
+    "survivor": 2
+  },
+  "energyVein": {
+    "energy": 120,
+    "maxWorkers": 2,
+    "secondsPerEnergy": 2
+  },
+  "rubble": {
+    "energy": 30,
+    "workSeconds": 24
+  },
+  "water": {
+    "fraction": 0.1,
+    "blobs": [
+      2,
+      4
+    ]
+  },
+  "demonMinDistance": 9,
+  "constraints": [
+    "all non-water cells reachable from command center",
+    "no site on water",
+    "no other site adjacent to demon_hatch"
+  ]
+}

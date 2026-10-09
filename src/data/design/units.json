@@ -1,0 +1,34 @@
+{
+  "version": "0.1",
+  "units": [
+    {
+      "id": "resident",
+      "name_ru": "Житель",
+      "hp": 12,
+      "defense": 0,
+      "damage": 0,
+      "speed": 3.2,
+      "canFight": false,
+      "takesParts": false
+    },
+    {
+      "id": "defender",
+      "name_ru": "Защитник",
+      "hp": 48,
+      "defense": 2,
+      "damage": 8,
+      "attackSeconds": 0.8,
+      "range": 1,
+      "speed": 2.8,
+      "canFight": true,
+      "takesParts": true,
+      "slots": [
+        "arm_left",
+        "arm_right",
+        "leg_left",
+        "leg_right",
+        "tail"
+      ]
+    }
+  ]
+}

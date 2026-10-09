@@ -1,0 +1,208 @@
+{
+  "version": "0.1",
+  "_rules": "Enemy wears its part (bonuses apply to the enemy). Killing blow by a defender transfers it: free slot -> attach; else replace weakest same-type part if strictly higher tier; else recycle into energy = recycleEnergyPerTier * tier.",
+  "techs": [
+    "thermo",
+    "cryo",
+    "volt",
+    "impact",
+    "toxin"
+  ],
+  "mvpTechs": [
+    "thermo",
+    "cryo",
+    "volt",
+    "impact"
+  ],
+  "parts": [
+    {
+      "id": "thermo_arm",
+      "slot": "arm",
+      "tech": "thermo",
+      "tiers": [
+        {
+          "tier": 1,
+          "damage": 3,
+          "burnDps": 2,
+          "burnSeconds": 3
+        },
+        {
+          "tier": 2,
+          "damage": 5,
+          "burnDps": 3,
+          "burnSeconds": 3
+        },
+        {
+          "tier": 3,
+          "damage": 8,
+          "burnDps": 4,
+          "burnSeconds": 3
+        }
+      ]
+    },
+    {
+      "id": "cryo_arm",
+      "slot": "arm",
+      "tech": "cryo",
+      "tiers": [
+        {
+          "tier": 1,
+          "damage": 2,
+          "slowPercent": 30,
+          "slowSeconds": 2
+        },
+        {
+          "tier": 2,
+          "damage": 4,
+          "slowPercent": 40,
+          "slowSeconds": 2
+        },
+        {
+          "tier": 3,
+          "damage": 6,
+          "slowPercent": 50,
+          "slowSeconds": 2.5
+        }
+      ]
+    },
+    {
+      "id": "volt_arm",
+      "slot": "arm",
+      "tech": "volt",
+      "tiers": [
+        {
+          "tier": 1,
+          "damage": 2,
+          "chainTargets": 1,
+          "chainDamageFactor": 0.5,
+          "chainRange": 1.5
+        },
+        {
+          "tier": 2,
+          "damage": 4,
+          "chainTargets": 1,
+          "chainDamageFactor": 0.5,
+          "chainRange": 1.5
+        },
+        {
+          "tier": 3,
+          "damage": 6,
+          "chainTargets": 2,
+          "chainDamageFactor": 0.6,
+          "chainRange": 1.5
+        }
+      ]
+    },
+    {
+      "id": "impact_arm",
+      "slot": "arm",
+      "tech": "impact",
+      "tiers": [
+        {
+          "tier": 1,
+          "damage": 3,
+          "defense": 1
+        },
+        {
+          "tier": 2,
+          "damage": 5,
+          "defense": 2
+        },
+        {
+          "tier": 3,
+          "damage": 7,
+          "defense": 3
+        }
+      ]
+    },
+    {
+      "id": "toxin_arm",
+      "slot": "arm",
+      "tech": "toxin",
+      "tiers": [
+        {
+          "tier": 1,
+          "damage": 2,
+          "armorShred": 1,
+          "shredSeconds": 4
+        },
+        {
+          "tier": 2,
+          "damage": 3,
+          "armorShred": 2,
+          "shredSeconds": 4
+        },
+        {
+          "tier": 3,
+          "damage": 5,
+          "armorShred": 2,
+          "shredSeconds": 4
+        }
+      ],
+      "mvp": false
+    },
+    {
+      "id": "runner_leg",
+      "slot": "leg",
+      "tech": "any_light",
+      "tiers": [
+        {
+          "tier": 1,
+          "speed": 0.4,
+          "hp": 10
+        },
+        {
+          "tier": 2,
+          "speed": 0.6,
+          "hp": 15
+        },
+        {
+          "tier": 3,
+          "speed": 0.8,
+          "hp": 20
+        }
+      ],
+      "_note": "dropped by ordinary adaptants of any tech"
+    },
+    {
+      "id": "piston_leg",
+      "slot": "leg",
+      "tech": "impact",
+      "tiers": [
+        {
+          "tier": 1,
+          "speed": 0.1,
+          "hp": 20,
+          "defense": 1
+        },
+        {
+          "tier": 2,
+          "speed": 0.2,
+          "hp": 30,
+          "defense": 1
+        },
+        {
+          "tier": 3,
+          "speed": 0.3,
+          "hp": 40,
+          "defense": 2
+        }
+      ],
+      "_note": "dropped by heavy adaptants"
+    },
+    {
+      "id": "drill_tail",
+      "slot": "tail",
+      "tech": "demon",
+      "tiers": [
+        {
+          "tier": 3,
+          "damage": 10,
+          "splashRadius": 1,
+          "splashFactor": 0.5,
+          "hp": 60
+        }
+      ]
+    }
+  ]
+}

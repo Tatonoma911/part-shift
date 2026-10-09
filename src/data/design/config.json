@@ -1,0 +1,99 @@
+{
+  "version": "0.1",
+  "_units": "distances in tiles, speeds in tiles/s, time in seconds of unpaused game time",
+  "board": {
+    "width": 14,
+    "height": 18,
+    "neighborhood": "moore8"
+  },
+  "economy": {
+    "startEnergy": 50,
+    "energyPerDugTile": 5,
+    "orbSpeed": 6,
+    "cacheEnergy": 60,
+    "partRecycleEnergyPerTier": 5
+  },
+  "dig": {
+    "digSeconds": 9,
+    "requireAdjacentRevealed": true,
+    "autoQueueZeroNeighbors": true,
+    "autoQueuePriority": "low"
+  },
+  "territory": {
+    "commandCenterRadius": 3,
+    "schoolRadius": 2
+  },
+  "population": {
+    "spawnSeconds": 20,
+    "firstResidentImmediate": true
+  },
+  "defenders": {
+    "baseCapacityWithSchool": 3,
+    "capacityPerSchool": 2,
+    "trainCost": 10,
+    "trainSeconds": 8,
+    "trainingFreesDwellingSlot": true,
+    "guardRadius": 3,
+    "attackNestsOnlyByOrder": true
+  },
+  "combat": {
+    "damageFormula": "max(minDamage, attackerDamage - targetDefense)",
+    "minDamage": 1,
+    "residentFleeRadius": 2
+  },
+  "threat": {
+    "secondsPerLevel": 120,
+    "hpPerLevel": 0.1,
+    "damagePerLevel": 0.1,
+    "spawnIntervalFactorPerLevel": 0.93,
+    "minSpawnInterval": 2,
+    "partTierByLevel": [
+      {
+        "fromLevel": 0,
+        "tier": 1
+      },
+      {
+        "fromLevel": 3,
+        "tier": 2
+      },
+      {
+        "fromLevel": 6,
+        "tier": 3
+      }
+    ]
+  },
+  "demon": {
+    "selfWakeSeconds": 900,
+    "warningSeconds": 60
+  },
+  "victory": {
+    "type": "kill_demon",
+    "requireHotGroundCleared": true
+  },
+  "defeat": {
+    "type": "command_destroyed"
+  },
+  "save": {
+    "autosaveSeconds": 10,
+    "saveOnPause": true,
+    "storage": "localStorage"
+  },
+  "ranks": [
+    {
+      "id": "recruit",
+      "minParts": 0
+    },
+    {
+      "id": "veteran",
+      "minParts": 1
+    },
+    {
+      "id": "champion",
+      "minParts": 3
+    },
+    {
+      "id": "legend",
+      "minParts": 5
+    }
+  ]
+}

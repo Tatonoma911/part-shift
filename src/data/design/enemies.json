@@ -1,0 +1,133 @@
+{
+  "version": "0.1",
+  "sites": [
+    {
+      "id": "nest",
+      "name_ru": "Гнездо адаптантов",
+      "clueChannel": "threat",
+      "hp": 180,
+      "defense": 3,
+      "spawns": "adaptant",
+      "initialSpawn": 3,
+      "spawnSeconds": 4,
+      "maxAlive": 8,
+      "reward": 40,
+      "techPool": [
+        "thermo",
+        "cryo",
+        "volt"
+      ]
+    },
+    {
+      "id": "heavy_nest",
+      "name_ru": "Гнездо тяжёлого адаптанта",
+      "clueChannel": "threat",
+      "hp": 240,
+      "defense": 3,
+      "spawns": "heavy_adaptant",
+      "initialSpawn": 1,
+      "respawnAfterDeathSeconds": 30,
+      "maxAlive": 1,
+      "reward": 60,
+      "tech": "impact"
+    },
+    {
+      "id": "demon_hatch",
+      "name_ru": "Люк Undersun",
+      "clueChannel": "demon",
+      "hp": 260,
+      "defense": 4,
+      "spawns": "demon",
+      "initialSpawn": 1,
+      "maxAlive": 1,
+      "reward": 0
+    },
+    {
+      "id": "cache",
+      "name_ru": "Тайник HeroOut",
+      "clueChannel": "finds",
+      "onReveal": {
+        "energy": 60
+      }
+    },
+    {
+      "id": "survivor",
+      "name_ru": "Выживший",
+      "clueChannel": "finds",
+      "onReveal": {
+        "resident": 1,
+        "permanentSlotOnCommand": true
+      }
+    }
+  ],
+  "enemies": [
+    {
+      "id": "adaptant",
+      "name_ru": "Адаптант",
+      "hp": 40,
+      "damage": 10,
+      "defense": 1,
+      "attackSeconds": 1,
+      "range": 1,
+      "speed": 2.4,
+      "part": {
+        "slotWeights": {
+          "arm": 0.7,
+          "leg": 0.3
+        },
+        "armByTech": "<tech>_arm",
+        "leg": "runner_leg",
+        "tech": "fromNest",
+        "tierOffset": 0
+      },
+      "partDropChance": 0.4,
+      "reward": 0
+    },
+    {
+      "id": "heavy_adaptant",
+      "name_ru": "Тяжёлый адаптант",
+      "hp": 260,
+      "damage": 22,
+      "defense": 3,
+      "attackSeconds": 2.4,
+      "range": 1,
+      "speed": 0.75,
+      "part": {
+        "slotWeights": {
+          "arm": 0.7,
+          "leg": 0.3
+        },
+        "arm": "impact_arm",
+        "leg": "piston_leg",
+        "tierOffset": 1
+      },
+      "partDropChance": 1.0,
+      "reward": 0
+    },
+    {
+      "id": "demon",
+      "name_ru": "Демон",
+      "boss": true,
+      "hp": 440,
+      "damage": 14,
+      "defense": 4,
+      "attackSeconds": 2.2,
+      "range": 1,
+      "speed": 1.5,
+      "part": {
+        "fixed": "drill_tail"
+      },
+      "partDropChance": 1.0,
+      "reward": 120,
+      "special": {
+        "id": "steam_blast",
+        "windupSeconds": 0.9,
+        "range": 3.25,
+        "blastSeconds": 0.65,
+        "cooldownSeconds": 6,
+        "hotGroundSeconds": 3.2,
+        "hotGroundDps": 4
+      }
+    }
+  ]
+}

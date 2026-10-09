@@ -1,0 +1,95 @@
+{
+  "version": "0.1",
+  "buildings": [
+    {
+      "id": "command",
+      "name_ru": "Командный центр",
+      "sheet": null,
+      "buildable": false,
+      "cost": 0,
+      "buildSeconds": 0,
+      "hp": 80,
+      "defense": 1,
+      "residentSlots": 2,
+      "territoryRadius": 3,
+      "isKeep": true
+    },
+    {
+      "id": "home",
+      "name_ru": "Жилой блок",
+      "sheet": 2,
+      "buildable": true,
+      "cost": 40,
+      "buildSeconds": 6,
+      "hp": 100,
+      "defense": 0,
+      "residentSlots": 1
+    },
+    {
+      "id": "reactor",
+      "name_ru": "Микрореактор",
+      "sheet": 8,
+      "buildable": true,
+      "cost": 50,
+      "buildSeconds": 6,
+      "hp": 100,
+      "defense": 0,
+      "operatorSlots": 1,
+      "produce": {
+        "energy": 1,
+        "everySeconds": 5,
+        "perOperator": true
+      }
+    },
+    {
+      "id": "cooler",
+      "name_ru": "Станция охлаждения",
+      "sheet": 9,
+      "buildable": true,
+      "cost": 100,
+      "buildSeconds": 8,
+      "hp": 100,
+      "defense": 0,
+      "aura": {
+        "radius": 1,
+        "targets": [
+          "reactor"
+        ],
+        "productionSpeedMultiplier": 2,
+        "stacks": false
+      }
+    },
+    {
+      "id": "school",
+      "name_ru": "Школа спасателей",
+      "sheet": 5,
+      "buildable": true,
+      "cost": 100,
+      "buildSeconds": 10,
+      "hp": 100,
+      "defense": 0,
+      "defenderCapacity": 2,
+      "territoryRadius": 2,
+      "trainsDefenders": true,
+      "recruitToggle": true
+    },
+    {
+      "id": "medcenter",
+      "name_ru": "Медцентр",
+      "sheet": 1,
+      "buildable": true,
+      "cost": 120,
+      "buildSeconds": 10,
+      "hp": 100,
+      "defense": 0,
+      "aura": {
+        "radius": 2,
+        "targets": [
+          "defender"
+        ],
+        "healAmount": 4,
+        "healEverySeconds": 2
+      }
+    }
+  ]
+}

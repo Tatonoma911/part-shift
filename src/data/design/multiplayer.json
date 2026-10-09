@@ -1,0 +1,57 @@
+{
+  "version": "0.2",
+  "players": {
+    "min": 2,
+    "max": 4
+  },
+  "modes": [
+    {
+      "id": "coop_demon_hunt",
+      "order": 1,
+      "sharedVictory": true,
+      "loseWhen": "all_commands_destroyed"
+    },
+    {
+      "id": "last_command",
+      "order": 2,
+      "sharedVictory": false,
+      "loseWhen": "own_command_destroyed",
+      "demonSelfWakeSeconds": 900,
+      "demonTarget": "nearest_command"
+    }
+  ],
+  "pause": false,
+  "board": {
+    "2": {
+      "width": 18,
+      "height": 22
+    },
+    "3": {
+      "width": 22,
+      "height": 26
+    },
+    "4": {
+      "width": 22,
+      "height": 26
+    },
+    "pinchZoom": true
+  },
+  "fairStart": {
+    "serverPlacesCommands": true,
+    "symmetric": true,
+    "mirroredRadius": 4
+  },
+  "scaling": {
+    "demonHpPerExtraPlayer": 0.6,
+    "nestsPerPlayer": 6
+  },
+  "territoryOverlap": false,
+  "canDigInRivalTerritory": true,
+  "pvpPartSteal": {
+    "enabled": true,
+    "pick": "strongest"
+  },
+  "energyTransfer": false,
+  "disconnectGraceSeconds": 60,
+  "adsDuringMatch": false
+}
