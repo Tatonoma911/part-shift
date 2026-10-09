@@ -8,6 +8,14 @@ export type Snapshot = Record<string, string>;
 export const PREFIX = 'partshift.';
 export const ACCOUNT_PREFIX = 'partshift.account.';
 export const RUN_KEY = 'partshift.save.v1';
+/** Runs in progress: the save slots (and their timestamps) plus the pre-menu single save. */
+const RUN_KEY_RE = /^partshift\.(save|slot\d+)\.v1(\.at)?$/;
+export const isRunKey = (k: string): boolean => RUN_KEY_RE.test(k);
+
+/** Just the runs in progress, as text, to compare two sides. */
+export function runsOf(data: Snapshot): string {
+  return fingerprint(Object.fromEntries(Object.entries(data).filter(([k]) => isRunKey(k))));
+}
 const BEST_KEY = 'partshift.best.v1';
 const TUTORIAL_KEY = 'partshift.tutorialDone.v1';
 
@@ -24,7 +32,7 @@ export interface MergeResult {
   upload: boolean;
   /** Local storage differs from the result and must be written. */
   localChanged: boolean;
-  /** The run in progress comes from the cloud and differs from the one on this device. */
+  /** The runs in progress come from the cloud and differ from the ones on this device. */
   runFromCloud: boolean;
 }
 
@@ -55,9 +63,8 @@ export function fingerprint(data: Snapshot): string {
 export function merge(local: Side, cloud: Side | null): MergeResult {
   if (!cloud) return { data: { ...local.data }, changedAt: local.changedAt, upload: true, localChanged: false, runFromCloud: false };
   const [newer, older] = cloud.changedAt > local.changedAt ? [cloud, local] : [local, cloud];
-  const data: Snapshot = { ...older.data, ...newer.data };
-  // A finished or abandoned run is removed on the newer side; don't resurrect the older one.
-  if (!(RUN_KEY in newer.data)) delete data[RUN_KEY];
+  // Runs come whole from the newer side: a slot finished or erased there must not come back from the older one.
+  const data: Snapshot = { ...Object.fromEntries(Object.entries(older.data).filter(([k]) => !isRunKey(k))), ...newer.data };
 
   const bests = [local.data[BEST_KEY], cloud.data[BEST_KEY]].map(Number).filter((n) => n > 0 && Number.isFinite(n));
   if (bests.length) data[BEST_KEY] = String(Math.min(...bests));
@@ -69,6 +76,6 @@ export function merge(local: Side, cloud: Side | null): MergeResult {
     changedAt: Math.max(local.changedAt, cloud.changedAt),
     upload: fp !== fingerprint(cloud.data),
     localChanged: fp !== fingerprint(local.data),
-    runFromCloud: data[RUN_KEY] !== undefined && data[RUN_KEY] !== local.data[RUN_KEY] && data[RUN_KEY] === cloud.data[RUN_KEY],
+    runFromCloud: newer === cloud && runsOf(data) !== runsOf(local.data),
   };
 }

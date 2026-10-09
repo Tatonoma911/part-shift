@@ -2,7 +2,7 @@ import type { FirebaseApp } from 'firebase/app';
 import type { Auth, User } from 'firebase/auth';
 import type { Firestore } from 'firebase/firestore/lite';
 import { FIREBASE_CONFIG } from './config';
-import { ACCOUNT_PREFIX, fingerprint, merge, readLocal, RUN_KEY, writeLocal, type MergeResult, type Snapshot } from './snapshot';
+import { ACCOUNT_PREFIX, fingerprint, isRunKey, merge, readLocal, runsOf, writeLocal, type MergeResult, type Snapshot } from './snapshot';
 
 /**
  * Guest-first accounts: everyone plays at once with saves in localStorage.
@@ -33,7 +33,7 @@ interface Meta {
 }
 
 const META_KEY = `${ACCOUNT_PREFIX}meta`;
-const PREV_RUN_KEY = `${ACCOUNT_PREFIX}replacedRun`;
+const PREV_RUNS_KEY = `${ACCOUNT_PREFIX}replacedRuns`;
 const WATCH_MS = 5_000;
 /** Upload at most this often while playing (Firestore free tier: 20k writes a day); always on leaving the page. */
 const UPLOAD_EVERY_MS = 60_000;
@@ -200,7 +200,8 @@ class Account {
       const local = { data: readLocal(localStorage), changedAt: this.meta.changedAt };
       // First sign-in on this device with a different run on each side: never pick silently.
       const firstLink = !this.meta.uploaded;
-      const twoRuns = !!cloud && !!cloud.data[RUN_KEY] && !!local.data[RUN_KEY] && cloud.data[RUN_KEY] !== local.data[RUN_KEY];
+      const hasRuns = (d: Snapshot) => Object.keys(d).some(isRunKey);
+      const twoRuns = !!cloud && hasRuns(cloud.data) && hasRuns(local.data) && runsOf(cloud.data) !== runsOf(local.data);
       const r = firstLink && twoRuns ? merge({ ...local, changedAt: 0 }, cloud) : merge(local, cloud);
       this.set({ syncedAt: Date.now() });
       if (r.runFromCloud && (this.live || (firstLink && twoRuns))) {
@@ -276,11 +277,11 @@ class Account {
     }
   }
 
-  /** Keeps the run that a cloud run replaced, just in case (never synced). */
+  /** Keeps the runs that cloud runs replaced, just in case (never synced). */
   private keepReplacedRun(next: Snapshot): void {
     try {
-      const cur = localStorage.getItem(RUN_KEY);
-      if (cur && cur !== next[RUN_KEY]) localStorage.setItem(PREV_RUN_KEY, cur);
+      const cur = readLocal(localStorage);
+      if (runsOf(cur) !== runsOf(next)) localStorage.setItem(PREV_RUNS_KEY, JSON.stringify(Object.fromEntries(Object.entries(cur).filter(([k]) => isRunKey(k)))));
     } catch {
       /* ignore */
     }

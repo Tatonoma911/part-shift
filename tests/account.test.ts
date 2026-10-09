@@ -43,6 +43,21 @@ describe('cloud save merge', () => {
     expect(r.localChanged).toBe(true);
   });
 
+  it('save slots come whole from the newer side; an erased slot stays erased', () => {
+    const S1 = 'partshift.slot1.v1';
+    const S2 = 'partshift.slot2.v1';
+    const r = merge({ data: { [S1]: 'a', [`${S1}.at`]: '1', [S2]: 'b' }, changedAt: 5 }, { data: { [S1]: 'c', [`${S1}.at`]: '9' }, changedAt: 9 });
+    expect(r.data[S1]).toBe('c');
+    expect(r.data[S2]).toBeUndefined();
+    expect(r.runFromCloud).toBe(true);
+  });
+
+  it('settings from an older cloud do not count as a cloud run', () => {
+    const r = merge({ data: { 'partshift.slot1.v1': 'a' }, changedAt: 1 }, { data: { 'partshift.slot1.v1': 'a', 'partshift.settings.v1': 'x' }, changedAt: 9 });
+    expect(r.runFromCloud).toBe(false);
+    expect(r.data['partshift.settings.v1']).toBe('x');
+  });
+
   it('keeps the best time and tutorial progress from both devices', () => {
     const r = merge({ data: { [BEST]: '300', [TUT]: '1' }, changedAt: 50 }, { data: { [BEST]: '240' }, changedAt: 10 });
     expect(r.data[BEST]).toBe('240');
