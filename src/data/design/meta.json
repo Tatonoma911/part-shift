@@ -150,7 +150,8 @@
     "hero_seen.<heroId>": "1 once the hero was met as an enemy (lair opened or hero woke)",
     "hero_defeats.<heroId>": "times that hero was defeated",
     "daily_streak": "consecutive UTC days with a finished Вызов дня",
-    "daily_last_date": "YYYY-MM-DD"
+    "daily_last_date": "YYYY-MM-DD",
+    "challenge.<challengeId>": "times the run challenge was completed (win_without_accidental_open, win_no_resident_lost, resident_full_slots); > 0 means done"
   },
   "runChallenges": {
     "energy_earned": "value = energy earned this run; best kept in best_run_energy",

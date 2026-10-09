@@ -73,6 +73,8 @@ export interface BuildingDef {
   };
   spawnPoint?: boolean;
   trainingLevel?: number;
+  autoAttack?: { damage: number; attackSeconds: number; range: number; tech?: string };
+  healAura?: { radius: number; hpPerSecond: number };
 }
 
 export interface UnitStats {
@@ -131,6 +133,9 @@ export interface SiteDef {
   techPool?: Tech[];
   tech?: Tech;
   onReveal?: { energy?: number; resident?: number; permanentSlotOnCommand?: boolean };
+  /** Overrides spawnSeconds / maxAlive from a threat level on (QA B-2: early nests are weaker). */
+  spawnByThreat?: { fromLevel: number; spawnSeconds: number; maxAlive: number }[];
+  initialSpawnByThreat?: { fromLevel: number; count: number }[];
 }
 
 /** Tables from rules v0.4 on (residents fight, heroes as enemies); later minor versions only add fields. */

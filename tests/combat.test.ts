@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { buildings, config, heroes, residentStats } from '../src/core/data';
+import { buildings, config, enemies, heroes, raidRules, residentStats } from '../src/core/data';
 import type { Unit } from '../src/core/state';
 import { World } from '../src/core/world';
 import { handWorld, residents, run } from './helpers';
@@ -40,12 +40,12 @@ const foe = (w: World, over: Partial<Unit> = {}): Unit => {
 };
 
 describe('nests and combat', () => {
-  it('opening a nest releases 3 adaptants that wear a part of the nest tech', () => {
+  it('opening an early nest releases 2 adaptants (3 from threat 2) that wear a part of the nest tech', () => {
     const w = handWorld(['.......', '.......', '......n']);
     w.apply({ type: 'placeCommand', x: 0, y: 0 });
     internals(w).reveal(6, 2, 0);
     const foes = w.s.units.filter((u) => u.owner < 0);
-    expect(foes).toHaveLength(3);
+    expect(foes).toHaveLength(2);
     for (const f of foes) {
       const part = Object.values(f.parts)[0]!;
       expect(['cryo_arm', 'runner_leg']).toContain(part.id);
@@ -165,7 +165,7 @@ describe('nests and combat', () => {
     w.s.time = w.cfg.threat.secondsPerLevel * 6;
     internals(w).reveal(6, 2, 0);
     const f = w.s.units.find((u) => u.owner < 0)!;
-    expect(f.base.hp).toBeCloseTo(40 * 1.6 * w.difficulty.enemyHpFactor);
+    expect(f.base.hp).toBeCloseTo(enemies.adaptant.hp * 1.6 * w.difficulty.enemyHpFactor);
     expect(Object.values(f.parts)[0]!.tier).toBe(3);
   });
 });
@@ -245,13 +245,77 @@ describe('heroes and the call target', () => {
     w.step(0.05);
     const ev = w.drainEvents();
     expect(ev.find((e) => e.type === 'raid_incoming')).toMatchObject({ x: 3, y: 2, amount: w.difficulty.raids!.size });
-    expect(w.s.units.filter((u) => u.raid === `b:${home.id}`).length).toBe(w.difficulty.raids!.size);
+    const raiders = w.s.units.filter((u) => u.raid === `b:${home.id}`);
+    expect(raiders.length).toBe(w.difficulty.raids!.size);
+    // QA B-3: the siren runs its full time before the raid moves.
+    const at = raiders.map((u) => [u.x, u.y]);
+    run(w, raidRules.minSecondsSirenToFirstHit - 0.5);
+    expect(raiders.map((u) => [u.x, u.y])).toEqual(at);
+    expect(home.hp).toBe(10);
     run(w, 30);
     expect(w.s.buildings.includes(home)).toBe(false);
     expect(w.cell(3, 2).ruin).toBe('home');
     for (const u of w.s.units) if (u.owner < 0) u.hp = 0;
     w.s.units = w.s.units.filter((u) => u.hp > 0);
     expect(w.buildCost('home', 3, 2)).toBe(Math.ceil(buildings.home.cost / 2));
+  });
+
+  it('B-2: the command center shoots enemies in range and heals residents next to it', () => {
+    const w = squad(['.......', '.......', '.......'], 1);
+    for (const site of w.s.sites) site.spawnTimer = Infinity;
+    const me = residents(w)[0];
+    me.x = 0;
+    me.y = 0;
+    me.hp = 5;
+    const e = foe(w, { x: 3, y: 1, hp: 40, base: { hp: 40, damage: 0, defense: 0, attackSeconds: 99, range: 1, speed: 0 } });
+    w.step(0.05);
+    const cmd = buildings.command;
+    expect(e.hp).toBe(40 - cmd.autoAttack!.damage);
+    expect(me.hp).toBeGreaterThan(5);
+  });
+
+  it('B-2: a badly hurt resident walks back to the center and returns when healed', () => {
+    const w = squad(['..........', '..........', '..........'], 1);
+    for (const site of w.s.sites) site.spawnTimer = Infinity;
+    const me = residents(w)[0];
+    Object.assign(me, { x: 8, y: 1, path: [] });
+    me.hp = 1;
+    run(w, 6);
+    expect(me.retreat).toBe(true);
+    expect(Math.abs(me.x - 1)).toBeLessThanOrEqual(1.5);
+    run(w, 60);
+    expect(me.retreat).toBe(false);
+  });
+
+  it('B-2: on an order residents gather first, then go in together', () => {
+    const w = squad(['..........', '..........', '..........'], 4);
+    for (const site of w.s.sites) site.spawnTimer = Infinity;
+    residents(w).forEach((u, i) => Object.assign(u, { x: i % 2, y: Math.floor(i / 2) * 2, path: [] }));
+    const e = foe(w, { x: 9, y: 1, base: { hp: 40, damage: 0, defense: 0, attackSeconds: 99, range: 1, speed: 0 } });
+    w.apply({ type: 'attack', target: `u:${e.id}` });
+    const rally = w.player(0).rally!;
+    expect(rally.members).toHaveLength(4);
+    expect(Math.hypot(rally.x - 9, rally.y - 1)).toBeLessThanOrEqual(2.5);
+    run(w, 10);
+    expect(w.player(0).rally).toBeUndefined();
+    run(w, 20);
+    expect(e.hp).toBeLessThan(40);
+  });
+
+  it('QA B-3: a raid from a nest next to the city surfaces 6 cells out', () => {
+    const w = squad(['............', '............', '............', '............', '....n.......'], 1);
+    w.s.units = w.s.units.filter((u) => u.owner >= 0);
+    w.player(0).energy = 999;
+    expect(w.apply({ type: 'build', building: 'home', x: 3, y: 2 }).ok).toBe(true);
+    Object.assign(w.s.buildings.find((b) => b.type === 'home')!, { complete: true, built: 99 });
+    internals(w).reveal(4, 4, 0);
+    w.s.units = w.s.units.filter((u) => u.owner >= 0);
+    for (const site of w.s.sites) site.spawnTimer = Infinity;
+    w.s.time = w.difficulty.raids!.firstAfterSeconds - 0.05;
+    w.step(0.05);
+    const raiders = w.s.units.filter((u) => u.raid);
+    expect(raiders.length).toBeGreaterThan(0);
+    for (const u of raiders) for (const b of w.s.buildings) expect(Math.hypot(u.x - b.x, u.y - b.y)).toBeGreaterThanOrEqual(raidRules.spawnMinDistanceFromBuildings - 1.5);
   });
 
   it('losing the command center is a defeat', () => {

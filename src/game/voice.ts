@@ -1,11 +1,10 @@
 import Phaser from 'phaser';
 import type { GameEvent, World } from '../core/world';
 import voiceJson from '../data/text/voice.json';
-import { lang, t } from '../i18n';
-import en from '../i18n/en.json';
+import { hasLangText, lang, t } from '../i18n';
 import { sound } from './audio';
 import { UI_DEPTH } from './cameras';
-import { BOARD, C, INK } from './layout';
+import { C, DOCK, INK } from './layout';
 import { chip, TXT } from './ui';
 
 /**
@@ -36,7 +35,6 @@ interface Channel {
 
 const TRIGGERS = voiceJson.triggers as Trigger[];
 const CHANNELS = voiceJson.channels as Record<string, Channel>;
-const EN = en as Record<string, string>;
 
 /** Engine event → voice.json event name, where they differ. */
 const ALIAS: Record<string, string> = {
@@ -67,6 +65,12 @@ export class Voice {
     /** Board point over a unit's head, or over a cell when there is no unit. */
     private bubbleAt: (at: { unit?: number; x?: number; y?: number }) => { x: number; y: number } | null,
   ) {}
+
+  /** Top edge of Контроль's strip while it is up, so toasts can stack above it. */
+  barTop(): number | null {
+    const b = this.bar;
+    return b && b.active ? (b.getData('top') as number) : null;
+  }
 
   /** A fresh run: Контроль says good morning. */
   start(fresh: boolean): void {
@@ -136,7 +140,7 @@ export class Voice {
     let pool: string[] | undefined = tr.pool;
     if (!pool && hero) pool = tr.poolByHero?.[hero] ?? (tr.byHero ? [tr.byHero.replace('{hero}', hero)] : undefined);
     if (!pool?.length) return null;
-    pool = pool.filter((k) => (lang === 'en' ? k in EN : t(k) !== k));
+    pool = pool.filter((k) => hasLangText(lang, k));
     if (!pool.length) return null;
     const id = `${tr.event}:${tr.channel}`;
     const fresh = pool.length > 1 ? pool.filter((k) => k !== this.last.get(id)) : pool;
@@ -157,7 +161,7 @@ export class Voice {
       case 'control':
         this.minute.push(now);
         this.lastShown.control = now;
-        this.banner(t(key, { hero: e.text ? t(`enemy.${e.text}.name`) : '', n: e.amount ?? '' }), ch.showSeconds ?? 4.5, false);
+        this.banner(t(key, { hero: e.text ? t(`enemy.${e.text}.name`) : '', n: e.amount ?? '', count: e.amount ?? '' }), ch.showSeconds ?? 4.5, false);
         sound.play('voice_control');
         return;
       case 'ad':
@@ -180,13 +184,16 @@ export class Voice {
     }
   }
 
-  /** Контроль's PA strip (white helmet mask, blue smile) or the HERO | OUT billboard, typed out letter by letter. */
+  /**
+   * Контроль's PA strip (white helmet mask, blue smile) or the HERO | OUT billboard, typed out letter by letter.
+   * It sits in the toast strip just above the dock, never over the board (QA-038).
+   */
   private banner(text: string, seconds: number, ad: boolean): void {
     const s = this.scene;
     this.bar?.destroy();
     this.typer?.remove();
-    const w = Math.min(BOARD.w - 32, 720);
-    const x = BOARD.x + BOARD.w / 2;
+    const w = DOCK.w;
+    const x = DOCK.x + DOCK.w / 2;
     const items: Phaser.GameObjects.GameObject[] = [];
     let left = -w / 2 + 18;
     let tag: Phaser.GameObjects.Text | null = null;
@@ -214,8 +221,8 @@ export class Voice {
       items.push(m);
     }
     items.push(body);
-    const y = BOARD.y + BOARD.h - 16 - h / 2;
-    const box = s.add.container(x, y + 20, items).setDepth(DEPTH).setAlpha(0);
+    const y = DOCK.y - 8 - h / 2;
+    const box = s.add.container(x, y + 20, items).setDepth(DEPTH).setAlpha(0).setData('top', y - h / 2);
     this.bar = box;
     s.tweens.add({ targets: box, y, alpha: 1, duration: 200 });
     let n = prefix.length;

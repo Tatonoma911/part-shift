@@ -53,7 +53,7 @@ const TOASTS: Record<string, { text: (e: GameEvent) => string; bad?: boolean }> 
   hero_part_taken: { text: (e) => t('trophy.module_acquired', { part: t(`part.${e.text}.label`) }) },
   demon_windup: { text: () => t('enemy.demon.windup'), bad: true },
   boss_dead: { text: () => t('event.boss_dead') },
-  raid_incoming: { text: (e) => t('event.raid_incoming', { n: e.amount ?? 0 }), bad: true },
+  raid_incoming: { text: (e) => t(`event.raid_incoming.${plural(e.amount ?? 0)}`, { count: e.amount ?? 0 }), bad: true },
   survivor_joined: { text: () => t('event.survivor_slot') },
   hint: { text: (e) => t(e.text ?? '') },
   threat_level_up: { text: (e) => t('event.threat_rising', { level: e.amount ?? 0 }), bad: true },
@@ -66,9 +66,18 @@ const TOASTS: Record<string, { text: (e: GameEvent) => string; bad?: boolean }> 
 };
 
 /** Screen name of a hero (writer's text), e.g. «Килн». */
-const FEMALE_HEROES = new Set(['seraph', 'frostline', 'canopy']);
+const FEMALE_HEROES = new Set(['seraph', 'frostline', 'canopy', 'beacon']);
 /** «Течение» is grammatically neuter in Russian: «Течение вышло» (QA-034). */
 const NEUTER_HEROES = new Set(['current']);
+
+/** Russian plural form key: 1 → one, 2–4 → few, else many (English keys use the same names). */
+function plural(n: number): 'one' | 'few' | 'many' {
+  const m10 = n % 10;
+  const m100 = n % 100;
+  if (m10 === 1 && m100 !== 11) return 'one';
+  if (m10 >= 2 && m10 <= 4 && (m100 < 12 || m100 > 14)) return 'few';
+  return 'many';
+}
 
 function heroName(id: string | undefined): string {
   return id ? t(`enemy.${id}.name`) : '';
@@ -258,6 +267,13 @@ export class GameScene extends Phaser.Scene {
 
   update(time: number, deltaMs: number): void {
     const w = this.world;
+    // Toasts ride above Контроль's strip while it is up, and settle back when it leaves.
+    const floor = this.voice?.barTop() ?? DOCK.y;
+    for (const box of this.toasts) {
+      if (!box.active || this.tweens.isTweening(box)) continue;
+      const want = floor - 8 - (box.getData('h') as number) / 2;
+      box.y += (want - box.y) * Math.min(1, deltaMs / 80);
+    }
     if (!this.paused && !this.overlayPaused && w.s.outcome === 'playing') {
       if (!this.coachedBuild && !this.guide && w.player(ME).energy >= 100) this.coachedBuild = learning().coach('build') || this.coachedBuild;
       w.tick(Math.min(deltaMs, 250) / 1000);
@@ -408,8 +424,8 @@ export class GameScene extends Phaser.Scene {
     const h = Math.max(58, tx.height + 20);
     const g = this.add.graphics();
     chip(g, -width / 2, -h / 2, width, h, bad ? C.coralInk : C.paper, 0.97, 14, bad ? undefined : { color: C.seam, width: 2 });
-    const y = DOCK.y - 8 - h / 2;
-    const box = this.add.container(DOCK.x + DOCK.w / 2, y + 16, [g, tx]).setDepth(21).setAlpha(0);
+    const y = (this.voice?.barTop() ?? DOCK.y) - 8 - h / 2;
+    const box = this.add.container(DOCK.x + DOCK.w / 2, y + 16, [g, tx]).setDepth(21).setAlpha(0).setData('h', h);
     for (const old of this.toasts) this.tweens.add({ targets: old, alpha: 0, duration: 120, onComplete: () => old.destroy() });
     this.toasts = [box];
     this.tweens.add({ targets: box, y, alpha: 1, duration: 180 });
@@ -1060,13 +1076,6 @@ export class GameScene extends Phaser.Scene {
   /** "Next to this block: 2 nests" with Russian plural forms. */
   private nearText(x: number, y: number): string {
     const cl = this.world.clues(x, y);
-    const plural = (n: number) => {
-      const m10 = n % 10;
-      const m100 = n % 100;
-      if (m10 === 1 && m100 !== 11) return 'one';
-      if (m10 >= 2 && m10 <= 4 && (m100 < 12 || m100 > 14)) return 'few';
-      return 'many';
-    };
     const lines: string[] = [];
     if (cl.threat) lines.push(t(`cell.near.threat.${plural(cl.threat)}`, { count: cl.threat }));
     if (cl.demon) lines.push(t('cell.near.boss.one', { count: cl.demon }));
@@ -1112,7 +1121,17 @@ export class GameScene extends Phaser.Scene {
       if (w.apply({ type: 'attack', target: `s:${x},${y}` }, ME).ok) this.orderSaid();
       return;
     }
-    if (c.revealed && w.player(ME).order && c.content === 'ground') w.apply({ type: 'cancelOrder' }, ME);
+    // A tap that just missed a running enemy must not drop the order (QA-037): only a tap well away
+    // from the target and from any enemy lifts it, and the player is told so.
+    const order = w.player(ME).order;
+    if (c.revealed && order && c.content === 'ground') {
+      const tp = w.targetPos(order) as { x: number; y: number } | undefined;
+      const enemyNear = w.s.units.some((u) => u.owner < 0 && u.hp > 0 && Math.hypot(u.x - x, u.y - y) <= 2);
+      if ((!tp || Math.hypot(tp.x - x, tp.y - y) > 2.5) && !enemyNear && w.apply({ type: 'cancelOrder' }, ME).ok) {
+        this.say(t('order.cancelled'));
+        return;
+      }
+    }
     // Touching an opened clue shows the eight cells it counts.
     if (c.revealed && c.building === undefined && (c.content === 'ground' || c.resolved)) {
       this.spotlight = { x, y, until: this.time.now + 2500 };

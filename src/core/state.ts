@@ -125,6 +125,10 @@ export interface Unit {
   calm?: number;
   /** Raiders: the building they march on ("b:id"); dropped once a resident hits them. */
   raid?: string;
+  /** Raiders wait at their exit until the siren has run (raidRules.minSecondsSirenToFirstHit). */
+  holdUntil?: number;
+  /** Residents: badly hurt, walking back to heal (config.residents.retreat). */
+  retreat?: boolean;
   kills: number;
 }
 
@@ -142,6 +146,8 @@ export interface Building {
   healTimer: number;
   /** Rebuilt on its own ruins: builds in half the time. */
   rebuild?: boolean;
+  /** Seconds until the next shot (buildings with autoAttack: the command center). */
+  attackCd?: number;
 }
 
 export interface Orb {
@@ -166,6 +172,8 @@ export interface Player {
   spawnTimer: number;
   /** Extra resident places (survivors). */
   capBonus: number;
+  /** Residents gathering before they engage, so they don't trickle in one by one (config.residents.rally). */
+  rally?: { x: number; y: number; start: number; members: number[] };
   stats: { nests: number; caches: number; heroes: string[]; energy: number; lost: number; parts: number };
   /** Scanner helper (design/ONBOARDING.md §1.3). */
   assist: AssistState;

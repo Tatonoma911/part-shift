@@ -115,11 +115,15 @@
     "_doc": "design/MVP_RULES.md §9.7",
     "source": "every opened (revealed, not destroyed) nest or heavy_nest; if none opened, a hidden nest nearest to the player's buildings opens a tunnel and sends the raid from there (its cell is shown as threat ping)",
     "target": "player building nearest to the source, command center last unless it is the only one",
-    "warningSeconds": 5,
+    "warningSeconds": 10,
     "warningUi": "red arrow at screen edge + sound raid_incoming",
     "raidersPreferBuildings": true,
     "switchToResidentsIfAttackedWithin": 1,
-    "_note": "raids are what makes villains regularly smash buildings"
+    "_note": "raids are what makes villains regularly smash buildings",
+    "minSecondsSirenToFirstHit": 10,
+    "spawnMinDistanceFromBuildings": 6,
+    "tunnelExit": "if the source nest is closer than 6 cells to any player building, raiders surface at a revealed or closed cell 6 cells away along the line from the target; they wait there until the siren has run 10 s",
+    "_b3": "QA B-3: reactor fell 4 s after the toast, home in the same second"
   },
   "buildingDamage": {
     "enemyVsBuildingFactor": 1.5,
