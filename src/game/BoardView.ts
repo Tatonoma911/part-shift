@@ -20,8 +20,12 @@ interface UnitView {
   spr: Phaser.GameObjects.Sprite;
   ring?: Phaser.GameObjects.Image;
   set: string;
-  lastX: number;
-  lastY: number;
+  /** Sim positions before and after the last fixed step; the sprite is drawn between them. */
+  prevX: number;
+  prevY: number;
+  curX: number;
+  curY: number;
+  simT: number;
   lastCd: number;
   oneShot: boolean;
   windup: boolean;
@@ -728,6 +732,7 @@ export class BoardView {
 
   private oneShot(v: UnitView, anim: string): void {
     v.oneShot = true;
+    v.spr.anims.timeScale = 1;
     v.spr.play(`${v.set}.${anim}`);
     v.spr.once('animationcomplete', () => (v.oneShot = false));
   }
@@ -739,21 +744,32 @@ export class BoardView {
     const order = w.player(ME).order;
     for (const u of w.s.units) {
       alive.add(u.id);
-      const c = this.center(u.x, u.y);
+      let v = this.units.get(u.id);
+      if (v && v.simT !== w.s.time) {
+        v.prevX = v.curX;
+        v.prevY = v.curY;
+        v.curX = u.x;
+        v.curY = u.y;
+        v.simT = w.s.time;
+      }
+      // The sim moves units in 50 ms steps; draw between the last two so walking is smooth at any frame rate.
+      const a = w.stepAlpha;
+      const c = v ? this.center(v.prevX + (v.curX - v.prevX) * a, v.prevY + (v.curY - v.prevY) * a) : this.center(u.x, u.y);
       const fx = c.x;
       const fy = c.y - CELL / 2 + FEET;
-      let v = this.units.get(u.id);
       if (!v) {
         const set = this.setOf(u);
         const spr = this.scene.add.sprite(fx, fy, set).setOrigin(...originOf(set));
-        v = { spr, set, lastX: u.x, lastY: u.y, lastCd: u.attackCooldown, oneShot: false, windup: false, anim: '' };
+        v = { spr, set, prevX: u.x, prevY: u.y, curX: u.x, curY: u.y, simT: w.s.time, lastCd: u.attackCooldown, oneShot: false, windup: false, anim: '' };
         if (u.kind === 'defender') v.ring = this.scene.add.image(fx, fy, 'tile.defender_ring').setOrigin(0.5, 0.75);
         if (u.owner >= 0 && u.owner !== ME) spr.setTint(0xffb080);
         this.units.set(u.id, v);
         if (u.kind === 'demon') this.oneShot(v, 'emerge');
       }
-      const dx = u.x - v.lastX;
-      const dy = u.y - v.lastY;
+      // Movement over the last sim step, not this render frame: frames between steps would read as
+      // "stopped" and restart the walk cycle every time.
+      const dx = v.curX - v.prevX;
+      const dy = v.curY - v.prevY;
       const moved = Math.abs(dx) + Math.abs(dy) > 0.0005;
       const set = animSets[v.set];
       if (Math.abs(dx) > 0.0005) v.spr.setFlipX(set.faces === 'left' ? dx > 0 : dx < 0);
@@ -785,11 +801,13 @@ export class BoardView {
         if (anim === 'dig' && v.anim !== 'dig' && u.owner === ME) sound.play('dig_start');
         v.anim = anim;
         v.spr.play(`${v.set}.${anim}`, true);
+        // Runs carry the distance one cycle covers; match it to the unit's real speed so feet don't slide.
+        const stride = set.anims[anim]?.pxPerCycle;
+        const def = set.anims[anim];
+        v.spr.anims.timeScale = stride && def ? Phaser.Math.Clamp((w.stats(u).speed * CELL) / ((stride * def.fps) / def.frames.length), 0.5, 2) : 1;
       }
       v.spr.setPosition(fx, fy).setDepth(D.unit + fy / 4000);
       v.ring?.setPosition(fx, fy).setDepth(D.unit + fy / 4000 - 0.0001);
-      v.lastX = u.x;
-      v.lastY = u.y;
       v.lastCd = u.attackCooldown;
 
       const st = w.stats(u);
@@ -814,6 +832,7 @@ export class BoardView {
       this.units.delete(id);
       v.ring?.destroy();
       if (animSets[v.set].anims.death) {
+        v.spr.anims.timeScale = 1;
         v.spr.play(`${v.set}.death`).once('animationcomplete', () => v.spr.destroy());
       } else v.spr.destroy();
     }

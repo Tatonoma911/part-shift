@@ -34,8 +34,9 @@
       12,
       13
      ],
-     "fps": 10,
-     "loop": true
+     "fps": 24,
+     "loop": true,
+     "pxPerCycle": 42
     },
     "walk_back": {
      "frames": [
@@ -46,17 +47,20 @@
       20,
       21
      ],
-     "fps": 10,
-     "loop": true
+     "fps": 24,
+     "loop": true,
+     "pxPerCycle": 42
     },
     "dig": {
      "frames": [
       24,
       25,
       26,
-      27
+      27,
+      28,
+      29
      ],
-     "fps": 8,
+     "fps": 10,
      "loop": true
     },
     "build": {
@@ -78,8 +82,9 @@
       44,
       45
      ],
-     "fps": 14,
-     "loop": true
+     "fps": 24,
+     "loop": true,
+     "pxPerCycle": 42
     },
     "death": {
      "frames": [
@@ -96,8 +101,8 @@
      "loop": false
     }
    },
-   "faces": "front",
-   "note": "Все кадры нарисованы заново из одной позы (front_a/back_a idle_0); влево — flipX."
+   "faces": "right",
+   "note": "Все кадры нарисованы заново из одной позы (front_a/back_a idle_0); бег вбок лицом по движению, влево — flipX. pxPerCycle: путь за цикл, при котором ноги не скользят (AR-20)."
   },
   "defender": {
    "sheet": "defender.png",
@@ -130,8 +135,9 @@
       12,
       13
      ],
-     "fps": 10,
-     "loop": true
+     "fps": 24,
+     "loop": true,
+     "pxPerCycle": 42
     },
     "attack": {
      "frames": [

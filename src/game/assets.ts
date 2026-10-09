@@ -16,7 +16,7 @@ interface AnimSet {
   cols: number;
   anchor: [number, number];
   faces?: 'front' | 'left' | 'right';
-  anims: Record<string, { frames: number[]; fps: number; loop: boolean }>;
+  anims: Record<string, { frames: number[]; fps: number; loop: boolean; pxPerCycle?: number }>;
 }
 
 export const animSets = (animJson as unknown as { sets: Record<string, AnimSet> }).sets;
