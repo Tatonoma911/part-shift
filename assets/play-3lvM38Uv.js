@@ -1,8 +1,8 @@
-import"./modulepreload-polyfill-B5Qt9EMX.js";import{H as o,i as p}from"./content-C9P0gmRj.js";import"./main-yIg1wzK9.js";const l=new URLSearchParams(location.search).get("lang");let i=l==="ru"||l==="en"?l:navigator.language.toLowerCase().startsWith("ru")?"ru":"en";try{if(!l){const e=localStorage.getItem("partshift.lang");(e==="ru"||e==="en")&&(i=e)}}catch{}const a=(e,s)=>i==="ru"?e:s,n=e=>`../${p(e)}`,t=e=>`../index.html?lang=${i}#${e}`,c=[["home","Вселенная","Universe"],["heroes","Герои","Heroes"],["world","Мир и лор","World and lore"],["villains","Злодеи","Villains"],["comics","Комиксы","Comics"],["artbook","Артбук","Artbook"]],m='<svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 5l14 14M19 5L5 19" stroke="currentColor" stroke-width="2.4"/></svg>',b='<svg width="22" height="22" viewBox="0 0 26 26" aria-hidden="true"><path d="M3 7h20M3 13h20M3 19h14" stroke="currentColor" stroke-width="2.6" stroke-linecap="square"/></svg>',h=["kiln","frostline","lineman","demon"].map(e=>o.find(s=>s.id===e));document.documentElement.lang=i;document.getElementById("frame").innerHTML=`
+import"./modulepreload-polyfill-B5Qt9EMX.js";import{H as o,i as p}from"./content-Mp9u95Fl.js";import"./main-yIg1wzK9.js";const l=new URLSearchParams(location.search).get("lang");let i=l==="ru"||l==="en"?l:navigator.language.toLowerCase().startsWith("ru")?"ru":"en";try{if(!l){const e=localStorage.getItem("partshift.lang");(e==="ru"||e==="en")&&(i=e)}}catch{}const a=(e,s)=>i==="ru"?e:s,n=e=>`../${p(e)}`,t=e=>`../index.html?lang=${i}#${e}`,c=[["home","Вселенная","Universe"],["heroes","Герои","Heroes"],["world","Мир и лор","World and lore"],["villains","Злодеи","Villains"],["comics","Комиксы","Comics"],["artbook","Артбук","Artbook"]],m='<svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 5l14 14M19 5L5 19" stroke="currentColor" stroke-width="2.4"/></svg>',b='<svg width="22" height="22" viewBox="0 0 26 26" aria-hidden="true"><path d="M3 7h20M3 13h20M3 19h14" stroke="currentColor" stroke-width="2.6" stroke-linecap="square"/></svg>',h=["kiln","frostline","lineman","demon"].map(e=>o.find(s=>s.id===e));document.documentElement.lang=i;document.getElementById("frame").innerHTML=`
   <header class="pbar">
     <a class="brand" href="${t("home")}"><img src="${n("emblem.webp")}" alt="" width="28" height="28"><span class="wordmark">PART<b>SHIFT</b></span></a>
     <nav class="pnav">${c.slice(1).map(([e,s,d])=>`<a href="${t(e)}">${a(s,d)}</a>`).join("")}</nav>
-    <span class="caps pshift">${a("СМЕНА // ОХОТА НА ДЕМОНА","SHIFT // DEMON HUNT")}</span>
+    <span class="caps pshift">${a("СРОЧНЫЙ ВЫЗОВ // ДЕМОН","URGENT CALL // DEMON")}</span>
     <button class="pmenu" id="pmenu" aria-label="${a("Меню","Menu")}">${b}<span>${a("Меню","Menu")}</span></button>
   </header>
 
@@ -11,8 +11,8 @@ import"./modulepreload-polyfill-B5Qt9EMX.js";import{H as o,i as p}from"./content
       <figure class="slab poster"><img src="${n("key-art.webp")}" alt=""><figcaption><span class="caps">LUMEN CITY</span>${a("Сеть спасения сломалась и перестроила город. Ты открываешь его заново.","The rescue network broke and rebuilt the city. You are reopening it.")}</figcaption></figure>
       <div class="slab pcard">
         <span class="caps">${a("ЦЕЛЬ СМЕНЫ","SHIFT GOAL")}</span>
-        <p>${a("Найди люк Undersun, где спит <b>Демон</b>, подготовь защитников и победи его, пока Угроза не выросла.","Find the Undersun hatch where the <b>Demon</b> sleeps, train defenders and beat him before the Threat grows.")}</p>
-        <img class="pxs" src="${n("px/anim-demon.gif")}" alt="">
+        <p>${a("Вызов пришёл на <b>Демона</b>, одного из обезумевших героев. Найди люк Undersun, где он спит, подготовь защитников и победи его, пока Угроза не выросла.","The call is for <b>Demon</b>, one of the deranged heroes. Find the Undersun hatch where he sleeps, train defenders and beat him before the Threat grows.")}</p>
+        <img class="pxs" src="${n("px/demon.png")}" alt="">
       </div>
     </aside>
 
@@ -38,7 +38,7 @@ import"./modulepreload-polyfill-B5Qt9EMX.js";import{H as o,i as p}from"./content
         </ul>
       </div>
       <div class="slab pcard">
-        <span class="caps">${a("ЧЬИ ЧАСТИ ЗАБЕРЁШЬ","WHOSE PARTS YOU CLAIM")}</span>
+        <span class="caps">${a("ГЕРОИ НА СМЕНЕ","HEROES ON SHIFT")}</span>
         <div class="pheroes">${h.map(e=>`<a href="${t(`hero-${e.id}`)}" title="${e.name[i]}"><img src="${n(e.px)}" alt="${e.name[i]}"><span>${e.name[i]}</span></a>`).join("")}</div>
       </div>
     </aside>
