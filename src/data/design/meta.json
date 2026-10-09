@@ -145,7 +145,7 @@
     "parts_taken": "part attached to a resident",
     "parts_recycled": "spare part turned into Energy",
     "residents_lost": "resident died",
-    "accidental_opens": "danger opened without explicit confirm",
+    "accidental_opens": "nest/heavy_nest revealed by digging WITHOUT the explicit confirm «Да, вскрыть» (tap on a scanner-marked or player-flagged cell + confirm = deliberate). Lairs/hatches self-opening by timer and raid tunnels do not count",
     "heroes_defeated": "any hero killed",
     "hero_seen.<heroId>": "1 once the hero was met as an enemy (lair opened or hero woke)",
     "hero_defeats.<heroId>": "times that hero was defeated",

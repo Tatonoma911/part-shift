@@ -6,7 +6,9 @@ import type { GameEvent, World } from '../core/world';
 import { animSets, BUILDING_ANCHOR, originOf } from './assets';
 import { sound } from './audio';
 import { C, CELL, CHANNEL, STEP, TECH_COLOR } from './layout';
+import { buzz, comfort } from './comfort';
 import { Quarantine, type RevealKind } from './Quarantine';
+import { Bars, drawWeakOrbs, weaknessesOf, type Weakness } from './Vitals';
 import { glyph, TXT } from './ui';
 
 const ME = 0;
@@ -43,20 +45,16 @@ export interface ViewState {
   focus: { x: number; y: number }[];
   /** Assist mode "full": show the risk glow around visible numbers (UI_SPEC §3.2). */
   showRisk: boolean;
+  /** Light all liberated land for a moment (after a tap outside it). */
+  showTerritory?: boolean;
+  /** Bouncing arrow over the nearest free liberated cell. */
+  pointTo?: { x: number; y: number } | null;
 }
 
 function hash(x: number, y: number): number {
   return (Math.imul(x + 17, 73856093) ^ Math.imul(y + 31, 19349663)) >>> 0;
 }
 
-/**
- * Stand-in for adaptants: the chunky shield-armed sheets clash with the hero
- * style and Антон rejected them (2026-10-09). Until the animator redraws them,
- * adaptants are smaller Standard-style infected residents tinted by element.
- */
-const ADAPTANT_SET = 'standard';
-const ADAPTANT_TINT: Record<string, number> = { thermo: 0xffb6a0, cryo: 0xb4e2ff, volt: 0xfff09a, toxin: 0xc6f29e, impact: 0xe0c0a0, kinetic: 0xe0d0c0 };
-const HEAVY_TINT = 0xc8a890;
 
 /** Residents fight now; their swing, flinch and limb install come from the animator's fighter sheet. */
 const RESIDENT_COMBAT_SET = 'defender';
@@ -88,8 +86,11 @@ export class BoardView {
   private readonly arcG: Phaser.GameObjects.Graphics;
   private readonly topG: Phaser.GameObjects.Graphics;
   private ghostSpr: Phaser.GameObjects.Image | null = null;
+  private zoneG?: Phaser.GameObjects.Graphics;
   private lost: GameEvent[] = [];
   private readonly quarantine: Quarantine;
+  private readonly vitals = new Bars();
+  private readonly weakCache = new Map<number, Weakness[]>();
 
   constructor(
     private readonly scene: Phaser.Scene,
@@ -288,6 +289,7 @@ export class BoardView {
         break;
       case 'center_hit':
         this.shake(100, 0.002);
+        buzz(30);
         break;
       case 'demon_blast': {
         this.shake(220, 0.006);
@@ -304,12 +306,14 @@ export class BoardView {
       }
       case 'building_lost':
         this.lost.push(e);
+        buzz([40, 40, 80]);
         this.fxAtCell('explosion', e.x, e.y, 1.8);
         this.shake(160, 0.004);
         break;
       case 'nest_open':
       case 'heavy_nest_open':
         this.fxAtCell('explosion', e.x, e.y, e.type === 'heavy_nest_open' ? 2 : 1.5);
+        buzz(70);
         this.shake(180, 0.004);
         break;
       case 'nest_destroyed':
@@ -359,6 +363,7 @@ export class BoardView {
 
   /** Shake only the board camera; HUD and dock stay still. */
   private shake(ms: number, intensity: number): void {
+    if (!comfort().shake) return;
     const cams = this.scene.cameras.cameras;
     (cams[1] ?? cams[0]).shake(ms, intensity);
   }
@@ -456,6 +461,10 @@ export class BoardView {
         if (w.started && w.inTerritory(ME, x, y) && c.building === undefined) {
           og.lineStyle(2, C.seam, 0.55);
           og.strokeRect(px + 2, py + 2, CELL - 4, CELL - 4);
+          if (view.showTerritory) {
+            og.fillStyle(C.seam, 0.28 + 0.14 * Math.sin(now / 150));
+            og.fillRect(px, py, CELL, CELL);
+          }
         }
         if (view.buildType && w.canBuild(ME, view.buildType, x, y) === null) {
           const pulse = 0.35 + 0.25 * Math.sin(now / 200);
@@ -469,6 +478,7 @@ export class BoardView {
       }
     }
     this.drawSpotlight(og, view, now);
+    this.drawPointTo(view, now);
     this.updateBuildings(now);
     this.updateGhost(view);
     this.updateUnits();
@@ -529,7 +539,7 @@ export class BoardView {
       g.fillRect(px, py, CELL, CELL);
       g.lineStyle(6, 0x0b1117, 0.5);
       this.check(g, cx, cy + 1);
-      g.lineStyle(5, 0x8fe35a, 1);
+      g.lineStyle(5, C.green, 1);
       this.check(g, cx, cy);
     } else if (risk) {
       const col = risk === 'threat' ? C.coral : C.violet;
@@ -609,6 +619,42 @@ export class BoardView {
         g.strokeRect(px + 1, py + 1, CELL - 2, CELL - 2);
       }
     }
+  }
+
+  private arrowG?: Phaser.GameObjects.Graphics;
+
+  /** Teal arrow bobbing above the target cell, with its outline (MVP_RULES §7.1). */
+  private drawPointTo(view: ViewState, now: number): void {
+    this.arrowG ??= this.scene.add.graphics().setDepth(D.top + 0.5);
+    const g = this.arrowG;
+    g.clear();
+    const to = view.pointTo;
+    if (!to) return;
+    const px = this.bx + to.x * STEP;
+    const py = this.by + to.y * STEP;
+    const pulse = 0.5 + 0.5 * Math.sin(now / 140);
+    g.fillStyle(C.seam, 0.25 + 0.2 * pulse);
+    g.fillRect(px, py, CELL, CELL);
+    g.lineStyle(5, C.seam, 1);
+    g.strokeRect(px + 2, py + 2, CELL - 4, CELL - 4);
+    const cx = px + CELL / 2;
+    const tip = py - 6 - 10 * pulse;
+    const s = CELL * 0.32;
+    const pts = [
+      new Phaser.Math.Vector2(cx, tip),
+      new Phaser.Math.Vector2(cx + s, tip - s),
+      new Phaser.Math.Vector2(cx + s * 0.38, tip - s),
+      new Phaser.Math.Vector2(cx + s * 0.38, tip - s * 2.1),
+      new Phaser.Math.Vector2(cx - s * 0.38, tip - s * 2.1),
+      new Phaser.Math.Vector2(cx - s * 0.38, tip - s),
+      new Phaser.Math.Vector2(cx - s, tip - s),
+    ];
+    g.fillStyle(C.graphite, 0.35);
+    g.fillPoints(pts.map((v) => new Phaser.Math.Vector2(v.x + 3, v.y + 4)), true);
+    g.fillStyle(C.seam, 1);
+    g.fillPoints(pts, true);
+    g.lineStyle(3, C.graphite, 1);
+    g.strokePoints(pts, true);
   }
 
   private updateHot(i: number, hot: number, px: number, py: number, now: number): void {
@@ -756,14 +802,46 @@ export class BoardView {
     if (b.owner !== ME) spr.setTint(0xffc2a8);
     const g = this.topG;
     const p = this.center(b.x, b.y);
-    if (b.complete && b.hp < def.hp) this.bar(g, p.x - 22, p.y - 40, 44, b.hp / def.hp, b.hp / def.hp > 0.4 ? C.green : C.coralInk);
+    if (b.complete && b.hp < def.hp) this.vitals.draw(g, `b:${b.id}`, p.x - 28, p.y - 46, 56, b.hp / def.hp, 'building', this.scene.time.now);
     void now;
   }
 
   private updateGhost(view: ViewState): void {
+    this.zoneG ??= this.scene.add.graphics().setDepth(D.overlay + 0.2);
+    this.zoneG.clear();
     if (!view.ghost || !view.buildType) {
       this.ghostSpr?.setVisible(false);
       return;
+    }
+    // The land this building will free: a dashed square of its territory radius around the ghost.
+    const r = buildingDefs[view.buildType]?.territoryRadius ?? 0;
+    if (r > 0) {
+      const w = this.world.s;
+      const x0 = Math.max(0, view.ghost.x - r);
+      const y0 = Math.max(0, view.ghost.y - r);
+      const x1 = Math.min(w.width - 1, view.ghost.x + r);
+      const y1 = Math.min(w.height - 1, view.ghost.y + r);
+      const a = this.center(x0, y0);
+      const b = this.center(x1, y1);
+      const L = a.x - CELL / 2;
+      const T = a.y - CELL / 2;
+      const R = b.x + CELL / 2;
+      const B = b.y + CELL / 2;
+      const zg = this.zoneG;
+      zg.fillStyle(C.seam, 0.12);
+      zg.fillRect(L, T, R - L, B - T);
+      zg.lineStyle(3, C.seam, 0.95);
+      const dash = (ax: number, ay: number, bx: number, by: number) => {
+        const len = Math.hypot(bx - ax, by - ay);
+        for (let d = 0; d < len; d += 14) {
+          const e = Math.min(len, d + 8);
+          zg.lineBetween(ax + ((bx - ax) * d) / len, ay + ((by - ay) * d) / len, ax + ((bx - ax) * e) / len, ay + ((by - ay) * e) / len);
+        }
+      };
+      dash(L, T, R, T);
+      dash(R, T, R, B);
+      dash(R, B, L, B);
+      dash(L, B, L, T);
     }
     const p = this.center(view.ghost.x, view.ghost.y);
     if (!this.ghostSpr) this.ghostSpr = this.scene.add.image(0, 0, `building.${view.buildType}`).setDepth(D.building + 1);
@@ -779,14 +857,33 @@ export class BoardView {
 
   // ------------------------------------------------------------------ units
 
+  /** What this enemy is weak to: heroes by their hero entry, adaptants by their nest technology. */
+  private weakOf(u: Unit): Weakness[] {
+    let w = this.weakCache.get(u.id);
+    if (w) return w;
+    if (u.kind === 'hero') w = weaknessesOf({ heroId: u.hero });
+    else if (u.kind === 'heavy_adaptant') w = weaknessesOf({ tech: 'impact' });
+    else w = weaknessesOf({ tech: u.tech });
+    this.weakCache.set(u.id, w);
+    return w;
+  }
+
   private setOf(u: Unit): string {
     switch (u.kind) {
       case 'resident':
         return 'resident';
       case 'hero':
         return animSets[u.hero!] ? u.hero! : 'standard';
-      default:
-        return ADAPTANT_SET;
+      case 'heavy_adaptant':
+        return 'heavy_adaptant';
+      case 'ally':
+        // The hero's own team look (animator's ally_<id> sheets), else the enemy sheet.
+        return animSets[`ally_${u.hero}`] ? `ally_${u.hero}` : animSets[u.hero!] ? u.hero! : 'standard';
+      default: {
+        // The animator's redrawn sheets, one per nest element, no shields (AR-18).
+        const set = `adaptant_${u.tech ?? 'thermo'}`;
+        return animSets[set] ? set : 'adaptant_thermo';
+      }
     }
   }
 
@@ -827,11 +924,6 @@ export class BoardView {
         if (u.kind === 'hero' && u.nest && w.cell(...(u.nest.slice(2).split(',').map(Number) as [number, number])).content === 'boss_hatch') {
           spr.setScale(1.3);
           v.ring = this.scene.add.image(fx, fy, 'tile.defender_ring').setOrigin(0.5, 0.75).setScale(1.6).setTint(C.violet);
-        }
-        if (u.kind === 'adaptant' || u.kind === 'heavy_adaptant') {
-          spr.setScale(u.kind === 'heavy_adaptant' ? 1.05 : 0.8);
-          v.tint = u.kind === 'heavy_adaptant' ? HEAVY_TINT : ADAPTANT_TINT[u.tech ?? 'thermo'] ?? ADAPTANT_TINT.thermo;
-          spr.setTint(v.tint);
         }
         if (u.owner >= 0 && u.owner !== ME) spr.setTint(0xffb080);
         this.units.set(u.id, v);
@@ -900,7 +992,10 @@ export class BoardView {
         g.fillStyle(TECH_COLOR[partDefs[part.id]?.tech] ?? 0xffffff, 1);
         g.fillCircle(fx - 14 + k * 9, top + 2, 3.5);
       });
-      if (u.hp < st.hp) this.bar(g, fx - 20, top - 8, 40, u.hp / st.hp, u.owner < 0 ? C.coralInk : C.green);
+      // Health bar: enemies always, our units when hurt or fighting; weakness orbs above enemies (UI_SPEC §3.5).
+      const enemy = u.owner < 0;
+      if (enemy || u.hp < st.hp || u.target !== undefined) this.vitals.draw(g, `u:${u.id}`, fx - 24, top - 12, 48, u.hp / st.hp, enemy ? 'enemy' : 'ally', this.scene.time.now);
+      if (enemy) drawWeakOrbs(g, fx, top - 30, this.weakOf(u));
       if (order === `u:${u.id}`) {
         g.lineStyle(3, C.coral, 1);
         g.strokeEllipse(fx, fy - 2, 46, 18);
@@ -926,7 +1021,7 @@ export class BoardView {
     for (const site of w.s.sites) {
       if (site.destroyed || site.hp >= site.maxHp) continue;
       const p = this.center(site.x, site.y);
-      this.bar(g, p.x - 22, p.y - 30, 44, site.hp / site.maxHp, C.coralInk);
+      this.vitals.draw(g, `s:${site.x},${site.y}`, p.x - 26, p.y - 34, 52, site.hp / site.maxHp, 'enemy', this.scene.time.now);
     }
   }
 
@@ -976,12 +1071,5 @@ export class BoardView {
     for (const b of w.s.buildings) {
       if (!b.complete && b.built > 0) arc(b.x, b.y, 1 - b.built / w.buildSeconds(b));
     }
-  }
-
-  private bar(g: Phaser.GameObjects.Graphics, x: number, y: number, width: number, frac: number, color: number): void {
-    g.fillStyle(0x0b1117, 0.75);
-    g.fillRect(x - 2, y - 2, width + 4, 10);
-    g.fillStyle(color, 1);
-    g.fillRect(x, y, width * Math.max(0, Math.min(1, frac)), 6);
   }
 }

@@ -39,6 +39,8 @@ export interface Cell {
   building?: number;
   /** Player's "danger here" flag. */
   marked?: boolean;
+  /** The player confirmed digging this known danger ("Да, вскрыть"): opening it is deliberate. */
+  deliberate?: boolean;
   /** Seconds left of steam-burnt ground. */
   hot?: number;
   /** Hero lair / boss hatch: the hero waiting inside (heroes.json id). */
@@ -74,7 +76,8 @@ export interface PartInstance {
   tier: number;
 }
 
-export type UnitKind = 'resident' | 'adaptant' | 'heavy_adaptant' | 'hero';
+/** 'ally': a hero who came back to the team (meta progress), fighting next to the residents. */
+export type UnitKind = 'resident' | 'adaptant' | 'heavy_adaptant' | 'hero' | 'ally';
 
 export type Task =
   | { type: 'idle' }
@@ -174,6 +177,14 @@ export interface Player {
   capBonus: number;
   /** Residents gathering before they engage, so they don't trickle in one by one (config.residents.rally). */
   rally?: { x: number; y: number; start: number; members: number[] };
+  /** Cache bonuses taken this run, with their stack count (boons.json). */
+  boons?: Record<string, number>;
+  /** An opened cache waiting for the player's pick: three boon ids, and when it was offered. */
+  boonOffer?: { ids: string[]; at: number };
+  /** Allies down, waiting to come back at the center: hero id → game time it returns. */
+  allyBack?: Record<string, number>;
+  /** Ally passive timers (heroes.json ally.everySeconds): hero id → seconds left. */
+  allyTimers?: Record<string, number>;
   stats: { nests: number; caches: number; heroes: string[]; energy: number; lost: number; parts: number };
   /** Scanner helper (design/ONBOARDING.md §1.3). */
   assist: AssistState;
@@ -207,6 +218,10 @@ export interface RuleOverrides {
   relativeSites?: { type: 'nest' | 'cache' | 'rubble'; dx: number; dy: number }[];
   /** Tech of nests placed by relativeSites. */
   relativeTech?: Tech;
+  /** Cache bonuses this player's rank allows (boons.json, meta ranks); none: a cache only pays Energy (tutorial). */
+  boonPool?: string[];
+  /** Heroes taken on this shift as allies (meta allyChoice), heroes.json ids. */
+  allies?: string[];
   nest?: { initialSpawn?: number; maxAlive?: number; spawnSeconds?: number; totalBudget?: number };
   adaptant?: { partDropChance?: number; partSlot?: 'arm' | 'leg' };
 }

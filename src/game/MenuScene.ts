@@ -6,6 +6,7 @@ import type { AssistMode } from '../core/state';
 import { hasText, lang, setLang, t } from '../i18n';
 import { introSeen, playIntro } from '../intro';
 import { analytics, askAnalyticsConsent } from '../analytics';
+import { canVibrate, comfort, PALETTES, setComfort, TEXT_SCALES } from './comfort';
 import { learning, learningLang } from './learn';
 import { volumeHeight, volumeSliders } from './volume';
 import { BUILDING_ANCHOR, createArt, preloadArt } from './assets';
@@ -13,6 +14,11 @@ import { preloadComm } from './Comm';
 import { sound } from './audio';
 import type { GameStart } from './GameScene';
 import { C, INK, LANDSCAPE, VIEW } from './layout';
+import { menuIcon, type MenuIconId } from './menuIcons';
+import { preloadMetaArt } from './meta/art';
+import { loadMeta, pickAllies } from './meta/store';
+import { allySelect } from './meta/AllySelect';
+import { metaPreview } from './meta/preview';
 import { clearSlot, lastSlot, loadSettings, loadSlot, saveSettings, SLOTS } from './saves';
 import { tutorialDone } from './Tutorial';
 import { setBackHandler } from '../platform/native';
@@ -20,7 +26,7 @@ import { chip, plate, TXT } from './ui';
 import { closeSocial, dailySeed, dayId, heroOfWeek, invite, openBoard, openDonate, openFeedback, readChallenge, socialOpen } from '../social';
 
 type Ev = Phaser.Types.Input.EventData;
-type Page = 'main' | 'slots' | 'settings';
+type Page = 'main' | 'slots' | 'settings' | 'comfort';
 
 /** HeroOut heroes, all of them infected villains now (lore/VILLAINS.md); the menu shows three at random. */
 const MENU_HEROES = ['kiln', 'lineman', 'frostline', 'seraph', 'current', 'mason', 'beacon', 'canopy', 'sweep', 'patch', 'hive', 'n73', 'doctor', 'demon'];
@@ -35,6 +41,8 @@ export class MenuScene extends Phaser.Scene {
   private armed: number | null = null;
   private current: Page = 'main';
   private storyPlaying = false;
+  /** The ally picker before a new shift, while it is open. */
+  private allyUi: Phaser.GameObjects.Container | null = null;
 
   constructor() {
     super('menu');
@@ -42,6 +50,7 @@ export class MenuScene extends Phaser.Scene {
 
   preload(): void {
     preloadArt(this);
+    preloadMetaArt(this);
     preloadComm(this);
     const bar = this.add.graphics();
     this.load.on('progress', (v: number) => {
@@ -53,6 +62,7 @@ export class MenuScene extends Phaser.Scene {
   }
 
   create(): void {
+    this.allyUi = null;
     if (!this.anims.exists('resident.idle')) createArt(this);
 
     // Links for tests and sharing: ?seed=…, ?tutorial=1 go straight to the board.
@@ -67,6 +77,7 @@ export class MenuScene extends Phaser.Scene {
     }
     this.drawBackdrop();
     this.show('main');
+    metaPreview(this);
     analytics.where('menu');
     analytics.track('menu_view', { tutorial_done: tutorialDone(), has_run: lastSlot() !== null });
     // Android back: skips the intro comic, sub-pages return to the main page; on the main page the app goes to the background.
@@ -89,7 +100,8 @@ export class MenuScene extends Phaser.Scene {
       this.registry.set('introShown', true);
       this.story(false);
     } else {
-      askAnalyticsConsent();
+      // Statistics are asked about once a shift has been played, not over the first menu (AR-09).
+      if (loadMeta().stats.runs_played) askAnalyticsConsent();
       sound.playMusic('menu');
     }
   }
@@ -105,8 +117,6 @@ export class MenuScene extends Phaser.Scene {
       .catch(() => undefined)
       .finally(() => {
         analytics.where('menu');
-        // First launch asks about statistics after the comic, not over it.
-        askAnalyticsConsent();
         this.storyPlaying = false;
         if (this.scene.isActive()) {
           this.input.enabled = true;
@@ -145,7 +155,7 @@ export class MenuScene extends Phaser.Scene {
     // The week's leader gets their name on everyone's title screen.
     void heroOfWeek().then((h) => {
       if (!h || !this.scene.isActive()) return;
-      const tx = this.add.text(ax + 390, 276 + ay, `🏆 ${t('social.hero_week', { name: h.name, score: h.score.toLocaleString('ru-RU') })}`, TXT.body(22, INK.amber, '700')).setOrigin(0.5);
+      const tx = this.add.text(ax + 390, 276 + ay, `${t('social.hero_week', { name: h.name, score: h.score.toLocaleString('ru-RU') })}`, TXT.body(22, INK.amber, '700')).setOrigin(0.5);
       if (tx.width > 740) tx.setScale(740 / tx.width);
     });
 
@@ -202,14 +212,17 @@ export class MenuScene extends Phaser.Scene {
       const name = (hasText(`enemy.${id}.name`) ? t(`enemy.${id}.name`) : id).toUpperCase();
       const tagT = this.add.text(0, 0, name, TXT.num(18, INK.white)).setOrigin(0.5, 0.5);
       const callT = this.add.text(0, 0, t('menu.on_call').toUpperCase(), { ...TXT.caps(INK.coral), fontSize: '12px' }).setOrigin(0.5, 0.5);
-      const w = Math.max(tagT.width, callT.width) + 36;
+      if (tagT.width > 200) tagT.setScale(200 / tagT.width);
+      const w = Math.max(tagT.displayWidth, callT.width) + 36;
       const tg = this.add.graphics();
       chip(tg, -w / 2, -26, w, 52, C.graphite, 0.92, 12);
       tg.fillStyle(C.coral, 1);
       tg.fillCircle(-w / 2 + 14, 12, 4);
       tagT.setPosition(0, -9);
       callT.setPosition(6, 13);
-      this.add.container(x, 284 + ay, [tg, tagT, callT]);
+      // Long names (СЕМЬДЕСЯТ ТРЕТИЙ) stay inside the screen (AR-07).
+      const tx = Phaser.Math.Clamp(x, ax + w / 2 + 12, ax + 780 - w / 2 - 12);
+      this.add.container(tx, 284 + ay, [tg, tagT, callT]);
 
       // Easter egg: tap a hero to hear one of their lines.
       hero.setInteractive({ useHandCursor: true }).on('pointerdown', () => {
@@ -260,8 +273,15 @@ export class MenuScene extends Phaser.Scene {
       }
       const color = primary ? INK.white : act ? INK.graphite : INK.dim;
       const tx = this.add.text(cx, y + (sub ? 38 : h / 2), label, TXT.body(29, color, '700')).setOrigin(0.5);
+      // A label never touches the button edges (ART_REVIEW AR-10): shrink it to fit, larger text sizes included.
+      const room = w - 64 - 56;
+      if (tx.width > room) tx.setScale(room / tx.width);
       c.add([g, tx]);
-      if (sub) c.add(this.add.text(cx, y + 78, sub, TXT.body(21, primary ? '#D9F3F8' : INK.dim, '500')).setOrigin(0.5));
+      if (sub) {
+        const st = this.add.text(cx, y + 78, sub, TXT.body(21, primary ? '#D9F3F8' : INK.dim, '500')).setOrigin(0.5);
+        if (st.width > room) st.setScale(room / st.width);
+        c.add(st);
+      }
       if (act) {
         const hit = this.add.zone(x0 + 32, y, w - 64, h).setOrigin(0).setInteractive({ useHandCursor: true });
         hit.on('pointerdown', (_p: Phaser.Input.Pointer, _x: number, _y: number, ev: Ev) => {
@@ -281,6 +301,8 @@ export class MenuScene extends Phaser.Scene {
         button(t('menu.continue'), () => this.play({ slot: last }), true, `${t('menu.slot', { n: last })} · ${this.fmt(s.time)}`);
       } else if (!tutorialDone()) button(t('menu.tutorial'), () => this.play({ tutorial: true }), true);
       button(t('menu.new_run'), () => this.show('slots'), !last && tutorialDone());
+      // Meta progress: returned heroes, stats, records, rank (design/META.md §6).
+      button(t('dossier.title'), () => this.scene.start('dossier'));
       if (last || tutorialDone()) button(t('menu.tutorial'), () => this.play({ tutorial: true }));
       button(t('menu.guide'), () => learning().openGuide());
       button(t('menu.settings'), () => this.show('settings'));
@@ -319,6 +341,48 @@ export class MenuScene extends Phaser.Scene {
         }
       }
       button(t('menu.back'), () => this.show('main'));
+    } else if (page === 'comfort') {
+      // «Удобство» (UI_SPEC §4.7): each row cycles its value on tap.
+      const cf = comfort();
+      const onOff = (v: boolean) => t(v ? 'comfort.on' : 'comfort.off');
+      c.add(this.add.text(cx, y + 6, t('settings.comfort').toUpperCase(), TXT.caps()).setOrigin(0.5));
+      y += 40;
+      button(`${t('comfort.palette')}: ${t(`comfort.palette.${cf.palette}`)}`, () => {
+        setComfort({ palette: PALETTES[(PALETTES.indexOf(cf.palette) + 1) % PALETTES.length] });
+        this.show('comfort');
+      }, false, t(`comfort.palette.${cf.palette}.hint`));
+      // Swatch: what "safe" and "danger" look like in this palette.
+      const sw = this.add.graphics();
+      const sy = y - 16 - 110 + 78;
+      sw.fillStyle(C.green, 1);
+      sw.fillCircle(x0 + 80, sy, 10);
+      sw.fillStyle(C.coral, 1);
+      sw.fillTriangle(x0 + w - 92, sy + 9, x0 + w - 68, sy + 9, x0 + w - 80, sy - 11);
+      c.add(sw);
+      button(`${t('comfort.calm')}: ${onOff(cf.calm)}`, () => {
+        setComfort({ calm: !cf.calm });
+        this.show('comfort');
+      }, false, t('comfort.calm.hint'));
+      button(`${t('comfort.shake')}: ${onOff(cf.shake)}`, () => {
+        setComfort({ shake: !cf.shake });
+        this.show('comfort');
+      });
+      button(`${t('comfort.text')}: ${Math.round(cf.textScale * 100)}%`, () => {
+        const i = TEXT_SCALES.indexOf(cf.textScale);
+        setComfort({ textScale: TEXT_SCALES[(i + 1) % TEXT_SCALES.length] });
+        this.show('comfort');
+      });
+      button(
+        `${t('comfort.vibrate')}: ${canVibrate() ? onOff(cf.vibrate) : t('comfort.vibrate.none')}`,
+        canVibrate()
+          ? () => {
+              setComfort({ vibrate: !cf.vibrate });
+              if (!cf.vibrate) navigator.vibrate?.(40);
+              this.show('comfort');
+            }
+          : null,
+      );
+      button(t('menu.back'), () => this.show('settings'), true);
     } else {
       const st = loadSettings();
       c.add(this.add.text(cx, y + 6, t('settings.volume').toUpperCase(), TXT.caps()).setOrigin(0.5));
@@ -333,10 +397,17 @@ export class MenuScene extends Phaser.Scene {
         this.scene.restart();
       });
       const modes: AssistMode[] = ['full', 'scanner', 'off'];
-      button(`${t('settings.assist.title')}: ${t(`assist.mode.${st.assist}`)}`, () => {
-        saveSettings({ ...st, assist: modes[(modes.indexOf(st.assist) + 1) % modes.length] });
-        this.show('settings');
-      });
+      // Short name on the button, the current mode in the sub-line (AR-10: the long label did not fit).
+      button(
+        t('settings.assist'),
+        () => {
+          saveSettings({ ...st, assist: modes[(modes.indexOf(st.assist) + 1) % modes.length] });
+          this.show('settings');
+        },
+        false,
+        t(`assist.mode.${st.assist}.short`),
+      );
+      button(t('settings.comfort'), () => this.show('comfort'));
       button(`${t('analytics.setting')}: ${t(analytics.consent === 'granted' ? 'settings.on' : 'settings.off')}`, () => {
         analytics.setConsent(analytics.consent !== 'granted');
         this.show('settings');
@@ -358,11 +429,12 @@ export class MenuScene extends Phaser.Scene {
   /** Ranking · Invite · Feedback · Coffee (the coffee chip is gold: supporting the author is one tap away). */
   private socialRow(c: Phaser.GameObjects.Container, x: number, y: number, w: number): void {
     const h = LANDSCAPE ? 76 : 92;
-    const items: [string, string, () => void, boolean][] = [
-      ['🏆', t('social.menu.board'), () => openBoard({ playDaily: () => this.playDaily() }), false],
-      ['📣', t('social.menu.invite'), () => invite('menu'), false],
-      ['✉', t('social.menu.feedback'), () => openFeedback('menu'), false],
-      ['☕', t('social.menu.coffee'), () => openDonate('menu'), true],
+    // Brand icons, not system emoji (AR-21): emoji look different on every phone.
+    const items: [MenuIconId, string, () => void, boolean][] = [
+      ['leaderboard', t('social.menu.board'), () => openBoard({ playDaily: () => this.playDaily() }), false],
+      ['invite', t('social.menu.invite'), () => invite('menu'), false],
+      ['feedback', t('social.menu.feedback'), () => openFeedback('menu'), false],
+      ['coffee', t('social.menu.coffee'), () => openDonate('menu'), true],
     ];
     const gap = 10;
     const bw = (w - gap * (items.length - 1)) / items.length;
@@ -370,7 +442,7 @@ export class MenuScene extends Phaser.Scene {
       const bx = x + i * (bw + gap);
       const g = this.add.graphics();
       chip(g, bx, y, bw, h, gold ? C.amber : C.graphite, gold ? 1 : 0.08, 14);
-      const ic = this.add.text(bx + bw / 2, y + h * 0.34, icon, TXT.body(LANDSCAPE ? 24 : 28)).setOrigin(0.5);
+      const ic = menuIcon(this, bx + bw / 2, y + h * 0.34, LANDSCAPE ? 32 : 40, icon);
       const tx = this.add.text(bx + bw / 2, y + h * 0.74, label, TXT.body(LANDSCAPE ? 17 : 19, INK.graphite, '700')).setOrigin(0.5);
       if (tx.width > bw - 10) tx.setScale((bw - 10) / tx.width);
       const hit = this.add.zone(bx, y, bw, h).setOrigin(0).setInteractive({ useHandCursor: true });
@@ -379,7 +451,7 @@ export class MenuScene extends Phaser.Scene {
         sound.play('ui_tap');
         act();
       });
-      c.add([g, ic, tx, hit]);
+      c.add([g, ...ic, tx, hit]);
     });
   }
 
@@ -392,6 +464,24 @@ export class MenuScene extends Phaser.Scene {
   }
 
   private play(start: GameStart): void {
+    // A new shift with heroes back on the team: pick who comes along first (META.md, allySelection).
+    const meta = loadMeta();
+    if (start.fresh && !start.tutorial && meta.unlocked.length && !this.allyUi) {
+      this.allyUi = allySelect(
+        this,
+        meta,
+        (ids) => {
+          pickAllies(meta, ids);
+          this.allyUi = null;
+          this.scene.start('game', { ...start, allies: ids });
+        },
+        () => {
+          this.allyUi?.destroy();
+          this.allyUi = null;
+        },
+      );
+      return;
+    }
     this.scene.start('game', start);
   }
 

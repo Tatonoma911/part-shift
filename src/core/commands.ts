@@ -15,7 +15,9 @@ export type Command =
   | { type: 'attack'; target: string }
   | { type: 'cancelOrder' }
   /** Spend a scanner charge (assist mode "scanner"). */
-  | { type: 'scan' };
+  | { type: 'scan' }
+  /** Take one card of the open cache offer (boons.json). */
+  | { type: 'pickBoon'; id: string };
 
 /** Why a command was refused; the keys match the writer's texts (text/ru.json). */
 export type RefuseReason =

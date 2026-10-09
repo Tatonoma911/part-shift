@@ -2,11 +2,13 @@ import { t } from '../i18n';
 import type { Analytics } from './analytics';
 
 const STYLE = `
-.ps-consent{position:fixed;left:50%;bottom:max(16px,env(safe-area-inset-bottom));transform:translate(-50%,24px);opacity:0;z-index:2147483000;
+.ps-consent-shade{position:fixed;inset:0;background:#0a1218;opacity:0;z-index:2147482999;transition:opacity .25s ease}
+.ps-consent-shade.on{opacity:.55}
+.ps-consent{position:fixed;left:50%;top:50%;transform:translate(-50%,calc(-50% + 24px));opacity:0;z-index:2147483000;
   width:min(440px,calc(100vw - 32px));box-sizing:border-box;padding:16px 16px 14px 20px;background:#F4F7F7;color:#10171C;
   border-radius:16px;box-shadow:0 10px 32px #10171c40;border-left:6px solid #007E89;font:500 14px/1.4 "Golos Text",system-ui,sans-serif;
   transition:transform .25s ease,opacity .25s ease}
-.ps-consent.on{transform:translate(-50%,0);opacity:1}
+.ps-consent.on{transform:translate(-50%,-50%);opacity:1}
 .ps-consent b{display:block;font:800 12px/1 Unbounded,"Golos Text",sans-serif;letter-spacing:.08em;text-transform:uppercase;color:#007E89;margin-bottom:8px}
 .ps-consent p{margin:0 0 12px}
 .ps-consent .row{display:flex;gap:8px;justify-content:flex-end}
@@ -16,8 +18,8 @@ const STYLE = `
 `;
 
 /**
- * A small card at the bottom of the screen, once per device: may the game send anonymous play statistics?
- * It never blocks the game; until it is answered nothing is sent. Settings has the same switch.
+ * A modal card over a dimmed screen, once per device, after the first finished shift (UI_SPEC §6.1, AR-09):
+ * may the game send anonymous play statistics? Until it is answered nothing is sent. Settings has the same switch.
  */
 export function askConsent(a: Analytics): void {
   if (!a.shouldAsk || document.querySelector('.ps-consent')) return;
@@ -41,15 +43,20 @@ export function askConsent(a: Analytics): void {
   yes.textContent = t('analytics.consent.yes');
   row.append(no, yes);
   box.append(title, text, row);
+  const shade = document.createElement('div');
+  shade.className = 'ps-consent-shade';
+  shade.addEventListener('pointerdown', (e) => e.stopPropagation());
   document.head.append(style);
-  document.body.append(box);
-  requestAnimationFrame(() => requestAnimationFrame(() => box.classList.add('on')));
+  document.body.append(shade, box);
+  requestAnimationFrame(() => requestAnimationFrame(() => [box, shade].forEach((el) => el.classList.add('on'))));
   const answer = (granted: boolean) => (e: Event) => {
     e.stopPropagation();
     a.setConsent(granted);
     box.classList.remove('on');
+    shade.classList.remove('on');
     setTimeout(() => {
       box.remove();
+      shade.remove();
       style.remove();
     }, 300);
   };
