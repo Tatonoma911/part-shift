@@ -44,6 +44,8 @@ export interface GameStart {
   daily?: string;
   /** Opened from a friend's "beat my score" link. */
   challenge?: { score: number; name: string };
+  /** Heroes taken on this shift as allies; defaults to the last choice (meta allyChoice). */
+  allies?: string[];
 }
 type Ev = Phaser.Types.Input.EventData;
 
@@ -221,7 +223,9 @@ export class GameScene extends Phaser.Scene {
     if (st.tutorial) this.guide = new TutorialGuide();
     // Free play: residents dig only where the player sends them, nothing is queued for them at the start.
     // Caches offer 1 of 3 bonuses from the pool the player's HeroOut rank has opened (META.md §3, §8).
-    const rules = { config: { 'dig.autoQueueZeroNeighbors': false }, boonPool: boonPoolFor(loadMeta()) };
+    const meta = loadMeta();
+    const allies = (st.allies ?? meta.allyChoice).filter((id) => meta.unlocked.includes(id));
+    const rules = { config: { 'dig.autoQueueZeroNeighbors': false }, boonPool: boonPoolFor(meta), allies };
     this.world = this.guide
       ? this.guide.world
       : saved
@@ -416,6 +420,8 @@ export class GameScene extends Phaser.Scene {
       this.say(TOASTS[e.type].text(e), 2800, TOASTS[e.type].bad);
     }
     if (e.type === 'build_place') this.nextTutorialBuilding();
+    // However the center went down (tap, restore), the "place the Command Center" line gives way (AR-06).
+    if (e.type === 'command_placed' && e.owner === ME && !this.guide) this.say(t('tutorial.dig'), 5000);
     if (e.type === 'cache_open' && e.x !== undefined) this.float(e.x, e.y!, `+${e.amount}`);
     if ((e.type === 'nest_open' || e.type === 'heavy_nest_open') && e.x !== undefined) this.explainNest(e.x, e.y!);
     if (e.type === 'victory' || e.type === 'defeat') this.showEnd(e.type === 'victory');
@@ -1221,7 +1227,7 @@ export class GameScene extends Phaser.Scene {
     const w = this.world;
     const { x, y } = at;
     if (!w.started) {
-      if (w.apply({ type: 'placeCommand', x, y }, ME).ok && !this.guide) this.say(t('tutorial.dig'), 5000);
+      w.apply({ type: 'placeCommand', x, y }, ME);
       return;
     }
     const c = w.cell(x, y);

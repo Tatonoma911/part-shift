@@ -876,6 +876,9 @@ export class BoardView {
         return animSets[u.hero!] ? u.hero! : 'standard';
       case 'heavy_adaptant':
         return 'heavy_adaptant';
+      case 'ally':
+        // The hero's own team look (animator's ally_<id> sheets), else the enemy sheet.
+        return animSets[`ally_${u.hero}`] ? `ally_${u.hero}` : animSets[u.hero!] ? u.hero! : 'standard';
       default: {
         // The animator's redrawn sheets, one per nest element, no shields (AR-18).
         const set = `adaptant_${u.tech ?? 'thermo'}`;

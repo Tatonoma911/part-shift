@@ -104,3 +104,47 @@ describe('cache bonuses (boons.json, META.md §8)', () => {
     expect(w.player(0).boonOffer).toBeUndefined();
   });
 });
+
+describe('allies (heroes back on the team)', () => {
+  const team = (allies: string[]) => {
+    const w = new World({ seed: 5, rules: { allies } });
+    w.apply({ type: 'placeCommand', x: 6, y: 8 });
+    return w;
+  };
+
+  it('chosen allies stand at the center when the shift starts, weaker than their enemy form', () => {
+    const w = team(['kiln', 'seraph']);
+    const allies = w.s.units.filter((u) => u.kind === 'ally');
+    expect(allies.map((u) => u.hero).sort()).toEqual(['kiln', 'seraph']);
+    const kiln = allies.find((u) => u.hero === 'kiln')!;
+    expect(kiln.owner).toBe(0);
+    expect(kiln.hp).toBeLessThan(460);
+  });
+
+  it('Серафим heals residents near her; a knocked-out ally comes back to the center', () => {
+    const w = team(['seraph']);
+    for (const site of w.s.sites) site.spawnTimer = Infinity;
+    const seraph = w.s.units.find((u) => u.kind === 'ally')!;
+    const r = w.s.units.find((u) => u.kind === 'resident')!;
+    Object.assign(r, { x: seraph.x, y: seraph.y });
+    r.hp = 1;
+    for (let i = 0; i < 60; i++) w.step(0.05);
+    expect(r.hp).toBeGreaterThan(1);
+    seraph.hp = 0.1;
+    (w as unknown as { damage(v: unknown, n: number): void }).damage(seraph, 5);
+    w.step(0.05);
+    expect(w.s.units.some((u) => u.kind === 'ally' && u.hp > 0)).toBe(false);
+    for (let i = 0; i < 31 * 20; i++) w.step(0.05);
+    expect(w.s.units.some((u) => u.kind === 'ally' && u.hero === 'seraph' && u.hp > 0)).toBe(true);
+  });
+
+  it('Килн: residents next to him take less damage', () => {
+    const w = team(['kiln']);
+    const kiln = w.s.units.find((u) => u.kind === 'ally')!;
+    const r = w.s.units.find((u) => u.kind === 'resident')!;
+    Object.assign(r, { x: kiln.x, y: kiln.y });
+    const hp = r.hp;
+    (w as unknown as { damage(v: unknown, n: number): void }).damage(r, 10);
+    expect(hp - r.hp).toBeCloseTo(8);
+  });
+});

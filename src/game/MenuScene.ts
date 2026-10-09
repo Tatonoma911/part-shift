@@ -16,7 +16,8 @@ import type { GameStart } from './GameScene';
 import { C, INK, LANDSCAPE, VIEW } from './layout';
 import { menuIcon, type MenuIconId } from './menuIcons';
 import { preloadMetaArt } from './meta/art';
-import { loadMeta } from './meta/store';
+import { loadMeta, pickAllies } from './meta/store';
+import { allySelect } from './meta/AllySelect';
 import { metaPreview } from './meta/preview';
 import { clearSlot, lastSlot, loadSettings, loadSlot, saveSettings, SLOTS } from './saves';
 import { tutorialDone } from './Tutorial';
@@ -40,6 +41,8 @@ export class MenuScene extends Phaser.Scene {
   private armed: number | null = null;
   private current: Page = 'main';
   private storyPlaying = false;
+  /** The ally picker before a new shift, while it is open. */
+  private allyUi: Phaser.GameObjects.Container | null = null;
 
   constructor() {
     super('menu');
@@ -59,6 +62,7 @@ export class MenuScene extends Phaser.Scene {
   }
 
   create(): void {
+    this.allyUi = null;
     if (!this.anims.exists('resident.idle')) createArt(this);
 
     // Links for tests and sharing: ?seed=…, ?tutorial=1 go straight to the board.
@@ -460,6 +464,24 @@ export class MenuScene extends Phaser.Scene {
   }
 
   private play(start: GameStart): void {
+    // A new shift with heroes back on the team: pick who comes along first (META.md, allySelection).
+    const meta = loadMeta();
+    if (start.fresh && !start.tutorial && meta.unlocked.length && !this.allyUi) {
+      this.allyUi = allySelect(
+        this,
+        meta,
+        (ids) => {
+          pickAllies(meta, ids);
+          this.allyUi = null;
+          this.scene.start('game', { ...start, allies: ids });
+        },
+        () => {
+          this.allyUi?.destroy();
+          this.allyUi = null;
+        },
+      );
+      return;
+    }
     this.scene.start('game', start);
   }
 

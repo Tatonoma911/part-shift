@@ -74,7 +74,8 @@ export interface PartInstance {
   tier: number;
 }
 
-export type UnitKind = 'resident' | 'adaptant' | 'heavy_adaptant' | 'hero';
+/** 'ally': a hero who came back to the team (meta progress), fighting next to the residents. */
+export type UnitKind = 'resident' | 'adaptant' | 'heavy_adaptant' | 'hero' | 'ally';
 
 export type Task =
   | { type: 'idle' }
@@ -178,6 +179,10 @@ export interface Player {
   boons?: Record<string, number>;
   /** An opened cache waiting for the player's pick: three boon ids, and when it was offered. */
   boonOffer?: { ids: string[]; at: number };
+  /** Allies down, waiting to come back at the center: hero id → game time it returns. */
+  allyBack?: Record<string, number>;
+  /** Ally passive timers (heroes.json ally.everySeconds): hero id → seconds left. */
+  allyTimers?: Record<string, number>;
   stats: { nests: number; caches: number; heroes: string[]; energy: number; lost: number; parts: number };
   /** Scanner helper (design/ONBOARDING.md §1.3). */
   assist: AssistState;
@@ -213,6 +218,8 @@ export interface RuleOverrides {
   relativeTech?: Tech;
   /** Cache bonuses this player's rank allows (boons.json, meta ranks); none: a cache only pays Energy (tutorial). */
   boonPool?: string[];
+  /** Heroes taken on this shift as allies (meta allyChoice), heroes.json ids. */
+  allies?: string[];
   nest?: { initialSpawn?: number; maxAlive?: number; spawnSeconds?: number; totalBudget?: number };
   adaptant?: { partDropChance?: number; partSlot?: 'arm' | 'leg' };
 }
