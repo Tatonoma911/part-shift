@@ -4,6 +4,7 @@
  * tick() with real time, World advances in fixed steps and emits events
  * named after the sound list (MVP_RULES appendix B).
  */
+import { deduce, type Knowledge } from './assist';
 import type { ApplyResult, Command } from './commands';
 import {
   buildings as buildingDefs,
@@ -23,7 +24,7 @@ import { cellAt, cellKey, cheb, dist, inBounds, neighbors, parseKey, walkableFor
 import { generateField } from './mapgen';
 import { findPath } from './pathfind';
 import { rand, randIntOf } from './rng';
-import type { Building, Cell, ClueChannel, GameState, PartInstance, Player, SiteState, Task, Unit, UnitKind } from './state';
+import type { AssistMode, Building, Cell, ClueChannel, GameState, PartInstance, Player, SiteState, Task, Unit, UnitKind } from './state';
 
 export const STEP = 0.05;
 
@@ -31,6 +32,7 @@ export type GameEvent = { type: string; x?: number; y?: number; amount?: number;
 
 export interface WorldOptions {
   seed: number;
+  assist?: AssistMode;
   players?: number;
   width?: number;
   height?: number;
@@ -72,6 +74,12 @@ export function createState(opts: WorldOptions): GameState {
       autoQueue: [],
       order: null,
       stats: { nests: 0, caches: 0 },
+      assist: {
+        mode: opts.assist ?? 'full',
+        charges: config.assist.scanner.maxCharges,
+        recharge: config.assist.scanner.rechargeSeconds,
+        scanLeft: 0,
+      },
     })),
     units: [],
     buildings: [],
@@ -92,6 +100,9 @@ export class World {
   readonly s: GameState;
   private acc = 0;
   private events: GameEvent[] = [];
+  /** Bumped whenever the opened field changes; the scanner result is cached per revision. */
+  private rev = 0;
+  private known: { rev: number; map: Map<string, Knowledge> } | null = null;
 
   constructor(opts: WorldOptions | { state: GameState }) {
     this.s = 'state' in opts ? opts.state : createState(opts);
@@ -140,6 +151,19 @@ export class World {
       if (ch && !n.cell.resolved) out[ch]++;
     }
     return out;
+  }
+
+  /** Everything the scanner can prove about covered cells right now. */
+  knowledge(): Map<string, Knowledge> {
+    if (!this.known || this.known.rev !== this.rev) this.known = { rev: this.rev, map: deduce(this.s) };
+    return this.known.map;
+  }
+
+  /** What this player's helper currently shows (empty when off or between scans). */
+  visibleKnowledge(playerId: number): Map<string, Knowledge> {
+    const a = this.player(playerId).assist;
+    if (a.mode === 'off' || (a.mode === 'scanner' && a.scanLeft <= 0)) return new Map();
+    return this.knowledge();
   }
 
   isFrontier(x: number, y: number): boolean {
@@ -214,6 +238,10 @@ export class World {
         const k = cellKey(cmd.x, cmd.y);
         const harvestable = c.revealed && (c.content === 'rubble' || c.content === 'energy_vein') && (c.stock ?? 0) > 0;
         if ((c.revealed && !harvestable) || c.marked || p.queue.includes(k)) return bad();
+        const known = this.visibleKnowledge(playerId).get(k);
+        if (config.assist.blockSwipeOnKnownDanger && !cmd.force && (known === 'threat' || known === 'demon')) {
+          return bad('assist.known_danger');
+        }
         p.autoQueue = p.autoQueue.filter((q) => q !== k);
         p.queue.push(k);
         return ok;
@@ -265,6 +293,15 @@ export class World {
       case 'cancelOrder':
         p.order = null;
         return ok;
+      case 'scan': {
+        const a = p.assist;
+        if (a.mode !== 'scanner') return bad();
+        if (a.charges <= 0) return bad('assist.no_charges');
+        a.charges--;
+        a.scanLeft = config.assist.scanner.markDurationSeconds;
+        this.emit('scan', { owner: playerId });
+        return ok;
+      }
     }
   }
 
@@ -319,6 +356,7 @@ export class World {
     s.time += dt;
     if (this.threatLevel > levelBefore) this.emit('threat_level_up', { amount: this.threatLevel });
     this.demonClock();
+    this.assistTimers(dt);
     this.population(dt);
     this.recruiting();
     for (const u of [...s.units]) {
@@ -336,12 +374,31 @@ export class World {
     this.checkOutcome();
   }
 
+  private assistTimers(dt: number): void {
+    const sc = config.assist.scanner;
+    for (const p of this.s.players) {
+      const a = p.assist;
+      if (a.mode !== 'scanner') continue;
+      a.scanLeft = Math.max(0, a.scanLeft - dt);
+      if (a.charges >= sc.maxCharges) {
+        a.recharge = sc.rechargeSeconds;
+        continue;
+      }
+      a.recharge -= dt;
+      if (a.recharge <= 0) {
+        a.charges++;
+        a.recharge = sc.rechargeSeconds;
+      }
+    }
+  }
+
   // -- reveal & clues
 
   private reveal(x: number, y: number, owner: number, pay = true): void {
     const s = this.s;
     const c = this.cell(x, y);
     if (c.revealed) return;
+    this.rev++;
     c.revealed = true;
     c.marked = false;
     const k = cellKey(x, y);
@@ -532,6 +589,7 @@ export class World {
   }
 
   private depleted(x: number, y: number): void {
+    this.rev++;
     const c = this.cell(x, y);
     c.content = 'ground';
     c.stock = 0;
@@ -881,6 +939,7 @@ export class World {
     this.emit(v.kind === 'demon' ? 'demon_die' : 'enemy_die', { x: v.x, y: v.y, owner: by?.owner });
     if (v.kind === 'demon') {
       s.demon.dead = true;
+      this.rev++;
       const hatch = s.sites.find((t) => t.kind === 'demon_hatch');
       if (hatch) {
         hatch.destroyed = true;
@@ -1004,6 +1063,7 @@ export class World {
   private destroySite(site: SiteState, by: Unit): void {
     if (site.destroyed) return;
     site.destroyed = true;
+    this.rev++;
     const c = this.cell(site.x, site.y);
     c.resolved = true;
     const reward = siteDefs[site.kind].reward ?? 0;

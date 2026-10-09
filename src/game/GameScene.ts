@@ -1,7 +1,7 @@
 import Phaser from 'phaser';
 import { BUILDABLE, buildings as buildingDefs, config } from '../core/data';
 import { cellKey } from '../core/grid';
-import type { GameState, Unit } from '../core/state';
+import type { AssistMode, GameState, Unit } from '../core/state';
 import { World, type GameEvent } from '../core/world';
 import { t } from '../i18n';
 import { BAR_HEIGHT, BUILDING_STYLE, CHANNEL_COLOR, COLORS, HUD_HEIGHT, SIDE_MARGIN, TECH_COLOR, VIEW } from './layout';
@@ -35,7 +35,10 @@ function loadState(): GameState | null {
     const raw = localStorage.getItem(SAVE_KEY);
     if (!raw) return null;
     const s = JSON.parse(raw) as GameState;
-    return s.version === 1 && s.outcome === 'playing' ? s : null;
+    if (s.version !== 1 || s.outcome !== 'playing') return null;
+    // Saves from before the scanner existed.
+    for (const p of s.players) p.assist ??= { mode: 'full', charges: config.assist.scanner.maxCharges, recharge: config.assist.scanner.rechargeSeconds, scanLeft: 0 };
+    return s;
   } catch {
     return null;
   }
@@ -66,6 +69,11 @@ export class GameScene extends Phaser.Scene {
   private lastDragCell = -1;
   private pressTimer: Phaser.Time.TimerEvent | null = null;
   private saveTimer = 0;
+  /** Cell the scanner flagged on the last tap; a second tap there confirms digging it. */
+  private confirmCell: string | null = null;
+  /** Neighborhood shown around a touched clue (design/ONBOARDING.md §1.2). */
+  private spotlight: { x: number; y: number; until: number } | null = null;
+  private scanButton: Phaser.GameObjects.Text | null = null;
   private lastCenterHit = -99;
 
   constructor() {
@@ -76,7 +84,9 @@ export class GameScene extends Phaser.Scene {
     const params = new URLSearchParams(location.search);
     const seedParam = Number(params.get('seed'));
     const saved = params.has('seed') ? null : loadState();
-    this.world = saved ? new World({ state: saved }) : new World({ seed: seedParam || Math.floor(Math.random() * 1e9) });
+    const assistParam = params.get('assist');
+    const assist = (['full', 'scanner', 'off'] as const).find((m) => m === assistParam) as AssistMode | undefined;
+    this.world = saved ? new World({ state: saved }) : new World({ seed: seedParam || Math.floor(Math.random() * 1e9), assist });
     (window as unknown as { partShift: unknown }).partShift = { world: this.world, scene: this };
 
     const { width, height } = this.world.s;
@@ -162,7 +172,27 @@ export class GameScene extends Phaser.Scene {
       this.say(TOASTS[e.type](e));
     }
     if (e.type === 'cache_open' && e.x !== undefined) this.float(e.x, e.y!, `+${e.amount}`, COLORS.energy);
+    if ((e.type === 'nest_open' || e.type === 'heavy_nest_open') && e.x !== undefined) this.explainNest(e.x, e.y!);
     if (e.type === 'victory' || e.type === 'defeat') this.showEnd(e.type === 'victory');
+  }
+
+  /** Points at an opened clue that warned about the nest (design/ONBOARDING.md §1.4). */
+  private explainNest(x: number, y: number): void {
+    const w = this.world;
+    for (let dy = -1; dy <= 1; dy++) {
+      for (let dx = -1; dx <= 1; dx++) {
+        const nx = x + dx;
+        const ny = y + dy;
+        if ((dx || dy) && nx >= 0 && ny >= 0 && nx < w.s.width && ny < w.s.height) {
+          const c = w.cell(nx, ny);
+          if (c.revealed && c.content === 'ground' && c.building === undefined && w.clues(nx, ny).threat > 0) {
+            this.spotlight = { x: nx, y: ny, until: this.time.now + 4000 };
+            this.time.delayedCall(3600, () => this.say(t('cell.accidental_nest'), 4000));
+            return;
+          }
+        }
+      }
+    }
   }
 
   private say(text: string, ms = 3500): void {
@@ -192,6 +222,16 @@ export class GameScene extends Phaser.Scene {
       ev.stopPropagation();
       this.setPaused(!this.paused);
     });
+    if (this.world.player(ME).assist.mode === 'scanner') {
+      this.scanButton = this.add
+        .text(VIEW.width - 250, 30, '', { fontFamily: 'sans-serif', fontSize: '24px', color: '#0f1420', backgroundColor: '#7ee0a1', padding: { x: 12, y: 8 } })
+        .setOrigin(1, 0)
+        .setInteractive({ useHandCursor: true });
+      this.scanButton.on('pointerdown', (_p: Phaser.Input.Pointer, _x: number, _y: number, ev: Phaser.Types.Input.EventData) => {
+        ev.stopPropagation();
+        if (!this.world.apply({ type: 'scan' }, ME).ok) this.say(t('assist.scan.empty'));
+      });
+    }
   }
 
   private updateHud(): void {
@@ -206,6 +246,10 @@ export class GameScene extends Phaser.Scene {
       `👷 ${residents}/${slots}   🛡 ${defenders}/${w.defenderCapacity(ME)}   ${Math.floor(secs / 60)}:${String(secs % 60).padStart(2, '0')}`,
     );
     this.hud.threat.setText(t('hud.threat.level', { level: w.threatLevel }));
+    if (this.scanButton) {
+      const a = w.player(ME).assist;
+      this.scanButton.setText(t('assist.scan.charges', { count: a.charges })).setAlpha(a.charges > 0 || a.scanLeft > 0 ? 1 : 0.5);
+    }
     // Big arc without digits: time until the next threat level.
     const g = this.hud.arc;
     const cx = VIEW.width - 150;
@@ -339,6 +383,7 @@ export class GameScene extends Phaser.Scene {
     const digging = new Map<string, number>();
     for (const u of s.units) if (u.task.type === 'dig' && u.path.length === 0) digging.set(cellKey(u.task.x, u.task.y), u.task.progress / config.dig.digSeconds);
     const showBuild = this.selected !== null;
+    const known = w.started ? w.visibleKnowledge(ME) : new Map();
 
     for (let y = 0; y < s.height; y++) {
       for (let x = 0; x < s.width; x++) {
@@ -363,6 +408,8 @@ export class GameScene extends Phaser.Scene {
             g.lineStyle(3, p.queue.includes(k) ? COLORS.queued : COLORS.autoQueued, 1);
             g.strokeRoundedRect(px + 5, py + 5, cs - 10, cs - 10, 5);
           }
+          const kn = known.get(k);
+          if (kn) this.drawKnowledge(g, kn, px, py);
           const prog = digging.get(k);
           if (prog !== undefined) this.bar(g, px + 6, py + cs - 10, cs - 12, prog, COLORS.queued);
           continue;
@@ -384,7 +431,53 @@ export class GameScene extends Phaser.Scene {
       }
     }
     this.drawBuildings(g);
+    this.drawSpotlight(g);
     this.drawUnits();
+  }
+
+  private drawKnowledge(g: Phaser.GameObjects.Graphics, kn: string, px: number, py: number): void {
+    const cs = this.cs;
+    if (kn === 'safe') {
+      g.lineStyle(4, COLORS.queued, 0.9);
+      g.beginPath();
+      g.moveTo(px + cs * 0.3, py + cs * 0.52);
+      g.lineTo(px + cs * 0.45, py + cs * 0.66);
+      g.lineTo(px + cs * 0.72, py + cs * 0.36);
+      g.strokePath();
+      return;
+    }
+    const color = kn === 'demon' ? 0xc77dff : 0xff5a5a;
+    g.fillStyle(color, 0.85);
+    g.fillCircle(px + cs / 2, py + cs / 2, cs * 0.2);
+    g.lineStyle(3, color, 1);
+    g.strokeCircle(px + cs / 2, py + cs / 2, cs * 0.32);
+  }
+
+  private drawSpotlight(g: Phaser.GameObjects.Graphics): void {
+    const sp = this.spotlight;
+    if (!sp || this.time.now > sp.until) return;
+    const cs = this.cs;
+    g.lineStyle(4, 0xffffff, 0.9);
+    g.strokeRect(this.ox + (sp.x - 1) * cs, this.oy + (sp.y - 1) * cs, cs * 3, cs * 3);
+    g.fillStyle(0xffffff, 0.08);
+    g.fillRect(this.ox + (sp.x - 1) * cs, this.oy + (sp.y - 1) * cs, cs * 3, cs * 3);
+  }
+
+  /** "Next to this block: 2 nests" with Russian plural forms. */
+  private nearText(x: number, y: number): string {
+    const cl = this.world.clues(x, y);
+    const plural = (n: number) => {
+      const m10 = n % 10;
+      const m100 = n % 100;
+      if (m10 === 1 && m100 !== 11) return 'one';
+      if (m10 >= 2 && m10 <= 4 && (m100 < 12 || m100 > 14)) return 'few';
+      return 'many';
+    };
+    const lines: string[] = [];
+    if (cl.threat) lines.push(t(`cell.near.threat.${plural(cl.threat)}`, { count: cl.threat }));
+    if (cl.demon) lines.push(t('cell.near.demon.one', { count: cl.demon }));
+    if (cl.finds) lines.push(t(`cell.near.finds.${plural(cl.finds)}`, { count: cl.finds }));
+    return lines.length ? lines.join('\n') : t('cell.near.clear');
   }
 
   private bar(g: Phaser.GameObjects.Graphics, x: number, y: number, width: number, frac: number, color: number): void {
@@ -618,7 +711,26 @@ export class GameScene extends Phaser.Scene {
       return;
     }
     if (c.revealed && w.player(ME).order && c.content === 'ground') w.apply({ type: 'cancelOrder' }, ME);
-    this.dragMode = w.isQueued(ME, x, y) ? 'cancel' : 'queue';
+    // Touching an opened clue shows the eight cells it counts.
+    if (c.revealed && c.building === undefined && (c.content === 'ground' || c.resolved)) {
+      this.spotlight = { x, y, until: this.time.now + 2500 };
+      this.say(this.nearText(x, y));
+    }
+    // Second tap on a cell the scanner knows is dangerous: dig it anyway.
+    const k = cellKey(x, y);
+    if (this.confirmCell === k) {
+      this.confirmCell = null;
+      w.apply({ type: 'queueDig', x, y, force: true }, ME);
+      return;
+    }
+    this.confirmCell = null;
+    const r = !c.revealed && !w.isQueued(ME, x, y) ? w.apply({ type: 'queueDig', x, y }, ME) : null;
+    if (r && !r.ok && r.reason === 'assist.known_danger') {
+      this.confirmCell = k;
+      this.say(t(w.visibleKnowledge(ME).get(k) === 'demon' ? 'cell.confirm_demon.hint' : 'cell.confirm_nest.hint'), 5000);
+      return;
+    }
+    this.dragMode = r?.ok ? 'queue' : w.isQueued(ME, x, y) ? 'cancel' : 'queue';
     this.lastDragCell = -1;
     this.applyDrag(x, y);
     const idx = y * w.s.width + x;

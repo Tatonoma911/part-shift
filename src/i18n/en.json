@@ -61,5 +61,20 @@
   "place.command": "Tap a block to place the Command Center.",
   "legend.threat": "Nests",
   "legend.demon": "Demon",
-  "legend.finds": "Finds"
+  "legend.finds": "Finds",
+  "cell.near.threat.one": "Next to this block: {count} nest",
+  "cell.near.threat.few": "Next to this block: {count} nests",
+  "cell.near.threat.many": "Next to this block: {count} nests",
+  "cell.near.demon.one": "Next to this block: the Demon's hatch",
+  "cell.near.finds.one": "Next to this block: {count} find",
+  "cell.near.finds.few": "Next to this block: {count} finds",
+  "cell.near.finds.many": "Next to this block: {count} finds",
+  "cell.near.clear": "Nothing next to this block",
+  "cell.accidental_nest": "This nest was next to this number. Next time check its neighbors.",
+  "cell.confirm_nest.hint": "The scanner is sure there is a nest here. Tap again to open it.",
+  "cell.confirm_demon.hint": "The scanner is sure the Demon's hatch is here. Tap again to wake it.",
+  "assist.name": "HeroOut Scanner",
+  "assist.scan": "Scan",
+  "assist.scan.charges": "Scan: {count}",
+  "assist.scan.empty": "Scanner charges are recharging"
 }

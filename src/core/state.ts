@@ -130,6 +130,19 @@ export interface Player {
   /** Attack order for all defenders: unit id or site key. */
   order: string | null;
   stats: { nests: number; caches: number };
+  /** Scanner helper (design/ONBOARDING.md §1.3). */
+  assist: AssistState;
+}
+
+export type AssistMode = 'full' | 'scanner' | 'off';
+
+export interface AssistState {
+  mode: AssistMode;
+  charges: number;
+  /** Seconds until the next scanner charge. */
+  recharge: number;
+  /** Seconds the last scan stays visible. */
+  scanLeft: number;
 }
 
 export type Outcome = 'playing' | 'victory' | 'defeat';

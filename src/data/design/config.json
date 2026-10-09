@@ -95,5 +95,37 @@
       "id": "legend",
       "minParts": 5
     }
-  ]
+  ],
+  "assist": {
+    "_doc": "design/ONBOARDING.md",
+    "modes": [
+      "full",
+      "scanner",
+      "off"
+    ],
+    "defaultByDifficulty": {
+      "tutorial": "full",
+      "easy": "full",
+      "normal": "scanner",
+      "hard": "off"
+    },
+    "safeMeansNoChannels": [
+      "threat",
+      "demon"
+    ],
+    "scanner": {
+      "maxCharges": 3,
+      "rechargeSeconds": 60,
+      "markDurationSeconds": 20
+    },
+    "blockSwipeOnKnownDanger": true,
+    "blockSwipeOnPlayerFlag": true,
+    "neighborHighlightOnTouch": true,
+    "explainAccidentalOpen": true,
+    "suggestNormalAfterWins": 3,
+    "online": {
+      "coop": "hostChoice",
+      "last_command": "scanner"
+    }
+  }
 }
