@@ -10,7 +10,8 @@
     "test": "vitest run",
     "typecheck": "tsc --noEmit",
     "sync-data": "node scripts/sync-data.mjs ..",
-    "artifact": "ARTIFACT=1 vite build && node scripts/build-artifact.mjs"
+    "artifact": "ARTIFACT=1 vite build && node scripts/build-artifact.mjs",
+    "learning-artifact": "LEARNING=1 vite build && node scripts/build-learning-artifact.mjs"
   },
   "dependencies": {
     "phaser": "3.90.0"
