@@ -1,5 +1,5 @@
 {
-  "_meta.version": "0.13",
+  "_meta.version": "0.14",
   "_meta.date": "2026-10-09",
   "_meta.note": "Русский оригинал строк MVP, сверено с design/MVP_RULES.md, ONBOARDING.md и ELEMENTS.md 0.3. Ключи плоские, плейсхолдеры в фигурных скобках, множественное число через суффиксы .one/.few/.many. Формат описан в text/README.md",
   "game.title": "Part Shift",
@@ -156,6 +156,7 @@
   "build.done": "{building}: готово",
   "build.enemies_near": "Рядом враги, строить опасно",
   "build.unreachable": "Жители не могут туда дойти",
+  "build.refuse.not_liberated": "Земля ещё не освобождена. Стройте рядом со своими зданиями: каждое освобождает землю вокруг.",
   "unit.resident.name": "Житель",
   "unit.resident.desc": "Обычный горожанин. Копает, строит и, когда надо, дерётся. Побеждая врагов, сам забирает их части.",
   "unit.defender.name": "Защитник",

@@ -18,7 +18,21 @@
     "digSeconds": 9,
     "requireAdjacentRevealed": true,
     "autoQueueZeroNeighbors": false,
-    "autoQueuePriority": "low"
+    "autoQueuePriority": "low",
+    "workers": {
+      "_doc": "[Антон 21:48] несколько жителей на одной клетке копают быстрее; MVP_RULES §4.2",
+      "maxPerCell": 3,
+      "speedBonusPerExtraWorker": 0.75,
+      "formula": "seconds = digSeconds / (1 + 0.75 × (workers − 1))  → 1: 9 s, 2: 5.1 s, 3: 3.6 s",
+      "idleJoin": "an idle resident with nothing in the queue joins the nearest cell being dug (up to maxPerCell)",
+      "progressBar": "one shared progress ring on the cell, workers stand on different free sides of it",
+      "appliesAlsoTo": [
+        "rubble",
+        "energy_vein (already maxWorkers 2)",
+        "building construction",
+        "ruins rebuild"
+      ]
+    }
   },
   "territory": {
     "commandCenterRadius": 3,
@@ -188,5 +202,20 @@
       "highlightIfResidentHasMatchingArm": true,
       "_note": "понятно, чем его лучше бить"
     }
+  },
+  "combat_stacking": {
+    "_note": "damage of several residents on one target already adds up (each resident hits); sites (nests, lairs) and enemies have no cap on attackers except physical space: up to 8 around a cell",
+    "maxAttackersPerCell": 8
+  },
+  "input": {
+    "_doc": "[Антон 21:49] без переключателя Копать/Строить: действие по тому, куда тапнули. MVP_RULES §7.1",
+    "modeSwitch": false,
+    "tapClosedCell": "add to dig queue (swipe adds several); cell highlights at once",
+    "tapOpenCellInTerritory": "open build menu for this cell",
+    "tapOpenCellOutsideTerritory": "toast build.refuse.not_liberated + flash territory border + arrow to the nearest liberated cell",
+    "tapEnemy": "direct nearby residents to attack",
+    "tapBuilding": "building info (HP, effect, upgrade later)",
+    "longPressClosedCell": "toggle flag «осторожно»",
+    "tapNumberCell": "highlight 8 neighbours (ONBOARDING 1.2); a second tap on the same cell opens build menu if liberated"
   }
 }

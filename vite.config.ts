@@ -31,7 +31,7 @@ export default defineConfig({
   base: './',
   plugins: artifact ? [smallMusic()] : [],
   // The Artifact and learning previews never send analytics, so Firebase Analytics stays out of their one-file builds.
-  define: { __ANALYTICS__: JSON.stringify(!artifact && !learning) },
+  define: { __ANALYTICS__: JSON.stringify(!artifact && !learning), __CLOUD__: JSON.stringify(!artifact && !learning) },
   build: {
     chunkSizeWarningLimit: 4000,
     assetsInlineLimit: artifact || learning ? () => true : 4096,

@@ -79,7 +79,7 @@ describe('population and buildings', () => {
     const w = handWorld(['..........', '..........', '..........', '..........', '.........n']);
     for (const c of w.s.cells) c.revealed = c.content === 'ground';
     w.apply({ type: 'placeCommand', x: 1, y: 1 });
-    expect(w.apply({ type: 'build', building: 'home', x: 4, y: 3 }).ok).toBe(true);
+    expect(w.apply({ type: 'build', building: 'home', x: 3, y: 3 }).ok).toBe(true);
     expect(w.player(0).energy).toBe(w.cfg.economy.startEnergy - 40);
     run(w, 9);
     const home = w.s.buildings.find((b) => b.type === 'home')!;
@@ -92,7 +92,7 @@ describe('population and buildings', () => {
       w.step(0.05);
       ev.push(...w.drainEvents());
     }
-    expect(ev.find((e) => e.type === 'resident_born')?.x).toBe(4);
+    expect(ev.find((e) => e.type === 'resident_born')?.x).toBe(3);
   });
 
   it('refuses with a reason: no energy, outside territory, occupied, not opened', () => {
