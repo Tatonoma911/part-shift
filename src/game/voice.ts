@@ -157,7 +157,7 @@ export class Voice {
       case 'control':
         this.minute.push(now);
         this.lastShown.control = now;
-        this.banner(t(key), ch.showSeconds ?? 4.5, false);
+        this.banner(t(key, { hero: e.text ? t(`enemy.${e.text}.name`) : '', n: e.amount ?? '' }), ch.showSeconds ?? 4.5, false);
         sound.play('voice_control');
         return;
       case 'ad':
