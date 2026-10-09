@@ -457,3 +457,25 @@ footer .wrap { display: flex; gap: 18px; justify-content: space-between; flex-wr
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
 }
+
+/* Download + donation. */
+.support { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr)); gap: 18px; }
+.support-card { padding: 26px 26px 28px; display: grid; gap: 14px; align-content: start; }
+.support-card h3 { font: 800 24px/1.15 var(--display); margin: 0; }
+.support-card p { margin: 0; }
+.support-card .dim { color: var(--dim); font-size: 14px; }
+.support-card .btn { justify-self: start; }
+.support-card .btn:disabled { opacity: 0.5; cursor: default; transform: none; }
+.sums { display: flex; flex-wrap: wrap; gap: 8px; }
+.sums button {
+  font: 700 16px/1 var(--display);
+  padding: 12px 14px;
+  border: 2px solid var(--line);
+  background: transparent;
+  color: var(--ink);
+  cursor: pointer;
+  font-variant-numeric: tabular-nums;
+}
+.sums button[aria-pressed='true'] { border-color: var(--teal); background: color-mix(in srgb, var(--teal) 14%, transparent); }
+.sum-field { display: grid; gap: 6px; }
+.sum-field input { font: 700 20px/1 var(--display); padding: 12px 14px; border: 2px solid var(--line); background: var(--paper); color: var(--ink); width: min(100%, 220px); }

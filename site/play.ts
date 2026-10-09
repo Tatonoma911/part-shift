@@ -1,6 +1,7 @@
 import './style.css';
 import './play.css';
 import { HEROES, img, type Lang } from './content';
+import { APK_URL } from './support';
 
 /**
  * Frame around the game on /play. The game itself (src/main.ts) mounts into #app;
@@ -88,6 +89,8 @@ document.getElementById('frame')!.innerHTML = `
     <div class="drawer-head"><span class="wordmark">PART<b>SHIFT</b></span><button class="icon-btn" id="pclose" aria-label="${R('Закрыть', 'Close')}">${close}</button></div>
     <button class="item resume" id="presume">${R('Вернуться в игру', 'Back to the game')}<span class="caps">▶</span></button>
     ${links.map(([h, ru, en]) => `<a class="item" href="${site(h)}">${R(ru, en)}<span class="caps">→</span></a>`).join('')}
+    <a class="item" href="${APK_URL}" rel="noopener">${R('Скачать для Android', 'Download for Android')}<span class="caps">APK</span></a>
+    <a class="item" href="${site('support')}">${R('Донат автору', 'Tip the author')}<span class="caps">☕</span></a>
     <figure class="drawer-art"><img src="${A('key-art.webp')}" alt=""></figure>
   </div></div>`;
 
