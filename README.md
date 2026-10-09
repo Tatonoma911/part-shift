@@ -25,7 +25,7 @@ npm run build    # сборка в dist/
 - `src/game/` — Phaser: только рисует состояние и превращает касания в команды (графика временная).
 - `src/i18n/` — тексты на русском и английском (`?lang=en` для проверки).
 
-Архитектура, онлайн и монетизация: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
+Архитектура, онлайн и монетизация: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md). Аккаунты и облачные сохранения: [docs/ACCOUNTS.md](docs/ACCOUNTS.md).
 
 ## Правила
 

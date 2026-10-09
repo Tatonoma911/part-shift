@@ -9,5 +9,7 @@ export default defineConfig({
     chunkSizeWarningLimit: 4000,
     assetsInlineLimit: artifact ? () => true : 4096,
     outDir: artifact ? 'dist-artifact' : 'dist',
+    // One file for the artifact: lazy chunks (Firebase) are folded into the main script.
+    rollupOptions: artifact ? { output: { inlineDynamicImports: true } } : {},
   },
 });

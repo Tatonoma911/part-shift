@@ -13,6 +13,7 @@
     "artifact": "ARTIFACT=1 vite build && node scripts/build-artifact.mjs"
   },
   "dependencies": {
+    "firebase": "12.19.0",
     "phaser": "3.90.0"
   },
   "devDependencies": {

@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { openAccountPanel } from '../account/panel';
 import { BUILDABLE, buildings as buildingDefs, config } from '../core/data';
 import { cellKey } from '../core/grid';
 import type { AssistMode, GameState } from '../core/state';
@@ -675,6 +676,7 @@ export class GameScene extends Phaser.Scene {
             this.setPaused(true);
           },
         },
+        { label: t('pause.account'), act: () => openAccountPanel() },
         { label: t('pause.restart'), act: () => this.restart() },
       ],
       animate: false,
