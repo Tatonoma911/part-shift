@@ -303,5 +303,11 @@
   "event.raid_incoming.few": "Raid: {count} adaptants are coming to smash a building",
   "event.raid_incoming.many": "Raid: {count} adaptants are coming to smash a building",
   "event.ruins": "Building destroyed. Rebuild on the ruins for half price",
-  "building.ruins.name": "Ruins"
+  "building.ruins.name": "Ruins",
+  "build.tap_again": "Tap again to build here",
+  "dock.hint": "Tap a block to dig, or your own land to build",
+  "dock.build_here": "What goes here? Pick a building and tap ✓",
+  "dock.build_tutorial": "Tap the glowing land next to the center to build",
+  "dock.cancel": "Cancel",
+  "build.refuse.not_liberated": "This land isn't free yet. Build next to your buildings: each one frees the land around it."
 }

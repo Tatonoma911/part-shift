@@ -141,7 +141,8 @@ export class GameScene extends Phaser.Scene {
   };
   private shownEnergy = 0;
   private dock!: {
-    tabs: { mode: Mode; g: Phaser.GameObjects.Graphics; label: Phaser.GameObjects.Text; icon: Phaser.GameObjects.Image; x: number; w: number }[];
+    /** Context line instead of mode tabs: what a tap does now, and a cancel chip while placing. */
+    head: { text: Phaser.GameObjects.Text; cancel: Phaser.GameObjects.Container };
     panes: Record<Mode, Phaser.GameObjects.Container>;
     queue: Phaser.GameObjects.Text;
     scan: Phaser.GameObjects.Text | null;
@@ -158,6 +159,10 @@ export class GameScene extends Phaser.Scene {
   /** The field guide or a coach card is open: the world waits, no pause sheet. */
   private overlayPaused = false;
   private coachedBuild = false;
+  /** Until when the liberated land is lit after a tap outside it (Антон: say why you can't build there). */
+  private territoryFlash = 0;
+  /** Arrow to the nearest free liberated cell after a tap outside the territory (MVP_RULES §7.1). */
+  private pointTo: { x: number; y: number; until: number } | null = null;
   private rightClick: { x: number; y: number; px: number; py: number } | null = null;
   private dragMode: 'queue' | 'cancel' | null = null;
   private lastDragCell = -1;
@@ -250,8 +255,6 @@ export class GameScene extends Phaser.Scene {
       if (this.ghost) this.setGhost(null);
       else this.world.apply({ type: 'cancelOrder' }, ME);
     });
-    this.input.keyboard?.on('keydown-ONE', () => this.setMode('dig'));
-    this.input.keyboard?.on('keydown-TWO', () => this.setMode('build'));
     const onHide = () => {
       if (!document.hidden) return;
       // Leaving the tab or the app (home button, a call) pauses the run, which also saves it.
@@ -301,9 +304,13 @@ export class GameScene extends Phaser.Scene {
     this.voice?.update();
     if (this.guide?.update()) this.showGuideStep();
     if (this.spotlight && time > this.spotlight.until) this.spotlight = null;
+    if (this.pointTo && time > this.pointTo.until) this.pointTo = null;
     this.board.update(time, {
-      buildType: this.mode === 'build' && w.started ? this.buildType : null,
+      // Liberated free land pulses while placing and when the tutorial asks for a building.
+      buildType: (this.mode === 'build' || this.tutorialWantsBuild()) && w.started ? this.buildType : null,
       ghost: this.mode === 'build' ? this.ghost : null,
+      showTerritory: time < this.territoryFlash,
+      pointTo: this.pointTo,
       spotlight: this.spotlight,
       focus: this.guide?.focusCells() ?? [],
       showRisk: w.player(ME).assist.mode === 'full',
@@ -514,10 +521,8 @@ export class GameScene extends Phaser.Scene {
       d.fillStyle(k <= g.stepIndex ? C.teal : 0xc6d4d9, 1);
       d.fillCircle(GUIDE.x + 50 + k * 22, box.y + 30, k === g.stepIndex ? 7 : 5);
     }
-    if ((g.step!.highlightBuild ?? []).length) {
-      this.nextTutorialBuilding();
-      this.setMode('build');
-    }
+    if ((g.step!.highlightBuild ?? []).length) this.nextTutorialBuilding();
+    this.setMode(this.ghost ? 'build' : 'dig');
   }
 
   /** In a tutorial step that asks for buildings, preselect the first one not built yet. */
@@ -637,21 +642,23 @@ export class GameScene extends Phaser.Scene {
     const g = this.add.graphics().setDepth(20);
     plate(g, DOCK.x, DOCK.y, DOCK.w, DOCK.h, 28);
     // No attack mode: residents fight on their own, a tap on a foe directs them (MVP_RULES §6).
-    const modes: Mode[] = ['dig', 'build'];
-    const icons = { dig: 'icon.dig', build: 'icon.build' };
+    // No mode tabs (Антон 2026-10-09): a tap on a closed block digs, a tap on liberated land builds.
+    // The top row of the dock says what a tap does right now.
     const pad = 22;
-    const gap = 10;
-    const tw = (DOCK.w - pad * 2 - gap * (modes.length - 1)) / modes.length;
     const ty = DOCK.y + 22;
-    const tabs = modes.map((mode, k) => {
-      const x = DOCK.x + pad + k * (tw + gap);
-      const tg = this.add.graphics().setDepth(20);
-      const icon = this.add.image(x + 46, ty + 40, icons[mode]).setScale(1.25).setDepth(20);
-      const label = this.add.text(x + 70, ty + 40, t(`hud.mode_${mode}`), TXT.body(26, INK.graphite, '700')).setOrigin(0, 0.5).setDepth(20);
-      const hit = this.add.zone(x, ty, tw, 80).setOrigin(0).setDepth(20).setInteractive({ useHandCursor: true });
-      hit.on('pointerdown', stop(() => this.setMode(mode)));
-      return { mode, g: tg, label, icon, x, w: tw };
-    });
+    const headText = this.add
+      .text(DOCK.x + pad + 8, ty + 40, '', { ...TXT.body(23, INK.graphite, '600'), wordWrap: { width: DOCK.w - pad * 2 - 190 }, lineSpacing: 2 })
+      .setOrigin(0, 0.5)
+      .setDepth(20);
+    const cg0 = this.add.graphics();
+    chip(cg0, 0, 0, 170, 70, C.graphite, 1, 14);
+    const ctx = this.add.text(85, 35, `✕ ${t('dock.cancel')}`, TXT.body(23, INK.white, '700')).setOrigin(0.5);
+    const chit = this.add.zone(0, 0, 170, 70).setOrigin(0).setInteractive({ useHandCursor: true });
+    chit.on('pointerdown', stop(() => this.setGhost(null)));
+    const cancel = this.add.container(DOCK.x + DOCK.w - pad - 170, ty + 5, [cg0, ctx, chit]).setDepth(20);
+    const divider = this.add.graphics().setDepth(20);
+    divider.fillStyle(C.graphite, 0.08);
+    divider.fillRect(DOCK.x + pad, ty + 88, DOCK.w - pad * 2, 2);
 
     const top = DOCK.y + 124;
     const inner = DOCK.w - pad * 2;
@@ -729,31 +736,69 @@ export class GameScene extends Phaser.Scene {
         'pointerdown',
         stop(() => {
           this.buildType = id;
-          this.setGhost(null);
+          // Switch the ghost on the chosen block to this building.
+          if (this.ghost) this.setGhost(this.ghost);
           this.say(t(`building.${id}.desc`), 3500);
         }),
       );
-      build.add([cg, img, name, cost, eicon, hit]);
+      // How far this building frees land around it (buildings.json territoryRadius).
+      const r = buildingDefs[id].territoryRadius ?? 0;
+      build.add([cg, img, name, cost, eicon]);
+      if (r > 0) build.add(this.add.text(x + cw - 8, top + 10, `⬚${r}`, { ...TXT.num(15, INK.teal) }).setOrigin(1, 0));
+      build.add(hit);
       return { id, g: cg, cost, x, y: top, w: cw, h: ch };
     });
 
-    this.dock = { tabs, panes: { dig, build }, queue, scan, cards };
+    this.dock = { head: { text: headText, cancel }, panes: { dig, build }, queue, scan, cards };
   }
 
+  /** 'build' while a liberated block is chosen (ghost shown), otherwise 'dig'. */
   private setMode(mode: Mode): void {
+    if (mode === 'dig' && this.ghost) {
+      this.ghost = null;
+      this.ghostButtons?.destroy();
+      this.ghostButtons = null;
+    }
     this.mode = mode;
     if (mode === 'build' && !this.guide && !this.coachedBuild) this.coachedBuild = learning().coach('build');
-    if (mode !== 'build') this.setGhost(null);
-    for (const tab of this.dock.tabs) {
-      const on = tab.mode === mode;
-      tab.g.clear();
-      if (on) chip(tab.g, tab.x, DOCK.y + 22, tab.w, 80, C.graphite, 1, 14);
-      else chip(tab.g, tab.x, DOCK.y + 22, tab.w, 80, C.graphite, 0.06, 14);
-      tab.label.setColor(on ? INK.white : INK.graphite);
-      if (on) tab.icon.setTintFill(0xffffff);
-      else tab.icon.clearTint();
-    }
+    this.dock.head.cancel.setVisible(mode === 'build');
+    this.dock.head.text.setText(t(mode === 'build' ? 'dock.build_here' : this.tutorialWantsBuild() ? 'dock.build_tutorial' : 'dock.hint'));
     for (const [m, pane] of Object.entries(this.dock.panes)) pane.setVisible(m === mode);
+  }
+
+  private tutorialWantsBuild(): boolean {
+    return (this.guide?.step?.highlightBuild ?? []).length > 0;
+  }
+
+  /** Tap on liberated land: show the ghost of the selected building there and the building cards. */
+  private openBuild(x: number, y: number): void {
+    const why = this.world.canBuild(ME, this.buildType, x, y);
+    // Not enough Energy still opens the cards (another building may fit the budget); other refusals explain themselves.
+    if (why !== null && why !== 'build.not_enough_energy') {
+      this.setGhost(null);
+      this.say(t(why === 'invalid' ? 'build.invalid_cell' : why), 2800, true);
+      return;
+    }
+    this.setGhost({ x, y });
+  }
+
+  /** Closest open, empty cell of our own land (for the arrow after a refused tap). */
+  private nearestFreeLand(fx: number, fy: number): { x: number; y: number } | null {
+    const w = this.world;
+    let best: { x: number; y: number } | null = null;
+    let bestD = Infinity;
+    for (let y = 0; y < w.s.height; y++) {
+      for (let x = 0; x < w.s.width; x++) {
+        const c = w.cell(x, y);
+        if (!c.revealed || c.content !== 'ground' || c.building !== undefined || !w.inTerritory(ME, x, y)) continue;
+        const d = (x - fx) ** 2 + (y - fy) ** 2;
+        if (d < bestD) {
+          bestD = d;
+          best = { x, y };
+        }
+      }
+    }
+    return best;
   }
 
   private updateDock(): void {
@@ -779,13 +824,9 @@ export class GameScene extends Phaser.Scene {
         c.cost.setColor(afford ? INK.cobalt : INK.coral);
       }
     }
-    // Tutorial: the Build tab blinks when the step asks for a building.
-    const hl = (this.guide?.step?.highlightBuild ?? []).length > 0;
-    const tab = this.dock.tabs[1];
-    if (hl && this.mode !== 'build') {
-      tab.g.clear();
-      chip(tab.g, tab.x, DOCK.y + 22, tab.w, 80, C.amber, 0.4 + 0.4 * Math.sin(this.time.now / 180), 14);
-    }
+    // Tutorial: the context line blinks amber when the step asks for a building.
+    if (this.mode === 'dig' && this.tutorialWantsBuild()) this.dock.head.text.setColor(Math.sin(this.time.now / 180) > 0 ? INK.amber : INK.graphite);
+    else this.dock.head.text.setColor(INK.graphite);
   }
 
   // ------------------------------------------------------------ build ghost
@@ -794,6 +835,7 @@ export class GameScene extends Phaser.Scene {
     this.ghost = at;
     this.ghostButtons?.destroy();
     this.ghostButtons = null;
+    this.setMode(at ? 'build' : 'dig');
     if (!at) return;
     const p = this.board.center(at.x, at.y);
     const y = Math.max(BOARD.y + 30, p.y - 110);
@@ -1126,15 +1168,6 @@ export class GameScene extends Phaser.Scene {
       if (w.apply({ type: 'placeCommand', x, y }, ME).ok && !this.guide) this.say(t('tutorial.dig'), 5000);
       return;
     }
-    if (this.mode === 'build') {
-      const why = w.canBuild(ME, this.buildType, x, y);
-      if (why === null) this.setGhost({ x, y });
-      else {
-        this.setGhost(null);
-        this.say(t(why === 'invalid' ? 'build.invalid_cell' : why), 2800, true);
-      }
-      return;
-    }
     const c = w.cell(x, y);
     if (p.rightButtonDown()) {
       // Right click cancels or marks; a right drag pans the view instead (see onUp).
@@ -1164,12 +1197,36 @@ export class GameScene extends Phaser.Scene {
         return;
       }
     }
+    // Open land: liberated → build here; not liberated → say why and light the land that is.
+    if (c.revealed && c.content === 'ground' && c.building === undefined && w.inTerritory(ME, x, y) && !(this.guide && !this.tutorialWantsBuild())) {
+      // A number first shows the eight cells it counts; the second tap on it builds (config.input.tapNumberCell).
+      const cl = w.clues(x, y);
+      const sp = this.spotlight;
+      if ((cl.threat || cl.demon) && !this.ghost && !(sp && sp.x === x && sp.y === y)) {
+        this.spotlight = { x, y, until: this.time.now + 3500 };
+        this.say(`${this.nearText(x, y)}\n${t('build.tap_again')}`, 3500);
+        if (cl.threat) this.guide?.notify('clue_touched');
+        return;
+      }
+      this.spotlight = null;
+      this.openBuild(x, y);
+      return;
+    }
     // Touching an opened clue shows the eight cells it counts.
     if (c.revealed && c.building === undefined && (c.content === 'ground' || c.resolved)) {
       this.spotlight = { x, y, until: this.time.now + 2500 };
-      this.say(this.nearText(x, y));
+      if (this.guide || c.content !== 'ground') this.say(this.nearText(x, y));
+      else {
+        this.setGhost(null);
+        this.territoryFlash = this.time.now + 2600;
+        const to = this.nearestFreeLand(x, y);
+        this.pointTo = to ? { ...to, until: this.time.now + 3600 } : null;
+        this.say(t('build.refuse.not_liberated'), 3600);
+      }
       if (w.clues(x, y).threat > 0) this.guide?.notify('clue_touched');
     }
+    // A tap on a closed block while placing: drop the building and dig instead.
+    if (!c.revealed && this.ghost) this.setGhost(null);
     // Second tap on a cell the scanner knows is dangerous: dig it anyway.
     const k = cellKey(x, y);
     if (this.confirmCell === k) {

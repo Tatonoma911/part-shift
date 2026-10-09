@@ -43,6 +43,10 @@ export interface ViewState {
   focus: { x: number; y: number }[];
   /** Assist mode "full": show the risk glow around visible numbers (UI_SPEC §3.2). */
   showRisk: boolean;
+  /** Light all liberated land for a moment (after a tap outside it). */
+  showTerritory?: boolean;
+  /** Bouncing arrow over the nearest free liberated cell. */
+  pointTo?: { x: number; y: number } | null;
 }
 
 function hash(x: number, y: number): number {
@@ -88,6 +92,7 @@ export class BoardView {
   private readonly arcG: Phaser.GameObjects.Graphics;
   private readonly topG: Phaser.GameObjects.Graphics;
   private ghostSpr: Phaser.GameObjects.Image | null = null;
+  private zoneG?: Phaser.GameObjects.Graphics;
   private lost: GameEvent[] = [];
   private readonly quarantine: Quarantine;
 
@@ -456,6 +461,10 @@ export class BoardView {
         if (w.started && w.inTerritory(ME, x, y) && c.building === undefined) {
           og.lineStyle(2, C.seam, 0.55);
           og.strokeRect(px + 2, py + 2, CELL - 4, CELL - 4);
+          if (view.showTerritory) {
+            og.fillStyle(C.seam, 0.28 + 0.14 * Math.sin(now / 150));
+            og.fillRect(px, py, CELL, CELL);
+          }
         }
         if (view.buildType && w.canBuild(ME, view.buildType, x, y) === null) {
           const pulse = 0.35 + 0.25 * Math.sin(now / 200);
@@ -469,6 +478,7 @@ export class BoardView {
       }
     }
     this.drawSpotlight(og, view, now);
+    this.drawPointTo(view, now);
     this.updateBuildings(now);
     this.updateGhost(view);
     this.updateUnits();
@@ -609,6 +619,42 @@ export class BoardView {
         g.strokeRect(px + 1, py + 1, CELL - 2, CELL - 2);
       }
     }
+  }
+
+  private arrowG?: Phaser.GameObjects.Graphics;
+
+  /** Teal arrow bobbing above the target cell, with its outline (MVP_RULES §7.1). */
+  private drawPointTo(view: ViewState, now: number): void {
+    this.arrowG ??= this.scene.add.graphics().setDepth(D.top + 0.5);
+    const g = this.arrowG;
+    g.clear();
+    const to = view.pointTo;
+    if (!to) return;
+    const px = this.bx + to.x * STEP;
+    const py = this.by + to.y * STEP;
+    const pulse = 0.5 + 0.5 * Math.sin(now / 140);
+    g.fillStyle(C.seam, 0.25 + 0.2 * pulse);
+    g.fillRect(px, py, CELL, CELL);
+    g.lineStyle(5, C.seam, 1);
+    g.strokeRect(px + 2, py + 2, CELL - 4, CELL - 4);
+    const cx = px + CELL / 2;
+    const tip = py - 6 - 10 * pulse;
+    const s = CELL * 0.32;
+    const pts = [
+      new Phaser.Math.Vector2(cx, tip),
+      new Phaser.Math.Vector2(cx + s, tip - s),
+      new Phaser.Math.Vector2(cx + s * 0.38, tip - s),
+      new Phaser.Math.Vector2(cx + s * 0.38, tip - s * 2.1),
+      new Phaser.Math.Vector2(cx - s * 0.38, tip - s * 2.1),
+      new Phaser.Math.Vector2(cx - s * 0.38, tip - s),
+      new Phaser.Math.Vector2(cx - s, tip - s),
+    ];
+    g.fillStyle(C.graphite, 0.35);
+    g.fillPoints(pts.map((v) => new Phaser.Math.Vector2(v.x + 3, v.y + 4)), true);
+    g.fillStyle(C.seam, 1);
+    g.fillPoints(pts, true);
+    g.lineStyle(3, C.graphite, 1);
+    g.strokePoints(pts, true);
   }
 
   private updateHot(i: number, hot: number, px: number, py: number, now: number): void {
@@ -761,9 +807,41 @@ export class BoardView {
   }
 
   private updateGhost(view: ViewState): void {
+    this.zoneG ??= this.scene.add.graphics().setDepth(D.overlay + 0.2);
+    this.zoneG.clear();
     if (!view.ghost || !view.buildType) {
       this.ghostSpr?.setVisible(false);
       return;
+    }
+    // The land this building will free: a dashed square of its territory radius around the ghost.
+    const r = buildingDefs[view.buildType]?.territoryRadius ?? 0;
+    if (r > 0) {
+      const w = this.world.s;
+      const x0 = Math.max(0, view.ghost.x - r);
+      const y0 = Math.max(0, view.ghost.y - r);
+      const x1 = Math.min(w.width - 1, view.ghost.x + r);
+      const y1 = Math.min(w.height - 1, view.ghost.y + r);
+      const a = this.center(x0, y0);
+      const b = this.center(x1, y1);
+      const L = a.x - CELL / 2;
+      const T = a.y - CELL / 2;
+      const R = b.x + CELL / 2;
+      const B = b.y + CELL / 2;
+      const zg = this.zoneG;
+      zg.fillStyle(C.seam, 0.12);
+      zg.fillRect(L, T, R - L, B - T);
+      zg.lineStyle(3, C.seam, 0.95);
+      const dash = (ax: number, ay: number, bx: number, by: number) => {
+        const len = Math.hypot(bx - ax, by - ay);
+        for (let d = 0; d < len; d += 14) {
+          const e = Math.min(len, d + 8);
+          zg.lineBetween(ax + ((bx - ax) * d) / len, ay + ((by - ay) * d) / len, ax + ((bx - ax) * e) / len, ay + ((by - ay) * e) / len);
+        }
+      };
+      dash(L, T, R, T);
+      dash(R, T, R, B);
+      dash(R, B, L, B);
+      dash(L, B, L, T);
     }
     const p = this.center(view.ghost.x, view.ghost.y);
     if (!this.ghostSpr) this.ghostSpr = this.scene.add.image(0, 0, `building.${view.buildType}`).setDepth(D.building + 1);
