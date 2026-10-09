@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { BoardScene } from './game/BoardScene';
+import { GameScene } from './game/GameScene';
 import { VIEW } from './game/layout';
 
 new Phaser.Game({
@@ -10,5 +10,5 @@ new Phaser.Game({
   height: VIEW.height,
   scale: { mode: Phaser.Scale.FIT, autoCenter: Phaser.Scale.CENTER_BOTH },
   input: { activePointers: 2 },
-  scene: [BoardScene],
+  scene: [GameScene],
 });
