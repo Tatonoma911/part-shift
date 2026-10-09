@@ -3,6 +3,7 @@ import { config } from '../core/data';
 import type { AssistMode } from '../core/state';
 import { lang, setLang, t } from '../i18n';
 import { introSeen, playIntro } from '../intro';
+import { learning, learningLang } from './learn';
 import { BUILDING_ANCHOR, createArt, preloadArt } from './assets';
 import { sound } from './audio';
 import type { GameStart } from './GameScene';
@@ -63,6 +64,7 @@ export class MenuScene extends Phaser.Scene {
     this.show('main');
     // Android back: skips the intro comic, sub-pages return to the main page; on the main page the app goes to the background.
     setBackHandler(() => {
+      if (learning().isOpen) return true;
       if (this.storyPlaying) {
         document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
         return true;
@@ -178,6 +180,7 @@ export class MenuScene extends Phaser.Scene {
       } else if (!tutorialDone()) button(t('menu.tutorial'), () => this.play({ tutorial: true }), true);
       button(t('menu.new_run'), () => this.show('slots'), !last && tutorialDone());
       if (last || tutorialDone()) button(t('menu.tutorial'), () => this.play({ tutorial: true }));
+      button(t('menu.guide'), () => learning().openGuide());
       button(t('menu.settings'), () => this.show('settings'));
       button(t('menu.story'), () => this.story(true));
       button(t('menu.account'), null, false, t('menu.soon'));
@@ -224,6 +227,7 @@ export class MenuScene extends Phaser.Scene {
       button(`${t('settings.language')}: ${t(`settings.language.${lang}`)}`, () => {
         const next = lang === 'ru' ? 'en' : 'ru';
         setLang(next);
+        learningLang(next);
         saveSettings({ ...st, lang: next });
         this.scene.restart();
       });
@@ -233,6 +237,10 @@ export class MenuScene extends Phaser.Scene {
         this.show('settings');
       });
       button(t('settings.replay_tutorial'), () => this.play({ tutorial: true }));
+      button(t('settings.reset_hints'), () => {
+        learning().resetProgress();
+        this.show('settings');
+      });
       button(t('menu.back'), () => this.show('main'), true);
     }
     const h = y - top + 24;

@@ -6,6 +6,7 @@ import { World, type GameEvent } from '../core/world';
 import { t } from '../i18n';
 import { BUILDING_ANCHOR } from './assets';
 import { sound } from './audio';
+import { learning, setLearningHooks } from './learn';
 import { BoardView } from './BoardView';
 import { Cameras, UI_DEPTH } from './cameras';
 import { clearSlot, loadSettings, loadSlot, saveSlot, touchSlot } from './saves';
@@ -99,6 +100,9 @@ export class GameScene extends Phaser.Scene {
   private guideBox: { text: Phaser.GameObjects.Text; dots: Phaser.GameObjects.Graphics; g: Phaser.GameObjects.Graphics; y: number; h: number } | null = null;
 
   private paused = false;
+  /** The field guide or a coach card is open: the world waits, no pause sheet. */
+  private overlayPaused = false;
+  private coachedBuild = false;
   private rightClick: { x: number; y: number; px: number; py: number } | null = null;
   private dragMode: 'queue' | 'cancel' | null = null;
   private lastDragCell = -1;
@@ -125,6 +129,8 @@ export class GameScene extends Phaser.Scene {
     this.overlay = null;
     this.guideBox = null;
     this.paused = false;
+    this.overlayPaused = false;
+    this.coachedBuild = false;
     this.dragMode = null;
     this.saveTimer = 0;
   }
@@ -192,11 +198,15 @@ export class GameScene extends Phaser.Scene {
     setBackHandler(() => this.onBack());
     if (this.world.s.outcome === 'playing') sound.playMusic('theme_lumen');
     this.setMode('dig');
+    // The tutorial teaches by itself; coach cards and the guide come with free play.
+    setLearningHooks({ pause: () => (this.overlayPaused = true), resume: () => (this.overlayPaused = false) });
+    this.events.once('shutdown', () => setLearningHooks(null));
   }
 
   update(time: number, deltaMs: number): void {
     const w = this.world;
-    if (!this.paused && w.s.outcome === 'playing') {
+    if (!this.paused && !this.overlayPaused && w.s.outcome === 'playing') {
+      if (!this.coachedBuild && !this.guide && w.player(ME).energy >= 100) this.coachedBuild = learning().coach('build') || this.coachedBuild;
       w.tick(Math.min(deltaMs, 250) / 1000);
       this.saveTimer += deltaMs / 1000;
       if (this.saveTimer >= config.save.autosaveSeconds) {
@@ -250,6 +260,8 @@ export class GameScene extends Phaser.Scene {
       ['+', () => this.cams.zoomBy(1.3)],
       ['−', () => this.cams.zoomBy(1 / 1.3)],
       ['⟲', () => this.cams.reset()],
+      // Field guide (Learning thread).
+      ['?', () => learning().openGuide()],
     ];
     items.forEach(([label, act], k) => {
       const x = (LANDSCAPE ? BOARD.x + BOARD.w : VIEW.width) - 24 - 56;
@@ -265,10 +277,23 @@ export class GameScene extends Phaser.Scene {
 
   // ------------------------------------------------------------------ events
 
+  /** First-time coach cards (Learning thread): world events plus clue moments the world doesn't name. */
+  private coachOn(e: GameEvent): void {
+    const l = learning();
+    if (l.onGameEvent(e.type)) return;
+    if (e.type === 'scan') l.coach('deduce');
+    if (e.type === 'dig_done' && e.x !== undefined && e.y !== undefined) {
+      const c = this.world.clues(e.x, e.y);
+      if (c.threat > 0) l.coach('clue');
+      else if (c.finds > 0) l.coach('finds');
+    }
+  }
+
   private onEvent(e: GameEvent): void {
     if (e.owner !== undefined && e.owner !== ME && e.owner >= 0) return;
     if (e.type === 'victory' || e.type === 'defeat') sound.stopMusic();
     sound.play(e.type);
+    if (!this.guide) this.coachOn(e);
     if (e.type === 'center_hit') {
       if (this.time.now - this.lastCenterHit > 6000) this.say(t('event.command_under_attack'), 3000, true);
       this.lastCenterHit = this.time.now;
@@ -606,6 +631,7 @@ export class GameScene extends Phaser.Scene {
 
   private setMode(mode: Mode): void {
     this.mode = mode;
+    if (mode === 'build' && !this.guide && !this.coachedBuild) this.coachedBuild = learning().coach('build');
     if (mode !== 'build') this.setGhost(null);
     for (const tab of this.dock.tabs) {
       const on = tab.mode === mode;
@@ -685,6 +711,8 @@ export class GameScene extends Phaser.Scene {
 
   /** Android back: drop the building ghost, else pause; on the pause menu or an end screen, back to the main menu. */
   private onBack(): boolean {
+    // The field guide and coach cards are DOM overlays without a close hook yet: back waits for their own button.
+    if (learning().isOpen) return true;
     if (this.ghost) {
       this.setGhost(null);
     } else if (this.overlay || this.paused || this.world.s.outcome !== 'playing') {
@@ -721,6 +749,13 @@ export class GameScene extends Phaser.Scene {
           act: () => {
             sound.setPrefs({ music: !sound.prefs.music });
             this.setPaused(true);
+          },
+        },
+        {
+          label: t('menu.guide'),
+          act: () => {
+            this.setPaused(false);
+            learning().openGuide();
           },
         },
         { label: t('pause.restart'), act: () => this.restart() },
@@ -847,7 +882,7 @@ export class GameScene extends Phaser.Scene {
   }
 
   private onDown(p: Phaser.Input.Pointer): void {
-    if (this.overlay || !this.cams.inBoardView(p) || this.cams.busy) return;
+    if (this.overlay || this.overlayPaused || !this.cams.inBoardView(p) || this.cams.busy) return;
     const wp = this.cams.worldAt(p);
     const at = this.board.cellAt(wp.x, wp.y);
     if (!at) return;

@@ -30,5 +30,7 @@
   "settings.assist.title": "Подсказки разведки",
   "settings.language.ru": "Русский",
   "settings.language.en": "English",
-  "menu.zoom_hint": "Колесо мыши или два пальца: приблизить поле"
+  "menu.zoom_hint": "Колесо мыши или два пальца: приблизить поле",
+  "menu.guide": "Справочник",
+  "settings.reset_hints": "Сбросить подсказки"
 }
