@@ -151,6 +151,7 @@ export class GameScene extends Phaser.Scene {
     ringBox: Phaser.GameObjects.Container;
     goal: Phaser.GameObjects.Text;
     goalBg: Phaser.GameObjects.Graphics;
+    shiftLabel: Phaser.GameObjects.Text;
   };
   private shownEnergy = 0;
   private dock!: {
@@ -301,7 +302,8 @@ export class GameScene extends Phaser.Scene {
     this.boonCheck();
     if (!this.paused && !this.overlayPaused && w.s.outcome === 'playing') {
       if (!this.coachedBuild && !this.guide && w.player(ME).energy >= 100) this.coachedBuild = learning().coach('build') || this.coachedBuild;
-      w.tick(Math.min(deltaMs, 250) / 1000);
+      // Real elapsed time: Phaser smooths delta while the window is unfocused, which slowed the game (QA-015).
+      w.tick(Math.min(this.game.loop.rawDelta || deltaMs, 250) / 1000);
       this.saveTimer += deltaMs / 1000;
       if (this.saveTimer >= config.save.autosaveSeconds) {
         this.saveTimer = 0;
@@ -618,10 +620,10 @@ export class GameScene extends Phaser.Scene {
     const ringBox = this.add.container(rx, midY, [ring, threat]).setDepth(20);
 
     // Goal line under the HUD.
-    this.add.text(HUD.x + 8, GOAL.y + 22, t('hud.shift_label').toUpperCase(), TXT.caps()).setOrigin(0, 0.5).setDepth(20);
+    const shiftLabel = this.add.text(HUD.x + 8, GOAL.y + 22, t('hud.shift_label').toUpperCase(), TXT.caps()).setOrigin(0, 0.5).setDepth(20);
     const goalBg = this.add.graphics().setDepth(20);
     const goal = this.add.text(HUD.x + HUD.w - 24, GOAL.y + 22, '', TXT.body(23, INK.white, '700')).setOrigin(1, 0.5).setDepth(20);
-    this.hud = { energy, residents, squad, threat, ring, ringBox, goal, goalBg };
+    this.hud = { energy, residents, squad, threat, ring, ringBox, goal, goalBg, shiftLabel };
   }
 
   private updateHud(deltaMs: number): void {
@@ -672,6 +674,8 @@ export class GameScene extends Phaser.Scene {
     const gb = this.hud.goalBg;
     gb.clear();
     const gw = this.hud.goal.width + 36;
+    // A long banner wins over the shift name rather than covering it (QA-011).
+    this.hud.shiftLabel.setVisible(this.hud.shiftLabel.width + gw + 24 < HUD.w);
     chip(gb, HUD.x + HUD.w - 6 - gw, GOAL.y, gw, 44, bg, 1, 12);
   }
 

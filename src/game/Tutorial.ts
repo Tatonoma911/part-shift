@@ -67,7 +67,11 @@ export class TutorialGuide {
     const w = this.world;
     const elapsed = w.s.time - this.stepStartedAt;
     const done = this.met(step.until) || (step.autoAdvanceSeconds !== undefined && elapsed >= step.autoAdvanceSeconds);
-    if (done && elapsed >= (step.minSeconds ?? 0)) {
+    // Don't move on to a step that points at something not on the board yet
+    // (step 4 "tap the number" before any threat number is open: QA-008).
+    const next = this.steps[this.index + 1];
+    const nextReady = !next?.focus || this.cellsFor(next).length > 0;
+    if (done && nextReady && elapsed >= (step.minSeconds ?? 0)) {
       this.index++;
       this.stepStartedAt = w.s.time;
       this.flags.delete('clue_touched');
@@ -106,8 +110,10 @@ export class TutorialGuide {
 
   /** Cells to pulse for the current step. */
   focusCells(): { x: number; y: number }[] {
-    const step = this.step;
-    if (!step) return [];
+    return this.step ? this.cellsFor(this.step) : [];
+  }
+
+  private cellsFor(step: TutorialStep): { x: number; y: number }[] {
     if (step.highlight) return step.highlight.map(([x, y]) => ({ x, y }));
     const w = this.world;
     const all: { x: number; y: number }[] = [];
