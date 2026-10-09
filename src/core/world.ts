@@ -37,6 +37,7 @@ import {
 } from './data';
 import { cellAt, cellKey, cheb, dist, inBounds, neighbors, parseKey, walkableForEnemy, walkableForPlayer } from './grid';
 import { generateField } from './mapgen';
+import { solvable } from './noguess';
 import { findPath } from './pathfind';
 import { rand, randIntOf } from './rng';
 import type { AssistMode, Building, Cell, ClueChannel, GameState, PartInstance, Player, RuleOverrides, SiteState, Task, Unit, UnitKind } from './state';
@@ -91,6 +92,8 @@ export const HERO_ABILITY: Record<string, { every: number; range: number; amount
 
 const isSiteCell = (c: Cell) => c.content === 'nest' || c.content === 'heavy_nest' || c.content === 'hero_lair' || c.content === 'boss_hatch';
 const isEnemy = (u: Unit) => u.owner < 0;
+/** difficulty.json noGuess.maxAttempts; after that the board is accepted as is. */
+const NO_GUESS_ATTEMPTS = 200;
 const siteKey = (x: number, y: number) => `s:${x},${y}`;
 
 /** config.json with the difficulty level and a match's dotted-path overrides applied. */
@@ -380,6 +383,7 @@ export class World {
       if (fixed && (fixed.x !== cmd.x || fixed.y !== cmd.y)) return bad();
       this.placeRelativeSites(cmd.x, cmd.y);
       this.placeCommands([{ player: playerId, x: cmd.x, y: cmd.y }]);
+      this.emit('command_placed', { x: cmd.x, y: cmd.y, owner: playerId });
       return ok;
     }
     if (!p.alive || p.command === null) return bad();
@@ -518,6 +522,16 @@ export class World {
     if (!s.generated) {
       const nests = s.players.length > 1 ? 6 * s.players.length : undefined;
       generateField(s, { commands: list, nests });
+      // Стажёр and Смена never leave the player a 50/50 (MVP_RULES §15.2); tutorial boards are hand-laid.
+      const noGuess = this.difficulty.noGuessBoard && s.players.length === 1 && !this.rules.relativeSites;
+      for (let attempt = 1; noGuess && attempt < NO_GUESS_ATTEMPTS && !solvable(s, list); attempt++) {
+        for (const c of s.cells) {
+          if (c.revealed) continue;
+          c.content = 'ground';
+          for (const k of ['tech', 'stock', 'hero', 'heroTier'] as const) delete c[k];
+        }
+        generateField(s, { commands: list, nests });
+      }
     }
     for (const { player, x, y } of list) {
       const b = this.addBuilding(player, 'command', x, y, true);

@@ -234,6 +234,7 @@ export interface DifficultyDef {
   bossSelfWakeSeconds: number;
   callTargetHpFactor: number;
   lairSelfOpenThreatLevels: number[];
+  noGuessBoard?: boolean;
   raids?: { enabled: boolean; firstAfterSeconds: number; everySeconds: number; size: number; sizePerThreatLevels: number; maxSize: number };
 }
 export const difficulties: Record<string, DifficultyDef> = Object.fromEntries(

@@ -72,6 +72,8 @@ export class BoardView {
   private readonly hot = new Map<number, Phaser.GameObjects.Image>();
   private readonly haze = new Map<number, Phaser.GameObjects.Sprite>();
   private readonly sparks = new Map<number, Phaser.GameObjects.Sprite>();
+  /** Pulsing glow over nests that are still alive (nest_live, AR-05). */
+  private readonly nestGlow = new Map<number, Phaser.GameObjects.Sprite>();
   private readonly sites = new Map<string, Phaser.GameObjects.Sprite>();
   private readonly clueTexts = new Map<number, Phaser.GameObjects.Text[]>();
   private readonly buildingViews = new Map<number, { spr: Phaser.GameObjects.Sprite; state: string; type: string; x: number; y: number }>();
@@ -159,6 +161,15 @@ export class BoardView {
     return { x: this.bx + x * STEP + CELL / 2, y: this.by + y * STEP + CELL / 2 };
   }
 
+  /** Where a speech bubble goes: over a unit's head, else over a cell. */
+  speakerAt(at: { unit?: number; x?: number; y?: number }): { x: number; y: number } | null {
+    const v = at.unit !== undefined ? this.units.get(at.unit) : undefined;
+    if (v) return { x: v.spr.x, y: v.spr.y - v.spr.displayHeight * 0.85 };
+    if (at.x === undefined || at.y === undefined) return null;
+    const p = this.center(at.x, at.y);
+    return { x: p.x, y: p.y - CELL / 2 };
+  }
+
   cellAt(px: number, py: number): { x: number; y: number } | null {
     const x = Math.floor((px - this.bx + (STEP - CELL) / 2) / STEP);
     const y = Math.floor((py - this.by + (STEP - CELL) / 2) / STEP);
@@ -166,14 +177,17 @@ export class BoardView {
   }
 
   /** Enemy whose sprite is under the finger (sprites stand taller than a cell). */
+  /** The enemy under a tap: generous radius around the drawn sprite (body, not feet), so moving targets are easy to hit (QA). */
   enemyAt(px: number, py: number): Unit | undefined {
     let best: Unit | undefined;
-    let bestD = 44;
+    let bestD = Infinity;
     for (const u of this.world.s.units) {
-      if (u.owner >= 0) continue;
-      const c = this.center(u.x, u.y);
-      const d = Math.hypot(c.x - px, c.y - 14 - py);
-      if (d < bestD) {
+      if (u.owner >= 0 || u.hp <= 0) continue;
+      const v = this.units.get(u.id);
+      const c = v ? { x: v.spr.x, y: v.spr.y - v.spr.displayHeight * 0.4 } : { ...this.center(u.x, u.y), y: this.center(u.x, u.y).y - 14 };
+      const reach = Math.max(80, (v?.spr.displayHeight ?? 0) * 0.7);
+      const d = Math.hypot(c.x - px, c.y - py);
+      if (d < reach && d < bestD) {
         bestD = d;
         best = u;
       }
@@ -181,13 +195,28 @@ export class BoardView {
     return best;
   }
 
+
   // ----------------------------------------------------------------- events
 
   /** One-shot effect from the animator's fx sheet, centered on a board pixel. */
   private fx(anim: string, x: number, y: number, scale = 1, depth = D.top - 0.5): void {
+    // Combat hits and explosions use the animator's big outlined sheet (2×2 cells, centred; ANIM_SPEC §6, AR-04).
+    const big = `fx_big.${anim}_big`;
+    if (this.scene.anims.exists(big)) {
+      const s = this.scene.add.sprite(x, y, 'fx_big').setScale(Math.max(0.6, scale * 0.55)).setDepth(depth);
+      s.play(big).once('animationcomplete', () => s.destroy());
+      return;
+    }
     if (!this.scene.anims.exists(`fx.${anim}`)) return;
     const s = this.scene.add.sprite(x, y, 'fx').setScale(scale).setDepth(depth);
     s.play(`fx.${anim}`).once('animationcomplete', () => s.destroy());
+  }
+
+  /** White flash on the struck target, in time with the attacker's swing. */
+  private flash(x: number, y: number, scale: number): void {
+    if (!this.scene.anims.exists('fx_big.hit_flash')) return;
+    const s = this.scene.add.sprite(x, y, 'fx_big').setScale(scale).setDepth(D.top - 0.4);
+    s.play('fx_big.hit_flash').once('animationcomplete', () => s.destroy());
   }
 
   private fxAtCell(anim: string, x: number, y: number, scale = 1): void {
@@ -404,6 +433,14 @@ export class BoardView {
           this.sparks.set(i, spark);
         }
         spark?.setVisible(sparking);
+        const living = c.revealed && (c.content === 'nest' || c.content === 'heavy_nest') && !c.resolved && !w.site(x, y)?.destroyed;
+        let glow = this.nestGlow.get(i);
+        if (living && !glow && this.scene.anims.exists('nest_live.live')) {
+          glow = this.scene.add.sprite(px, py, 'nest_live').setOrigin(0).setDepth(D.site + 0.3);
+          glow.play({ key: 'nest_live.live', startFrame: h % 6 });
+          this.nestGlow.set(i, glow);
+        }
+        glow?.setVisible(living);
         this.updateHot(i, c.hot ?? 0, px, py, now);
         this.updateSite(x, y);
 
@@ -799,7 +836,10 @@ export class BoardView {
           const big = u.kind === 'hero' || u.kind === 'heavy_adaptant';
           const victim = u.target?.startsWith('u:') ? w.unit(Number(u.target.slice(2))) : undefined;
           const anim = this.hitAnim(u, victim);
-          this.scene.time.delayedCall(180, () => this.fx(anim, tp.x, tp.y, big ? 1.6 : 1.1));
+          this.scene.time.delayedCall(180, () => {
+            this.flash(tp.x, tp.y, big ? 0.8 : 0.55);
+            this.fx(anim, tp.x, tp.y, big ? 1.6 : 1.1);
+          });
           if (tp.x !== fx) v.spr.setFlipX(set.faces === 'left' ? tp.x > fx : tp.x < fx);
         }
       }

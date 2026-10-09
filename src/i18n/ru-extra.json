@@ -161,5 +161,9 @@
   "feedback.short": "Напиши хотя бы пару слов",
   "settings.feedback": "Написать автору",
   "order.attack": "Жители, в атаку!",
-  "event.raid_incoming": "Набег: {n} адаптантов идут ломать здание"
+  "event.raid_incoming": "Набег: {n} адаптантов идут ломать здание",
+  "voice.control_prefix": "КОНТРОЛЬ:",
+  "event.hero_appears_neuter": "{hero} вышло на улицы",
+  "event.boss_awake_neuter": "{hero} вышло на улицы. Это цель вызова",
+  "win.nests": "Гнёзд уничтожено: {count}"
 }
