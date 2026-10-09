@@ -2,6 +2,7 @@
  * Typed view of the game designer's tables (src/data/design, synced from
  * design/data). Code reads only these; balance changes never touch code.
  */
+import boonsJson from '../data/design/boons.json';
 import buildingsJson from '../data/design/buildings.json';
 import configJson from '../data/design/config.json';
 import difficultyJson from '../data/design/difficulty.json';
@@ -248,4 +249,15 @@ export const difficulties: Record<string, DifficultyDef> = Object.fromEntries(
 export const DEFAULT_DIFFICULTY = difficultyJson.default;
 /** Raids and damage to buildings (MVP_RULES §9.7). */
 export const raidRules = difficultyJson.raidRules;
+
+export interface BoonDef {
+  id: string;
+  rarity: 'common' | 'rare';
+  stackable: boolean;
+  maxStacks?: number;
+  effect: Record<string, unknown> & { type: string };
+}
+/** Cache bonuses, pick 1 of 3 (design/META.md §8). */
+export const boonRules = boonsJson.rules;
+export const boons: Record<string, BoonDef> = Object.fromEntries((boonsJson.boons as unknown as BoonDef[]).map((b) => [b.id, b]));
 export const buildingDamage = difficultyJson.buildingDamage;

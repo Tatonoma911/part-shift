@@ -35,6 +35,8 @@ import {
   type UnitStats,
   buildingDamage,
   raidRules,
+  boonRules,
+  boons as boonDefs,
 } from './data';
 import { cellAt, cellKey, cheb, dist, inBounds, neighbors, parseKey, walkableForEnemy, walkableForPlayer } from './grid';
 import { generateField } from './mapgen';
@@ -299,7 +301,7 @@ export class World {
   trainingLevel(playerId: number): number {
     const lv = this.s.buildings
       .filter((b) => b.owner === playerId && b.complete)
-      .reduce((n, b) => n + (buildingDefs[b.type].trainingLevel ?? 0), 0);
+      .reduce((n, b) => n + (buildingDefs[b.type].trainingLevel ?? 0), this.s.players[playerId]?.boons?.field_training ?? 0);
     return Math.min(this.cfg.school.trainingLevelsMax, lv);
   }
 
@@ -465,6 +467,13 @@ export class World {
       case 'cancelOrder':
         p.order = null;
         return ok;
+      case 'pickBoon': {
+        const offer = p.boonOffer;
+        if (!offer || !offer.ids.includes(cmd.id)) return bad();
+        p.boonOffer = undefined;
+        this.grantBoon(p, cmd.id);
+        return ok;
+      }
       case 'scan': {
         const a = p.assist;
         if (a.mode !== 'scanner') return bad();
@@ -583,6 +592,7 @@ export class World {
     }
     this.nests(dt);
     this.towers(dt);
+    this.boonClock(dt);
     this.production(dt);
     this.orbs(dt);
     this.hotGround(dt);
@@ -646,10 +656,16 @@ export class World {
     switch (c.content) {
       case 'cache': {
         c.resolved = true;
-        const energy = siteDefs.cache.onReveal?.energy ?? this.cfg.economy.cacheEnergy;
+        // With bonuses on, a cache pays a little Energy and offers 1 of 3 cards (META.md §8).
+        const offer = this.rules.boonPool?.length ? this.boonOffer(player) : [];
+        const energy = offer.length ? boonRules.cacheEnergyStillGranted : (siteDefs.cache.onReveal?.energy ?? this.cfg.economy.cacheEnergy);
         this.earn(player, energy);
         player.stats.caches++;
         this.emit('cache_open', { x, y, owner, amount: energy });
+        if (offer.length) {
+          player.boonOffer = { ids: offer, at: s.time };
+          this.emit('boon_offer', { x, y, owner, text: offer.join(',') });
+        }
         break;
       }
       case 'survivor': {
@@ -711,7 +727,7 @@ export class World {
       }
       p.spawnTimer -= dt;
       if (p.spawnTimer > 0) continue;
-      p.spawnTimer = this.cfg.population.spawnSeconds;
+      p.spawnTimer = this.cfg.population.spawnSeconds * this.boonFactor(p.id, 'hotline');
       const at = this.spawnPoint(p);
       if (at) this.spawnResident(p.id, at.x, at.y);
     }
@@ -742,6 +758,11 @@ export class World {
 
   private residentAi(u: Unit, dt: number): void {
     const s = this.s;
+    // Аптечки (boons.json first_aid): out of combat residents slowly heal.
+    const aid = s.players[u.owner]?.boons?.first_aid ? boonDefs.first_aid.effect : null;
+    if (aid && u.hp < this.maxHp(u) && !s.units.some((e) => isEnemy(e) && e.hp > 0 && dist(e.x, e.y, u.x, u.y) <= 3)) {
+      u.hp = Math.min(this.maxHp(u), u.hp + Number(aid.hpPerSecond) * dt);
+    }
     if (this.retreating(u, dt)) return;
     if (this.rallying(u, dt)) return;
     const target = this.cfg.residents.allFight ? this.combatTarget(u) : null;
@@ -773,7 +794,7 @@ export class World {
         const c = this.cell(t.x, t.y);
         c.dig = (c.dig ?? 0) + this.workShare(u, (o) => o.task.type === 'dig' && o.task.x === t.x && o.task.y === t.y) * dt;
         t.progress = Math.max(c.dig, 1e-6);
-        if (c.dig >= this.cfg.dig.digSeconds) {
+        if (c.dig >= this.cfg.dig.digSeconds * this.boonFactor(u.owner, 'sharp_shovels')) {
           c.dig = undefined;
           this.setTask(u, { type: 'idle' });
           this.reveal(t.x, t.y, u.owner);
@@ -1265,6 +1286,8 @@ export class World {
       reaction = elements.reactions.find((r) => r.hitTech === tech && has(r.onTargetStatus))?.id;
     }
     let mul = this.resistOf(v, tech) * factor;
+    // Досье на цель (boons.json weak_spot): residents hit the call target harder.
+    if (attacker.owner >= 0 && v.kind === 'hero' && v.hero === this.s.boss.hero) mul *= this.boonFactor(attacker.owner, 'weak_spot');
     if (reaction === 'thermoshock') {
       mul *= 1 + Number(elements.reactions.find((r) => r.id === reaction)!.effect.bonusDamageFactor ?? 1);
       v.burn = undefined;
@@ -1854,6 +1877,124 @@ export class World {
     return b;
   }
 
+  // -- cache bonuses (boons.json, META.md §8)
+
+  private boonStacks(p: Player, id: string): number {
+    return p.boons?.[id] ?? 0;
+  }
+
+  /** Product of a boon's factor over its stacks (1 when not taken). */
+  private boonFactor(owner: number, id: string): number {
+    const p = this.s.players[owner];
+    const n = p ? this.boonStacks(p, id) : 0;
+    return n ? Math.pow(Number(boonDefs[id].effect.value), n) : 1;
+  }
+
+  /** Three different cards from the rank's pool; rare ones come up 30 % of the time; Заначка fills a short offer. */
+  private boonOffer(p: Player): string[] {
+    const s = this.s;
+    const r = boonRules;
+    const can = (id: string): boolean => {
+      const b = boonDefs[id];
+      if (!b) return false;
+      const n = this.boonStacks(p, id);
+      if (n > 0 && (!b.stackable || n >= (b.maxStacks ?? Infinity))) return false;
+      if (b.effect.type === 'trainingLevel' && this.trainingLevel(p.id) >= this.cfg.school.trainingLevelsMax) return false;
+      if (b.effect.type === 'mark_hidden_site' && !this.hiddenSite(p)) return false;
+      return true;
+    };
+    const pool = (this.rules.boonPool ?? []).filter(can);
+    const out: string[] = [];
+    while (out.length < r.offerCount) {
+      const left = pool.filter((id) => !out.includes(id));
+      if (!left.length) break;
+      const rare = left.filter((id) => boonDefs[id].rarity === 'rare');
+      const common = left.filter((id) => boonDefs[id].rarity !== 'rare');
+      const fromRare = rare.length > 0 && (common.length === 0 || rand(s) * 100 < r.rarityWeights.rare);
+      const list = fromRare ? rare : common;
+      out.push(list[randIntOf(s, list.length)]);
+    }
+    while (out.length < r.offerCount && !out.includes(r.fallbackBoon)) out.push(r.fallbackBoon);
+    return out;
+  }
+
+  /** Online there is no pause: after 10 s the first card is taken (boons.json rules.online). */
+  private boonClock(_dt: number): void {
+    if (this.s.players.length < 2) return;
+    for (const p of this.s.players) {
+      if (p.boonOffer && this.s.time - p.boonOffer.at >= 10) {
+        const id = p.boonOffer.ids[0];
+        p.boonOffer = undefined;
+        this.grantBoon(p, id);
+      }
+    }
+  }
+
+  /** The nearest hidden nest, heavy nest or hero lair to the command center (Наводка). */
+  private hiddenSite(p: Player): { x: number; y: number } | null {
+    const cmd = this.building(p.command);
+    if (!cmd) return null;
+    let best: { x: number; y: number } | null = null;
+    let bestD = Infinity;
+    this.s.cells.forEach((c, i) => {
+      if (c.revealed || c.marked || !['nest', 'heavy_nest', 'hero_lair'].includes(c.content)) return;
+      const x = i % this.s.width;
+      const y = (i - x) / this.s.width;
+      const d = dist(x, y, cmd.x, cmd.y);
+      if (d < bestD) [best, bestD] = [{ x, y }, d];
+    });
+    return best;
+  }
+
+  private grantBoon(p: Player, id: string): void {
+    const b = boonDefs[id];
+    if (!b) return;
+    p.boons ??= {};
+    p.boons[id] = (p.boons[id] ?? 0) + 1;
+    const e = b.effect;
+    const mine = () => this.s.units.filter((u) => u.owner === p.id && u.kind === 'resident' && u.hp > 0);
+    const cmd = this.building(p.command);
+    switch (e.type) {
+      case 'energy_now':
+        this.earn(p, Number(e.amount));
+        break;
+      case 'residents_now_and_cap':
+        p.capBonus += Number(e.cap);
+        if (cmd) for (let i = 0; i < Number(e.residents); i++) this.spawnResident(p.id, cmd.x, cmd.y);
+        break;
+      case 'scan_now_and_charges':
+        p.assist.scanLeft = Math.max(p.assist.scanLeft, Number(e.markDurationSeconds));
+        if (p.assist.mode !== 'off') p.assist.charges += Number(e.scannerChargesAdd);
+        break;
+      case 'mark_hidden_site': {
+        const at = this.hiddenSite(p);
+        if (at) {
+          this.cell(at.x, at.y).marked = true;
+          const k = cellKey(at.x, at.y);
+          p.queue = p.queue.filter((q) => q !== k);
+          this.emit('site_marked', { x: at.x, y: at.y, owner: p.id });
+        }
+        break;
+      }
+      case 'give_part': {
+        const free = (u: Unit) => RESIDENT_SLOTS.filter((sl) => !u.parts[sl]).length;
+        const u = mine().sort((a, c) => free(c) - free(a))[0];
+        if (!u) break;
+        const armFree = RESIDENT_SLOTS.some((sl) => sl.startsWith('arm') && !u.parts[sl]);
+        const kind = armFree ? 'arm' : 'leg';
+        const ids = Object.keys(partDefs).filter((pid) => partDefs[pid].slot === kind && partDefs[pid].tiers.some((tr) => tr.tier === Number(e.tier)));
+        if (ids.length) this.takePart(u, { id: ids[randIntOf(this.s, ids.length)], tier: Number(e.tier) });
+        break;
+      }
+      case 'trainingLevel':
+      case 'residentDefenseAdd':
+        // Stats are read live (baseStats); heal the HP the training adds.
+        for (const u of mine()) u.hp = Math.min(this.maxHp(u), u.hp + (e.type === 'trainingLevel' ? this.cfg.school.perLevel.hp : 0));
+        break;
+    }
+    this.emit('boon_taken', { x: cmd?.x ?? 0, y: cmd?.y ?? 0, owner: p.id, text: id });
+  }
+
   /** The command center shoots the nearest enemy in range and heals residents next to it (buildings.json autoAttack, healAura). */
   private towers(dt: number): void {
     const s = this.s;
@@ -1894,7 +2035,7 @@ export class World {
         b.produceTimer += dt * (cooled ? 2 : 1);
         if (b.produceTimer >= def.produce.everySeconds) {
           b.produceTimer -= def.produce.everySeconds;
-          this.spawnOrb(b.owner, b.x, b.y, def.produce.energy);
+          this.spawnOrb(b.owner, b.x, b.y, Math.round(def.produce.energy * (b.type === 'reactor' ? this.boonFactor(b.owner, 'reactor_overclock') : 1)));
         }
       }
       const aura = def.aura;
@@ -1962,9 +2103,11 @@ export class World {
   private baseStats(u: Unit): UnitStats {
     if (u.kind !== 'resident') return u.base;
     const lv = this.trainingLevel(u.owner);
-    if (!lv) return u.base;
+    // Бронежилеты (boons.json armor_plates): flat defense per stack.
+    const armor = (this.s.players[u.owner]?.boons?.armor_plates ?? 0) * Number(boonDefs.armor_plates?.effect.value ?? 0);
+    if (!lv && !armor) return u.base;
     const per = this.cfg.school.perLevel;
-    return { ...u.base, hp: u.base.hp + per.hp * lv, damage: u.base.damage + per.damage * lv, defense: u.base.defense + per.defense * lv };
+    return { ...u.base, hp: u.base.hp + per.hp * lv, damage: u.base.damage + per.damage * lv, defense: u.base.defense + per.defense * lv + armor };
   }
 
   private cleanup(): void {

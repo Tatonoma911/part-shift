@@ -1,6 +1,6 @@
 import Phaser from 'phaser';
 import { openAccountPanel } from '../account/panel';
-import { BUILDABLE, buildings as buildingDefs, config } from '../core/data';
+import { BUILDABLE, boons, buildings as buildingDefs, config } from '../core/data';
 import { cellKey } from '../core/grid';
 import type { AssistMode } from '../core/state';
 import { World, type GameEvent } from '../core/world';
@@ -11,7 +11,8 @@ import { SoundDirector } from './soundDirector';
 import { Voice } from './voice';
 import { RunTally } from './meta/record';
 import { showResults } from './meta/ResultsScreen';
-import { loadMeta, pickAllies } from './meta/store';
+import { boonPoolFor, loadMeta, pickAllies } from './meta/store';
+import { pickBoon } from './meta/BoonPick';
 import { learning, setLearningHooks } from './learn';
 import { volumeHeight, volumeSliders } from './volume';
 import { BoardView } from './BoardView';
@@ -58,6 +59,9 @@ const TOASTS: Record<string, { text: (e: GameEvent) => string; bad?: boolean }> 
   hero_part_taken: { text: (e) => t('trophy.module_acquired', { part: t(`part.${e.text}.label`) }) },
   demon_windup: { text: () => t('enemy.demon.windup'), bad: true },
   boss_dead: { text: () => t('event.boss_dead') },
+  // The card's own joke line under its name: the pick reads as a story beat, not a stat change.
+  boon_taken: { text: (e) => `${t(`boon.${e.text}.name`)}. ${t(`boon.${e.text}.line`)}` },
+  site_marked: { text: () => t('boon.nest_tracker.desc') },
   raid_incoming: { text: (e) => t(`event.raid_incoming.${plural(e.amount ?? 0)}`, { count: e.amount ?? 0 }), bad: true },
   survivor_joined: { text: () => t('event.survivor_slot') },
   hint: { text: (e) => t(e.text ?? '') },
@@ -123,6 +127,8 @@ export class GameScene extends Phaser.Scene {
   private voice: Voice | null = null;
   /** This run's counters for the meta progress (Досье); not in the tutorial. */
   private tally: RunTally | null = null;
+  /** The cache's pick-1-of-3 sheet while it is open (the run waits). */
+  private boonUi: Phaser.GameObjects.Container | null = null;
   /** The end screen is up: a second victory/defeat call must not stack another one. */
   private ended = false;
 
@@ -214,7 +220,8 @@ export class GameScene extends Phaser.Scene {
     const saved = st.tutorial || st.fresh ? null : loadSlot(this.slot);
     if (st.tutorial) this.guide = new TutorialGuide();
     // Free play: residents dig only where the player sends them, nothing is queued for them at the start.
-    const rules = { config: { 'dig.autoQueueZeroNeighbors': false } };
+    // Caches offer 1 of 3 bonuses from the pool the player's HeroOut rank has opened (META.md §3, §8).
+    const rules = { config: { 'dig.autoQueueZeroNeighbors': false }, boonPool: boonPoolFor(loadMeta()) };
     this.world = this.guide
       ? this.guide.world
       : saved
@@ -277,6 +284,7 @@ export class GameScene extends Phaser.Scene {
     this.voice?.start(!saved);
     this.tally = this.guide ? null : new RunTally(ME);
     this.ended = false;
+    this.boonUi = null;
     this.music.start();
     this.setMode('dig');
     // The tutorial teaches by itself; coach cards and the guide come with free play.
@@ -286,6 +294,7 @@ export class GameScene extends Phaser.Scene {
 
   update(time: number, deltaMs: number): void {
     const w = this.world;
+    this.boonCheck();
     if (!this.paused && !this.overlayPaused && w.s.outcome === 'playing') {
       if (!this.coachedBuild && !this.guide && w.player(ME).energy >= 100) this.coachedBuild = learning().coach('build') || this.coachedBuild;
       w.tick(Math.min(deltaMs, 250) / 1000);
@@ -410,6 +419,8 @@ export class GameScene extends Phaser.Scene {
     if (e.type === 'cache_open' && e.x !== undefined) this.float(e.x, e.y!, `+${e.amount}`);
     if ((e.type === 'nest_open' || e.type === 'heavy_nest_open') && e.x !== undefined) this.explainNest(e.x, e.y!);
     if (e.type === 'victory' || e.type === 'defeat') this.showEnd(e.type === 'victory');
+    // Наводка: point at the cell it marked.
+    if (e.type === 'site_marked' && e.owner === ME && e.x !== undefined) this.pointTo = { x: e.x, y: e.y!, until: this.time.now + 5000 };
   }
 
   /** Points at an opened clue that warned about the nest (design/ONBOARDING.md §1.4). */
@@ -429,6 +440,23 @@ export class GameScene extends Phaser.Scene {
         }
       }
     }
+  }
+
+  /** An opened cache waits for the pick: solo runs pause under the cards (boons.json rules.solo). */
+  private boonCheck(): void {
+    const offer = this.world.player(ME).boonOffer;
+    if (!offer || this.boonUi || this.world.s.outcome !== 'playing') return;
+    const p = this.world.player(ME);
+    this.overlayPaused = true;
+    this.boonUi = pickBoon(
+      this,
+      offer.ids.map((id) => ({ id, rare: boons[id]?.rarity === 'rare', stacks: p.boons?.[id] ?? 0 })),
+      (id) => {
+        this.world.apply({ type: 'pickBoon', id }, ME);
+        this.boonUi = null;
+        this.overlayPaused = false;
+      },
+    );
   }
 
   /** Toast plate in the strip between the board and the dock; a new one replaces the old (UI_SPEC §2). */

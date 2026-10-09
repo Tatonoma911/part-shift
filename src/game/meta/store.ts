@@ -155,3 +155,9 @@ export function pickAllies(m: MetaSave, ids: string[]): void {
   m.allyChoice = ids.slice(0, allySlots(m).slots);
   saveMeta(m);
 }
+
+/** Cache bonuses opened by every rank up to the player's (meta.json ranks[].unlocksBoons, cumulative). */
+export function boonPoolFor(m: MetaSave): string[] {
+  const { index } = rankAt(stat(m, 'total_score'));
+  return RANKS.slice(0, index + 1).flatMap((r) => r.unlocksBoons);
+}

@@ -174,6 +174,10 @@ export interface Player {
   capBonus: number;
   /** Residents gathering before they engage, so they don't trickle in one by one (config.residents.rally). */
   rally?: { x: number; y: number; start: number; members: number[] };
+  /** Cache bonuses taken this run, with their stack count (boons.json). */
+  boons?: Record<string, number>;
+  /** An opened cache waiting for the player's pick: three boon ids, and when it was offered. */
+  boonOffer?: { ids: string[]; at: number };
   stats: { nests: number; caches: number; heroes: string[]; energy: number; lost: number; parts: number };
   /** Scanner helper (design/ONBOARDING.md §1.3). */
   assist: AssistState;
@@ -207,6 +211,8 @@ export interface RuleOverrides {
   relativeSites?: { type: 'nest' | 'cache' | 'rubble'; dx: number; dy: number }[];
   /** Tech of nests placed by relativeSites. */
   relativeTech?: Tech;
+  /** Cache bonuses this player's rank allows (boons.json, meta ranks); none: a cache only pays Energy (tutorial). */
+  boonPool?: string[];
   nest?: { initialSpawn?: number; maxAlive?: number; spawnSeconds?: number; totalBudget?: number };
   adaptant?: { partDropChance?: number; partSlot?: 'arm' | 'leg' };
 }
