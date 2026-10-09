@@ -107,3 +107,23 @@ kbd {
   .pgame { width: 100%; height: 100%; aspect-ratio: auto; }
   .pgame::before, .pgame::after { display: none; }
 }
+
+/* Wide screens: the game sets body[data-layout=landscape] before Phaser starts and plays on a 1600 × 900 canvas.
+   The board takes the whole stage; the side columns give way and the key art sits behind it. */
+body.play[data-layout='landscape'] .pstage { display: grid; grid-template-columns: minmax(0, 1fr); place-items: center; position: relative; }
+body.play[data-layout='landscape'] .pstage::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: url('../universe/key-art.webp') center / cover;
+  opacity: 0.16;
+  pointer-events: none;
+}
+body.play[data-layout='landscape'] .pside { display: none; }
+body.play[data-layout='landscape'] .pgame {
+  grid-column: 1;
+  height: auto;
+  width: min(100%, (100vh - 56px - 28px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px)) * 16 / 9);
+  aspect-ratio: 16 / 9;
+}
+body[data-layout='landscape'] #app { aspect-ratio: 16 / 9; height: auto; }
