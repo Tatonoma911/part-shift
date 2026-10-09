@@ -98,3 +98,18 @@ describe('World', () => {
     expect(w.queueDig(covered.x, covered.y)).toBe(false);
   });
 });
+
+describe('Commands', () => {
+  it('apply() drives the same actions and rejects invalid ones', () => {
+    const w = new World({ ...boardConfig, sites: { nest: 6, depot: 0, cache: 0, demon: 0 } }, sim, 5);
+    expect(w.apply({ type: 'queueDig', x: 0, y: 0 })).toBe(false); // nothing placed yet
+    expect(w.apply({ type: 'placeCore', x: 4, y: 4 })).toBe(true);
+    expect(w.apply({ type: 'placeCore', x: 1, y: 1 })).toBe(false);
+    const covered = w.board.cells.find((c) => !c.revealed)!;
+    expect(w.apply({ type: 'queueDig', x: covered.x, y: covered.y })).toBe(true);
+    expect(w.apply({ type: 'cancelDig', x: covered.x, y: covered.y })).toBe(true);
+    expect(w.isQueued(covered.x, covered.y)).toBe(false);
+    expect(w.apply({ type: 'toggleMark', x: covered.x, y: covered.y })).toBe(true);
+    expect(w.board.get(covered.x, covered.y).marked).toBe(true);
+  });
+});

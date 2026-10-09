@@ -2,6 +2,7 @@ import Phaser from 'phaser';
 import rules from '../data/rules.json';
 import { HINT_CHANNELS, type BoardConfig, type SimConfig } from '../core/types';
 import { World } from '../core/world';
+import { t } from '../i18n';
 import { CHANNEL_STYLE, COLORS, FOOTER_HEIGHT, HUD_HEIGHT, SIDE_MARGIN, SITE_GLYPH, VIEW } from './layout';
 
 const LONG_PRESS_MS = 450;
@@ -72,7 +73,7 @@ export class BoardScene extends Phaser.Scene {
       if (e.type === 'revealed') this.refreshLabels();
       else if (e.type === 'cacheFound') this.refreshLabels();
       else if (e.type === 'energy') this.floatText(e.x, e.y, `+${e.amount}`, '#ffd54f');
-      else if (e.type === 'threatAwakened') this.floatText(e.x, e.y, 'Угроза!', '#ff6b6b');
+      else if (e.type === 'threatAwakened') this.floatText(e.x, e.y, t('float.threat'), '#ff6b6b');
     }
     this.drawBoard();
     this.updateHud();
@@ -98,7 +99,7 @@ export class BoardScene extends Phaser.Scene {
     keys.forEach((k, i) => {
       const s = CHANNEL_STYLE[k];
       this.add
-        .text(SIDE_MARGIN + slot * i + slot / 2, top + 84, `■ ${s.label}`, { fontFamily: 'sans-serif', fontSize: '21px', color: s.color })
+        .text(SIDE_MARGIN + slot * i + slot / 2, top + 84, `■ ${t(s.label)}`, { fontFamily: 'sans-serif', fontSize: '21px', color: s.color })
         .setOrigin(0.5, 0);
     });
   }
@@ -106,14 +107,10 @@ export class BoardScene extends Phaser.Scene {
   private updateHud(): void {
     const w = this.world;
     this.energyText.setText(`⚡ ${w.energy}`);
-    const t = Math.floor(w.time);
+    const secs = Math.floor(w.time);
     const busy = w.workers.filter((x) => x.state !== 'idle').length;
-    this.infoText.setText(`Жители ${busy}/${w.workers.length}   ${Math.floor(t / 60)}:${String(t % 60).padStart(2, '0')}`);
-    this.helpText.setText(
-      w.started
-        ? 'Проведите пальцем по клеткам, чтобы копать.\nДолгое нажатие или правая кнопка: метка опасности.'
-        : 'Нажмите на клетку, чтобы поставить Командный центр.',
-    );
+    this.infoText.setText(`${t('hud.residents')} ${busy}/${w.workers.length}   ${Math.floor(secs / 60)}:${String(secs % 60).padStart(2, '0')}`);
+    this.helpText.setText(w.started ? t('help.dig') : t('help.placeCore'));
   }
 
   private cellRect(x: number, y: number) {
@@ -184,7 +181,7 @@ export class BoardScene extends Phaser.Scene {
         this.labels.set(idx, l);
       }
       if (c.core) {
-        l.glyph.setText('КЦ').setColor('#ffffff').setFontSize(Math.round(this.cellSize * 0.4));
+        l.glyph.setText(t('core.short')).setColor('#ffffff').setFontSize(Math.round(this.cellSize * 0.4));
         continue;
       }
       if (c.site !== 'none') {
@@ -250,11 +247,11 @@ export class BoardScene extends Phaser.Scene {
     const x = idx % b.width;
     const y = Math.floor(idx / b.width);
     if (!this.world.started) {
-      this.world.placeCore(x, y);
+      this.world.apply({ type: 'placeCore', x, y });
       return;
     }
     if (p.rightButtonDown()) {
-      this.world.toggleMark(x, y);
+      this.world.apply({ type: 'toggleMark', x, y });
       return;
     }
     this.dragMode = this.world.isQueued(x, y) ? 'cancel' : 'queue';
@@ -264,8 +261,8 @@ export class BoardScene extends Phaser.Scene {
     this.pressTimer = this.time.delayedCall(LONG_PRESS_MS, () => {
       // Long press on the same cell: undo the drag action and toggle the mark instead.
       if (this.pressCell !== idx || this.lastDragCell !== idx) return;
-      if (this.dragMode === 'queue') this.world.cancelDig(x, y);
-      this.world.toggleMark(x, y);
+      if (this.dragMode === 'queue') this.world.apply({ type: 'cancelDig', x, y });
+      this.world.apply({ type: 'toggleMark', x, y });
       this.dragMode = null;
     });
   }
@@ -289,7 +286,7 @@ export class BoardScene extends Phaser.Scene {
     const x = idx % w;
     const y = Math.floor(idx / w);
     this.lastDragCell = idx;
-    if (this.dragMode === 'queue') this.world.queueDig(x, y);
-    else if (this.dragMode === 'cancel') this.world.cancelDig(x, y);
+    if (this.dragMode === 'queue') this.world.apply({ type: 'queueDig', x, y });
+    else if (this.dragMode === 'cancel') this.world.apply({ type: 'cancelDig', x, y });
   }
 }

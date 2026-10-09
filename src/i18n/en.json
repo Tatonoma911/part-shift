@@ -1,0 +1,11 @@
+{
+  "hud.residents": "Residents",
+  "help.placeCore": "Tap a cell to place the Command Center.",
+  "help.dig": "Swipe across cells to dig.\nLong press or right click: mark danger.",
+  "float.threat": "Threat!",
+  "core.short": "CC",
+  "channel.nest": "Nests",
+  "channel.demon": "Demon",
+  "channel.cache": "Caches",
+  "channel.depot": "Chassis depots"
+}

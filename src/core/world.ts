@@ -1,4 +1,5 @@
 import { Board } from './board';
+import type { Command } from './commands';
 import { findPath, type Point } from './pathfind';
 import { createRng, type Rng } from './rng';
 import type { BoardConfig, Cell, GameEvent, SimConfig } from './types';
@@ -40,6 +41,26 @@ export class World {
 
   get started(): boolean {
     return this.board.core !== null;
+  }
+
+  /** Single entry point for player actions; returns false when the command was rejected. */
+  apply(cmd: Command): boolean {
+    switch (cmd.type) {
+      case 'placeCore':
+        if (this.started || !this.board.inBounds(cmd.x, cmd.y)) return false;
+        this.placeCore(cmd.x, cmd.y);
+        return true;
+      case 'queueDig':
+        return this.queueDig(cmd.x, cmd.y);
+      case 'cancelDig':
+        if (!this.isQueued(cmd.x, cmd.y)) return false;
+        this.cancelDig(cmd.x, cmd.y);
+        return true;
+      case 'toggleMark':
+        if (!this.started || !this.board.inBounds(cmd.x, cmd.y)) return false;
+        this.toggleMark(cmd.x, cmd.y);
+        return true;
+    }
   }
 
   placeCore(x: number, y: number): void {

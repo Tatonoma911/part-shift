@@ -23,10 +23,10 @@ export const COLORS = {
 
 /** One color per clue channel (Keepsweeper: lairs are sky blue). */
 export const CHANNEL_STYLE = {
-  nest: { color: '#4fc3f7', label: 'Гнёзда' },
-  demon: { color: '#ff5252', label: 'Демон' },
-  cache: { color: '#ffd54f', label: 'Тайники' },
-  depot: { color: '#b388ff', label: 'Склады шасси' },
+  nest: { color: '#4fc3f7', label: 'channel.nest' },
+  demon: { color: '#ff5252', label: 'channel.demon' },
+  cache: { color: '#ffd54f', label: 'channel.cache' },
+  depot: { color: '#b388ff', label: 'channel.depot' },
 } as const;
 
 export const SITE_GLYPH = { nest: '☣', depot: '▣', demon: '☠', cache: '◆' } as const;
