@@ -5,15 +5,34 @@
  */
 export const VIEW = { width: 780, height: 1600 };
 
+/**
+ * Wide screens (desktop browser) get a landscape layout: the board on the left
+ * at full height, HUD and dock in a column on the right. Chosen once at boot.
+ */
+export let LANDSCAPE = false;
+
 /** Board cell 52 + 2 px gap (UI_SPEC §2.3 at 2×). */
 export const CELL = 52;
 export const STEP = 54;
 
 export const HUD = { x: 16, y: 18, w: 748, h: 116 };
-export const GOAL_Y = 150;
+export const GOAL = { y: 150 };
 /** Board area: 14 × 18 cells at most. Smaller boards are centered in it. */
 export const BOARD = { x: 12, y: 196, w: 756, h: 972 };
 export const DOCK = { x: 16, y: 1268, w: 748, h: 300 };
+/** Where the tutorial card goes; in portrait it takes the top of the board area. */
+export const GUIDE = { x: 16, y: 192, w: 748, h: 0 };
+
+export function chooseLayout(screenW: number, screenH: number): void {
+  LANDSCAPE = screenW > screenH * 1.15;
+  if (!LANDSCAPE) return;
+  Object.assign(VIEW, { width: 1600, height: 900 });
+  Object.assign(BOARD, { x: 20, y: 20, w: 860, h: 860 });
+  Object.assign(HUD, { x: 908, y: 18, w: 676, h: 116 });
+  GOAL.y = 150;
+  Object.assign(DOCK, { x: 908, y: 584, w: 676, h: 300 });
+  Object.assign(GUIDE, { x: 908, y: 210, w: 676, h: 270 });
+}
 
 export const FONT_NUM = 'Unbounded, "Golos Text", system-ui, sans-serif';
 export const FONT = '"Golos Text", system-ui, -apple-system, "Segoe UI", sans-serif';
