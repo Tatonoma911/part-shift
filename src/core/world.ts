@@ -595,8 +595,7 @@ export class World {
       case 'cache': {
         c.resolved = true;
         const energy = siteDefs.cache.onReveal?.energy ?? this.cfg.economy.cacheEnergy;
-        player.energy += energy;
-        player.stats.energy += energy;
+        this.earn(player, energy);
         player.stats.caches++;
         this.emit('cache_open', { x, y, owner, amount: energy });
         break;
@@ -1108,7 +1107,7 @@ export class World {
     const def = this.enemyDef(v.kind);
     const part = Object.values(v.parts)[0];
     if (killer?.kind === 'resident' && part && rand(s) < def.partDropChance) this.takePart(killer, part);
-    if (def.reward && killer) s.players[killer.owner].energy += def.reward;
+    if (def.reward && killer) this.earn(s.players[killer.owner], def.reward);
     this.emit('enemy_die', { x: v.x, y: v.y, owner: killer?.owner, text: v.kind === 'adaptant' ? `adaptant_${v.tech ?? 'thermo'}` : v.kind });
   }
 
@@ -1133,8 +1132,7 @@ export class World {
         .filter((r) => r.u && r.u.hp > 0 && r.u !== killer && r.u.owner === killer.owner)
         .sort((a, b) => b.n - a.n)[0]?.u;
       if (second) this.takePart(runnerUp ?? killer, { id: second.id, tier: partTier(second.id, 3).tier }, hero.id);
-      s.players[owner].energy += hero.enemy.reward;
-      s.players[owner].stats.energy += hero.enemy.reward;
+      this.earn(s.players[owner], hero.enemy.reward);
     }
     for (const p of s.players) if (!p.stats.heroes.includes(hero.id) && p.alive) p.stats.heroes.push(hero.id);
     this.emit('hero_defeated', { x: v.x, y: v.y, owner, text: hero.id, amount: hero.enemy.reward });
@@ -1288,8 +1286,7 @@ export class World {
     c.resolved = true;
     const reward = this.siteDef(site.kind).reward ?? 0;
     if (by.owner >= 0) {
-      this.s.players[by.owner].energy += reward;
-      this.s.players[by.owner].stats.energy += reward;
+      this.earn(this.s.players[by.owner], reward);
       this.s.players[by.owner].stats.nests++;
     }
     for (const p of this.s.players) if (p.order === siteKey(site.x, site.y)) p.order = null;
@@ -1616,8 +1613,7 @@ export class World {
       if (!cmd) return false;
       const d = dist(cmd.x, cmd.y, o.x, o.y);
       if (d <= speed) {
-        s.players[o.owner].energy += o.amount;
-        s.players[o.owner].stats.energy += o.amount;
+        this.earn(s.players[o.owner], o.amount);
         this.emit('energy_orb_arrive', { x: cmd.x, y: cmd.y, owner: o.owner, amount: o.amount });
         return false;
       }
@@ -1688,6 +1684,12 @@ export class World {
       s.outcome = 'victory';
       this.emit('victory');
     }
+  }
+
+  /** Energy income; stats.energy feeds the run score (meta.json runScore.energyEarned). */
+  private earn(p: Player, amount: number): void {
+    p.energy += amount;
+    p.stats.energy += amount;
   }
 
   private emit(type: string, data: Omit<GameEvent, 'type'> = {}): void {
