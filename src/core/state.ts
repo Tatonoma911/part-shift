@@ -47,6 +47,8 @@ export interface Cell {
   warned?: boolean;
   /** Seconds left of Canopy's overgrowth (slows residents). */
   overgrown?: number;
+  /** Ruins of this building type: rebuilding is cheaper and faster (difficulty.json buildingDamage.ruins). */
+  ruin?: string;
 }
 
 /** An opened nest (a structure with HP that releases enemies) or an opened hero lair / boss hatch. */
@@ -119,6 +121,8 @@ export interface Unit {
   dealt?: Record<number, number>;
   /** Seconds left before a resident goes back to work after a fight. */
   calm?: number;
+  /** Raiders: the building they march on ("b:id"); dropped once a resident hits them. */
+  raid?: string;
   kills: number;
 }
 
@@ -134,6 +138,8 @@ export interface Building {
   complete: boolean;
   produceTimer: number;
   healTimer: number;
+  /** Rebuilt on its own ruins: builds in half the time. */
+  rebuild?: boolean;
 }
 
 export interface Orb {
@@ -215,5 +221,7 @@ export interface GameState {
   outcome: Outcome;
   /** difficulty.json level id. */
   difficulty: string;
+  /** Game time of the next raid (MVP_RULES §9.7). */
+  raidAt?: number;
   rules?: RuleOverrides;
 }

@@ -234,8 +234,12 @@ export interface DifficultyDef {
   bossSelfWakeSeconds: number;
   callTargetHpFactor: number;
   lairSelfOpenThreatLevels: number[];
+  raids?: { enabled: boolean; firstAfterSeconds: number; everySeconds: number; size: number; sizePerThreatLevels: number; maxSize: number };
 }
 export const difficulties: Record<string, DifficultyDef> = Object.fromEntries(
   (difficultyJson.levels as unknown as DifficultyDef[]).map((d) => [d.id, d]),
 );
 export const DEFAULT_DIFFICULTY = difficultyJson.default;
+/** Raids and damage to buildings (MVP_RULES §9.7). */
+export const raidRules = difficultyJson.raidRules;
+export const buildingDamage = difficultyJson.buildingDamage;

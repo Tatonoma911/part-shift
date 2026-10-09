@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { config, heroes, residentStats } from '../src/core/data';
+import { buildings, config, heroes, residentStats } from '../src/core/data';
 import type { Unit } from '../src/core/state';
 import { World } from '../src/core/world';
 import { handWorld, residents, run } from './helpers';
@@ -228,6 +228,30 @@ describe('heroes and the call target', () => {
     run(w, 1.2);
     expect(w.s.outcome).toBe('victory');
     expect(Object.values(r.parts).map((p) => p!.id)).toEqual(expect.arrayContaining(['demon_arm', 'drill_tail']));
+  });
+
+  it('raids: an opened nest sends a squad at the nearest building; a destroyed building leaves cheap ruins', () => {
+    const w = squad(['..........', '..........', '..........', '..........', '.........n'], 1);
+    w.s.units = w.s.units.filter((u) => u.owner < 0);
+    w.player(0).energy = 999;
+    expect(w.apply({ type: 'build', building: 'home', x: 3, y: 2 }).ok).toBe(true);
+    const home = w.s.buildings.find((b) => b.type === 'home')!;
+    Object.assign(home, { complete: true, built: 99, hp: 10 });
+    internals(w).reveal(9, 4, 0);
+    w.s.units = w.s.units.filter((u) => u.owner >= 0);
+    for (const site of w.s.sites) site.spawnTimer = Infinity;
+    w.s.time = w.difficulty.raids!.firstAfterSeconds - 0.05;
+    w.drainEvents();
+    w.step(0.05);
+    const ev = w.drainEvents();
+    expect(ev.find((e) => e.type === 'raid_incoming')).toMatchObject({ x: 3, y: 2, amount: w.difficulty.raids!.size });
+    expect(w.s.units.filter((u) => u.raid === `b:${home.id}`).length).toBe(w.difficulty.raids!.size);
+    run(w, 30);
+    expect(w.s.buildings.includes(home)).toBe(false);
+    expect(w.cell(3, 2).ruin).toBe('home');
+    for (const u of w.s.units) if (u.owner < 0) u.hp = 0;
+    w.s.units = w.s.units.filter((u) => u.hp > 0);
+    expect(w.buildCost('home', 3, 2)).toBe(Math.ceil(buildings.home.cost / 2));
   });
 
   it('losing the command center is a defeat', () => {

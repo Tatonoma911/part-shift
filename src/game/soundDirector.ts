@@ -13,12 +13,14 @@ const RENAME: Record<string, string> = {
   boss_dead: 'demon_die',
   training_up: 'defender_trained',
   hero_warning: 'quarantine_siren',
+  // No raid sound yet (sounds.json); the city siren stands in.
+  raid_incoming: 'quarantine_siren',
 };
 
 /** Events that bring in the "heroes" layer for 20 s. */
 const BATTLE = new Set(['nest_open', 'heavy_nest_open', 'nest_destroyed', 'part_attached', 'hero_part_taken', 'hero_spawn', 'hero_defeated']);
 /** Events that bring in the "danger" layer for 8 s. */
-const ALARM = new Set(['center_hit', 'building_lost']);
+const ALARM = new Set(['center_hit', 'building_lost', 'raid_incoming']);
 const DANGER_RADIUS = 6;
 const DANGER_HOLD = 8;
 

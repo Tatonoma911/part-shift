@@ -295,5 +295,6 @@
   "feedback.queued": "Saved. The message goes to the author as soon as the game is online.",
   "feedback.short": "Write at least a few words",
   "settings.feedback": "Write to the author",
-  "order.attack": "All residents: attack!"
+  "order.attack": "All residents: attack!",
+  "event.raid_incoming": "Raid: {n} adaptants are coming to smash a building"
 }

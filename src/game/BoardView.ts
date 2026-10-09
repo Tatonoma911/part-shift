@@ -389,6 +389,8 @@ export class BoardView {
             default:
               key = GROUND[h % 8];
           }
+          // Ruins of a lost building: rubble until it is rebuilt at half price.
+          if (c.ruin && c.building === undefined) key = `rubble_${h % 2}`;
         }
         if (this.tileKey[i] !== key) {
           this.tiles[i].setTexture(`tile.${key}`);
