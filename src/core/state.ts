@@ -46,6 +46,8 @@ export interface SiteState {
   spawnTimer: number;
   alive: number[];
   destroyed: boolean;
+  /** Enemies released so far (for a limited spawn budget). */
+  spawned?: number;
 }
 
 export interface PartInstance {
@@ -147,6 +149,21 @@ export interface AssistState {
 
 export type Outcome = 'playing' | 'victory' | 'defeat';
 
+/**
+ * Per-match changes to the design tables (the tutorial uses them).
+ * `config` keys are dotted paths into config.json, e.g. "dig.digSeconds".
+ */
+export interface RuleOverrides {
+  config?: Record<string, number | boolean>;
+  threatEnabled?: boolean;
+  demonEnabled?: boolean;
+  commandInvulnerable?: boolean;
+  /** The command center may only go here (tutorial). */
+  commandFixed?: { x: number; y: number };
+  nest?: { initialSpawn?: number; maxAlive?: number; spawnSeconds?: number; totalBudget?: number };
+  adaptant?: { partDropChance?: number; partSlot?: 'arm' | 'leg' };
+}
+
 export interface GameState {
   version: 1;
   seed: number;
@@ -164,4 +181,5 @@ export interface GameState {
   nextId: number;
   demon: { awake: boolean; warned: boolean; dead: boolean; hpScale: number };
   outcome: Outcome;
+  rules?: RuleOverrides;
 }

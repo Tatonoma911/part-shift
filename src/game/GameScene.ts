@@ -4,6 +4,7 @@ import { cellKey } from '../core/grid';
 import type { AssistMode, GameState, Unit } from '../core/state';
 import { World, type GameEvent } from '../core/world';
 import { t } from '../i18n';
+import { markTutorialDone, TutorialGuide, tutorialDone } from './Tutorial';
 import { BAR_HEIGHT, BUILDING_STYLE, CHANNEL_COLOR, COLORS, HUD_HEIGHT, SIDE_MARGIN, TECH_COLOR, VIEW } from './layout';
 
 const SAVE_KEY = 'partshift.save.v1';
@@ -74,6 +75,8 @@ export class GameScene extends Phaser.Scene {
   /** Neighborhood shown around a touched clue (design/ONBOARDING.md §1.2). */
   private spotlight: { x: number; y: number; until: number } | null = null;
   private scanButton: Phaser.GameObjects.Text | null = null;
+  private guide: TutorialGuide | null = null;
+  private guideText: Phaser.GameObjects.Text | null = null;
   private lastCenterHit = -99;
 
   constructor() {
@@ -83,18 +86,26 @@ export class GameScene extends Phaser.Scene {
   create(): void {
     const params = new URLSearchParams(location.search);
     const seedParam = Number(params.get('seed'));
-    const saved = params.has('seed') ? null : loadState();
+    const saved = params.has('seed') || params.get('tutorial') === '1' ? null : loadState();
+    const wantTutorial = params.get('tutorial') === '1' || (!saved && !params.has('seed') && params.get('tutorial') !== '0' && !tutorialDone());
     const assistParam = params.get('assist');
     const assist = (['full', 'scanner', 'off'] as const).find((m) => m === assistParam) as AssistMode | undefined;
-    this.world = saved ? new World({ state: saved }) : new World({ seed: seedParam || Math.floor(Math.random() * 1e9), assist });
+    if (wantTutorial) this.guide = new TutorialGuide();
+    this.world = this.guide
+      ? this.guide.world
+      : saved
+        ? new World({ state: saved })
+        : new World({ seed: seedParam || Math.floor(Math.random() * 1e9), assist });
     (window as unknown as { partShift: unknown }).partShift = { world: this.world, scene: this };
 
     const { width, height } = this.world.s;
+    // The tutorial keeps a text box between the HUD and the board.
+    const top = HUD_HEIGHT + (this.guide ? 130 : 0);
     const availW = VIEW.width - SIDE_MARGIN * 2;
-    const availH = VIEW.height - HUD_HEIGHT - BAR_HEIGHT;
+    const availH = VIEW.height - top - BAR_HEIGHT;
     this.cs = Math.floor(Math.min(availW / width, availH / height));
     this.ox = Math.round((VIEW.width - this.cs * width) / 2);
-    this.oy = HUD_HEIGHT + Math.round((availH - this.cs * height) / 2);
+    this.oy = top + Math.round((availH - this.cs * height) / 2);
 
     this.gfx = this.add.graphics();
     this.top = this.add.graphics().setDepth(5);
@@ -104,7 +115,8 @@ export class GameScene extends Phaser.Scene {
       .text(VIEW.width / 2, VIEW.height - BAR_HEIGHT + 6, '', { fontFamily: 'sans-serif', fontSize: '22px', color: COLORS.text, align: 'center', wordWrap: { width: VIEW.width - 24 } })
       .setOrigin(0.5, 0)
       .setDepth(6);
-    this.say(this.world.started ? t('tutorial.dig') : t('place.command'), 6000);
+    if (this.guide) this.createGuide();
+    else this.say(this.world.started ? t('tutorial.dig') : t('place.command'), 6000);
 
     this.input.mouse?.disableContextMenu();
     this.input.on('pointerdown', this.onDown, this);
@@ -131,7 +143,11 @@ export class GameScene extends Phaser.Scene {
         this.save();
       }
     }
-    for (const e of w.drainEvents()) this.onEvent(e);
+    for (const e of w.drainEvents()) {
+      this.guide?.onEvent(e);
+      this.onEvent(e);
+    }
+    if (this.guide?.update()) this.showGuideStep();
     if (this.time.now > this.toastUntil) this.toast.setText('');
     this.draw();
     this.updateHud();
@@ -141,7 +157,7 @@ export class GameScene extends Phaser.Scene {
 
   private save(): void {
     try {
-      if (this.world.started && this.world.s.outcome === 'playing') localStorage.setItem(SAVE_KEY, JSON.stringify(this.world.s));
+      if (!this.guide && this.world.started && this.world.s.outcome === 'playing') localStorage.setItem(SAVE_KEY, JSON.stringify(this.world.s));
     } catch {
       /* storage full or blocked: the run just isn't saved */
     }
@@ -155,6 +171,7 @@ export class GameScene extends Phaser.Scene {
     }
     const url = new URL(location.href);
     url.searchParams.delete('seed');
+    url.searchParams.delete('tutorial');
     location.href = url.toString();
   }
 
@@ -174,6 +191,49 @@ export class GameScene extends Phaser.Scene {
     if (e.type === 'cache_open' && e.x !== undefined) this.float(e.x, e.y!, `+${e.amount}`, COLORS.energy);
     if ((e.type === 'nest_open' || e.type === 'heavy_nest_open') && e.x !== undefined) this.explainNest(e.x, e.y!);
     if (e.type === 'victory' || e.type === 'defeat') this.showEnd(e.type === 'victory');
+  }
+
+  private createGuide(): void {
+    this.guideText = this.add
+      .text(VIEW.width / 2, HUD_HEIGHT - 4, '', {
+        fontFamily: 'sans-serif',
+        fontSize: '24px',
+        color: '#0f1420',
+        backgroundColor: '#ffd54f',
+        align: 'center',
+        padding: { x: 14, y: 10 },
+        wordWrap: { width: VIEW.width - 40 },
+      })
+      .setOrigin(0.5, 0)
+      .setDepth(8);
+    const skip = this.add
+      .text(SIDE_MARGIN + 4, 72, t('tutorial.skip'), { fontFamily: 'sans-serif', fontSize: '22px', color: COLORS.textDim, backgroundColor: '#1d263b', padding: { x: 10, y: 4 } })
+      .setDepth(8)
+      .setInteractive({ useHandCursor: true });
+    skip.on('pointerdown', (_p: Phaser.Input.Pointer, _x: number, _y: number, ev: Phaser.Types.Input.EventData) => {
+      ev.stopPropagation();
+      markTutorialDone();
+      this.restart();
+    });
+    this.hud.people.setVisible(false);
+    this.hud.threat.setVisible(false);
+    this.hud.arc.setVisible(false);
+    this.showGuideStep();
+  }
+
+  private showGuideStep(): void {
+    const g = this.guide!;
+    if (g.finished) {
+      this.guideText?.setVisible(false);
+      this.overlay?.destroy();
+      this.overlay = this.panel(t('tutorial.final.title'), [t('tutorial.final.line1'), t('tutorial.final.line2'), t('tutorial.final.line3')], [
+        { label: t('tutorial.final.go'), act: () => this.restart() },
+      ]);
+      return;
+    }
+    this.guideText?.setText(t(g.step!.text));
+    const build = g.step!.highlightBuild ?? [];
+    for (const b of this.buttons) b.bg.setStrokeStyle(build.includes(b.id) ? 4 : 2, build.includes(b.id) ? 0xffd54f : 0x3b4a6e);
   }
 
   /** Points at an opened clue that warned about the nest (design/ONBOARDING.md §1.4). */
@@ -454,6 +514,11 @@ export class GameScene extends Phaser.Scene {
   }
 
   private drawSpotlight(g: Phaser.GameObjects.Graphics): void {
+    if (this.guide) {
+      const pulse = 0.5 + 0.5 * Math.sin(this.time.now / 180);
+      g.lineStyle(5, 0xffd54f, 0.4 + 0.6 * pulse);
+      for (const f of this.guide.focusCells()) g.strokeRoundedRect(this.ox + f.x * this.cs + 2, this.oy + f.y * this.cs + 2, this.cs - 4, this.cs - 4, 8);
+    }
     const sp = this.spotlight;
     if (!sp || this.time.now > sp.until) return;
     const cs = this.cs;
@@ -676,8 +741,7 @@ export class GameScene extends Phaser.Scene {
     const w = this.world;
     const { x, y } = at;
     if (!w.started) {
-      w.apply({ type: 'placeCommand', x, y }, ME);
-      this.say(t('tutorial.dig'), 6000);
+      if (w.apply({ type: 'placeCommand', x, y }, ME).ok && !this.guide) this.say(t('tutorial.dig'), 6000);
       return;
     }
     if (this.selected) {
@@ -715,22 +779,26 @@ export class GameScene extends Phaser.Scene {
     if (c.revealed && c.building === undefined && (c.content === 'ground' || c.resolved)) {
       this.spotlight = { x, y, until: this.time.now + 2500 };
       this.say(this.nearText(x, y));
+      if (w.clues(x, y).threat > 0) this.guide?.notify('clue_touched');
     }
     // Second tap on a cell the scanner knows is dangerous: dig it anyway.
     const k = cellKey(x, y);
     if (this.confirmCell === k) {
       this.confirmCell = null;
-      w.apply({ type: 'queueDig', x, y, force: true }, ME);
+      if (w.apply({ type: 'queueDig', x, y, force: true }, ME).ok) this.guide?.notify('queued');
       return;
     }
     this.confirmCell = null;
-    const r = !c.revealed && !w.isQueued(ME, x, y) ? w.apply({ type: 'queueDig', x, y }, ME) : null;
+    // Swiping over auto-queued cells promotes them to the player's own queue; only own orders get cancelled.
+    const own = w.player(ME).queue.includes(k);
+    const r = !c.revealed && !own ? w.apply({ type: 'queueDig', x, y }, ME) : null;
+    if (r?.ok) this.guide?.notify('queued');
     if (r && !r.ok && r.reason === 'assist.known_danger') {
       this.confirmCell = k;
       this.say(t(w.visibleKnowledge(ME).get(k) === 'demon' ? 'cell.confirm_demon.hint' : 'cell.confirm_nest.hint'), 5000);
       return;
     }
-    this.dragMode = r?.ok ? 'queue' : w.isQueued(ME, x, y) ? 'cancel' : 'queue';
+    this.dragMode = r?.ok ? 'queue' : own ? 'cancel' : 'queue';
     this.lastDragCell = -1;
     this.applyDrag(x, y);
     const idx = y * w.s.width + x;
@@ -760,7 +828,7 @@ export class GameScene extends Phaser.Scene {
     if (idx === this.lastDragCell) return;
     if (this.lastDragCell !== -1) this.pressTimer?.remove();
     this.lastDragCell = idx;
-    if (this.dragMode === 'queue') this.world.apply({ type: 'queueDig', x, y }, ME);
+    if (this.dragMode === 'queue' && this.world.apply({ type: 'queueDig', x, y }, ME).ok) this.guide?.notify('queued');
     else if (this.dragMode === 'cancel') this.world.apply({ type: 'cancelDig', x, y }, ME);
   }
 }

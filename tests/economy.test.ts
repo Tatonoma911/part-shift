@@ -77,7 +77,7 @@ describe('population and buildings', () => {
     const w = handWorld(['.......', '.......', '.......', '......n']);
     w.apply({ type: 'placeCommand', x: 1, y: 1 });
     expect(w.apply({ type: 'build', building: 'home', x: 2, y: 2 }).ok).toBe(true);
-    expect(w.player(0).energy).toBe(10);
+    expect(w.player(0).energy).toBe(config.economy.startEnergy - 40);
     run(w, 8);
     const home = w.s.buildings.find((b) => b.type === 'home')!;
     expect(home.complete).toBe(true);
@@ -88,6 +88,7 @@ describe('population and buildings', () => {
   it('refuses with a reason: no energy, outside territory, occupied, not opened', () => {
     const w = handWorld(['..........', '..........', '..........', '..........', '.........n']);
     w.apply({ type: 'placeCommand', x: 1, y: 1 });
+    w.player(0).energy = 50;
     expect(w.apply({ type: 'build', building: 'school', x: 2, y: 2 })).toEqual({ ok: false, reason: 'build.not_enough_energy' });
     expect(w.apply({ type: 'build', building: 'home', x: 1, y: 1 })).toEqual({ ok: false, reason: 'build.cell_occupied' });
     expect(w.apply({ type: 'build', building: 'home', x: 8, y: 1 })).toEqual({ ok: false, reason: 'build.invalid_cell' });

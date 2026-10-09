@@ -17,6 +17,8 @@ import {
   parts as partDefs,
   residentStats,
   sites as siteDefs,
+  type EnemyDef,
+  type SiteDef,
   type SlotId,
   type UnitStats,
 } from './data';
@@ -24,7 +26,7 @@ import { cellAt, cellKey, cheb, dist, inBounds, neighbors, parseKey, walkableFor
 import { generateField } from './mapgen';
 import { findPath } from './pathfind';
 import { rand, randIntOf } from './rng';
-import type { AssistMode, Building, Cell, ClueChannel, GameState, PartInstance, Player, SiteState, Task, Unit, UnitKind } from './state';
+import type { AssistMode, RuleOverrides, Building, Cell, ClueChannel, GameState, PartInstance, Player, SiteState, Task, Unit, UnitKind } from './state';
 
 export const STEP = 0.05;
 
@@ -32,6 +34,7 @@ export type GameEvent = { type: string; x?: number; y?: number; amount?: number;
 
 export interface WorldOptions {
   seed: number;
+  rules?: RuleOverrides;
   assist?: AssistMode;
   players?: number;
   width?: number;
@@ -50,7 +53,20 @@ const isSiteCell = (c: Cell) => c.content === 'nest' || c.content === 'heavy_nes
 const isEnemy = (u: Unit) => u.owner < 0;
 const siteKey = (x: number, y: number) => `s:${x},${y}`;
 
+/** config.json with a match's dotted-path overrides applied. */
+export function effectiveConfig(rules?: RuleOverrides): typeof config {
+  const out = structuredClone(config);
+  for (const [path, value] of Object.entries(rules?.config ?? {})) {
+    const keys = path.split('.');
+    let node = out as unknown as Record<string, unknown>;
+    for (const k of keys.slice(0, -1)) node = node[k] as Record<string, unknown>;
+    node[keys[keys.length - 1]] = value;
+  }
+  return out;
+}
+
 export function createState(opts: WorldOptions): GameState {
+  const config = effectiveConfig(opts.rules);
   const players = opts.players ?? 1;
   const width = opts.width ?? config.board.width;
   const height = opts.height ?? config.board.height;
@@ -93,6 +109,7 @@ export function createState(opts: WorldOptions): GameState {
       hpScale: 1 + (players - 1) * (players > 1 ? 0.6 : 0),
     },
     outcome: 'playing',
+    rules: opts.rules,
   };
 }
 
@@ -104,8 +121,29 @@ export class World {
   private rev = 0;
   private known: { rev: number; map: Map<string, Knowledge> } | null = null;
 
+  /** Rule tables for this match (design tables plus any overrides). */
+  readonly cfg: typeof config;
+
   constructor(opts: WorldOptions | { state: GameState }) {
     this.s = 'state' in opts ? opts.state : createState(opts);
+    this.cfg = effectiveConfig(this.s.rules);
+  }
+
+  private get rules(): RuleOverrides {
+    return this.s.rules ?? {};
+  }
+
+  private siteDef(kind: string): SiteDef {
+    const base = siteDefs[kind];
+    return kind === 'nest' && this.rules.nest ? { ...base, ...this.rules.nest } : base;
+  }
+
+  private enemyDef(kind: string): EnemyDef {
+    const base = enemyDefs[kind];
+    const a = this.rules.adaptant;
+    if (kind !== 'adaptant' || !a) return base;
+    const slotWeights = a.partSlot ? { arm: a.partSlot === 'arm' ? 1 : 0, leg: a.partSlot === 'leg' ? 1 : 0 } : base.part.slotWeights;
+    return { ...base, partDropChance: a.partDropChance ?? base.partDropChance, part: { ...base.part, slotWeights } };
   }
 
   // ---------------------------------------------------------------- queries
@@ -115,12 +153,13 @@ export class World {
   }
 
   get threatLevel(): number {
-    return Math.floor(this.s.time / config.threat.secondsPerLevel);
+    if (this.rules.threatEnabled === false) return 0;
+    return Math.floor(this.s.time / this.cfg.threat.secondsPerLevel);
   }
 
   /** 0..1 progress toward the next threat level (the big arc timer). */
   get threatProgress(): number {
-    return (this.s.time % config.threat.secondsPerLevel) / config.threat.secondsPerLevel;
+    return (this.s.time % this.cfg.threat.secondsPerLevel) / this.cfg.threat.secondsPerLevel;
   }
 
   cell(x: number, y: number): Cell {
@@ -192,7 +231,7 @@ export class World {
     const schools = this.s.buildings.filter((b) => b.owner === playerId && b.type === 'school' && b.complete).length;
     if (schools === 0) return 0;
     // 3 + 2 per school: one school gives 5 places (MVP_RULES §8.1).
-    return config.defenders.baseCapacityWithSchool + config.defenders.capacityPerSchool * schools;
+    return this.cfg.defenders.baseCapacityWithSchool + this.cfg.defenders.capacityPerSchool * schools;
   }
 
   /** Stats including parts (and threat scaling baked into enemies at spawn). */
@@ -227,6 +266,8 @@ export class World {
     if (!p || s.outcome !== 'playing') return bad();
     if (cmd.type === 'placeCommand') {
       if (p.command !== null || !inBounds(s, cmd.x, cmd.y)) return bad();
+      const fixed = this.rules.commandFixed;
+      if (fixed && (fixed.x !== cmd.x || fixed.y !== cmd.y)) return bad();
       this.placeCommands([{ player: playerId, x: cmd.x, y: cmd.y }]);
       return ok;
     }
@@ -239,7 +280,7 @@ export class World {
         const harvestable = c.revealed && (c.content === 'rubble' || c.content === 'energy_vein') && (c.stock ?? 0) > 0;
         if ((c.revealed && !harvestable) || c.marked || p.queue.includes(k)) return bad();
         const known = this.visibleKnowledge(playerId).get(k);
-        if (config.assist.blockSwipeOnKnownDanger && !cmd.force && (known === 'threat' || known === 'demon')) {
+        if (this.cfg.assist.blockSwipeOnKnownDanger && !cmd.force && (known === 'threat' || known === 'demon')) {
           return bad('assist.known_danger');
         }
         p.autoQueue = p.autoQueue.filter((q) => q !== k);
@@ -298,7 +339,7 @@ export class World {
         if (a.mode !== 'scanner') return bad();
         if (a.charges <= 0) return bad('assist.no_charges');
         a.charges--;
-        a.scanLeft = config.assist.scanner.markDurationSeconds;
+        a.scanLeft = this.cfg.assist.scanner.markDurationSeconds;
         this.emit('scan', { owner: playerId });
         return ok;
       }
@@ -332,7 +373,7 @@ export class World {
       const b = this.addBuilding(player, 'command', x, y, true);
       s.players[player].command = b.id;
       // The first resident is there at once (population.firstResidentImmediate).
-      if (config.population.firstResidentImmediate && b.slots.length > 0) {
+      if (this.cfg.population.firstResidentImmediate && b.slots.length > 0) {
         b.slots[0].unit = this.spawnResident(player, b, x, y).id;
       }
       for (const n of [{ x, y }, ...neighbors(s, x, y)]) this.reveal(n.x, n.y, player, false);
@@ -375,7 +416,7 @@ export class World {
   }
 
   private assistTimers(dt: number): void {
-    const sc = config.assist.scanner;
+    const sc = this.cfg.assist.scanner;
     for (const p of this.s.players) {
       const a = p.assist;
       if (a.mode !== 'scanner') continue;
@@ -407,14 +448,14 @@ export class World {
       p.autoQueue = p.autoQueue.filter((q) => q !== k);
     }
     if (pay) {
-      this.spawnOrb(owner, x, y, config.economy.energyPerDugTile);
+      this.spawnOrb(owner, x, y, this.cfg.economy.energyPerDugTile);
       this.emit('dig_done', { x, y, owner });
     }
     const player = s.players[owner];
     switch (c.content) {
       case 'cache': {
         c.resolved = true;
-        const energy = siteDefs.cache.onReveal?.energy ?? config.economy.cacheEnergy;
+        const energy = siteDefs.cache.onReveal?.energy ?? this.cfg.economy.cacheEnergy;
         player.energy += energy;
         player.stats.caches++;
         this.emit('cache_open', { x, y, owner, amount: energy });
@@ -439,7 +480,7 @@ export class World {
         break;
     }
     // Quiet cell: its covered neighbors go to the low-priority auto queue.
-    if (!isSiteCell(c) && c.content !== 'water' && config.dig.autoQueueZeroNeighbors) {
+    if (!isSiteCell(c) && c.content !== 'water' && this.cfg.dig.autoQueueZeroNeighbors) {
       const cl = this.clues(x, y);
       if (cl.threat + cl.demon + cl.finds === 0) {
         for (const n of neighbors(s, x, y)) {
@@ -477,7 +518,7 @@ export class World {
     const slot = home?.slots.find((sl) => sl.unit === u.id);
     if (slot) {
       slot.unit = null;
-      slot.timer = config.population.spawnSeconds;
+      slot.timer = this.cfg.population.spawnSeconds;
     }
     u.home = undefined;
   }
@@ -489,12 +530,12 @@ export class World {
       const p = this.s.players[owner];
       if (this.s.units.some((u) => u.task.type === 'train' && u.task.building === school.id)) continue;
       const defenders = this.s.units.filter((u) => u.owner === owner && (u.kind === 'defender' || u.task.type === 'train')).length;
-      if (defenders >= this.defenderCapacity(owner) || p.energy < config.defenders.trainCost) continue;
+      if (defenders >= this.defenderCapacity(owner) || p.energy < this.cfg.defenders.trainCost) continue;
       const free = this.s.units
         .filter((u) => u.owner === owner && u.kind === 'resident' && (u.task.type === 'idle' || u.task.type === 'rest'))
         .sort((a, b) => dist(a.x, a.y, school.x, school.y) - dist(b.x, b.y, school.x, school.y))[0];
       if (!free) continue;
-      p.energy -= config.defenders.trainCost;
+      p.energy -= this.cfg.defenders.trainCost;
       this.setTask(free, { type: 'train', building: school.id, progress: 0 });
       free.path = this.playerPath(free, (x, y) => x === school.x && y === school.y) ?? [];
     }
@@ -504,7 +545,7 @@ export class World {
 
   private residentAi(u: Unit, dt: number): void {
     const s = this.s;
-    const threat = s.units.find((e) => isEnemy(e) && dist(e.x, e.y, u.x, u.y) <= config.combat.residentFleeRadius);
+    const threat = s.units.find((e) => isEnemy(e) && dist(e.x, e.y, u.x, u.y) <= this.cfg.combat.residentFleeRadius);
     const cmd = this.building(s.players[u.owner].command);
     if (threat && u.task.type !== 'flee' && cmd) {
       this.setTask(u, { type: 'flee' });
@@ -530,7 +571,7 @@ export class World {
         if (!this.isQueued(u.owner, t.x, t.y) || this.cell(t.x, t.y).revealed) return this.setTask(u, { type: 'idle' });
         if (u.path.length > 0) return this.move(u, dt);
         t.progress += dt;
-        if (t.progress >= config.dig.digSeconds) {
+        if (t.progress >= this.cfg.dig.digSeconds) {
           this.setTask(u, { type: 'idle' });
           this.reveal(t.x, t.y, u.owner);
         }
@@ -566,7 +607,7 @@ export class World {
         if (b.built >= buildingDefs[b.type].buildSeconds) {
           b.complete = true;
           b.hp = buildingDefs[b.type].hp;
-          for (const sl of b.slots) sl.timer = config.population.spawnSeconds;
+          for (const sl of b.slots) sl.timer = this.cfg.population.spawnSeconds;
           this.emit('build_done', { x: b.x, y: b.y, owner: b.owner });
           this.setTask(u, { type: 'idle' });
         }
@@ -582,7 +623,7 @@ export class World {
         if (!b) return this.setTask(u, { type: 'idle' });
         if (u.path.length > 0) return this.move(u, dt);
         t.progress += dt;
-        if (t.progress >= config.defenders.trainSeconds) this.promote(u);
+        if (t.progress >= this.cfg.defenders.trainSeconds) this.promote(u);
         return;
       }
     }
@@ -598,7 +639,7 @@ export class World {
   }
 
   private promote(u: Unit): void {
-    if (config.defenders.trainingFreesDwellingSlot) this.freeSlot(u);
+    if (this.cfg.defenders.trainingFreesDwellingSlot) this.freeSlot(u);
     u.kind = 'defender';
     u.base = { ...defenderStats };
     u.hp = defenderStats.hp;
@@ -793,7 +834,7 @@ export class World {
     if (!target) {
       const own = s.buildings.filter((b) => b.owner === u.owner);
       const near = s.units
-        .filter((e) => isEnemy(e) && own.some((b) => cheb(Math.round(e.x), Math.round(e.y), b.x, b.y) <= config.defenders.guardRadius))
+        .filter((e) => isEnemy(e) && own.some((b) => cheb(Math.round(e.x), Math.round(e.y), b.x, b.y) <= this.cfg.defenders.guardRadius))
         .sort((a, b) => dist(a.x, a.y, u.x, u.y) - dist(b.x, b.y, u.x, u.y))[0];
       target = near ? `u:${near.id}` : null;
     }
@@ -867,19 +908,20 @@ export class World {
     if (target.startsWith('s:')) {
       const { x, y } = parseKey(target.slice(2));
       const site = this.site(x, y)!;
-      const def = siteDefs[site.kind].defense ?? 0;
-      site.hp -= Math.max(config.combat.minDamage, st.damage * factor - def);
+      const def = this.siteDef(site.kind).defense ?? 0;
+      site.hp -= Math.max(this.cfg.combat.minDamage, st.damage * factor - def);
       if (site.hp <= 0) this.destroySite(site, attacker);
       return;
     }
     if (target.startsWith('b:')) {
       const b = this.building(Number(target.slice(2)))!;
-      b.hp -= Math.max(config.combat.minDamage, st.damage * factor - buildingDefs[b.type].defense);
+      if (b.type === 'command' && this.rules.commandInvulnerable) return;
+      b.hp -= Math.max(this.cfg.combat.minDamage, st.damage * factor - buildingDefs[b.type].defense);
       if (b.type === 'command') this.emit('center_hit', { x: b.x, y: b.y, owner: b.owner });
       return;
     }
     const v = this.unit(Number(target.slice(2)))!;
-    const dmg = Math.max(config.combat.minDamage, st.damage * factor - this.stats(v).defense);
+    const dmg = Math.max(this.cfg.combat.minDamage, st.damage * factor - this.stats(v).defense);
     this.damage(v, dmg, attacker);
     if (!primary) return;
     for (const part of Object.values(attacker.parts)) {
@@ -932,7 +974,7 @@ export class World {
       const site = s.sites.find((t) => siteKey(t.x, t.y) === v.nest);
       if (site) site.alive = site.alive.filter((id) => id !== v.id);
     }
-    const def = enemyDefs[v.kind];
+    const def = this.enemyDef(v.kind);
     const part = Object.values(v.parts)[0];
     if (by?.kind === 'defender' && part && rand(s) < def.partDropChance) this.takePart(by, part);
     if (def.reward && by && by.owner >= 0) s.players[by.owner].energy += def.reward;
@@ -959,7 +1001,7 @@ export class World {
       if (weakest && u.parts[weakest]!.tier < part.tier) slot = weakest;
     }
     if (!slot) {
-      const amount = config.economy.partRecycleEnergyPerTier * part.tier;
+      const amount = this.cfg.economy.partRecycleEnergyPerTier * part.tier;
       this.spawnOrb(u.owner, Math.round(u.x), Math.round(u.y), amount);
       this.emit('part_recycled', { x: u.x, y: u.y, owner: u.owner, amount, text: part.id });
       return;
@@ -986,7 +1028,7 @@ export class World {
 
   private openNest(x: number, y: number, c: Cell): void {
     const kind = c.content as 'nest' | 'heavy_nest';
-    const def = siteDefs[kind];
+    const def = this.siteDef(kind);
     const site: SiteState = { x, y, kind, hp: def.hp!, maxHp: def.hp!, spawnTimer: this.spawnInterval(kind), alive: [], destroyed: false };
     this.s.sites.push(site);
     for (let i = 0; i < (def.initialSpawn ?? 0); i++) this.spawnEnemy(site);
@@ -994,17 +1036,17 @@ export class World {
   }
 
   private spawnInterval(kind: 'nest' | 'heavy_nest' | 'demon_hatch'): number {
-    const def = siteDefs[kind];
+    const def = this.siteDef(kind);
     if (def.respawnAfterDeathSeconds) return def.respawnAfterDeathSeconds;
     if (!def.spawnSeconds) return Infinity;
-    const t = config.threat;
+    const t = this.cfg.threat;
     return Math.max(t.minSpawnInterval, def.spawnSeconds * Math.pow(t.spawnIntervalFactorPerLevel, this.threatLevel));
   }
 
   private nests(dt: number): void {
     for (const site of this.s.sites) {
       if (site.destroyed || site.kind === 'demon_hatch') continue;
-      const def = siteDefs[site.kind];
+      const def = this.siteDef(site.kind);
       if (site.alive.length >= (def.maxAlive ?? 0)) {
         if (def.respawnAfterDeathSeconds) site.spawnTimer = def.respawnAfterDeathSeconds;
         continue;
@@ -1019,14 +1061,17 @@ export class World {
 
   private spawnEnemy(site: SiteState): Unit | null {
     const s = this.s;
-    const def = siteDefs[site.kind];
+    const def = this.siteDef(site.kind);
     const kind = def.spawns as UnitKind;
-    const e = enemyDefs[kind];
+    const e = this.enemyDef(kind);
+    const budget = (def as { totalBudget?: number }).totalBudget;
+    if (budget !== undefined && (site.spawned ?? 0) >= budget) return null;
     const spots = neighbors(s, site.x, site.y).filter((n) => walkableForEnemy(s, n.x, n.y));
     if (spots.length === 0) return null;
+    site.spawned = (site.spawned ?? 0) + 1;
     const spot = spots[randIntOf(s, spots.length)];
     const L = this.threatLevel;
-    const t = config.threat;
+    const t = this.cfg.threat;
     const hpScale = (1 + t.hpPerLevel * L) * (kind === 'demon' ? s.demon.hpScale : 1);
     const base: UnitStats = {
       hp: e.hp * hpScale,
@@ -1050,7 +1095,7 @@ export class World {
   }
 
   private enemyPart(kind: UnitKind, tech: string | undefined): PartInstance | null {
-    const p = enemyDefs[kind].part;
+    const p = this.enemyDef(kind).part;
     if (p.fixed) return { id: p.fixed, tier: partDefs[p.fixed].tiers[0].tier };
     const L = this.threatLevel;
     const byLevel = [...config.threat.partTierByLevel].reverse().find((r) => L >= r.fromLevel)?.tier ?? 1;
@@ -1066,7 +1111,7 @@ export class World {
     this.rev++;
     const c = this.cell(site.x, site.y);
     c.resolved = true;
-    const reward = siteDefs[site.kind].reward ?? 0;
+    const reward = this.siteDef(site.kind).reward ?? 0;
     if (by.owner >= 0) {
       this.s.players[by.owner].energy += reward;
       this.s.players[by.owner].stats.nests++;
@@ -1077,9 +1122,9 @@ export class World {
 
   private demonClock(): void {
     const d = this.s.demon;
-    if (d.awake) return;
-    const wake = config.demon.selfWakeSeconds;
-    if (!d.warned && this.s.time >= wake - config.demon.warningSeconds) {
+    if (d.awake || this.rules.demonEnabled === false) return;
+    const wake = this.cfg.demon.selfWakeSeconds;
+    if (!d.warned && this.s.time >= wake - this.cfg.demon.warningSeconds) {
       d.warned = true;
       this.emit('demon_warning');
     }
@@ -1163,7 +1208,7 @@ export class World {
       hp: complete ? def.hp : Math.max(1, def.hp * 0.25),
       built: complete ? def.buildSeconds : 0,
       complete,
-      slots: Array.from({ length: def.residentSlots ?? 0 }, () => ({ unit: null, timer: config.population.spawnSeconds })),
+      slots: Array.from({ length: def.residentSlots ?? 0 }, () => ({ unit: null, timer: this.cfg.population.spawnSeconds })),
       operators: [],
       produceTimer: 0,
       recruit: true,
@@ -1215,7 +1260,7 @@ export class World {
 
   private orbs(dt: number): void {
     const s = this.s;
-    const speed = config.economy.orbSpeed * dt;
+    const speed = this.cfg.economy.orbSpeed * dt;
     s.orbs = s.orbs.filter((o) => {
       const cmd = this.building(s.players[o.owner]?.command);
       if (!cmd) return false;

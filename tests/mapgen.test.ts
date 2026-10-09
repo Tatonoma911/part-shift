@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { mapgen } from '../src/core/data';
+import { config, mapgen } from '../src/core/data';
 import { cheb } from '../src/core/grid';
 import { World } from '../src/core/world';
 
@@ -50,6 +50,6 @@ describe('field generation (mapgen.json)', () => {
     const w = generated(3);
     expect(w.s.cells.filter((c) => c.revealed).length).toBeGreaterThanOrEqual(9);
     expect(w.s.units.filter((u) => u.kind === 'resident')).toHaveLength(1);
-    expect(w.player(0).energy).toBe(50);
+    expect(w.player(0).energy).toBe(config.economy.startEnergy);
   });
 });

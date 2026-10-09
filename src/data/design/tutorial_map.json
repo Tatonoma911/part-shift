@@ -1,0 +1,134 @@
+{
+  "version": "0.1",
+  "id": "tutorial_first_shift",
+  "name_key": "tutorial.title",
+  "width": 8,
+  "height": 10,
+  "_note": "Hand-made tutorial map (ONBOARDING.md §2). Interim file by game designer until the level designer owns design/levels/.",
+  "layout": [
+    "........",
+    "........",
+    "......C.",
+    "..N.....",
+    "........",
+    "........",
+    "R.......",
+    ".......~",
+    "...K...~",
+    "........"
+  ],
+  "legend": {
+    ".": "ground",
+    "C": "cache",
+    "N": "nest",
+    "R": "rubble",
+    "~": "water",
+    "K": "command"
+  },
+  "commandFixed": {
+    "x": 3,
+    "y": 8
+  },
+  "initiallyRevealedRadius": 1,
+  "overrides": {
+    "config.dig.digSeconds": 3,
+    "config.population.spawnSeconds": 8,
+    "config.economy.startEnergy": 300,
+    "config.threat.enabled": false,
+    "config.demon.enabled": false,
+    "commandInvulnerable": true,
+    "assist.mode": "full",
+    "defenders.trainSeconds": 4,
+    "nest": {
+      "initialSpawn": 2,
+      "maxAlive": 2,
+      "spawnSeconds": 10,
+      "totalBudget": 2
+    },
+    "adaptant": {
+      "partDropChance": 1.0,
+      "partSlot": "arm"
+    },
+    "nestTech": "cryo"
+  },
+  "steps": [
+    {
+      "id": 1,
+      "text": "tutorial.step1",
+      "highlight": [
+        [
+          3,
+          8
+        ]
+      ],
+      "until": "command_placed"
+    },
+    {
+      "id": 2,
+      "text": "tutorial.step2",
+      "highlight": [
+        [
+          2,
+          6
+        ],
+        [
+          3,
+          6
+        ],
+        [
+          4,
+          6
+        ]
+      ],
+      "until": "cells_queued:3"
+    },
+    {
+      "id": 3,
+      "text": "tutorial.step3",
+      "until": "first_zero_cascade_done",
+      "autoAdvanceSeconds": 6
+    },
+    {
+      "id": 4,
+      "text": "tutorial.step4",
+      "focus": "first_threat_clue",
+      "until": "clue_touched"
+    },
+    {
+      "id": 5,
+      "text": "tutorial.step5",
+      "focus": "overlapping_threat_clues",
+      "until": "assist_mark_shown:danger"
+    },
+    {
+      "id": 6,
+      "text": "tutorial.step6",
+      "highlightBuild": [
+        "home",
+        "school"
+      ],
+      "until": "defenders_trained:2"
+    },
+    {
+      "id": 7,
+      "text": "tutorial.step7",
+      "focus": "nest_cell",
+      "until": "nest_opened"
+    },
+    {
+      "id": 8,
+      "text": "tutorial.step8",
+      "until": "part_attached"
+    },
+    {
+      "id": 9,
+      "text": "tutorial.step9",
+      "focus": "cache_cell",
+      "until": "cache_opened"
+    }
+  ],
+  "finish": {
+    "text": "tutorial.final",
+    "next": "demon_hunt_easy"
+  }
+}

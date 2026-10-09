@@ -7,7 +7,7 @@
     "neighborhood": "moore8"
   },
   "economy": {
-    "startEnergy": 50,
+    "startEnergy": 80,
     "energyPerDugTile": 5,
     "orbSpeed": 6,
     "cacheEnergy": 60,
