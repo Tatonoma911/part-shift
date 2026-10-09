@@ -96,13 +96,18 @@ def main():
     webp(f'{REFS}/demon-ilya-dorn-corrected-four-full-arms-v2.png', 'demon-sheet', 1024)
     webp(f'{REFS}/lore-sprites-01-v01.png', 'sprites-01', 1536)
     webp(f'{REFS}/lore-sprites-02-auto-upgrade-v01.png', 'sprites-02', 1536)
+    # Share of each card to cut (top, bottom): the name plates carry unapproved personal names (QA-023).
+    trims = {'sheet-01-lineman-frostline-kiln-relay-v1': (0, 0.17), 'sheet-03-current-mason-beacon-canopy-v1': (0, 0.15), 'sheet-04-sweep-patch-hive-v1': (0.095, 0)}
     cards = {
-        'sheet-01-lineman-frostline-kiln-relay-v1': [('lineman', (0, 0, .5, .5)), ('frostline', (.5, 0, 1, .5)), ('kiln', (0, .5, .5, 1)), ('relay', (.5, .5, 1, 1))],
+        'sheet-01-lineman-frostline-kiln-relay-v1': [('lineman', (0, 0, .5, .5)), ('frostline', (.5, 0, 1, .5)), ('kiln', (0, .5, .5, 1))],
         'sheet-03-current-mason-beacon-canopy-v1': [('current', (0, 0, .5, .5)), ('mason', (.5, 0, 1, .5)), ('beacon', (0, .5, .5, 1)), ('canopy', (.5, .5, 1, 1))],
         'sheet-04-sweep-patch-hive-v1': [('sweep', (0, 0, 1 / 3, 1)), ('patch', (1 / 3, 0, 0.655, 1)), ('hive', (0.665, 0, 1, 1))],
     }
     for sheet, parts in cards.items():
         for name, box in parts:
+            top, bottom = trims[sheet]
+            span = box[3] - box[1]
+            box = (box[0], box[1] + span * top, box[2], box[3] - span * bottom)
             webp(f'{REFS}/{sheet}.png', f'card-{name}', 700, box)
 
     # Pixel sprites from the artist's cut-outs, in-game animation previews.

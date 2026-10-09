@@ -233,14 +233,23 @@ function heroView(id: string): string {
         <h1>${tr(h.name)}</h1>
         <p class="lead">${tr(h.role)}</p>
         ${h.quote ? `<blockquote class="quote" style="margin:6px 0">${tr(h.quote)}<span class="caps" style="display:block;margin-top:6px">${R('ДО СИРЕН', 'BEFORE THE SIRENS')}</span></blockquote>` : ''}
-        ${h.line ? `<div class="bark slab"><span class="caps">${R('СЕЙЧАС, НА СМЕНЕ:', 'NOW, ON SHIFT:')}</span>«${tr(h.line)}»</div>` : ''}
+        ${h.mania ? `<div class="twin">
+          <div class="slab side mad"><span class="caps">${R('ОБЕЗУМЕВШИЙ // НА СМЕНЕ У HEROOUT', 'DERANGED // ON SHIFT FOR HEROOUT')}</span>
+            <p>${tr(h.mania)}</p>
+            ${h.line ? `<blockquote>«${tr(h.line)}»</blockquote>` : ''}
+            ${h.defeat ? `<p class="dim"><b>${R('Если победить:', 'When beaten:')}</b> «${tr(h.defeat)}»</p>` : ''}
+            ${h.trophy ? `<p class="dim"><b>${R('Трофей:', 'Trophy:')}</b> ${tr(h.trophy)}${h.lair ? ` · <b>${R('Убежище:', 'Lair:')}</b> ${tr(h.lair)}` : ''}</p>` : ''}
+          </div>
+          ${h.ally ? `<div class="slab side back"><span class="caps">${R('ВЕРНУЛСЯ // ТЕПЕРЬ НА ВАШЕЙ СМЕНЕ', 'BACK // NOW ON YOUR SHIFT')}</span>
+            ${h.back ? `<blockquote>«${tr(h.back)}»</blockquote>` : ''}
+            <p>${tr(h.ally)}</p>
+            ${h.allyLine ? `<p class="dim">«${tr(h.allyLine)}»</p>` : ''}
+            ${h.unlock ? `<p class="dim"><b>${R('Как вернуть:', 'How to bring back:')}</b> ${tr(h.unlock)}</p>` : ''}
+          </div>` : ''}
+        </div>` : ''}
         <div class="facts">
-          ${row(R('ДО АВАРИИ', 'BEFORE'), h.before)}
-          ${row(R('ПОСЛЕ ГЕЛЯ', 'AFTER THE GEL'), h.mania ?? h.after)}
-          ${row(R('ТРОФЕЙ', 'TROPHY'), h.trophy)}
-          ${row(R('УБЕЖИЩЕ', 'LAIR'), h.lair)}
-          ${row(R('ВЕРНЁТСЯ СОЮЗНИКОМ', 'COMES BACK AS AN ALLY'), h.ally)}
-          ${row(R('КАК ВЕРНУТЬ', 'HOW TO BRING BACK'), h.unlock)}
+          ${row(R('ДО КАТАСТРОФЫ', 'BEFORE THE DISASTER'), h.group === 'city' && h.bio ? h.bio : h.before)}
+          ${h.bio && h.group !== 'city' ? row(R('ЛЕГЕНДА СЛУЖБЫ', 'SERVICE RECORD'), h.bio) : ''}
           ${row(R('МОДУЛЬ', 'MODULE'), h.module)}
           ${row(R('ТЕХНОЛОГИЯ', 'TECH'), h.tech)}
           ${row(R('ОБРАЗ', 'LOOK'), h.look)}
@@ -442,7 +451,8 @@ function comicView(id: string): string {
       <span class="caps">${tr(c.series)} // ${tr(c.cast)}</span>
       <h1 style="font-size:clamp(30px,5vw,52px)">${tr(c.title)}</h1>
       <p class="lead">${tr(c.blurb)}${ruOnly ? ` <span class="chip">${u('ruOnly')}</span>` : ''}</p>
-      ${c.pages[lang].map((p, k) => `<img src="${img(p)}" alt="${esc(tr(c.title))} ${k + 1}" ${k ? 'loading="lazy"' : ''}>`).join('')}
+      <p class="caps tap-hint">${R('НАЖМИ НА СТРАНИЦУ, ЧТОБЫ ЧИТАТЬ КРУПНО', 'TAP A PAGE TO READ IT LARGE')}</p>
+      ${c.pages[lang].map((p, k) => `<button class="zoom page" data-src="${img(p)}" data-full="1" aria-label="${esc(tr(c.title))} ${k + 1}"><img src="${img(p)}" alt="${esc(tr(c.title))} ${k + 1}" ${k ? 'loading="lazy"' : ''}></button>`).join('')}
       <div class="pager"><a class="btn btn-ghost" href="#comics">${u('comics')}</a><a class="btn btn-primary" href="#comic-${next.id}">${tr(next.title)} →</a></div>
     </div>
   </div></section>`;
@@ -522,7 +532,10 @@ app.addEventListener('click', (ev) => {
   if (zoom) {
     const lb = document.getElementById('lightbox')!;
     lb.innerHTML = `<button class="icon-btn" aria-label="${u('close')}">${ICON.close}</button><img src="${zoom.dataset.src}" alt=""${zoom.dataset.px ? ' class="px"' : ''}><p>${zoom.dataset.cap ?? ''}</p>`;
+    // Comic pages open at reading size and scroll inside the viewer, so speech bubbles stay legible on phones (QA-025).
+    lb.classList.toggle('full', !!zoom.dataset.full);
     lb.hidden = false;
+    lb.scrollTo(0, 0);
     return;
   }
   if (t.closest('#lightbox')) document.getElementById('lightbox')!.hidden = true;
