@@ -1,13 +1,13 @@
 {
   "place.command": "Нажмите на квартал, чтобы поставить Командный центр.",
   "legend.threat": "Гнёзда",
-  "legend.demon": "Демон",
+  "legend.demon": "Цель вызова",
   "legend.finds": "Находки",
   "tutorial.dig": "Проведите по закрытым кварталам, чтобы отправить жителей на расчистку.",
-  "tutorial.attack": "Нажмите на врага или открытое гнездо, чтобы отправить туда всех защитников.",
+  "tutorial.attack": "Нажмите на врага или открытое гнездо, чтобы отправить туда всех жителей.",
   "hud.label.energy": "Энергия",
   "hud.label.residents": "Жители",
-  "hud.label.squad": "Отряд",
+  "hud.label.squad": "Школа",
   "hud.shift_label": "Смена 01 // Sunward",
   "hud.queue": "В очереди: {count}",
   "hud.squad_chip": "Отряд: {count}",
@@ -67,6 +67,9 @@
   "account.error.popup-blocked": "Браузер заблокировал окно входа. Разрешите всплывающие окна и попробуйте снова.",
   "account.error.generic": "Не получилось. Попробуйте ещё раз.",
   "pause.account": "Аккаунт и сохранения",
+  "event.boss_dead": "Цель вызова остановлена. Ждём, пока остынет земля",
+  "hint.nest_grows_stronger": "Гнездо крепнет, пока вы ждёте. Чем позже бой, тем злее враги",
+  "menu.on_call": "на вызове",
   "comm.no_weakness": "Слабых мест нет",
   "social.menu.board": "Рейтинг",
   "social.menu.invite": "Позвать",
@@ -156,5 +159,7 @@
   "feedback.sent": "Отправлено. Автор читает каждое сообщение.",
   "feedback.queued": "Сохранили. Сообщение уйдёт автору, как только игра выйдет в сеть.",
   "feedback.short": "Напиши хотя бы пару слов",
-  "settings.feedback": "Написать автору"
+  "settings.feedback": "Написать автору",
+  "order.attack": "Жители, в атаку!",
+  "event.raid_incoming": "Набег: {n} адаптантов идут ломать здание"
 }

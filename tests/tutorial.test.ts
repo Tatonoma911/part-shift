@@ -24,7 +24,7 @@ describe('First Shift tutorial map', () => {
     expect(w.cell(4, 7).content).toBe('cache');
   });
 
-  it('has no threat growth, no Demon and an unbreakable center; the nest releases only 2 adaptants with arms', () => {
+  it('has no threat growth, no call target and an unbreakable center; the nest releases only 2 adaptants with arms', () => {
     const w = createTutorialWorld();
     w.apply({ type: 'placeCommand', x: 3, y: 8 });
     w.s.time = 2000;
@@ -34,7 +34,7 @@ describe('First Shift tutorial map', () => {
     w.cell(2, 3).revealed = false;
     w.apply({ type: 'queueDig', x: 2, y: 3, force: true });
     run(w, 60);
-    expect(w.s.units.some((u) => u.kind === 'demon')).toBe(false);
+    expect(w.s.units.some((u) => u.kind === 'hero')).toBe(false);
     expect(w.s.sites[0].spawned).toBe(2);
     expect(w.building(w.player(0).command)!.hp).toBeGreaterThan(0);
   });

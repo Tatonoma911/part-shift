@@ -2,7 +2,7 @@
  * The whole match as plain JSON-able data. Saves are JSON.stringify(state);
  * the multiplayer server will send the same object to clients.
  */
-import type { SlotId, Tech, UnitStats } from './data';
+import type { AttackTech, SlotId, Tech, UnitStats } from './data';
 
 export type CellContent =
   | 'ground'
@@ -13,8 +13,13 @@ export type CellContent =
   | 'survivor'
   | 'nest'
   | 'heavy_nest'
-  | 'demon_hatch';
+  | 'hero_lair'
+  | 'boss_hatch';
 
+/**
+ * Clue channels. 'demon' is the «Цель вызова» channel (design id `boss`): the
+ * key keeps its old name so the board, the scanner and saved settings stay stable.
+ */
 export type ClueChannel = 'threat' | 'demon' | 'finds';
 
 export interface Cell {
@@ -28,19 +33,31 @@ export interface Cell {
   stock?: number;
   /** Seconds of rubble clearing done. */
   work?: number;
+  /** Shared dig progress of everyone digging this cell (config.dig.workers). */
+  dig?: number;
   /** Building standing on this cell. */
   building?: number;
   /** Player's "danger here" flag. */
   marked?: boolean;
   /** Seconds left of steam-burnt ground. */
   hot?: number;
+  /** Hero lair / boss hatch: the hero waiting inside (heroes.json id). */
+  hero?: string;
+  /** Lair tier (1–3) for the self-open clock; the boss hatch has none. */
+  heroTier?: number;
+  /** Hero lair: the "coming out soon" warning was given. */
+  warned?: boolean;
+  /** Seconds left of Canopy's overgrowth (slows residents). */
+  overgrown?: number;
+  /** Ruins of this building type: rebuilding is cheaper and faster (difficulty.json buildingDamage.ruins). */
+  ruin?: string;
 }
 
-/** An opened nest / demon hatch: a structure with HP that releases enemies. */
+/** An opened nest (a structure with HP that releases enemies) or an opened hero lair / boss hatch. */
 export interface SiteState {
   x: number;
   y: number;
-  kind: 'nest' | 'heavy_nest' | 'demon_hatch';
+  kind: 'nest' | 'heavy_nest' | 'hero_lair' | 'boss_hatch';
   hp: number;
   maxHp: number;
   spawnTimer: number;
@@ -48,6 +65,8 @@ export interface SiteState {
   destroyed: boolean;
   /** Enemies released so far (for a limited spawn budget). */
   spawned?: number;
+  /** Seconds left of Beacon's alarm flare: this nest spawns twice as fast. */
+  rush?: number;
 }
 
 export interface PartInstance {
@@ -55,16 +74,13 @@ export interface PartInstance {
   tier: number;
 }
 
-export type UnitKind = 'resident' | 'defender' | 'adaptant' | 'heavy_adaptant' | 'demon';
+export type UnitKind = 'resident' | 'adaptant' | 'heavy_adaptant' | 'hero';
 
 export type Task =
   | { type: 'idle' }
   | { type: 'dig'; x: number; y: number; progress: number }
   | { type: 'harvest'; x: number; y: number; progress: number }
   | { type: 'build'; building: number }
-  | { type: 'operate'; building: number }
-  | { type: 'train'; building: number; progress: number }
-  | { type: 'flee' }
   | { type: 'rest' };
 
 export interface Unit {
@@ -78,8 +94,6 @@ export interface Unit {
   /** Stats before parts; enemies get threat scaling baked in at spawn. */
   base: UnitStats;
   path: { x: number; y: number }[];
-  /** Residents: the dwelling slot they belong to (building id). */
-  home?: number;
   task: Task;
   parts: Partial<Record<SlotId, PartInstance>>;
   attackCooldown: number;
@@ -88,10 +102,29 @@ export interface Unit {
   repathTimer: number;
   burn?: { dps: number; left: number; source: number };
   slow?: { percent: number; left: number };
-  /** Enemies: the nest that released them. */
+  /** Chill hits in a row (design/ELEMENTS.md: 3 = frozen). */
+  chill?: number;
+  poison?: { dps: number; left: number; defense: number; source: number };
+  /** Frozen or stunned: no moving, no hitting. */
+  stun?: number;
+  /** Shell break: defense counts as 0. */
+  bare?: number;
+  /** Enemies: the nest or lair that released them. */
   nest?: string;
+  /** Heroes: heroes.json id. Adaptants: the nest tech (sprite and resists). */
+  hero?: string;
+  tech?: Tech;
+  attackTech?: AttackTech;
+  /** Seconds until the hero's ability fires again. */
+  abilityCd?: number;
   /** Demon special attack state. */
   blast?: { phase: 'windup' | 'cooldown'; left: number; dx: number; dy: number };
+  /** Heroes: damage taken per resident id (the second part goes to the runner-up). */
+  dealt?: Record<number, number>;
+  /** Seconds left before a resident goes back to work after a fight. */
+  calm?: number;
+  /** Raiders: the building they march on ("b:id"); dropped once a resident hits them. */
+  raid?: string;
   kills: number;
 }
 
@@ -105,12 +138,10 @@ export interface Building {
   /** Seconds of construction done; complete when >= buildSeconds. */
   built: number;
   complete: boolean;
-  /** Dwelling slots: unit id living there, or seconds until the next birth. */
-  slots: { unit: number | null; timer: number }[];
-  operators: number[];
   produceTimer: number;
-  recruit: boolean;
   healTimer: number;
+  /** Rebuilt on its own ruins: builds in half the time. */
+  rebuild?: boolean;
 }
 
 export interface Orb {
@@ -129,10 +160,13 @@ export interface Player {
   queue: string[];
   /** Cells queued automatically next to quiet cells (low priority). */
   autoQueue: string[];
-  /** Attack order for all defenders: unit id or site key. */
+  /** Attack order for all residents: unit id or site key. */
   order: string | null;
-  /** earned: all Energy income this run (missing in old saves). */
-  stats: { nests: number; caches: number; earned?: number };
+  /** Seconds until the next resident appears. */
+  spawnTimer: number;
+  /** Extra resident places (survivors). */
+  capBonus: number;
+  stats: { nests: number; caches: number; heroes: string[]; energy: number; lost: number; parts: number };
   /** Scanner helper (design/ONBOARDING.md §1.3). */
   assist: AssistState;
 }
@@ -157,7 +191,7 @@ export type Outcome = 'playing' | 'victory' | 'defeat';
 export interface RuleOverrides {
   config?: Record<string, number | boolean>;
   threatEnabled?: boolean;
-  demonEnabled?: boolean;
+  bossEnabled?: boolean;
   commandInvulnerable?: boolean;
   /** The command center may only go here (tutorial). */
   commandFixed?: { x: number; y: number };
@@ -170,7 +204,7 @@ export interface RuleOverrides {
 }
 
 export interface GameState {
-  version: 1;
+  version: 2;
   seed: number;
   rng: number;
   time: number;
@@ -184,7 +218,12 @@ export interface GameState {
   sites: SiteState[];
   orbs: Orb[];
   nextId: number;
-  demon: { awake: boolean; warned: boolean; dead: boolean; hpScale: number };
+  /** The call target: the strongest hero of the district (boss_hatch). */
+  boss: { hero: string; awake: boolean; warned: boolean; dead: boolean; hpScale: number };
   outcome: Outcome;
+  /** difficulty.json level id. */
+  difficulty: string;
+  /** Game time of the next raid (MVP_RULES §9.7). */
+  raidAt?: number;
   rules?: RuleOverrides;
 }

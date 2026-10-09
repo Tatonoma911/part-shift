@@ -3,7 +3,7 @@ import { account } from '../account/cloud';
 import { openAccountPanel } from '../account/panel';
 import { config } from '../core/data';
 import type { AssistMode } from '../core/state';
-import { lang, setLang, t } from '../i18n';
+import { hasText, lang, setLang, t } from '../i18n';
 import { introSeen, playIntro } from '../intro';
 import { analytics, askAnalyticsConsent } from '../analytics';
 import { learning, learningLang } from './learn';
@@ -21,6 +21,9 @@ import { closeSocial, dailySeed, dayId, heroOfWeek, invite, openBoard, openDonat
 
 type Ev = Phaser.Types.Input.EventData;
 type Page = 'main' | 'slots' | 'settings';
+
+/** HeroOut heroes, all of them infected villains now (lore/VILLAINS.md); the menu shows three at random. */
+const MENU_HEROES = ['kiln', 'lineman', 'frostline', 'seraph', 'current', 'mason', 'beacon', 'canopy', 'sweep', 'patch', 'hive', 'n73', 'doctor', 'demon'];
 
 /**
  * Title screen: continue, new shift into one of three slots, the tutorial,
@@ -51,13 +54,6 @@ export class MenuScene extends Phaser.Scene {
 
   create(): void {
     if (!this.anims.exists('resident.idle')) createArt(this);
-    const unlock = () => sound.unlock();
-    window.addEventListener('pointerdown', unlock, { capture: true });
-    window.addEventListener('keydown', unlock, { capture: true });
-    this.events.once('shutdown', () => {
-      window.removeEventListener('pointerdown', unlock, { capture: true });
-      window.removeEventListener('keydown', unlock, { capture: true });
-    });
 
     // Links for tests and sharing: ?seed=…, ?tutorial=1 go straight to the board.
     const params = new URLSearchParams(location.search);
@@ -92,7 +88,10 @@ export class MenuScene extends Phaser.Scene {
     if (!introSeen() && !this.registry.get('introShown')) {
       this.registry.set('introShown', true);
       this.story(false);
-    } else askAnalyticsConsent();
+    } else {
+      askAnalyticsConsent();
+      sound.playMusic('menu');
+    }
   }
 
   private story(skipGate: boolean): void {
@@ -109,7 +108,10 @@ export class MenuScene extends Phaser.Scene {
         // First launch asks about statistics after the comic, not over it.
         askAnalyticsConsent();
         this.storyPlaying = false;
-        if (this.scene.isActive()) this.input.enabled = true;
+        if (this.scene.isActive()) {
+          this.input.enabled = true;
+          sound.playMusic('menu');
+        }
       });
   }
 
@@ -147,9 +149,8 @@ export class MenuScene extends Phaser.Scene {
       if (tx.width > 740) tx.setScale(740 / tx.width);
     });
 
-    // A slice of the city: buildings, residents at work and the Demon looming behind.
-    const demon = this.add.image(ax + 560, 560 + ay, 'portrait.demon').setOrigin(0.5, 1).setScale(2.2).setAlpha(0.9);
-    demon.texture.setFilter(Phaser.Textures.FilterMode.NEAREST);
+    // A slice of the city: three infected heroes on call behind it (a fresh three each launch), buildings, residents at work.
+    this.drawHeroes(ax, ay);
     const row: [string, number][] = [
       ['home', 120],
       ['reactor', 230],
@@ -162,6 +163,76 @@ export class MenuScene extends Phaser.Scene {
       this.add.image(ax + bx, 610 + ay, `building.${id}`).setOrigin(a[0] / a[2], a[1] / a[3]).setScale(1.6);
     }
     [170, 300, 430, 560].forEach((rx, i) => this.add.sprite(ax + rx, 640 + ay, i % 2 ? 'defender' : 'resident').setOrigin(0.5, 1).setScale(1.4).play(i % 2 ? 'defender.idle' : 'resident.idle'));
+  }
+
+  /** Three random heroes behind the city: coral glow, name tag, tap for one of their lines (Антон 2026-10-09). */
+  private drawHeroes(ax: number, ay: number): void {
+    if (!this.textures.exists('menu.glow')) {
+      const tex = this.textures.createCanvas('menu.glow', 128, 128)!;
+      const c = tex.getContext();
+      const g = c.createRadialGradient(64, 64, 0, 64, 64, 64);
+      g.addColorStop(0, 'rgba(239,92,115,0.55)');
+      g.addColorStop(0.55, 'rgba(138,77,255,0.18)');
+      g.addColorStop(1, 'rgba(138,77,255,0)');
+      c.fillStyle = g;
+      c.fillRect(0, 0, 128, 128);
+      tex.refresh();
+    }
+    const pool = MENU_HEROES.filter((id) => this.textures.exists(`portrait.${id}`));
+    const pick = Phaser.Utils.Array.Shuffle([...pool]).slice(0, 3);
+    // Side heroes stand a little further back; the middle one is drawn last, in front.
+    const slots = [
+      { x: 140, foot: 572, scale: 2.1 },
+      { x: 640, foot: 572, scale: 2.1 },
+      { x: 390, foot: 590, scale: 2.5 },
+    ];
+    let bubble: Phaser.GameObjects.Container | null = null;
+    pick.forEach((id, i) => {
+      const s = slots[i];
+      const x = ax + s.x;
+      const foot = s.foot + ay;
+      const glow = this.add.image(x, foot, 'menu.glow');
+      const hero = this.add.image(x, foot, `portrait.${id}`).setOrigin(0.5, 1).setScale(s.scale);
+      hero.texture.setFilter(Phaser.Textures.FilterMode.NEAREST);
+      const top = foot - hero.displayHeight;
+      glow.setPosition(x, foot - hero.displayHeight * 0.45).setScale(hero.displayHeight / 90);
+      this.tweens.add({ targets: hero, y: foot - 5, duration: 1500 + i * 230, yoyo: true, repeat: -1, ease: 'Sine.easeInOut', delay: i * 400 });
+
+      // Name tag: graphite chip with the hero's name and a coral "on call" line.
+      const name = (hasText(`enemy.${id}.name`) ? t(`enemy.${id}.name`) : id).toUpperCase();
+      const tagT = this.add.text(0, 0, name, TXT.num(18, INK.white)).setOrigin(0.5, 0.5);
+      const callT = this.add.text(0, 0, t('menu.on_call').toUpperCase(), { ...TXT.caps(INK.coral), fontSize: '12px' }).setOrigin(0.5, 0.5);
+      const w = Math.max(tagT.width, callT.width) + 36;
+      const tg = this.add.graphics();
+      chip(tg, -w / 2, -26, w, 52, C.graphite, 0.92, 12);
+      tg.fillStyle(C.coral, 1);
+      tg.fillCircle(-w / 2 + 14, 12, 4);
+      tagT.setPosition(0, -9);
+      callT.setPosition(6, 13);
+      this.add.container(x, 284 + ay, [tg, tagT, callT]);
+
+      // Easter egg: tap a hero to hear one of their lines.
+      hero.setInteractive({ useHandCursor: true }).on('pointerdown', () => {
+        const lines = [1, 2, 3, 4, 5].map((n) => `hero.line.${id}.${n}`).filter((k) => hasText(k));
+        if (!lines.length) return;
+        bubble?.destroy();
+        const txt = this.add.text(0, 0, t(Phaser.Utils.Array.GetRandom(lines)), { ...TXT.body(20, INK.graphite, '600'), wordWrap: { width: 300 }, align: 'center' }).setOrigin(0.5);
+        const bw = txt.width + 36;
+        const bh = txt.height + 26;
+        const bg = this.add.graphics();
+        plate(bg, -bw / 2, -bh / 2, bw, bh, 12);
+        bg.fillStyle(C.paper, 1);
+        bg.fillTriangle(-10, bh / 2 - 2, 10, bh / 2 - 2, 0, bh / 2 + 14);
+        const by = Math.max(top + 40, 360 + ay);
+        const bx = Phaser.Math.Clamp(x, ax + bw / 2 + 12, ax + 780 - bw / 2 - 12);
+        const box = this.add.container(bx, by, [bg, txt]).setDepth(5).setScale(0.6).setAlpha(0);
+        bubble = box;
+        this.tweens.add({ targets: box, scale: 1, alpha: 1, duration: 180, ease: 'Back.easeOut' });
+        this.tweens.add({ targets: box, alpha: 0, delay: 2800, duration: 300, onComplete: () => box.destroy() });
+        this.tweens.add({ targets: hero, scaleY: s.scale * 1.06, duration: 110, yoyo: true });
+        sound.play('ui_tap');
+      });
+    });
   }
 
   private show(page: Page): void {

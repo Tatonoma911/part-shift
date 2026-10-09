@@ -85,12 +85,9 @@ export class Comm {
       case 'hero_defeated':
         if (e.text && HEROES[e.text]) this.push({ hero: e.text, kind: 'defeat', priority: true });
         break;
-      case 'demon_warning':
-      case 'demon_awake':
-        this.push({ hero: 'demon', kind: 'lines', priority: true });
-        break;
-      case 'demon_die':
-        this.push({ hero: 'demon', kind: 'defeat', priority: true });
+      // The call target (any hero, not only the Demon) warns before it comes out; its spawn and fall are hero_spawn / hero_defeated.
+      case 'boss_warning':
+        if (e.text && HEROES[e.text]) this.push({ hero: e.text, kind: 'lines', priority: true });
         break;
       case 'build_place':
         // The command center goes down: the first hero cuts into the city channel.

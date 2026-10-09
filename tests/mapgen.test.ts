@@ -17,7 +17,10 @@ describe('field generation (mapgen.json)', () => {
     const w = generated(1);
     expect([w.s.width, w.s.height]).toEqual([14, 18]);
     expect(count(w, 'nest') + count(w, 'heavy_nest')).toBe(mapgen.counts.nest);
-    expect(count(w, 'demon_hatch')).toBe(1);
+    expect(count(w, 'boss_hatch')).toBe(1);
+    expect(count(w, 'hero_lair')).toBe(mapgen.counts.hero_lair);
+    const lairHeroes = w.s.cells.filter((c) => c.content === 'hero_lair').map((c) => c.hero);
+    expect(lairHeroes).not.toContain(w.s.boss.hero);
     expect(count(w, 'cache')).toBe(mapgen.counts.cache);
     expect(count(w, 'survivor')).toBe(mapgen.counts.survivor);
     expect(count(w, 'energy_vein')).toBe(mapgen.counts.energy_vein);
@@ -29,13 +32,13 @@ describe('field generation (mapgen.json)', () => {
       const cx = seed % 14;
       const cy = (seed * 7) % 18;
       const w = generated(seed, cx, cy);
-      const sites = w.s.cells.map((c, i) => ({ c, ...pos(w, i) })).filter(({ c }) => ['nest', 'heavy_nest', 'demon_hatch', 'cache', 'survivor'].includes(c.content));
+      const sites = w.s.cells.map((c, i) => ({ c, ...pos(w, i) })).filter(({ c }) => ['nest', 'heavy_nest', 'hero_lair', 'boss_hatch', 'cache', 'survivor'].includes(c.content));
       for (const { x, y } of sites) expect(cheb(x, y, cx, cy)).toBeGreaterThan(mapgen.safeRadius);
       const starter = sites.filter(({ c, x, y }) => c.content === 'nest' && cheb(x, y, cx, cy) >= 3 && cheb(x, y, cx, cy) <= 4);
       expect(starter.length).toBeGreaterThanOrEqual(1);
-      const hatch = sites.find(({ c }) => c.content === 'demon_hatch')!;
+      const hatch = sites.find(({ c }) => c.content === 'boss_hatch')!;
       const farthest = Math.max(...w.s.cells.map((_, i) => cheb(pos(w, i).x, pos(w, i).y, cx, cy)));
-      expect(cheb(hatch.x, hatch.y, cx, cy)).toBeGreaterThanOrEqual(Math.min(mapgen.demonMinDistance, farthest - 2));
+      expect(cheb(hatch.x, hatch.y, cx, cy)).toBeGreaterThanOrEqual(Math.min(mapgen.bossMinDistance, farthest - 2));
       for (const o of sites) if (o !== hatch) expect(cheb(o.x, o.y, hatch.x, hatch.y)).toBeGreaterThan(1);
       for (const { c } of sites) expect(c.content).not.toBe('water');
       for (const c of w.s.cells) if (['nest', 'heavy_nest'].includes(c.content)) expect(c.tech).toBeTruthy();
@@ -49,7 +52,7 @@ describe('field generation (mapgen.json)', () => {
   it('opens the 3×3 start and gives the first resident at once', () => {
     const w = generated(3);
     expect(w.s.cells.filter((c) => c.revealed).length).toBeGreaterThanOrEqual(9);
-    expect(w.s.units.filter((u) => u.kind === 'resident')).toHaveLength(1);
-    expect(w.player(0).energy).toBe(config.economy.startEnergy);
+    expect(w.s.units.filter((u) => u.kind === 'resident')).toHaveLength(config.population.initialResidents);
+    expect(w.player(0).energy).toBe(w.cfg.economy.startEnergy);
   });
 });

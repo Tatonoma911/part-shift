@@ -7,6 +7,7 @@ import { World, type GameEvent } from '../core/world';
 import { t } from '../i18n';
 import { BUILDING_ANCHOR } from './assets';
 import { sound } from './audio';
+import { SoundDirector } from './soundDirector';
 import { learning, setLearningHooks } from './learn';
 import { volumeHeight, volumeSliders } from './volume';
 import { BoardView } from './BoardView';
@@ -43,19 +44,38 @@ type Ev = Phaser.Types.Input.EventData;
 const TOASTS: Record<string, { text: (e: GameEvent) => string; bad?: boolean }> = {
   nest_open: { text: () => t('event.nest_opened'), bad: true },
   heavy_nest_open: { text: () => t('event.heavy_nest_opened'), bad: true },
-  demon_awake: { text: () => t('event.demon_awake'), bad: true },
-  demon_warning: { text: () => t('event.demon_warning'), bad: true },
+  boss_awake: { text: (e) => heroLine('event.boss_awake', e.text), bad: true },
+  boss_warning: { text: () => t('event.boss_warning'), bad: true },
+  hero_warning: { text: () => t('event.hero_warning'), bad: true },
+  hero_spawn: { text: (e) => (e.amount === 1 ? '' : heroLine('event.hero_appears', e.text)), bad: true },
+  hero_defeated: { text: (e) => t('event.hero_defeated', { hero: heroName(e.text) }) },
+  hero_part_taken: { text: (e) => t('trophy.module_acquired', { part: t(`part.${e.text}.label`) }) },
   demon_windup: { text: () => t('enemy.demon.windup'), bad: true },
-  demon_die: { text: () => t('event.demon_dead') },
+  boss_dead: { text: () => t('event.boss_dead') },
+  raid_incoming: { text: (e) => t('event.raid_incoming', { n: e.amount ?? 0 }), bad: true },
+  survivor_joined: { text: () => t('event.survivor_slot') },
+  hint: { text: (e) => t(e.text ?? '') },
   threat_level_up: { text: (e) => t('event.threat_rising', { level: e.amount ?? 0 }), bad: true },
   cache_open: { text: (e) => t('event.cache_reward', { energy: e.amount ?? 0 }) },
   nest_destroyed: { text: (e) => t('event.nest_destroyed', { energy: e.amount ?? 0 }) },
   building_lost: { text: (e) => t('event.building_lost', { building: t(`building.${e.text}.name`) }), bad: true },
   part_attached: { text: (e) => t('trophy.module_acquired', { part: t(`part.${e.text}.label`) }) },
   part_recycled: { text: (e) => t('part.recycled', { energy: e.amount ?? 0 }) },
-  defender_trained: { text: () => t('unit.trained') },
   build_refused: { text: (e) => t(e.text ?? 'build.invalid_cell'), bad: true },
 };
+
+/** Screen name of a hero (writer's text), e.g. «Килн». */
+const FEMALE_HEROES = new Set(['seraph', 'frostline', 'canopy']);
+
+function heroName(id: string | undefined): string {
+  return id ? t(`enemy.${id}.name`) : '';
+}
+
+/** Writer's line with {hero}; heroines get the `_female` variant when the writer has one. */
+function heroLine(key: string, id: string | undefined): string {
+  const female = id && FEMALE_HEROES.has(id) && t(`${key}_female`, { hero: heroName(id) });
+  return female && !female.startsWith(key) ? female : t(key, { hero: heroName(id) });
+}
 
 function stop(fn: () => void) {
   return (_p: Phaser.Input.Pointer, _x: number, _y: number, ev: Ev) => {
@@ -111,6 +131,8 @@ export class GameScene extends Phaser.Scene {
   private guideBox: { text: Phaser.GameObjects.Text; dots: Phaser.GameObjects.Graphics; g: Phaser.GameObjects.Graphics; y: number; h: number } | null = null;
 
   private paused = false;
+  private lastOrderSaid = -1e9;
+  private music!: SoundDirector;
   /** The field guide or a coach card is open: the world waits, no pause sheet. */
   private overlayPaused = false;
   private coachedBuild = false;
@@ -217,7 +239,8 @@ export class GameScene extends Phaser.Scene {
     document.addEventListener('visibilitychange', onHide);
     this.events.once('shutdown', () => document.removeEventListener('visibilitychange', onHide));
     setBackHandler(() => this.onBack());
-    if (this.world.s.outcome === 'playing') sound.playMusic('theme_lumen');
+    this.music = new SoundDirector(this.world, ME);
+    this.music.start();
     this.setMode('dig');
     // The tutorial teaches by itself; coach cards and the guide come with free play.
     setLearningHooks({ pause: () => (this.overlayPaused = true), resume: () => (this.overlayPaused = false) });
@@ -240,6 +263,7 @@ export class GameScene extends Phaser.Scene {
       this.board.onEvent(e);
       this.onEvent(e);
     }
+    this.music.tick();
     if (this.guide?.update()) this.showGuideStep();
     if (this.spotlight && time > this.spotlight.until) this.spotlight = null;
     this.board.update(time, {
@@ -314,10 +338,17 @@ export class GameScene extends Phaser.Scene {
     }
   }
 
+  /** Confirms an attack order, at most every 2 s so repeated taps don't spam. */
+  private orderSaid(): void {
+    sound.play('ui_tap');
+    if (this.time.now - this.lastOrderSaid < 2000) return;
+    this.lastOrderSaid = this.time.now;
+    this.say(t('order.attack'), 1800);
+  }
+
   private onEvent(e: GameEvent): void {
     if (e.owner !== undefined && e.owner !== ME && e.owner >= 0) return;
-    if (e.type === 'victory' || e.type === 'defeat') sound.stopMusic();
-    sound.play(e.type);
+    this.music.onEvent(e);
     if (!this.guide) this.coachOn(e);
     this.comm?.onEvent(e);
     if (e.type === 'center_hit') {
@@ -510,40 +541,39 @@ export class GameScene extends Phaser.Scene {
   private updateHud(deltaMs: number): void {
     const w = this.world;
     const mine = w.s.units.filter((u) => u.owner === ME);
-    const slots = w.s.buildings.filter((b) => b.owner === ME && b.complete).reduce((n, b) => n + b.slots.length, 0);
     const residents = mine.filter((u) => u.kind === 'resident').length;
-    const defenders = mine.filter((u) => u.kind === 'defender').length;
     // The counter rolls toward the real value so energy visibly "arrives".
     const real = Math.floor(w.player(ME).energy);
     const diff = real - this.shownEnergy;
     this.shownEnergy = Math.abs(diff) < 1 ? real : this.shownEnergy + diff * Math.min(1, deltaMs / 120);
     this.hud.energy.setText(String(Math.round(this.shownEnergy)));
-    this.hud.residents.setText(`${residents}/${slots}`);
-    this.hud.squad.setText(`${defenders}/${w.defenderCapacity(ME)}`);
+    this.hud.residents.setText(`${residents}/${w.residentCap(ME)}`);
+    // Shield = school training level of every resident (config.school).
+    this.hud.squad.setText(`${w.trainingLevel(ME)}/${w.cfg.school.trainingLevelsMax}`);
 
     const level = w.threatLevel;
     if (level > this.lastThreat) this.tweens.add({ targets: this.hud.ringBox, scale: 1.25, duration: 300, yoyo: true });
     this.lastThreat = level;
     const g = this.hud.ring;
     g.clear();
-    const col = w.s.demon.awake ? C.violet : C.coral;
+    const col = w.s.boss.awake ? C.violet : C.coral;
     g.fillStyle(col, 1);
     g.fillCircle(0, 0, 30);
     g.lineStyle(9, 0xdbe6ea, 1);
     g.strokeCircle(0, 0, 42);
-    g.lineStyle(9, w.s.demon.awake ? C.violet : C.amber, 1);
+    g.lineStyle(9, w.s.boss.awake ? C.violet : C.amber, 1);
     g.beginPath();
     g.arc(0, 0, 42, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * Math.max(0.001, 1 - w.threatProgress), false);
     g.strokePath();
     this.hud.threat.setText(String(level));
 
-    let goal = t('mode.demon_hunt.goal');
+    let goal = t('mode.call.goal', { hero: heroName(w.s.boss.hero) });
     let bg = C.graphite;
     if (this.paused) {
       goal = t('pause.plan_banner');
       bg = C.amber;
-    } else if (w.s.demon.warned && !w.s.demon.awake && !w.s.demon.dead) {
-      goal = t('event.demon_warning');
+    } else if (w.s.boss.warned && !w.s.boss.awake && !w.s.boss.dead) {
+      goal = t('event.boss_warning');
       bg = C.violet;
     }
     if (this.hud.goal.text !== goal) this.hud.goal.setText(goal);
@@ -558,7 +588,7 @@ export class GameScene extends Phaser.Scene {
   private createDock(): void {
     const g = this.add.graphics().setDepth(20);
     plate(g, DOCK.x, DOCK.y, DOCK.w, DOCK.h, 28);
-    // No attack mode: defenders fight on their own, a tap on a foe directs them (MVP_RULES §6).
+    // No attack mode: residents fight on their own, a tap on a foe directs them (MVP_RULES §6).
     const modes: Mode[] = ['dig', 'build'];
     const icons = { dig: 'icon.dig', build: 'icon.build' };
     const pad = 22;
@@ -764,6 +794,7 @@ export class GameScene extends Phaser.Scene {
     if (this.world.s.outcome !== 'playing') return;
     if (on !== this.paused) sound.play(on ? 'pause' : 'resume');
     this.paused = on;
+    sound.duck(on);
     this.overlay?.destroy();
     this.overlay = null;
     if (!on) return;
@@ -822,7 +853,7 @@ export class GameScene extends Phaser.Scene {
       badge = w.s.time < best ? t('win.new_record') : t('win.best_time', { time: this.fmt(best) });
     }
     // Free play scores points for the world ranking; the tutorial doesn't.
-    const rec = this.guide ? null : recordRun({ victory, seconds: w.s.time, nests: me.stats.nests, energy: me.stats.earned ?? 0, threat: w.threatLevel, daily: this.start.daily });
+    const rec = this.guide ? null : recordRun({ victory, seconds: w.s.time, nests: me.stats.nests, energy: me.stats.energy, heroes: me.stats.heroes.length, callTarget: w.s.boss.dead, difficulty: w.s.difficulty, threat: w.threatLevel, daily: this.start.daily });
     this.lastRun = rec;
     if (rec) {
       lines.splice(1, 0, t('end.score', { score: rec.score.toLocaleString('ru-RU') }));
@@ -842,7 +873,7 @@ export class GameScene extends Phaser.Scene {
     };
     this.overlay?.destroy();
     this.overlay = this.sheet({
-      portrait: victory ? 'portrait.demon' : 'portrait.bld_command',
+      portrait: victory && this.textures.exists(`portrait.${w.s.boss.hero}`) ? `portrait.${w.s.boss.hero}` : victory ? 'portrait.demon' : 'portrait.bld_command',
       grey: !victory,
       badge,
       title: victory ? t('win.title') : t('lose.title'),
@@ -900,7 +931,9 @@ export class GameScene extends Phaser.Scene {
       nests: p.stats.nests,
       caches: p.stats.caches,
       buildings: w.s.buildings.filter((b) => b.owner === ME).length,
-      defenders: w.s.units.filter((u) => u.owner === ME && u.kind === 'defender').length,
+      residents: w.s.units.filter((u) => u.owner === ME && u.kind === 'resident').length,
+      heroes: p.stats.heroes.length,
+      boss: w.s.boss.hero,
       ...(this.guide ? { step: this.guide.stepIndex } : {}),
     };
   }
@@ -1013,7 +1046,7 @@ export class GameScene extends Phaser.Scene {
     };
     const lines: string[] = [];
     if (cl.threat) lines.push(t(`cell.near.threat.${plural(cl.threat)}`, { count: cl.threat }));
-    if (cl.demon) lines.push(t('cell.near.demon.one', { count: cl.demon }));
+    if (cl.demon) lines.push(t('cell.near.boss.one', { count: cl.demon }));
     if (cl.finds) lines.push(t(`cell.near.finds.${plural(cl.finds)}`, { count: cl.finds }));
     return lines.length ? lines.join('\n') : t('cell.near.clear');
   }
@@ -1045,21 +1078,15 @@ export class GameScene extends Phaser.Scene {
       return;
     }
     if (p.middleButtonDown()) return;
-    // Tap an enemy or an opened nest: all defenders attack it (any mode).
+    // Tap an enemy or an opened nest: all residents attack it (any mode).
     const foe = this.board.enemyAt(wp.x, wp.y);
     if (foe) {
-      w.apply({ type: 'attack', target: `u:${foe.id}` }, ME);
+      if (w.apply({ type: 'attack', target: `u:${foe.id}` }, ME).ok) this.orderSaid();
       return;
     }
     const site = c.revealed ? w.site(x, y) : undefined;
     if (site && !site.destroyed) {
-      if (w.apply({ type: 'attack', target: `s:${x},${y}` }, ME).ok) this.say(t('tutorial.attack'));
-      return;
-    }
-    const b = w.building(c.building);
-    if (b && b.owner === ME && b.type === 'school' && b.complete) {
-      w.apply({ type: 'setRecruit', building: b.id, on: !b.recruit }, ME);
-      this.say(t(b.recruit ? 'building.school.train_on' : 'building.school.train_off'));
+      if (w.apply({ type: 'attack', target: `s:${x},${y}` }, ME).ok) this.orderSaid();
       return;
     }
     if (c.revealed && w.player(ME).order && c.content === 'ground') w.apply({ type: 'cancelOrder' }, ME);

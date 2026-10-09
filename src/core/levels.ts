@@ -27,12 +27,11 @@ export function createTutorialWorld(seed = 1): World {
   const config: Record<string, number | boolean> = {};
   for (const [k, v] of Object.entries(o)) {
     if (k.startsWith('config.') && (typeof v === 'number' || typeof v === 'boolean')) config[k.slice('config.'.length)] = v;
-    if (k === 'defenders.trainSeconds' && typeof v === 'number') config[k] = v;
   }
   const rules: RuleOverrides = {
     config,
     threatEnabled: o['config.threat.enabled'] !== false,
-    demonEnabled: o['config.demon.enabled'] !== false,
+    bossEnabled: o['config.boss.enabled'] !== false,
     commandInvulnerable: o.commandInvulnerable === true,
     relativeSites: t.commandPlacement?.relativeSites as RuleOverrides['relativeSites'],
     relativeTech: (o.nestTech as Tech) ?? 'cryo',
