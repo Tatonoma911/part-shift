@@ -8,6 +8,7 @@ import { t } from '../i18n';
 import { BUILDING_ANCHOR } from './assets';
 import { sound } from './audio';
 import { SoundDirector } from './soundDirector';
+import { Voice } from './voice';
 import { learning, setLearningHooks } from './learn';
 import { volumeHeight, volumeSliders } from './volume';
 import { BoardView } from './BoardView';
@@ -66,15 +67,18 @@ const TOASTS: Record<string, { text: (e: GameEvent) => string; bad?: boolean }> 
 
 /** Screen name of a hero (writer's text), e.g. «Килн». */
 const FEMALE_HEROES = new Set(['seraph', 'frostline', 'canopy']);
+/** «Течение» is grammatically neuter in Russian: «Течение вышло» (QA-034). */
+const NEUTER_HEROES = new Set(['current']);
 
 function heroName(id: string | undefined): string {
   return id ? t(`enemy.${id}.name`) : '';
 }
 
-/** Writer's line with {hero}; heroines get the `_female` variant when the writer has one. */
+/** Writer's line with {hero} in the hero's grammatical gender (`_female` / `_neuter` variants when they exist). */
 function heroLine(key: string, id: string | undefined): string {
-  const female = id && FEMALE_HEROES.has(id) && t(`${key}_female`, { hero: heroName(id) });
-  return female && !female.startsWith(key) ? female : t(key, { hero: heroName(id) });
+  const form = id && FEMALE_HEROES.has(id) ? '_female' : id && NEUTER_HEROES.has(id) ? '_neuter' : '';
+  const line = form && t(`${key}${form}`, { hero: heroName(id) });
+  return line && !line.startsWith(key) ? line : t(key, { hero: heroName(id) });
 }
 
 function stop(fn: () => void) {
@@ -99,6 +103,7 @@ export class GameScene extends Phaser.Scene {
   private guide: TutorialGuide | null = null;
   /** Hero pop-up in the board's top-left corner (free play only). */
   private comm: Comm | null = null;
+  private voice: Voice | null = null;
 
   private mode: Mode = 'dig';
   private buildType: string = BUILDABLE[0];
@@ -132,6 +137,7 @@ export class GameScene extends Phaser.Scene {
 
   private paused = false;
   private lastOrderSaid = -1e9;
+  private lastSaid = { text: '', bad: false, at: -1e9, until: -1e9 };
   private music!: SoundDirector;
   /** The field guide or a coach card is open: the world waits, no pause sheet. */
   private overlayPaused = false;
@@ -240,6 +246,9 @@ export class GameScene extends Phaser.Scene {
     this.events.once('shutdown', () => document.removeEventListener('visibilitychange', onHide));
     setBackHandler(() => this.onBack());
     this.music = new SoundDirector(this.world, ME);
+    // The city's voice: Контроль, ads, hero bubbles (not in the tutorial, it has its own coach).
+    this.voice = this.guide ? null : new Voice(this, this.world, ME, (at) => this.board.speakerAt(at));
+    this.voice?.start(!saved);
     this.music.start();
     this.setMode('dig');
     // The tutorial teaches by itself; coach cards and the guide come with free play.
@@ -264,6 +273,7 @@ export class GameScene extends Phaser.Scene {
       this.onEvent(e);
     }
     this.music.tick();
+    this.voice?.update();
     if (this.guide?.update()) this.showGuideStep();
     if (this.spotlight && time > this.spotlight.until) this.spotlight = null;
     this.board.update(time, {
@@ -349,6 +359,7 @@ export class GameScene extends Phaser.Scene {
   private onEvent(e: GameEvent): void {
     if (e.owner !== undefined && e.owner !== ME && e.owner >= 0) return;
     this.music.onEvent(e);
+    this.voice?.onEvent(e);
     if (!this.guide) this.coachOn(e);
     this.comm?.onEvent(e);
     if (e.type === 'center_hit') {
@@ -387,6 +398,11 @@ export class GameScene extends Phaser.Scene {
 
   /** Toast plate in the strip between the board and the dock; a new one replaces the old (UI_SPEC §2). */
   private say(text: string, ms = 2800, bad = false): void {
+    // The same line again while it is up, or routine news over a fresh alarm, waits its turn (QA-035).
+    const now = this.time.now;
+    if (text === this.lastSaid.text && now < this.lastSaid.until) return;
+    if (!bad && this.lastSaid.bad && now < this.lastSaid.at + 1500) return;
+    this.lastSaid = { text, bad, at: now, until: now + ms };
     const width = DOCK.w - 16;
     const tx = this.add.text(0, 0, text, { ...TXT.body(22, bad ? INK.white : INK.graphite, '600'), align: 'center', lineSpacing: 2, wordWrap: { width: width - 36 } }).setOrigin(0.5);
     const h = Math.max(58, tx.height + 20);
@@ -547,7 +563,13 @@ export class GameScene extends Phaser.Scene {
     const diff = real - this.shownEnergy;
     this.shownEnergy = Math.abs(diff) < 1 ? real : this.shownEnergy + diff * Math.min(1, deltaMs / 120);
     this.hud.energy.setText(String(Math.round(this.shownEnergy)));
-    this.hud.residents.setText(`${residents}/${w.residentCap(ME)}`);
+    const resText = `${residents}/${w.residentCap(ME)}`;
+    if (this.hud.residents.text !== resText) {
+      // Two-digit counts shrink to stay clear of the school column (QA-033).
+      const room = this.hud.squad.x - this.hud.residents.x - 44;
+      this.hud.residents.setText(resText).setFontSize(36);
+      if (this.hud.residents.width > room) this.hud.residents.setFontSize(Math.max(22, Math.floor((36 * room) / this.hud.residents.width)));
+    }
     // Shield = school training level of every resident (config.school).
     this.hud.squad.setText(`${w.trainingLevel(ME)}/${w.cfg.school.trainingLevelsMax}`);
 
@@ -795,6 +817,7 @@ export class GameScene extends Phaser.Scene {
     if (on !== this.paused) sound.play(on ? 'pause' : 'resume');
     this.paused = on;
     sound.duck(on);
+    if (on) this.voice?.onPause();
     this.overlay?.destroy();
     this.overlay = null;
     if (!on) return;

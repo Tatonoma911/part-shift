@@ -48,7 +48,7 @@
   "win.text": "The Demon is stopped. Lumen City got a little quieter.",
   "win.time": "Shift time: {time}",
   "win.threat": "Threat level: {level}",
-  "win.nests": "Nests opened: {count}",
+  "win.nests": "Nests destroyed: {count}",
   "win.caches": "Caches found: {count}",
   "win.best_time": "Best time: {time}",
   "win.again": "Another shift",
@@ -296,5 +296,6 @@
   "feedback.short": "Write at least a few words",
   "settings.feedback": "Write to the author",
   "order.attack": "All residents: attack!",
-  "event.raid_incoming": "Raid: {n} adaptants are coming to smash a building"
+  "event.raid_incoming": "Raid: {n} adaptants are coming to smash a building",
+  "voice.control_prefix": "CONTROL:"
 }

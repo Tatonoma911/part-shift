@@ -34,8 +34,9 @@
       12,
       13
      ],
-     "fps": 10,
-     "loop": true
+     "fps": 24,
+     "loop": true,
+     "pxPerCycle": 42
     },
     "walk_back": {
      "frames": [
@@ -46,17 +47,20 @@
       20,
       21
      ],
-     "fps": 10,
-     "loop": true
+     "fps": 24,
+     "loop": true,
+     "pxPerCycle": 42
     },
     "dig": {
      "frames": [
       24,
       25,
       26,
-      27
+      27,
+      28,
+      29
      ],
-     "fps": 8,
+     "fps": 10,
      "loop": true
     },
     "build": {
@@ -78,8 +82,9 @@
       44,
       45
      ],
-     "fps": 14,
-     "loop": true
+     "fps": 24,
+     "loop": true,
+     "pxPerCycle": 42
     },
     "death": {
      "frames": [
@@ -96,8 +101,8 @@
      "loop": false
     }
    },
-   "faces": "front",
-   "note": "Все кадры нарисованы заново из одной позы (front_a/back_a idle_0); влево — flipX."
+   "faces": "right",
+   "note": "Все кадры нарисованы заново из одной позы (front_a/back_a idle_0); бег вбок лицом по движению, влево — flipX. pxPerCycle: путь за цикл, при котором ноги не скользят (AR-20)."
   },
   "defender": {
    "sheet": "defender.png",
@@ -130,8 +135,9 @@
       12,
       13
      ],
-     "fps": 10,
-     "loop": true
+     "fps": 24,
+     "loop": true,
+     "pxPerCycle": 42
     },
     "attack": {
      "frames": [
@@ -2217,13 +2223,13 @@
   "bld_command": {
    "sheet": "bld_command.png",
    "frameSize": [
-    88,
-    112
+    52,
+    88
    ],
    "cols": 8,
    "anchor": [
-    44,
-    90
+    26,
+    75
    ],
    "anims": {
     "construct": {
@@ -2270,13 +2276,13 @@
   "bld_home": {
    "sheet": "bld_home.png",
    "frameSize": [
-    72,
-    96
+    52,
+    80
    ],
    "cols": 8,
    "anchor": [
-    36,
-    78
+    26,
+    67
    ],
    "anims": {
     "construct": {
@@ -2323,13 +2329,13 @@
   "bld_reactor": {
    "sheet": "bld_reactor.png",
    "frameSize": [
-    72,
-    96
+    52,
+    80
    ],
    "cols": 8,
    "anchor": [
-    36,
-    78
+    26,
+    67
    ],
    "anims": {
     "construct": {
@@ -2386,13 +2392,13 @@
   "bld_cooler": {
    "sheet": "bld_cooler.png",
    "frameSize": [
-    72,
-    96
+    52,
+    80
    ],
    "cols": 8,
    "anchor": [
-    36,
-    78
+    26,
+    67
    ],
    "anims": {
     "construct": {
@@ -2439,13 +2445,13 @@
   "bld_school": {
    "sheet": "bld_school.png",
    "frameSize": [
-    72,
-    96
+    52,
+    80
    ],
    "cols": 8,
    "anchor": [
-    36,
-    78
+    26,
+    67
    ],
    "anims": {
     "construct": {
@@ -2492,13 +2498,13 @@
   "bld_medcenter": {
    "sheet": "bld_medcenter.png",
    "frameSize": [
-    72,
-    96
+    52,
+    80
    ],
    "cols": 8,
    "anchor": [
-    36,
-    78
+    26,
+    67
    ],
    "anims": {
     "construct": {

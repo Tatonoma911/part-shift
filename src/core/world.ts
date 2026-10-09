@@ -380,6 +380,7 @@ export class World {
       if (fixed && (fixed.x !== cmd.x || fixed.y !== cmd.y)) return bad();
       this.placeRelativeSites(cmd.x, cmd.y);
       this.placeCommands([{ player: playerId, x: cmd.x, y: cmd.y }]);
+      this.emit('command_placed', { x: cmd.x, y: cmd.y, owner: playerId });
       return ok;
     }
     if (!p.alive || p.command === null) return bad();

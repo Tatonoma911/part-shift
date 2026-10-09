@@ -161,6 +161,15 @@ export class BoardView {
     return { x: this.bx + x * STEP + CELL / 2, y: this.by + y * STEP + CELL / 2 };
   }
 
+  /** Where a speech bubble goes: over a unit's head, else over a cell. */
+  speakerAt(at: { unit?: number; x?: number; y?: number }): { x: number; y: number } | null {
+    const v = at.unit !== undefined ? this.units.get(at.unit) : undefined;
+    if (v) return { x: v.spr.x, y: v.spr.y - v.spr.displayHeight * 0.85 };
+    if (at.x === undefined || at.y === undefined) return null;
+    const p = this.center(at.x, at.y);
+    return { x: p.x, y: p.y - CELL / 2 };
+  }
+
   cellAt(px: number, py: number): { x: number; y: number } | null {
     const x = Math.floor((px - this.bx + (STEP - CELL) / 2) / STEP);
     const y = Math.floor((py - this.by + (STEP - CELL) / 2) / STEP);
@@ -168,20 +177,24 @@ export class BoardView {
   }
 
   /** Enemy whose sprite is under the finger (sprites stand taller than a cell). */
+  /** The enemy under a tap: generous radius around the drawn sprite (body, not feet), so moving targets are easy to hit (QA). */
   enemyAt(px: number, py: number): Unit | undefined {
     let best: Unit | undefined;
-    let bestD = 44;
+    let bestD = Infinity;
     for (const u of this.world.s.units) {
-      if (u.owner >= 0) continue;
-      const c = this.center(u.x, u.y);
-      const d = Math.hypot(c.x - px, c.y - 14 - py);
-      if (d < bestD) {
+      if (u.owner >= 0 || u.hp <= 0) continue;
+      const v = this.units.get(u.id);
+      const c = v ? { x: v.spr.x, y: v.spr.y - v.spr.displayHeight * 0.4 } : { ...this.center(u.x, u.y), y: this.center(u.x, u.y).y - 14 };
+      const reach = Math.max(80, (v?.spr.displayHeight ?? 0) * 0.7);
+      const d = Math.hypot(c.x - px, c.y - py);
+      if (d < reach && d < bestD) {
         bestD = d;
         best = u;
       }
     }
     return best;
   }
+
 
   // ----------------------------------------------------------------- events
 

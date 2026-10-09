@@ -23,7 +23,7 @@ const jobs = [
   { from: join(root, 'comic/assets/sprites'), to: 'src/assets/comic/sprites', pick: (f) => f.endsWith('.png'), clean: true },
   { from: join(root, 'art/export/portraits'), to: 'src/assets/art/portraits', pick: (f) => f.endsWith('.png') && !f.startsWith('s01') && (!f.startsWith('bld_') || f === 'bld_command.png') },
   // Hero comm pop-up (left corner): lines RU+EN and round artbook portraits.
-  { from: join(root, 'text'), to: 'src/data/text', pick: (f) => f === 'comm.json' },
+  { from: join(root, 'text'), to: 'src/data/text', pick: (f) => f === 'comm.json' || f === 'voice.json' },
   { from: join(root, 'art/comm/game'), to: 'src/assets/comm', pick: (f) => f.endsWith('.webp') },
 ];
 for (const { from, to, pick, clean } of jobs) {
