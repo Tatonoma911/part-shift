@@ -160,6 +160,10 @@ export interface RuleOverrides {
   commandInvulnerable?: boolean;
   /** The command center may only go here (tutorial). */
   commandFixed?: { x: number; y: number };
+  /** Sites laid out around wherever the command center lands (tutorial, design commandPlacement). */
+  relativeSites?: { type: 'nest' | 'cache' | 'rubble'; dx: number; dy: number }[];
+  /** Tech of nests placed by relativeSites. */
+  relativeTech?: Tech;
   nest?: { initialSpawn?: number; maxAlive?: number; spawnSeconds?: number; totalBudget?: number };
   adaptant?: { partDropChance?: number; partSlot?: 'arm' | 'leg' };
 }

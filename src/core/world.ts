@@ -268,6 +268,7 @@ export class World {
       if (p.command !== null || !inBounds(s, cmd.x, cmd.y)) return bad();
       const fixed = this.rules.commandFixed;
       if (fixed && (fixed.x !== cmd.x || fixed.y !== cmd.y)) return bad();
+      this.placeRelativeSites(cmd.x, cmd.y);
       this.placeCommands([{ player: playerId, x: cmd.x, y: cmd.y }]);
       return ok;
     }
@@ -328,7 +329,8 @@ export class World {
       }
       case 'attack': {
         if (!this.targetAlive(cmd.target)) return bad();
-        p.order = cmd.target;
+        // Tapping the same target again lifts the order (MVP_RULES §6).
+        p.order = p.order === cmd.target ? null : cmd.target;
         return ok;
       }
       case 'cancelOrder':
@@ -363,6 +365,24 @@ export class World {
   }
 
   /** Puts command centers down, generates the field around them and opens the start. */
+  /** Tutorial: sites go at fixed offsets from the chosen center; an offset off the board is mirrored. */
+  private placeRelativeSites(cx: number, cy: number): void {
+    const s = this.s;
+    for (const site of this.rules.relativeSites ?? []) {
+      const pick = (c: number, d: number, size: number) => {
+        const v = c + d >= 0 && c + d < size ? c + d : c - d;
+        return Math.max(0, Math.min(size - 1, v));
+      };
+      const x = pick(cx, site.dx, s.width);
+      const y = pick(cy, site.dy, s.height);
+      if (x === cx && y === cy) continue;
+      const c = this.cell(x, y);
+      c.content = site.type;
+      if (site.type === 'nest') c.tech = this.rules.relativeTech ?? 'cryo';
+      if (site.type === 'rubble') c.stock = 30;
+    }
+  }
+
   placeCommands(list: { player: number; x: number; y: number }[]): void {
     const s = this.s;
     if (!s.generated) {
@@ -819,6 +839,34 @@ export class World {
     return this.building(Number(t.slice(2)))!;
   }
 
+  /**
+   * Without an order the squad guards on its own (MVP_RULES §6): enemies within guardRadius of
+   * own buildings, those hitting a building or a person first, then the nearest; then opened
+   * nests in that radius.
+   */
+  private guardTarget(u: Unit): string | null {
+    const s = this.s;
+    const r = this.cfg.defenders.guardRadius;
+    const own = s.buildings.filter((b) => b.owner === u.owner);
+    const inRadius = (x: number, y: number) => own.some((b) => cheb(Math.round(x), Math.round(y), b.x, b.y) <= r);
+    const mine = (t?: string) => {
+      if (!t) return false;
+      if (t.startsWith('b:')) return this.building(Number(t.slice(2)))?.owner === u.owner;
+      return s.units.find((o) => `u:${o.id}` === t)?.owner === u.owner;
+    };
+    const near = s.units
+      .filter((e) => isEnemy(e) && e.hp > 0 && inRadius(e.x, e.y))
+      .sort((a, b) => Number(mine(b.target)) - Number(mine(a.target)) || dist(a.x, a.y, u.x, u.y) - dist(b.x, b.y, u.x, u.y))[0];
+    if (near) return `u:${near.id}`;
+    if (this.cfg.defenders.autoAttackNestsInGuardRadius) {
+      const site = s.sites
+        .filter((t) => !t.destroyed && t.kind !== 'demon_hatch' && inRadius(t.x, t.y))
+        .sort((a, b) => dist(a.x, a.y, u.x, u.y) - dist(b.x, b.y, u.x, u.y))[0];
+      if (site) return siteKey(site.x, site.y);
+    }
+    return null;
+  }
+
   private defenderAi(u: Unit, dt: number): void {
     const s = this.s;
     const p = s.players[u.owner];
@@ -831,13 +879,7 @@ export class World {
         .sort((a, b) => dist(a.x, a.y, u.x, u.y) - dist(b.x, b.y, u.x, u.y))[0];
       if (close) target = `u:${close.id}`;
     }
-    if (!target) {
-      const own = s.buildings.filter((b) => b.owner === u.owner);
-      const near = s.units
-        .filter((e) => isEnemy(e) && own.some((b) => cheb(Math.round(e.x), Math.round(e.y), b.x, b.y) <= this.cfg.defenders.guardRadius))
-        .sort((a, b) => dist(a.x, a.y, u.x, u.y) - dist(b.x, b.y, u.x, u.y))[0];
-      target = near ? `u:${near.id}` : null;
-    }
+    if (!target) target = this.guardTarget(u);
     if (target) return this.fight(u, target, dt, (x, y) => walkableForPlayer(s, x, y));
     u.target = undefined;
     // Guard post: a spot next to the command center, spread by id.
