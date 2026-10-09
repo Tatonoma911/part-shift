@@ -4,8 +4,10 @@ import type { GameEvent } from '../core/world';
 import { lang, t } from '../i18n';
 import { sound } from './audio';
 import { UI_DEPTH } from './cameras';
-import { BOARD, C, INK, TECH_COLOR } from './layout';
+import { BOARD, INK } from './layout';
+import { TECH_HEX, techOrb } from './techIcon';
 import { TXT } from './ui';
+import heroesJson from '../data/design/heroes.json';
 
 /**
  * Comix Zone style pop-up: a round artbook portrait of a maddened hero slides
@@ -20,8 +22,6 @@ interface Line {
 interface HeroComm {
   name: Line;
   tech: string;
-  /** Elements that hit this hero harder (design/data/heroes.json resist > 1), strongest first. */
-  weak: string[];
   portrait: string;
   voice: string;
   lines: Line[];
@@ -31,6 +31,17 @@ interface HeroComm {
 
 const HEROES = (commJson as unknown as { heroes: Record<string, HeroComm> }).heroes;
 const IDS = Object.keys(HEROES);
+const RESIST: Record<string, Record<string, number>> = Object.fromEntries(
+  (heroesJson as unknown as { heroes: { id: string; enemy: { resist: Record<string, number> } }[] }).heroes.map((x) => [x.id, x.enemy.resist]),
+);
+
+/** Elements that hit a hero harder (resist > 1 in design/data/heroes.json), strongest first; ×1.5 is a strong weakness. */
+function weaknessOf(hero: string): { tech: string; strong: boolean }[] {
+  return Object.entries(RESIST[hero] ?? {})
+    .filter(([, m]) => m > 1.001)
+    .sort((a, b) => b[1] - a[1])
+    .map(([tech, m]) => ({ tech, strong: m >= 1.5 }));
+}
 const portraits = import.meta.glob('../assets/comm/*.webp', { eager: true, query: '?url', import: 'default' }) as Record<string, string>;
 
 const BAG_KEY = 'partshift.comm.bag.v1';
@@ -142,7 +153,7 @@ export class Comm {
     const s = this.scene;
     const h = HEROES[p.hero];
     const text = this.pickLine(p)[lang];
-    const tech = TECH_COLOR[h.tech] ?? C.seam;
+    const tech = TECH_HEX[h.tech] ?? 0xffffff;
 
     const cx = BOARD.x + 16 + R;
     const cy = BOARD.y + 16 + R;
@@ -161,18 +172,24 @@ export class Comm {
     const maxW = Math.min(480, BOARD.x + BOARD.w - (cx + R + 30) - 16);
     const body = s.add.text(0, 0, text, { ...TXT.body(24, INK.graphite, '700'), lineSpacing: 3, wordWrap: { width: maxW - 40, useAdvancedWrap: true } });
     // Footer: the hero's element and what beats it, so the player knows whom to send.
-    const chipOf = (tech: string) => {
-      const hex = '#' + (TECH_COLOR[tech] ?? 0xdde4e8).toString(16).padStart(6, '0');
-      return s.add.text(0, 0, t(`tech.${tech}`).toUpperCase(), { ...TXT.caps(INK.graphite), fontSize: '15px', backgroundColor: hex, padding: { x: 8, y: 4 } });
-    };
-    const foot: Phaser.GameObjects.Text[] = [chipOf(h.tech)];
-    if (h.weak.length) {
-      foot.push(s.add.text(0, 0, t('resist.weak_to', { tech: '' }).trim(), TXT.body(19, INK.dim, '700')));
-      h.weak.forEach((w) => foot.push(chipOf(w)));
-    } else foot.push(s.add.text(0, 0, t('comm.no_weakness'), TXT.body(19, INK.dim, '700')));
-    const footW = foot.reduce((sum, o) => sum + o.width + 10, -10);
-    const bw = Math.max(170, Math.min(maxW, Math.max(body.width, footW) + 40));
-    const bh = body.height + 30 + 44;
+    // Same orbs as over enemies on the board (UI_SPEC §3.5).
+    const orbs = s.add.graphics();
+    const label = (tech: string) => s.add.text(0, 0, t(`tech.${tech}`).toUpperCase(), { ...TXT.caps(INK.graphite), fontSize: '14px' });
+    const foot: { obj: Phaser.GameObjects.Text; orb?: string; strong?: boolean }[] = [];
+    if (h.tech !== 'kinetic') foot.push({ obj: label(h.tech), orb: h.tech });
+    else foot.push({ obj: label('kinetic') });
+    const weak = weaknessOf(p.hero);
+    if (weak.length) {
+      foot.push({ obj: s.add.text(0, 0, t('resist.weak_to', { tech: '' }).trim(), TXT.body(19, INK.dim, '700')) });
+      for (const w of weak) foot.push({ obj: label(w.tech), orb: w.tech, strong: w.strong });
+    } else foot.push({ obj: s.add.text(0, 0, t('comm.no_weakness'), TXT.body(19, INK.dim, '700')) });
+    const ORB = 11;
+    const itemW = (f: (typeof foot)[number]) => f.obj.width + (f.orb ? ORB * 2 + 6 : 0);
+    const rowW = (row: typeof foot) => row.reduce((sum, f) => sum + itemW(f) + 12, -12);
+    // Element and weaknesses on one line when they fit, else the weaknesses get their own line.
+    const rows = rowW(foot) + 40 <= maxW ? [foot] : [foot.slice(0, 1), foot.slice(1)];
+    const bw = Math.max(170, Math.min(maxW, Math.max(body.width, ...rows.map(rowW)) + 40));
+    const bh = body.height + 30 + 10 + rows.length * 34;
     const bx = R + 30;
     const by = -R + 6;
     const bubble = s.add.graphics();
@@ -183,27 +200,26 @@ export class Comm {
     };
     draw(0x10171c, 4);
     draw(0xffffff, 0);
-    bubble.lineStyle(2, 0xdde4e8, 1).lineBetween(bx + 16, by + bh - 46, bx + bw - 16, by + bh - 46);
-    let fx = bx + 20;
-    for (const o of foot) {
-      o.setOrigin(0, 0.5).setPosition(fx, by + bh - 23);
-      fx += o.width + 10;
-    }
+    const footTop = by + bh - 12 - rows.length * 34;
+    bubble.lineStyle(2, 0xdde4e8, 1).lineBetween(bx + 16, footTop, bx + bw - 16, footTop);
+    rows.forEach((row, i) => {
+      let fx = bx + 20;
+      const fy = footTop + 22 + i * 34;
+      for (const f of row) {
+        if (f.orb) techOrb(orbs, f.orb, fx + ORB, fy, ORB, f.strong);
+        f.obj.setOrigin(0, 0.5).setPosition(fx + (f.orb ? ORB * 2 + 6 : 0), fy);
+        fx += itemW(f) + 12;
+      }
+    });
     body.setPosition(bx + 20, by + 15).setText('');
-    const talk = s.add.container(0, 0, [bubble, body, ...foot]).setAlpha(0).setScale(0.6);
+    const talk = s.add.container(0, 0, [bubble, body, orbs, ...foot.map((f) => f.obj)]).setAlpha(0).setScale(0.6);
 
     box.add([talk, head]);
     head.setScale(0.2).setAngle(-12);
     s.tweens.add({ targets: head, scale: 1, angle: 0, duration: 280, ease: 'Back.easeOut' });
     s.tweens.add({ targets: talk, alpha: 1, scale: 1, duration: 200, delay: 140, ease: 'Back.easeOut' });
 
-    // Tap anywhere on it to skip.
-    const hit = s.add.zone(-R - 10, -R - 10, bx + bw + R + 20, Math.max(R * 2 + 40, bh + 20)).setOrigin(0).setInteractive({ useHandCursor: true });
-    hit.on('pointerdown', (_p: Phaser.Input.Pointer, _x: number, _y: number, ev: Phaser.Types.Input.EventData) => {
-      ev.stopPropagation();
-      this.hide();
-    });
-    box.add(hit);
+    // No hit area: the pop-up never takes a tap meant for the board under it.
     this.box = box;
 
     s.time.delayedCall(160, () => sound.play(h.voice));
