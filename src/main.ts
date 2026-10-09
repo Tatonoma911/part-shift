@@ -2,6 +2,9 @@ import Phaser from 'phaser';
 import { GameScene } from './game/GameScene';
 import { VIEW } from './game/layout';
 import { fontsReady } from './game/ui';
+import { initNative } from './platform/native';
+
+initNative();
 
 fontsReady().then(() => {
   new Phaser.Game({

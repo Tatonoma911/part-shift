@@ -10,6 +10,7 @@ import { BoardView } from './BoardView';
 import { BOARD, C, CELL, DOCK, GOAL_Y, HUD, INK, STEP, VIEW } from './layout';
 import { markTutorialDone, TutorialGuide, tutorialDone } from './Tutorial';
 import { brackets, chip, glyph, plate, TXT } from './ui';
+import { setBackHandler } from '../platform/native';
 
 const SAVE_KEY = 'partshift.save.v1';
 const BEST_KEY = 'partshift.best.v1';
@@ -163,8 +164,12 @@ export class GameScene extends Phaser.Scene {
     this.input.keyboard?.on('keydown-TWO', () => this.setMode('build'));
     this.input.keyboard?.on('keydown-THREE', () => this.setMode('attack'));
     document.addEventListener('visibilitychange', () => {
-      if (document.hidden) this.save();
+      if (!document.hidden) return;
+      // Leaving the tab or the app (home button, a call) pauses the run, which also saves it.
+      if (!this.paused && this.scene.isActive()) this.setPaused(true);
+      this.save();
     });
+    setBackHandler(() => this.onBack());
     // Audio may only start after a gesture; capture so buttons that stop propagation count too.
     const unlock = () => sound.unlock();
     window.addEventListener('pointerdown', unlock, { capture: true });
@@ -646,6 +651,17 @@ export class GameScene extends Phaser.Scene {
   }
 
   // ---------------------------------------------------------------- overlays
+
+  /** Android back: drop the building ghost, else pause; on the pause menu or an end screen the app goes to the background. */
+  private onBack(): boolean {
+    if (this.ghost) {
+      this.setGhost(null);
+      return true;
+    }
+    if (this.overlay || this.paused || this.world.s.outcome !== 'playing') return false;
+    this.setPaused(true);
+    return true;
+  }
 
   private setPaused(on: boolean): void {
     if (this.world.s.outcome !== 'playing') return;
