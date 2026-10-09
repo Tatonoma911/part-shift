@@ -102,7 +102,8 @@ export class RunTally {
     const rec = (m.records[recKey] ??= {});
     let newRecord = false;
     if (win && (rec.bestSeconds === undefined || w.s.time < rec.bestSeconds)) [rec.bestSeconds, newRecord] = [Math.floor(w.s.time), true];
-    if (rec.bestScore === undefined || total > rec.bestScore) [rec.bestScore, newRecord] = [total, newRecord || total > 0];
+    // The badge only celebrates a win; a loss still keeps its best score quietly (QA-042).
+    if (rec.bestScore === undefined || total > rec.bestScore) [rec.bestScore, newRecord] = [total, newRecord || (win && total > 0)];
     rec.bestEnergy = Math.max(rec.bestEnergy ?? 0, Math.floor(p.stats.energy));
 
     // Heroes whose condition is now met come back; "unlock_all" may follow from the others.

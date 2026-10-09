@@ -288,7 +288,8 @@ export function showResults(scene: Phaser.Scene, v: ResultsView, act: ResultsAct
     btns.push(...button(scene, bx, by, i % 2 === 0 && i === extra.length - 1 ? iw : iw / 2 - 8, 70, b.label, b.act, false, 24));
   });
   body.add(btns);
-  reveal(btns, (at += 200), 12);
+  // Buttons are there from the start: nobody waits for the count-up to leave (QA-041).
+  reveal(btns, 0, 12);
   y += 116 + 84 + 40 + Math.ceil(extra.length / 2) * 84;
   y = Math.max(y, leftBottom + 40);
   if (LANDSCAPE) {
