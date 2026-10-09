@@ -27,6 +27,8 @@ interface UnitView {
   oneShot: boolean;
   windup: boolean;
   anim: string;
+  /** Element tint that status tints fall back to (stand-in adaptants). */
+  tint?: number;
 }
 
 export interface ViewState {
@@ -43,9 +45,14 @@ function hash(x: number, y: number): number {
   return (Math.imul(x + 17, 73856093) ^ Math.imul(y + 31, 19349663)) >>> 0;
 }
 
-function adaptantSet(tech: string | undefined): string {
-  return animSets[`adaptant_${tech}`] ? `adaptant_${tech}` : 'adaptant_thermo';
-}
+/**
+ * Stand-in for adaptants: the chunky shield-armed sheets clash with the hero
+ * style and Антон rejected them (2026-10-09). Until the animator redraws them,
+ * adaptants are smaller Standard-style infected residents tinted by element.
+ */
+const ADAPTANT_SET = 'standard';
+const ADAPTANT_TINT: Record<string, number> = { thermo: 0xffb6a0, cryo: 0xb4e2ff, volt: 0xfff09a, toxin: 0xc6f29e, impact: 0xe0c0a0, kinetic: 0xe0d0c0 };
+const HEAVY_TINT = 0xc8a890;
 
 /** Residents fight now; their swing, flinch and limb install come from the animator's fighter sheet. */
 const RESIDENT_COMBAT_SET = 'defender';
@@ -733,12 +740,10 @@ export class BoardView {
     switch (u.kind) {
       case 'resident':
         return 'resident';
-      case 'heavy_adaptant':
-        return 'heavy_adaptant';
       case 'hero':
         return animSets[u.hero!] ? u.hero! : 'standard';
       default:
-        return adaptantSet(u.tech);
+        return ADAPTANT_SET;
     }
   }
 
@@ -770,6 +775,11 @@ export class BoardView {
           spr.setScale(1.3);
           v.ring = this.scene.add.image(fx, fy, 'tile.defender_ring').setOrigin(0.5, 0.75).setScale(1.6).setTint(C.violet);
         }
+        if (u.kind === 'adaptant' || u.kind === 'heavy_adaptant') {
+          spr.setScale(u.kind === 'heavy_adaptant' ? 1.05 : 0.8);
+          v.tint = u.kind === 'heavy_adaptant' ? HEAVY_TINT : ADAPTANT_TINT[u.tech ?? 'thermo'] ?? ADAPTANT_TINT.thermo;
+          spr.setTint(v.tint);
+        }
         if (u.owner >= 0 && u.owner !== ME) spr.setTint(0xffb080);
         this.units.set(u.id, v);
         this.oneShot(v, 'emerge');
@@ -796,6 +806,7 @@ export class BoardView {
       if (u.stun && u.slow) v.spr.setTint(0x7fd0ff);
       else if (u.slow) v.spr.setTint(0x9fdcff);
       else if (u.poison) v.spr.setTint(0xb8f08a);
+      else if (v.tint !== undefined) v.spr.setTint(v.tint);
       else if (!(u.owner >= 0 && u.owner !== ME)) v.spr.clearTint();
       const windup = u.blast?.phase === 'windup';
       if (windup && !v.windup) this.oneShot(v, 'tail_swing');

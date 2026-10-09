@@ -16,22 +16,34 @@ export function findPath(
   start: Point,
   isWalkable: (x: number, y: number) => boolean,
   isGoal: (x: number, y: number) => boolean,
+  /** No way to the goal: return the way to the reachable cell nearest this point instead. */
+  fallback?: Point,
 ): Point[] | null {
   const prev = new Int32Array(width * height).fill(-1);
   const startIdx = start.y * width + start.x;
   prev[startIdx] = startIdx;
   const queue: number[] = [startIdx];
+  const trace = (idx: number): Point[] => {
+    const path: Point[] = [];
+    for (let i = idx; ; i = prev[i]) {
+      path.push({ x: i % width, y: Math.floor(i / width) });
+      if (i === startIdx) break;
+    }
+    return path.reverse();
+  };
+  let best = startIdx;
+  let bestD = Infinity;
   for (let head = 0; head < queue.length; head++) {
     const idx = queue[head];
     const x = idx % width;
     const y = (idx - x) / width;
-    if (isGoal(x, y)) {
-      const path: Point[] = [];
-      for (let i = idx; ; i = prev[i]) {
-        path.push({ x: i % width, y: Math.floor(i / width) });
-        if (i === startIdx) break;
+    if (isGoal(x, y)) return trace(idx);
+    if (fallback) {
+      const d = Math.hypot(x - fallback.x, y - fallback.y);
+      if (d < bestD) {
+        bestD = d;
+        best = idx;
       }
-      return path.reverse();
     }
     for (const [dx, dy] of STEPS) {
       const nx = x + dx;
@@ -43,5 +55,5 @@ export function findPath(
       queue.push(nIdx);
     }
   }
-  return null;
+  return fallback ? trace(best) : null;
 }

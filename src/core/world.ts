@@ -432,9 +432,18 @@ export class World {
         return ok;
       }
       case 'attack': {
+        // A tap on an opened lair or hatch means its hero.
+        const lair = cmd.target.startsWith('s:') ? this.site(parseKey(cmd.target.slice(2)).x, parseKey(cmd.target.slice(2)).y) : undefined;
+        if (lair && (lair.kind === 'hero_lair' || lair.kind === 'boss_hatch')) {
+          const hero = lair.alive.map((id) => this.unit(id)).find((h) => h && h.hp > 0);
+          if (!hero) return bad();
+          p.order = `u:${hero.id}`;
+          return ok;
+        }
         if (!this.targetAlive(cmd.target)) return bad();
-        // Tapping the same target again lifts the order (MVP_RULES §4).
-        p.order = p.order === cmd.target ? null : cmd.target;
+        // Tapping the same target again keeps the order: players tap repeatedly to insist [Антон].
+        // The order lifts with a tap on open ground (cancelOrder) or when the target falls.
+        p.order = cmd.target;
         return ok;
       }
       case 'cancelOrder':
@@ -967,7 +976,11 @@ export class World {
       u.target = target;
       u.repathTimer = 0.5;
       const s = this.s;
-      const path = findPath(s.width, s.height, { x: Math.round(u.x), y: Math.round(u.y) }, walkable, (x, y) => dist(x, y, tp.x, tp.y) <= reach);
+      // A target out on unopened ground: get as close as the opened cells allow and meet it there.
+      const path = findPath(s.width, s.height, { x: Math.round(u.x), y: Math.round(u.y) }, walkable, (x, y) => dist(x, y, tp.x, tp.y) <= reach, {
+        x: Math.round(tp.x),
+        y: Math.round(tp.y),
+      });
       u.path = path ? path.slice(1) : [];
     }
     this.move(u, dt);

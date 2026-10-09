@@ -286,5 +286,6 @@
   "feedback.sent": "Sent. The author reads every message.",
   "feedback.queued": "Saved. The message goes to the author as soon as the game is online.",
   "feedback.short": "Write at least a few words",
-  "settings.feedback": "Write to the author"
+  "settings.feedback": "Write to the author",
+  "order.attack": "All residents: attack!"
 }

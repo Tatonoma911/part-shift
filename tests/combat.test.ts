@@ -97,13 +97,34 @@ describe('nests and combat', () => {
     expect(r.target).toBe('s:3,3');
   });
 
-  it('tapping the same target twice lifts the order', () => {
+  it('tapping the same target again keeps the order; a tap on open ground lifts it', () => {
     const w = squad(['.......', '.......', '......n'], 1);
     internals(w).reveal(6, 2, 0);
     expect(w.apply({ type: 'attack', target: 's:6,2' }).ok).toBe(true);
     expect(w.player(0).order).toBe('s:6,2');
     w.apply({ type: 'attack', target: 's:6,2' });
+    expect(w.player(0).order).toBe('s:6,2');
+    w.apply({ type: 'cancelOrder' });
     expect(w.player(0).order).toBeNull();
+  });
+
+  it('an ordered enemy out on unopened ground: residents go as close as they can and hit it', () => {
+    const w = squad(['........', '........', '........', '........'], 3);
+    // Columns 5..7 are still closed; the foe stands at (6,1) and doesn't move.
+    for (const c of w.s.cells) c.revealed = true;
+    for (let y = 0; y < 4; y++) for (let x = 5; x < 8; x++) w.cell(x, y).revealed = false;
+    const f = foe(w, { x: 5, y: 1, base: { hp: 400, damage: 0, defense: 0, attackSeconds: 9, range: 1, speed: 0 }, hp: 400 });
+    expect(w.apply({ type: 'attack', target: `u:${f.id}` }).ok).toBe(true);
+    run(w, 8);
+    expect(f.hp).toBeLessThan(400);
+  });
+
+  it('tapping an opened hero lair orders the attack on its hero', () => {
+    const w = squad(['.......', '.......', '......L'], 1);
+    internals(w).reveal(6, 2, 0);
+    const kiln = w.s.units.find((u) => u.hero === 'kiln')!;
+    expect(w.apply({ type: 'attack', target: 's:6,2' }).ok).toBe(true);
+    expect(w.player(0).order).toBe(`u:${kiln.id}`);
   });
 
   it('a part goes to a free slot, then replaces only a weaker one, else is recycled', () => {

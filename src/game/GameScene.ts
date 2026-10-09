@@ -127,6 +127,7 @@ export class GameScene extends Phaser.Scene {
   private guideBox: { text: Phaser.GameObjects.Text; dots: Phaser.GameObjects.Graphics; g: Phaser.GameObjects.Graphics; y: number; h: number } | null = null;
 
   private paused = false;
+  private lastOrderSaid = -1e9;
   private music!: SoundDirector;
   /** The field guide or a coach card is open: the world waits, no pause sheet. */
   private overlayPaused = false;
@@ -329,6 +330,14 @@ export class GameScene extends Phaser.Scene {
       if (c.threat > 0) l.coach('clue');
       else if (c.finds > 0) l.coach('finds');
     }
+  }
+
+  /** Confirms an attack order, at most every 2 s so repeated taps don't spam. */
+  private orderSaid(): void {
+    sound.play('ui_tap');
+    if (this.time.now - this.lastOrderSaid < 2000) return;
+    this.lastOrderSaid = this.time.now;
+    this.say(t('order.attack'), 1800);
   }
 
   private onEvent(e: GameEvent): void {
@@ -1065,12 +1074,12 @@ export class GameScene extends Phaser.Scene {
     // Tap an enemy or an opened nest: all residents attack it (any mode).
     const foe = this.board.enemyAt(wp.x, wp.y);
     if (foe) {
-      w.apply({ type: 'attack', target: `u:${foe.id}` }, ME);
+      if (w.apply({ type: 'attack', target: `u:${foe.id}` }, ME).ok) this.orderSaid();
       return;
     }
     const site = c.revealed ? w.site(x, y) : undefined;
     if (site && !site.destroyed) {
-      if (w.apply({ type: 'attack', target: `s:${x},${y}` }, ME).ok) this.say(t('tutorial.attack'));
+      if (w.apply({ type: 'attack', target: `s:${x},${y}` }, ME).ok) this.orderSaid();
       return;
     }
     if (c.revealed && w.player(ME).order && c.content === 'ground') w.apply({ type: 'cancelOrder' }, ME);
