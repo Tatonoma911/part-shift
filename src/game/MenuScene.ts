@@ -7,7 +7,7 @@ import { hasText, lang, setLang, t } from '../i18n';
 import { introSeen, playIntro } from '../intro';
 import { analytics, askAnalyticsConsent } from '../analytics';
 import { canVibrate, comfort, PALETTES, setComfort, TEXT_SCALES } from './comfort';
-import { learning, learningLang } from './learn';
+import { learning, learningLang, setLearningHooks } from './learn';
 import { volumeHeight, volumeSliders } from './volume';
 import { BUILDING_ANCHOR, createArt, preloadArt } from './assets';
 import { preloadComm } from './Comm';
@@ -64,6 +64,13 @@ export class MenuScene extends Phaser.Scene {
   create(): void {
     this.allyUi = null;
     if (!this.anims.exists('resident.idle')) createArt(this);
+    // QA-018: disable Phaser input while the guide/coach overlay is open, so touches
+    // don't fall through to menu buttons behind the DOM layer.
+    setLearningHooks({
+      pause: () => { this.input.enabled = false; },
+      resume: () => { this.input.enabled = true; },
+    });
+    this.events.once('shutdown', () => setLearningHooks(null));
 
     // Links for tests and sharing: ?seed=…, ?tutorial=1 go straight to the board.
     const params = new URLSearchParams(location.search);

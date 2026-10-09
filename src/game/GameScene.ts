@@ -371,13 +371,23 @@ export class GameScene extends Phaser.Scene {
       // Field guide (Learning thread).
       ['?', () => learning().openGuide()],
     ];
+    // QA-019: in portrait the board fills the full width, so vertical buttons on the
+    // right would cover board cells. Instead place them horizontally in the gap between
+    // the board bottom and the dock.
+    const btnW = LANDSCAPE ? 56 : 52;
+    const btnH = LANDSCAPE ? 56 : 48;
+    const totalW = items.length * (btnW + 4) - 4;
     items.forEach(([label, act], k) => {
-      const x = (LANDSCAPE ? BOARD.x + BOARD.w : VIEW.width) - 24 - 56;
-      const y = BOARD.y + 8 + k * 64;
+      const x = LANDSCAPE
+        ? BOARD.x + BOARD.w - 24 - btnW
+        : Math.round(VIEW.width / 2 - totalW / 2) + k * (btnW + 4);
+      const y = LANDSCAPE
+        ? BOARD.y + 8 + k * 64
+        : BOARD.y + BOARD.h + Math.round((DOCK.y - BOARD.y - BOARD.h - btnH) / 2);
       const g = this.add.graphics().setDepth(UI_DEPTH + 1).setAlpha(0.92);
-      chip(g, x, y, 56, 56, C.graphite, 0.85, 10);
-      const tx = this.add.text(x + 28, y + 28, label, TXT.num(28, INK.white)).setOrigin(0.5).setDepth(UI_DEPTH + 1);
-      const hit = this.add.zone(x, y, 56, 56).setOrigin(0).setDepth(UI_DEPTH + 1).setInteractive({ useHandCursor: true });
+      chip(g, x, y, btnW, btnH, C.graphite, 0.85, 10);
+      const tx = this.add.text(x + btnW / 2, y + btnH / 2, label, TXT.num(26, INK.white)).setOrigin(0.5).setDepth(UI_DEPTH + 1);
+      const hit = this.add.zone(x, y, btnW, btnH).setOrigin(0).setDepth(UI_DEPTH + 1).setInteractive({ useHandCursor: true });
       hit.on('pointerdown', stop(act));
       if (this.guide) [g, tx, hit].forEach((o) => o.setVisible(false));
     });
