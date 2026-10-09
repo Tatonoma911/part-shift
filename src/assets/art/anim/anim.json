@@ -268,8 +268,7 @@
     }
    },
    "faces": "right",
-   "temp": true,
-   "note": "Временный вид (горожанин S-01 + переросшая рука кодом). rip_part заканчивается без руки: дальше death."
+   "note": "Адаптант-термо: рука-радиатор. rip_part: часть отлетает, тело остаётся целым."
   },
   "adaptant_cryo": {
    "sheet": "adaptant_cryo.png",
@@ -354,8 +353,7 @@
     }
    },
    "faces": "right",
-   "temp": true,
-   "note": "Временный вид (горожанин S-01 + переросшая рука кодом). rip_part заканчивается без руки: дальше death."
+   "note": "Адаптант-крио: кожух с гелем. rip_part: часть отлетает, тело остаётся целым."
   },
   "adaptant_volt": {
    "sheet": "adaptant_volt.png",
@@ -440,8 +438,92 @@
     }
    },
    "faces": "right",
-   "temp": true,
-   "note": "Временный вид (горожанин S-01 + переросшая рука кодом). rip_part заканчивается без руки: дальше death."
+   "note": "Адаптант-ток: кольца-изоляторы. rip_part: часть отлетает, тело остаётся целым."
+  },
+  "adaptant_toxin": {
+   "sheet": "adaptant_toxin.png",
+   "frameSize": [
+    48,
+    56
+   ],
+   "cols": 8,
+   "anchor": [
+    24,
+    54
+   ],
+   "anims": {
+    "idle": {
+     "frames": [
+      0,
+      1,
+      2,
+      3
+     ],
+     "fps": 4,
+     "loop": true
+    },
+    "walk": {
+     "frames": [
+      8,
+      9,
+      10,
+      11,
+      12,
+      13
+     ],
+     "fps": 10,
+     "loop": true
+    },
+    "attack": {
+     "frames": [
+      16,
+      17,
+      18,
+      19,
+      20,
+      21
+     ],
+     "fps": 12,
+     "loop": false
+    },
+    "hit": {
+     "frames": [
+      24,
+      25,
+      26
+     ],
+     "fps": 12,
+     "loop": false
+    },
+    "death": {
+     "frames": [
+      32,
+      33,
+      34,
+      35,
+      36,
+      37,
+      38,
+      39
+     ],
+     "fps": 10,
+     "loop": false
+    },
+    "rip_part": {
+     "frames": [
+      40,
+      41,
+      42,
+      43,
+      44,
+      45
+     ],
+     "fps": 12,
+     "loop": false
+    }
+   },
+   "faces": "right",
+   "note": "Адаптант-токсин: баллон с иглой (про запас). rip_part: часть отлетает, тело остаётся целым."
   },
   "heavy_adaptant": {
    "sheet": "heavy_adaptant.png",
@@ -511,14 +593,25 @@
      ],
      "fps": 7,
      "loop": false
+    },
+    "rip_part": {
+     "frames": [
+      40,
+      41,
+      42,
+      43,
+      44,
+      45
+     ],
+     "fps": 8,
+     "loop": false
     }
    },
    "faces": "right",
-   "temp": true,
-   "note": "Временный вид. Медленнее остальных: fps ×0.7."
+   "note": "Тяжёлый адаптант: таранный кулак, поршневые ноги. rip_part: часть отлетает, тело остаётся целым."
   },
-  "demon": {
-   "sheet": "demon.png",
+  "standard": {
+   "sheet": "standard.png",
    "frameSize": [
     72,
     72
@@ -527,6 +620,103 @@
    "anchor": [
     36,
     70
+   ],
+   "anims": {
+    "idle": {
+     "frames": [
+      0,
+      1,
+      2,
+      3
+     ],
+     "fps": 4,
+     "loop": true
+    },
+    "walk": {
+     "frames": [
+      8,
+      9,
+      10,
+      11,
+      12,
+      13
+     ],
+     "fps": 10,
+     "loop": true
+    },
+    "attack": {
+     "frames": [
+      16,
+      17,
+      18,
+      19,
+      20,
+      21
+     ],
+     "fps": 12,
+     "loop": false
+    },
+    "hit": {
+     "frames": [
+      24,
+      25,
+      26
+     ],
+     "fps": 12,
+     "loop": false
+    },
+    "death": {
+     "frames": [
+      32,
+      33,
+      34,
+      35,
+      36,
+      37,
+      38,
+      39
+     ],
+     "fps": 10,
+     "loop": false
+    },
+    "rip_part": {
+     "frames": [
+      40,
+      41,
+      42,
+      43,
+      44,
+      45
+     ],
+     "fps": 12,
+     "loop": false
+    },
+    "tic": {
+     "frames": [
+      48,
+      49,
+      50,
+      51,
+      52,
+      53
+     ],
+     "fps": 8,
+     "loop": true
+    }
+   },
+   "faces": "right",
+   "note": "Стандарт S-01, обезумевший. rip_part: часть отлетает, тело остаётся целым."
+  },
+  "demon": {
+   "sheet": "demon.png",
+   "frameSize": [
+    88,
+    88
+   ],
+   "cols": 8,
+   "anchor": [
+    44,
+    86
    ],
    "anims": {
     "idle": {
@@ -627,7 +817,1269 @@
      "loop": false
     }
    },
-   "faces": "left"
+   "faces": "left",
+   "note": "Босс, спрайт художника units/enemies/demon.png."
+  },
+  "n73": {
+   "sheet": "n73.png",
+   "frameSize": [
+    72,
+    72
+   ],
+   "cols": 8,
+   "anchor": [
+    36,
+    70
+   ],
+   "anims": {
+    "idle": {
+     "frames": [
+      0,
+      1,
+      2,
+      3
+     ],
+     "fps": 4,
+     "loop": true
+    },
+    "walk": {
+     "frames": [
+      8,
+      9,
+      10,
+      11,
+      12,
+      13
+     ],
+     "fps": 10,
+     "loop": true
+    },
+    "attack": {
+     "frames": [
+      16,
+      17,
+      18,
+      19,
+      20,
+      21
+     ],
+     "fps": 12,
+     "loop": false
+    },
+    "hit": {
+     "frames": [
+      24,
+      25,
+      26
+     ],
+     "fps": 12,
+     "loop": false
+    },
+    "death": {
+     "frames": [
+      32,
+      33,
+      34,
+      35,
+      36,
+      37,
+      38,
+      39
+     ],
+     "fps": 10,
+     "loop": false
+    },
+    "rip_part": {
+     "frames": [
+      40,
+      41,
+      42,
+      43,
+      44,
+      45
+     ],
+     "fps": 12,
+     "loop": false
+    },
+    "tic": {
+     "frames": [
+      48,
+      49,
+      50,
+      51,
+      52,
+      53
+     ],
+     "fps": 8,
+     "loop": true
+    }
+   },
+   "faces": "right",
+   "note": "Семьдесят Третий, обезумевший. rip_part: часть отлетает, тело остаётся целым."
+  },
+  "doctor": {
+   "sheet": "doctor.png",
+   "frameSize": [
+    72,
+    72
+   ],
+   "cols": 8,
+   "anchor": [
+    36,
+    70
+   ],
+   "anims": {
+    "idle": {
+     "frames": [
+      0,
+      1,
+      2,
+      3
+     ],
+     "fps": 4,
+     "loop": true
+    },
+    "walk": {
+     "frames": [
+      8,
+      9,
+      10,
+      11,
+      12,
+      13
+     ],
+     "fps": 10,
+     "loop": true
+    },
+    "attack": {
+     "frames": [
+      16,
+      17,
+      18,
+      19,
+      20,
+      21
+     ],
+     "fps": 12,
+     "loop": false
+    },
+    "hit": {
+     "frames": [
+      24,
+      25,
+      26
+     ],
+     "fps": 12,
+     "loop": false
+    },
+    "death": {
+     "frames": [
+      32,
+      33,
+      34,
+      35,
+      36,
+      37,
+      38,
+      39
+     ],
+     "fps": 10,
+     "loop": false
+    },
+    "rip_part": {
+     "frames": [
+      40,
+      41,
+      42,
+      43,
+      44,
+      45
+     ],
+     "fps": 12,
+     "loop": false
+    },
+    "tic": {
+     "frames": [
+      48,
+      49,
+      50,
+      51,
+      52,
+      53
+     ],
+     "fps": 8,
+     "loop": true
+    }
+   },
+   "faces": "right",
+   "note": "Доктор, обезумевший. rip_part: часть отлетает, тело остаётся целым."
+  },
+  "kiln": {
+   "sheet": "kiln.png",
+   "frameSize": [
+    72,
+    72
+   ],
+   "cols": 8,
+   "anchor": [
+    36,
+    70
+   ],
+   "anims": {
+    "idle": {
+     "frames": [
+      0,
+      1,
+      2,
+      3
+     ],
+     "fps": 4,
+     "loop": true
+    },
+    "walk": {
+     "frames": [
+      8,
+      9,
+      10,
+      11,
+      12,
+      13
+     ],
+     "fps": 10,
+     "loop": true
+    },
+    "attack": {
+     "frames": [
+      16,
+      17,
+      18,
+      19,
+      20,
+      21
+     ],
+     "fps": 12,
+     "loop": false
+    },
+    "hit": {
+     "frames": [
+      24,
+      25,
+      26
+     ],
+     "fps": 12,
+     "loop": false
+    },
+    "death": {
+     "frames": [
+      32,
+      33,
+      34,
+      35,
+      36,
+      37,
+      38,
+      39
+     ],
+     "fps": 10,
+     "loop": false
+    },
+    "rip_part": {
+     "frames": [
+      40,
+      41,
+      42,
+      43,
+      44,
+      45
+     ],
+     "fps": 12,
+     "loop": false
+    },
+    "tic": {
+     "frames": [
+      48,
+      49,
+      50,
+      51,
+      52,
+      53
+     ],
+     "fps": 8,
+     "loop": true
+    }
+   },
+   "faces": "right",
+   "note": "Килн, обезумевший. rip_part: часть отлетает, тело остаётся целым."
+  },
+  "lineman": {
+   "sheet": "lineman.png",
+   "frameSize": [
+    72,
+    72
+   ],
+   "cols": 8,
+   "anchor": [
+    36,
+    70
+   ],
+   "anims": {
+    "idle": {
+     "frames": [
+      0,
+      1,
+      2,
+      3
+     ],
+     "fps": 4,
+     "loop": true
+    },
+    "walk": {
+     "frames": [
+      8,
+      9,
+      10,
+      11,
+      12,
+      13
+     ],
+     "fps": 10,
+     "loop": true
+    },
+    "attack": {
+     "frames": [
+      16,
+      17,
+      18,
+      19,
+      20,
+      21
+     ],
+     "fps": 12,
+     "loop": false
+    },
+    "hit": {
+     "frames": [
+      24,
+      25,
+      26
+     ],
+     "fps": 12,
+     "loop": false
+    },
+    "death": {
+     "frames": [
+      32,
+      33,
+      34,
+      35,
+      36,
+      37,
+      38,
+      39
+     ],
+     "fps": 10,
+     "loop": false
+    },
+    "rip_part": {
+     "frames": [
+      40,
+      41,
+      42,
+      43,
+      44,
+      45
+     ],
+     "fps": 12,
+     "loop": false
+    },
+    "tic": {
+     "frames": [
+      48,
+      49,
+      50,
+      51,
+      52,
+      53
+     ],
+     "fps": 8,
+     "loop": true
+    }
+   },
+   "faces": "right",
+   "note": "Линейщик, обезумевший. rip_part: часть отлетает, тело остаётся целым."
+  },
+  "frostline": {
+   "sheet": "frostline.png",
+   "frameSize": [
+    72,
+    72
+   ],
+   "cols": 8,
+   "anchor": [
+    36,
+    70
+   ],
+   "anims": {
+    "idle": {
+     "frames": [
+      0,
+      1,
+      2,
+      3
+     ],
+     "fps": 4,
+     "loop": true
+    },
+    "walk": {
+     "frames": [
+      8,
+      9,
+      10,
+      11,
+      12,
+      13
+     ],
+     "fps": 10,
+     "loop": true
+    },
+    "attack": {
+     "frames": [
+      16,
+      17,
+      18,
+      19,
+      20,
+      21
+     ],
+     "fps": 12,
+     "loop": false
+    },
+    "hit": {
+     "frames": [
+      24,
+      25,
+      26
+     ],
+     "fps": 12,
+     "loop": false
+    },
+    "death": {
+     "frames": [
+      32,
+      33,
+      34,
+      35,
+      36,
+      37,
+      38,
+      39
+     ],
+     "fps": 10,
+     "loop": false
+    },
+    "rip_part": {
+     "frames": [
+      40,
+      41,
+      42,
+      43,
+      44,
+      45
+     ],
+     "fps": 12,
+     "loop": false
+    },
+    "tic": {
+     "frames": [
+      48,
+      49,
+      50,
+      51,
+      52,
+      53
+     ],
+     "fps": 8,
+     "loop": true
+    }
+   },
+   "faces": "right",
+   "note": "Фростлайн, обезумевший. rip_part: часть отлетает, тело остаётся целым."
+  },
+  "seraph": {
+   "sheet": "seraph.png",
+   "frameSize": [
+    72,
+    72
+   ],
+   "cols": 8,
+   "anchor": [
+    36,
+    70
+   ],
+   "anims": {
+    "idle": {
+     "frames": [
+      0,
+      1,
+      2,
+      3
+     ],
+     "fps": 4,
+     "loop": true
+    },
+    "walk": {
+     "frames": [
+      8,
+      9,
+      10,
+      11,
+      12,
+      13
+     ],
+     "fps": 10,
+     "loop": true
+    },
+    "attack": {
+     "frames": [
+      16,
+      17,
+      18,
+      19,
+      20,
+      21
+     ],
+     "fps": 12,
+     "loop": false
+    },
+    "hit": {
+     "frames": [
+      24,
+      25,
+      26
+     ],
+     "fps": 12,
+     "loop": false
+    },
+    "death": {
+     "frames": [
+      32,
+      33,
+      34,
+      35,
+      36,
+      37,
+      38,
+      39
+     ],
+     "fps": 10,
+     "loop": false
+    },
+    "rip_part": {
+     "frames": [
+      40,
+      41,
+      42,
+      43,
+      44,
+      45
+     ],
+     "fps": 12,
+     "loop": false
+    },
+    "tic": {
+     "frames": [
+      48,
+      49,
+      50,
+      51,
+      52,
+      53
+     ],
+     "fps": 8,
+     "loop": true
+    }
+   },
+   "faces": "right",
+   "note": "Серафим, обезумевший. rip_part: часть отлетает, тело остаётся целым."
+  },
+  "current": {
+   "sheet": "current.png",
+   "frameSize": [
+    72,
+    72
+   ],
+   "cols": 8,
+   "anchor": [
+    36,
+    70
+   ],
+   "anims": {
+    "idle": {
+     "frames": [
+      0,
+      1,
+      2,
+      3
+     ],
+     "fps": 4,
+     "loop": true
+    },
+    "walk": {
+     "frames": [
+      8,
+      9,
+      10,
+      11,
+      12,
+      13
+     ],
+     "fps": 10,
+     "loop": true
+    },
+    "attack": {
+     "frames": [
+      16,
+      17,
+      18,
+      19,
+      20,
+      21
+     ],
+     "fps": 12,
+     "loop": false
+    },
+    "hit": {
+     "frames": [
+      24,
+      25,
+      26
+     ],
+     "fps": 12,
+     "loop": false
+    },
+    "death": {
+     "frames": [
+      32,
+      33,
+      34,
+      35,
+      36,
+      37,
+      38,
+      39
+     ],
+     "fps": 10,
+     "loop": false
+    },
+    "rip_part": {
+     "frames": [
+      40,
+      41,
+      42,
+      43,
+      44,
+      45
+     ],
+     "fps": 12,
+     "loop": false
+    },
+    "tic": {
+     "frames": [
+      48,
+      49,
+      50,
+      51,
+      52,
+      53
+     ],
+     "fps": 8,
+     "loop": true
+    }
+   },
+   "faces": "right",
+   "note": "CURRENT, обезумевший. rip_part: часть отлетает, тело остаётся целым."
+  },
+  "mason": {
+   "sheet": "mason.png",
+   "frameSize": [
+    72,
+    72
+   ],
+   "cols": 8,
+   "anchor": [
+    36,
+    70
+   ],
+   "anims": {
+    "idle": {
+     "frames": [
+      0,
+      1,
+      2,
+      3
+     ],
+     "fps": 4,
+     "loop": true
+    },
+    "walk": {
+     "frames": [
+      8,
+      9,
+      10,
+      11,
+      12,
+      13
+     ],
+     "fps": 10,
+     "loop": true
+    },
+    "attack": {
+     "frames": [
+      16,
+      17,
+      18,
+      19,
+      20,
+      21
+     ],
+     "fps": 12,
+     "loop": false
+    },
+    "hit": {
+     "frames": [
+      24,
+      25,
+      26
+     ],
+     "fps": 12,
+     "loop": false
+    },
+    "death": {
+     "frames": [
+      32,
+      33,
+      34,
+      35,
+      36,
+      37,
+      38,
+      39
+     ],
+     "fps": 10,
+     "loop": false
+    },
+    "rip_part": {
+     "frames": [
+      40,
+      41,
+      42,
+      43,
+      44,
+      45
+     ],
+     "fps": 12,
+     "loop": false
+    },
+    "tic": {
+     "frames": [
+      48,
+      49,
+      50,
+      51,
+      52,
+      53
+     ],
+     "fps": 8,
+     "loop": true
+    }
+   },
+   "faces": "right",
+   "note": "MASON, обезумевший. rip_part: часть отлетает, тело остаётся целым."
+  },
+  "beacon": {
+   "sheet": "beacon.png",
+   "frameSize": [
+    72,
+    72
+   ],
+   "cols": 8,
+   "anchor": [
+    36,
+    70
+   ],
+   "anims": {
+    "idle": {
+     "frames": [
+      0,
+      1,
+      2,
+      3
+     ],
+     "fps": 4,
+     "loop": true
+    },
+    "walk": {
+     "frames": [
+      8,
+      9,
+      10,
+      11,
+      12,
+      13
+     ],
+     "fps": 10,
+     "loop": true
+    },
+    "attack": {
+     "frames": [
+      16,
+      17,
+      18,
+      19,
+      20,
+      21
+     ],
+     "fps": 12,
+     "loop": false
+    },
+    "hit": {
+     "frames": [
+      24,
+      25,
+      26
+     ],
+     "fps": 12,
+     "loop": false
+    },
+    "death": {
+     "frames": [
+      32,
+      33,
+      34,
+      35,
+      36,
+      37,
+      38,
+      39
+     ],
+     "fps": 10,
+     "loop": false
+    },
+    "rip_part": {
+     "frames": [
+      40,
+      41,
+      42,
+      43,
+      44,
+      45
+     ],
+     "fps": 12,
+     "loop": false
+    },
+    "tic": {
+     "frames": [
+      48,
+      49,
+      50,
+      51,
+      52,
+      53
+     ],
+     "fps": 8,
+     "loop": true
+    }
+   },
+   "faces": "right",
+   "note": "BEACON, обезумевший. rip_part: часть отлетает, тело остаётся целым."
+  },
+  "canopy": {
+   "sheet": "canopy.png",
+   "frameSize": [
+    72,
+    72
+   ],
+   "cols": 8,
+   "anchor": [
+    36,
+    70
+   ],
+   "anims": {
+    "idle": {
+     "frames": [
+      0,
+      1,
+      2,
+      3
+     ],
+     "fps": 4,
+     "loop": true
+    },
+    "walk": {
+     "frames": [
+      8,
+      9,
+      10,
+      11,
+      12,
+      13
+     ],
+     "fps": 10,
+     "loop": true
+    },
+    "attack": {
+     "frames": [
+      16,
+      17,
+      18,
+      19,
+      20,
+      21
+     ],
+     "fps": 12,
+     "loop": false
+    },
+    "hit": {
+     "frames": [
+      24,
+      25,
+      26
+     ],
+     "fps": 12,
+     "loop": false
+    },
+    "death": {
+     "frames": [
+      32,
+      33,
+      34,
+      35,
+      36,
+      37,
+      38,
+      39
+     ],
+     "fps": 10,
+     "loop": false
+    },
+    "rip_part": {
+     "frames": [
+      40,
+      41,
+      42,
+      43,
+      44,
+      45
+     ],
+     "fps": 12,
+     "loop": false
+    },
+    "tic": {
+     "frames": [
+      48,
+      49,
+      50,
+      51,
+      52,
+      53
+     ],
+     "fps": 8,
+     "loop": true
+    }
+   },
+   "faces": "right",
+   "note": "CANOPY, обезумевший. rip_part: часть отлетает, тело остаётся целым."
+  },
+  "sweep": {
+   "sheet": "sweep.png",
+   "frameSize": [
+    72,
+    72
+   ],
+   "cols": 8,
+   "anchor": [
+    36,
+    70
+   ],
+   "anims": {
+    "idle": {
+     "frames": [
+      0,
+      1,
+      2,
+      3
+     ],
+     "fps": 4,
+     "loop": true
+    },
+    "walk": {
+     "frames": [
+      8,
+      9,
+      10,
+      11,
+      12,
+      13
+     ],
+     "fps": 10,
+     "loop": true
+    },
+    "attack": {
+     "frames": [
+      16,
+      17,
+      18,
+      19,
+      20,
+      21
+     ],
+     "fps": 12,
+     "loop": false
+    },
+    "hit": {
+     "frames": [
+      24,
+      25,
+      26
+     ],
+     "fps": 12,
+     "loop": false
+    },
+    "death": {
+     "frames": [
+      32,
+      33,
+      34,
+      35,
+      36,
+      37,
+      38,
+      39
+     ],
+     "fps": 10,
+     "loop": false
+    },
+    "rip_part": {
+     "frames": [
+      40,
+      41,
+      42,
+      43,
+      44,
+      45
+     ],
+     "fps": 12,
+     "loop": false
+    },
+    "tic": {
+     "frames": [
+      48,
+      49,
+      50,
+      51,
+      52,
+      53
+     ],
+     "fps": 8,
+     "loop": true
+    }
+   },
+   "faces": "right",
+   "note": "SWEEP, обезумевший. rip_part: часть отлетает, тело остаётся целым."
+  },
+  "patch": {
+   "sheet": "patch.png",
+   "frameSize": [
+    72,
+    72
+   ],
+   "cols": 8,
+   "anchor": [
+    36,
+    70
+   ],
+   "anims": {
+    "idle": {
+     "frames": [
+      0,
+      1,
+      2,
+      3
+     ],
+     "fps": 4,
+     "loop": true
+    },
+    "walk": {
+     "frames": [
+      8,
+      9,
+      10,
+      11,
+      12,
+      13
+     ],
+     "fps": 10,
+     "loop": true
+    },
+    "attack": {
+     "frames": [
+      16,
+      17,
+      18,
+      19,
+      20,
+      21
+     ],
+     "fps": 12,
+     "loop": false
+    },
+    "hit": {
+     "frames": [
+      24,
+      25,
+      26
+     ],
+     "fps": 12,
+     "loop": false
+    },
+    "death": {
+     "frames": [
+      32,
+      33,
+      34,
+      35,
+      36,
+      37,
+      38,
+      39
+     ],
+     "fps": 10,
+     "loop": false
+    },
+    "rip_part": {
+     "frames": [
+      40,
+      41,
+      42,
+      43,
+      44,
+      45
+     ],
+     "fps": 12,
+     "loop": false
+    },
+    "tic": {
+     "frames": [
+      48,
+      49,
+      50,
+      51,
+      52,
+      53
+     ],
+     "fps": 8,
+     "loop": true
+    }
+   },
+   "faces": "right",
+   "note": "PATCH, обезумевший. rip_part: часть отлетает, тело остаётся целым."
+  },
+  "hive": {
+   "sheet": "hive.png",
+   "frameSize": [
+    72,
+    72
+   ],
+   "cols": 8,
+   "anchor": [
+    36,
+    70
+   ],
+   "anims": {
+    "idle": {
+     "frames": [
+      0,
+      1,
+      2,
+      3
+     ],
+     "fps": 4,
+     "loop": true
+    },
+    "walk": {
+     "frames": [
+      8,
+      9,
+      10,
+      11,
+      12,
+      13
+     ],
+     "fps": 10,
+     "loop": true
+    },
+    "attack": {
+     "frames": [
+      16,
+      17,
+      18,
+      19,
+      20,
+      21
+     ],
+     "fps": 12,
+     "loop": false
+    },
+    "hit": {
+     "frames": [
+      24,
+      25,
+      26
+     ],
+     "fps": 12,
+     "loop": false
+    },
+    "death": {
+     "frames": [
+      32,
+      33,
+      34,
+      35,
+      36,
+      37,
+      38,
+      39
+     ],
+     "fps": 10,
+     "loop": false
+    },
+    "rip_part": {
+     "frames": [
+      40,
+      41,
+      42,
+      43,
+      44,
+      45
+     ],
+     "fps": 12,
+     "loop": false
+    },
+    "tic": {
+     "frames": [
+      48,
+      49,
+      50,
+      51,
+      52,
+      53
+     ],
+     "fps": 8,
+     "loop": true
+    }
+   },
+   "faces": "right",
+   "note": "HIVE, обезумевший. rip_part: часть отлетает, тело остаётся целым."
   },
   "nest": {
    "sheet": "nest.png",

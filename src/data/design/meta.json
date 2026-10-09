@@ -1,0 +1,33 @@
+{
+  "version": "0.4",
+  "_doc": "design/HEROES.md §4",
+  "runScore": {
+    "energyEarned": 1,
+    "nestDestroyed": 50,
+    "heroDefeated": 200,
+    "demonDefeated": 500,
+    "winBonus": 300,
+    "timeBonus": {
+      "under10min": 200,
+      "under15min": 100
+    }
+  },
+  "trackedLifetimeStats": [
+    "runs_won",
+    "caches_opened",
+    "reaction_conductive_chain",
+    "enemies_frozen",
+    "buildings_built",
+    "parts_recycled",
+    "total_score",
+    "hero_defeats.<heroId>"
+  ],
+  "trackedRunChallenges": [
+    "energy_earned",
+    "win_without_accidental_open",
+    "win_no_resident_lost",
+    "resident_full_slots"
+  ],
+  "storage": "localStorage now; cloud sync with account later",
+  "unlockFlow": "on unlock show the hero card; hero becomes selectable as ally before a run; enemy version of that hero still appears in runs"
+}
