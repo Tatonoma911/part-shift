@@ -16,5 +16,19 @@
   "build.confirm_hint": "Нажмите ✓, чтобы построить, или выберите другую клетку",
   "tutorial.progress": "Обучение {n}/{total}",
   "settings.on": "вкл",
-  "settings.off": "выкл"
+  "settings.off": "выкл",
+  "menu.tutorial": "Обучение «Первая смена»",
+  "menu.story": "История мира",
+  "menu.account": "Войти и сохранять в облако",
+  "menu.soon": "Скоро",
+  "menu.slots": "Слоты сохранений",
+  "menu.slot": "Слот {n}",
+  "menu.slot_empty": "Пусто: начать новую смену",
+  "menu.slot_run": "Смена идёт · {time} · угроза {level}",
+  "menu.slot_restart": "Заново",
+  "menu.slot_restart_confirm": "Ещё раз, чтобы стереть",
+  "settings.assist.title": "Подсказки разведки",
+  "settings.language.ru": "Русский",
+  "settings.language.en": "English",
+  "menu.zoom_hint": "Колесо мыши или два пальца: приблизить поле"
 }

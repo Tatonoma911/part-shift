@@ -1,22 +1,31 @@
 import Phaser from 'phaser';
 import { BUILDABLE, buildings as buildingDefs, config } from '../core/data';
 import { cellKey } from '../core/grid';
-import type { AssistMode, GameState } from '../core/state';
+import type { AssistMode } from '../core/state';
 import { World, type GameEvent } from '../core/world';
 import { t } from '../i18n';
-import { BUILDING_ANCHOR, createArt, preloadArt } from './assets';
+import { BUILDING_ANCHOR } from './assets';
 import { sound } from './audio';
 import { BoardView } from './BoardView';
-import { BOARD, C, CELL, DOCK, GOAL_Y, HUD, INK, STEP, VIEW } from './layout';
-import { markTutorialDone, TutorialGuide, tutorialDone } from './Tutorial';
+import { Cameras, UI_DEPTH } from './cameras';
+import { clearSlot, loadSettings, loadSlot, saveSlot, touchSlot } from './saves';
+import { BOARD, C, CELL, DOCK, GOAL, GUIDE, HUD, INK, LANDSCAPE, STEP, VIEW } from './layout';
+import { markTutorialDone, TutorialGuide } from './Tutorial';
 import { brackets, chip, glyph, plate, TXT } from './ui';
 
-const SAVE_KEY = 'partshift.save.v1';
 const BEST_KEY = 'partshift.best.v1';
 const LONG_PRESS_MS = 480;
 const ME = 0;
 
-type Mode = 'dig' | 'build' | 'attack';
+type Mode = 'dig' | 'build';
+
+/** What the menu asks for: a slot to continue or start fresh, or the tutorial. */
+export interface GameStart {
+  slot?: number;
+  fresh?: boolean;
+  tutorial?: boolean;
+  seed?: number;
+}
 type Ev = Phaser.Types.Input.EventData;
 
 /** Events that become a toast (writer's text keys); `bad` ones are coral. */
@@ -37,20 +46,6 @@ const TOASTS: Record<string, { text: (e: GameEvent) => string; bad?: boolean }> 
   build_refused: { text: (e) => t(e.text ?? 'build.invalid_cell'), bad: true },
 };
 
-function loadState(): GameState | null {
-  try {
-    const raw = localStorage.getItem(SAVE_KEY);
-    if (!raw) return null;
-    const s = JSON.parse(raw) as GameState;
-    if (s.version !== 1 || s.outcome !== 'playing') return null;
-    // Saves from before the scanner existed.
-    for (const p of s.players) p.assist ??= { mode: 'full', charges: config.assist.scanner.maxCharges, recharge: config.assist.scanner.rechargeSeconds, scanLeft: 0 };
-    return s;
-  } catch {
-    return null;
-  }
-}
-
 function stop(fn: () => void) {
   return (_p: Phaser.Input.Pointer, _x: number, _y: number, ev: Ev) => {
     ev.stopPropagation();
@@ -67,6 +62,9 @@ function stop(fn: () => void) {
 export class GameScene extends Phaser.Scene {
   private world!: World;
   private board!: BoardView;
+  private cams!: Cameras;
+  private start: GameStart = {};
+  private slot = 1;
   private guide: TutorialGuide | null = null;
 
   private mode: Mode = 'dig';
@@ -92,7 +90,6 @@ export class GameScene extends Phaser.Scene {
     tabs: { mode: Mode; g: Phaser.GameObjects.Graphics; label: Phaser.GameObjects.Text; icon: Phaser.GameObjects.Image; x: number; w: number }[];
     panes: Record<Mode, Phaser.GameObjects.Container>;
     queue: Phaser.GameObjects.Text;
-    squad: Phaser.GameObjects.Text;
     scan: Phaser.GameObjects.Text | null;
     cards: { id: string; g: Phaser.GameObjects.Graphics; cost: Phaser.GameObjects.Text; x: number; y: number; w: number; h: number }[];
   };
@@ -101,6 +98,7 @@ export class GameScene extends Phaser.Scene {
   private guideBox: { text: Phaser.GameObjects.Text; dots: Phaser.GameObjects.Graphics; g: Phaser.GameObjects.Graphics; y: number; h: number } | null = null;
 
   private paused = false;
+  private rightClick: { x: number; y: number; px: number; py: number } | null = null;
   private dragMode: 'queue' | 'cancel' | null = null;
   private lastDragCell = -1;
   private pressTimer: Phaser.Time.TimerEvent | null = null;
@@ -112,37 +110,58 @@ export class GameScene extends Phaser.Scene {
     super('game');
   }
 
-  preload(): void {
-    preloadArt(this);
+  init(data: GameStart): void {
+    this.start = data ?? {};
+    this.slot = this.start.slot ?? 1;
+    // Fresh state for scene restarts.
+    this.guide = null;
+    this.mode = 'dig';
+    this.ghost = null;
+    this.ghostButtons = null;
+    this.spotlight = null;
+    this.confirmCell = null;
+    this.toasts = [];
+    this.overlay = null;
+    this.guideBox = null;
+    this.paused = false;
+    this.dragMode = null;
+    this.saveTimer = 0;
   }
 
   create(): void {
-    createArt(this);
+    const st = this.start;
     const params = new URLSearchParams(location.search);
-    const seedParam = Number(params.get('seed'));
-    const saved = params.has('seed') || params.get('tutorial') === '1' ? null : loadState();
-    const wantTutorial = params.get('tutorial') === '1' || (!saved && !params.has('seed') && params.get('tutorial') !== '0' && !tutorialDone());
     const assistParam = params.get('assist');
-    const assist = (['full', 'scanner', 'off'] as const).find((m) => m === assistParam) as AssistMode | undefined;
-    if (wantTutorial) this.guide = new TutorialGuide();
+    const assist = ((['full', 'scanner', 'off'] as const).find((m) => m === assistParam) as AssistMode | undefined) ?? loadSettings().assist;
+    const saved = st.tutorial || st.fresh ? null : loadSlot(this.slot);
+    if (st.tutorial) this.guide = new TutorialGuide();
+    // Free play: residents dig only where the player sends them, nothing is queued for them at the start.
+    const rules = { config: { 'dig.autoQueueZeroNeighbors': false } };
     this.world = this.guide
       ? this.guide.world
       : saved
         ? new World({ state: saved })
-        : new World({ seed: seedParam || Math.floor(Math.random() * 1e9), assist });
+        : new World({ seed: st.seed || Math.floor(Math.random() * 1e9), assist, rules });
+    if (!this.guide) {
+      if (!saved) clearSlot(this.slot);
+      touchSlot(this.slot);
+    }
     (window as unknown as { partShift: unknown }).partShift = { world: this.world, scene: this, sound };
     this.shownEnergy = this.world.player(ME).energy;
     this.lastThreat = this.world.threatLevel;
 
+    this.cams = new Cameras(this);
     this.drawBackground();
     // Smaller boards (the tutorial) sit at the bottom of the board area; the guide card takes the top.
     const bw = this.world.s.width * STEP - (STEP - CELL);
     const bh = this.world.s.height * STEP - (STEP - CELL);
     const bx = Math.round(BOARD.x + (BOARD.w - bw) / 2);
-    const by = this.guide ? BOARD.y + BOARD.h - bh - 8 : Math.round(BOARD.y + (BOARD.h - bh) / 2);
+    const by = this.guide && !LANDSCAPE ? BOARD.y + BOARD.h - bh - 8 : Math.round(BOARD.y + (BOARD.h - bh) / 2);
     const frame = this.add.graphics().setDepth(0.5);
     brackets(frame, bx - 10, by - 10, bw + 20, bh + 20);
     this.board = new BoardView(this, this.world, bx, by);
+    this.cams.setBounds(bx, by, bw, bh);
+    this.createZoomButtons();
 
     this.createHud();
     this.createDock();
@@ -161,14 +180,11 @@ export class GameScene extends Phaser.Scene {
     });
     this.input.keyboard?.on('keydown-ONE', () => this.setMode('dig'));
     this.input.keyboard?.on('keydown-TWO', () => this.setMode('build'));
-    this.input.keyboard?.on('keydown-THREE', () => this.setMode('attack'));
-    document.addEventListener('visibilitychange', () => {
+    const onHide = () => {
       if (document.hidden) this.save();
-    });
-    // Audio may only start after a gesture; capture so buttons that stop propagation count too.
-    const unlock = () => sound.unlock();
-    window.addEventListener('pointerdown', unlock, { capture: true });
-    window.addEventListener('keydown', unlock, { capture: true });
+    };
+    document.addEventListener('visibilitychange', onHide);
+    this.events.once('shutdown', () => document.removeEventListener('visibilitychange', onHide));
     if (this.world.s.outcome === 'playing') sound.playMusic('theme_lumen');
     this.setMode('dig');
   }
@@ -199,28 +215,47 @@ export class GameScene extends Phaser.Scene {
     });
     this.updateHud(deltaMs);
     this.updateDock();
+    this.cams.route();
   }
 
   // ------------------------------------------------------------- persistence
 
   private save(): void {
-    try {
-      if (!this.guide && this.world.started && this.world.s.outcome === 'playing') localStorage.setItem(SAVE_KEY, JSON.stringify(this.world.s));
-    } catch {
-      /* storage full or blocked: the run just isn't saved */
+    if (!this.guide && this.world.started && this.world.s.outcome === 'playing') {
+      saveSlot(this.slot, this.world.s);
+      touchSlot(this.slot);
     }
   }
 
   private restart(): void {
-    try {
-      localStorage.removeItem(SAVE_KEY);
-    } catch {
-      /* ignore */
-    }
-    const url = new URL(location.href);
-    url.searchParams.delete('seed');
-    url.searchParams.delete('tutorial');
-    location.href = url.toString();
+    if (!this.guide) clearSlot(this.slot);
+    sound.stopMusic(0.2);
+    this.scene.restart({ slot: this.slot, fresh: true, tutorial: this.start.tutorial });
+  }
+
+  private toMenu(): void {
+    this.save();
+    sound.stopMusic(0.3);
+    this.scene.start('menu');
+  }
+
+  /** + / − / reset over the board corner; the wheel, pinch and right-drag do the same. */
+  private createZoomButtons(): void {
+    const items: [string, () => void][] = [
+      ['+', () => this.cams.zoomBy(1.3)],
+      ['−', () => this.cams.zoomBy(1 / 1.3)],
+      ['⟲', () => this.cams.reset()],
+    ];
+    items.forEach(([label, act], k) => {
+      const x = (LANDSCAPE ? BOARD.x + BOARD.w : VIEW.width) - 24 - 56;
+      const y = BOARD.y + 8 + k * 64;
+      const g = this.add.graphics().setDepth(UI_DEPTH + 1).setAlpha(0.92);
+      chip(g, x, y, 56, 56, C.graphite, 0.85, 10);
+      const tx = this.add.text(x + 28, y + 28, label, TXT.num(28, INK.white)).setOrigin(0.5).setDepth(UI_DEPTH + 1);
+      const hit = this.add.zone(x, y, 56, 56).setOrigin(0).setDepth(UI_DEPTH + 1).setInteractive({ useHandCursor: true });
+      hit.on('pointerdown', stop(act));
+      if (this.guide) [g, tx, hit].forEach((o) => o.setVisible(false));
+    });
   }
 
   // ------------------------------------------------------------------ events
@@ -265,13 +300,13 @@ export class GameScene extends Phaser.Scene {
 
   /** Toast plate in the strip between the board and the dock; a new one replaces the old (UI_SPEC §2). */
   private say(text: string, ms = 2800, bad = false): void {
-    const width = VIEW.width - 64;
+    const width = DOCK.w - 16;
     const tx = this.add.text(0, 0, text, { ...TXT.body(22, bad ? INK.white : INK.graphite, '600'), align: 'center', lineSpacing: 2, wordWrap: { width: width - 36 } }).setOrigin(0.5);
     const h = Math.max(58, tx.height + 20);
     const g = this.add.graphics();
     chip(g, -width / 2, -h / 2, width, h, bad ? C.coralInk : C.paper, 0.97, 14, bad ? undefined : { color: C.seam, width: 2 });
     const y = DOCK.y - 8 - h / 2;
-    const box = this.add.container(VIEW.width / 2, y + 16, [g, tx]).setDepth(21).setAlpha(0);
+    const box = this.add.container(DOCK.x + DOCK.w / 2, y + 16, [g, tx]).setDepth(21).setAlpha(0);
     for (const old of this.toasts) this.tweens.add({ targets: old, alpha: 0, duration: 120, onComplete: () => old.destroy() });
     this.toasts = [box];
     this.tweens.add({ targets: box, y, alpha: 1, duration: 180 });
@@ -292,17 +327,18 @@ export class GameScene extends Phaser.Scene {
 
   /** Tutorial card on the live board, above the (smaller) tutorial map. */
   private createGuide(bottom: number): void {
-    const y = BOARD.y - 4;
-    const h = Math.max(150, bottom - y);
+    // Portrait: above the tutorial map; landscape: in the right column under the HUD.
+    const y = LANDSCAPE ? GUIDE.y : BOARD.y - 4;
+    const h = LANDSCAPE ? GUIDE.h : Math.max(150, bottom - y);
     const g = this.add.graphics().setDepth(22);
-    const text = this.add.text(VIEW.width / 2, y + 60, '', { ...TXT.body(27, INK.graphite, '600'), align: 'center', lineSpacing: 6, wordWrap: { width: HUD.w - 80 } }).setOrigin(0.5, 0).setDepth(22);
+    const text = this.add.text(GUIDE.x + GUIDE.w / 2, y + 60, '', { ...TXT.body(27, INK.graphite, '600'), align: 'center', lineSpacing: 6, wordWrap: { width: GUIDE.w - 80 } }).setOrigin(0.5, 0).setDepth(22);
     const dots = this.add.graphics().setDepth(22);
-    const skip = this.add.text(HUD.x + HUD.w - 34, y + 30, t('tutorial.skip'), TXT.caps(INK.dim)).setOrigin(1, 0.5).setDepth(23).setInteractive({ useHandCursor: true });
+    const skip = this.add.text(GUIDE.x + GUIDE.w - 34, y + 30, t('tutorial.skip'), TXT.caps(INK.dim)).setOrigin(1, 0.5).setDepth(23).setInteractive({ useHandCursor: true });
     skip.on(
       'pointerdown',
       stop(() => {
         markTutorialDone();
-        this.restart();
+        this.toMenu();
       }),
     );
     this.guideBox = { text, dots, g, y, h };
@@ -322,22 +358,25 @@ export class GameScene extends Phaser.Scene {
         badge: t('tutorial.progress', { n: g.stepCount, total: g.stepCount }),
         title: t('tutorial.final.title'),
         lines: [t('tutorial.final.line1'), t('tutorial.final.line2'), t('tutorial.final.line3')],
-        actions: [{ label: t('tutorial.final.go'), act: () => this.restart(), primary: true }],
+        actions: [
+          { label: t('tutorial.final.go'), act: () => this.scene.start('game', { slot: 1, fresh: !loadSlot(1) }), primary: true },
+          { label: t('menu.quit_to_menu'), act: () => this.toMenu() },
+        ],
       });
       return;
     }
     box.text.setText(t(g.step!.text));
     const h = Math.min(box.h, box.text.height + 96);
     box.g.clear();
-    plate(box.g, HUD.x, box.y, HUD.w, h, 22);
+    plate(box.g, GUIDE.x, box.y, GUIDE.w, h, 22);
     box.g.fillStyle(C.amber, 1);
-    box.g.fillRect(HUD.x + 22, box.y + 18, 6, h - 36);
+    box.g.fillRect(GUIDE.x + 22, box.y + 18, 6, h - 36);
     const d = box.dots;
     d.clear();
     const n = g.stepCount;
     for (let k = 0; k < n; k++) {
       d.fillStyle(k <= g.stepIndex ? C.teal : 0xc6d4d9, 1);
-      d.fillCircle(HUD.x + 50 + k * 22, box.y + 30, k === g.stepIndex ? 7 : 5);
+      d.fillCircle(GUIDE.x + 50 + k * 22, box.y + 30, k === g.stepIndex ? 7 : 5);
     }
     if ((g.step!.highlightBuild ?? []).length) {
       this.nextTutorialBuilding();
@@ -383,13 +422,14 @@ export class GameScene extends Phaser.Scene {
     pauseHit.on('pointerdown', stop(() => this.setPaused(!this.paused)));
 
     const stat = (x: number, label: string, icon: string, color: string) => {
-      this.add.text(x, midY - 26, label.toUpperCase(), TXT.caps()).setOrigin(0, 0.5).setDepth(20);
+      this.add.text(x, midY - 26, label.toUpperCase(), { ...TXT.caps(), ...(LANDSCAPE ? { fontSize: '14px', letterSpacing: 1.2 } : {}) }).setOrigin(0, 0.5).setDepth(20);
       this.add.image(x + 14, midY + 18, icon).setScale(1.25).setDepth(20);
       return this.add.text(x + 34, midY + 18, '', TXT.num(36, color)).setOrigin(0, 0.5).setDepth(20);
     };
     const energy = stat(px + 112, t('hud.label.energy'), 'icon.energy', INK.cobalt);
-    const residents = stat(px + 300, t('hud.label.residents'), 'icon.resident', INK.graphite);
-    const squad = stat(px + 456, t('hud.label.squad'), 'icon.shield', INK.graphite);
+    // The landscape HUD is narrower: tighten the columns so the threat ring stays clear.
+    const residents = stat(px + (LANDSCAPE ? 244 : 300), t('hud.label.residents'), 'icon.resident', INK.graphite);
+    const squad = stat(px + (LANDSCAPE ? 390 : 456), t('hud.label.squad'), 'icon.shield', INK.graphite);
 
     // Threat ring: empties over secondsPerLevel, then the level goes up (UI_SPEC §2.1).
     const rx = HUD.x + HUD.w - 66;
@@ -398,9 +438,9 @@ export class GameScene extends Phaser.Scene {
     const ringBox = this.add.container(rx, midY, [ring, threat]).setDepth(20);
 
     // Goal line under the HUD.
-    this.add.text(HUD.x + 8, GOAL_Y + 22, t('hud.shift_label').toUpperCase(), TXT.caps()).setOrigin(0, 0.5).setDepth(20);
+    this.add.text(HUD.x + 8, GOAL.y + 22, t('hud.shift_label').toUpperCase(), TXT.caps()).setOrigin(0, 0.5).setDepth(20);
     const goalBg = this.add.graphics().setDepth(20);
-    const goal = this.add.text(HUD.x + HUD.w - 24, GOAL_Y + 22, '', TXT.body(23, INK.white, '700')).setOrigin(1, 0.5).setDepth(20);
+    const goal = this.add.text(HUD.x + HUD.w - 24, GOAL.y + 22, '', TXT.body(23, INK.white, '700')).setOrigin(1, 0.5).setDepth(20);
     this.hud = { energy, residents, squad, threat, ring, ringBox, goal, goalBg };
   }
 
@@ -447,7 +487,7 @@ export class GameScene extends Phaser.Scene {
     const gb = this.hud.goalBg;
     gb.clear();
     const gw = this.hud.goal.width + 36;
-    chip(gb, HUD.x + HUD.w - 6 - gw, GOAL_Y, gw, 44, bg, 1, 12);
+    chip(gb, HUD.x + HUD.w - 6 - gw, GOAL.y, gw, 44, bg, 1, 12);
   }
 
   // -------------------------------------------------------------------- dock
@@ -455,11 +495,12 @@ export class GameScene extends Phaser.Scene {
   private createDock(): void {
     const g = this.add.graphics().setDepth(20);
     plate(g, DOCK.x, DOCK.y, DOCK.w, DOCK.h, 28);
-    const modes: Mode[] = ['dig', 'build', 'attack'];
-    const icons = { dig: 'icon.dig', build: 'icon.build', attack: 'icon.attack' };
+    // No attack mode: defenders fight on their own, a tap on a foe directs them (MVP_RULES §6).
+    const modes: Mode[] = ['dig', 'build'];
+    const icons = { dig: 'icon.dig', build: 'icon.build' };
     const pad = 22;
     const gap = 10;
-    const tw = (DOCK.w - pad * 2 - gap * 2) / 3;
+    const tw = (DOCK.w - pad * 2 - gap * (modes.length - 1)) / modes.length;
     const ty = DOCK.y + 22;
     const tabs = modes.map((mode, k) => {
       const x = DOCK.x + pad + k * (tw + gap);
@@ -555,15 +596,7 @@ export class GameScene extends Phaser.Scene {
       return { id, g: cg, cost, x, y: top, w: cw, h: ch };
     });
 
-    // Attack: hint + squad chip.
-    const attack = this.add.container(0, 0).setDepth(20);
-    attack.add(this.add.text(DOCK.x + pad + 8, top + 70, t('tutorial.attack'), { ...TXT.body(23, INK.graphite, '500'), wordWrap: { width: inner - 280 } }).setOrigin(0, 0.5));
-    const sg = this.add.graphics();
-    chip(sg, qx, top + 40, 250, 60, 0xfde3e7, 1, 12);
-    const squad = this.add.text(qx + 125, top + 70, '', TXT.body(24, INK.coral, '700')).setOrigin(0.5);
-    attack.add([sg, squad]);
-
-    this.dock = { tabs, panes: { dig, build, attack }, queue, squad, scan, cards };
+    this.dock = { tabs, panes: { dig, build }, queue, scan, cards };
   }
 
   private setMode(mode: Mode): void {
@@ -572,7 +605,7 @@ export class GameScene extends Phaser.Scene {
     for (const tab of this.dock.tabs) {
       const on = tab.mode === mode;
       tab.g.clear();
-      if (on) chip(tab.g, tab.x, DOCK.y + 22, tab.w, 80, mode === 'attack' ? C.coralInk : C.graphite, 1, 14);
+      if (on) chip(tab.g, tab.x, DOCK.y + 22, tab.w, 80, C.graphite, 1, 14);
       else chip(tab.g, tab.x, DOCK.y + 22, tab.w, 80, C.graphite, 0.06, 14);
       tab.label.setColor(on ? INK.white : INK.graphite);
       if (on) tab.icon.setTintFill(0xffffff);
@@ -590,8 +623,6 @@ export class GameScene extends Phaser.Scene {
         const a = p.assist;
         this.dock.scan.setText(t('assist.scan.charges', { count: a.charges })).setAlpha(a.charges > 0 || a.scanLeft > 0 ? 1 : 0.5);
       }
-    } else if (this.mode === 'attack') {
-      this.dock.squad.setText(t('hud.squad_chip', { count: w.s.units.filter((u) => u.owner === ME && u.kind === 'defender').length }));
     } else {
       const hl = this.guide?.step?.highlightBuild ?? [];
       const pulse = 0.5 + 0.5 * Math.sin(this.time.now / 180);
@@ -642,7 +673,7 @@ export class GameScene extends Phaser.Scene {
         }),
         ...mk(48, false, '✕', () => this.setGhost(null)),
       ])
-      .setDepth(19);
+      .setDepth(13.5);
   }
 
   // ---------------------------------------------------------------- overlays
@@ -676,17 +707,14 @@ export class GameScene extends Phaser.Scene {
           },
         },
         { label: t('pause.restart'), act: () => this.restart() },
+        { label: t('menu.quit_to_menu'), act: () => this.toMenu() },
       ],
       animate: false,
     });
   }
 
   private showEnd(victory: boolean): void {
-    try {
-      localStorage.removeItem(SAVE_KEY);
-    } catch {
-      /* ignore */
-    }
+    if (!this.guide) clearSlot(this.slot);
     const w = this.world;
     const tiles: [string, string][] = [
       [t('win.time', { time: this.fmt(w.s.time) }), ''],
@@ -712,7 +740,10 @@ export class GameScene extends Phaser.Scene {
       badge,
       title: victory ? t('win.title') : t('lose.title'),
       lines: [victory ? t('win.text') : t('lose.text'), ...tiles.map((x) => x[0])],
-      actions: [{ label: victory ? t('win.again') : t('lose.again'), act: () => this.restart(), primary: true }],
+      actions: [
+        { label: victory ? t('win.again') : t('lose.again'), act: () => this.restart(), primary: true },
+        { label: t('menu.quit_to_menu'), act: () => this.toMenu() },
+      ],
     });
   }
 
@@ -727,8 +758,8 @@ export class GameScene extends Phaser.Scene {
     const shade = this.add.rectangle(0, 0, VIEW.width, VIEW.height, 0x0a1218, 0.55).setOrigin(0).setInteractive();
     shade.on('pointerdown', (_p: Phaser.Input.Pointer, _x: number, _y: number, ev: Ev) => ev.stopPropagation());
     c.add(shade);
-    const w = VIEW.width - 56;
-    const x = 28;
+    const w = Math.min(VIEW.width - 56, 724);
+    const x = (VIEW.width - w) / 2;
     const content: Phaser.GameObjects.GameObject[] = [];
     let y = 56;
     if (o.badge) {
@@ -799,8 +830,9 @@ export class GameScene extends Phaser.Scene {
   }
 
   private onDown(p: Phaser.Input.Pointer): void {
-    if (this.overlay) return;
-    const at = this.board.cellAt(p.worldX, p.worldY);
+    if (this.overlay || !this.cams.inBoardView(p) || this.cams.busy) return;
+    const wp = this.cams.worldAt(p);
+    const at = this.board.cellAt(wp.x, wp.y);
     if (!at) return;
     const w = this.world;
     const { x, y } = at;
@@ -819,12 +851,13 @@ export class GameScene extends Phaser.Scene {
     }
     const c = w.cell(x, y);
     if (p.rightButtonDown()) {
-      if (w.isQueued(ME, x, y)) w.apply({ type: 'cancelDig', x, y }, ME);
-      else w.apply({ type: 'toggleMark', x, y }, ME);
+      // Right click cancels or marks; a right drag pans the view instead (see onUp).
+      this.rightClick = { x, y, px: p.x, py: p.y };
       return;
     }
+    if (p.middleButtonDown()) return;
     // Tap an enemy or an opened nest: all defenders attack it (any mode).
-    const foe = this.board.enemyAt(p.worldX, p.worldY);
+    const foe = this.board.enemyAt(wp.x, wp.y);
     if (foe) {
       w.apply({ type: 'attack', target: `u:${foe.id}` }, ME);
       return;
@@ -838,10 +871,6 @@ export class GameScene extends Phaser.Scene {
     if (b && b.owner === ME && b.type === 'school' && b.complete) {
       w.apply({ type: 'setRecruit', building: b.id, on: !b.recruit }, ME);
       this.say(t(b.recruit ? 'building.school.train_on' : 'building.school.train_off'));
-      return;
-    }
-    if (this.mode === 'attack') {
-      if (c.revealed && w.player(ME).order) w.apply({ type: 'cancelOrder' }, ME);
       return;
     }
     if (c.revealed && w.player(ME).order && c.content === 'ground') w.apply({ type: 'cancelOrder' }, ME);
@@ -881,13 +910,27 @@ export class GameScene extends Phaser.Scene {
   }
 
   private onMove(p: Phaser.Input.Pointer): void {
+    if (this.cams.busy) {
+      // A second finger turns the gesture into pinch/pan: stop queueing cells.
+      this.dragMode = null;
+      this.pressTimer?.remove();
+      return;
+    }
     if (!this.dragMode || !p.isDown) return;
-    const at = this.board.cellAt(p.worldX, p.worldY);
+    const wp = this.cams.worldAt(p);
+    const at = this.board.cellAt(wp.x, wp.y);
     if (!at) return;
     this.applyDrag(at.x, at.y);
   }
 
-  private onUp(): void {
+  private onUp(p: Phaser.Input.Pointer): void {
+    const rc = this.rightClick;
+    this.rightClick = null;
+    if (rc && Math.hypot(p.x - rc.px, p.y - rc.py) < 10) {
+      const w = this.world;
+      if (w.isQueued(ME, rc.x, rc.y)) w.apply({ type: 'cancelDig', x: rc.x, y: rc.y }, ME);
+      else w.apply({ type: 'toggleMark', x: rc.x, y: rc.y }, ME);
+    }
     this.dragMode = null;
     this.pressTimer?.remove();
     this.pressTimer = null;

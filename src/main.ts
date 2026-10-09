@@ -1,9 +1,11 @@
 import Phaser from 'phaser';
 import { GameScene } from './game/GameScene';
-import { VIEW } from './game/layout';
+import { MenuScene } from './game/MenuScene';
+import { chooseLayout, VIEW } from './game/layout';
 import { fontsReady } from './game/ui';
 
 fontsReady().then(() => {
+  chooseLayout(window.innerWidth, window.innerHeight);
   new Phaser.Game({
     type: Phaser.AUTO,
     parent: 'app',
@@ -12,6 +14,6 @@ fontsReady().then(() => {
     height: VIEW.height,
     scale: { mode: Phaser.Scale.FIT, autoCenter: Phaser.Scale.CENTER_BOTH },
     input: { activePointers: 2 },
-    scene: [GameScene],
+    scene: [MenuScene, GameScene],
   });
 });
