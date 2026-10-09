@@ -479,3 +479,20 @@ footer .wrap { display: flex; gap: 18px; justify-content: space-between; flex-wr
 .sums button[aria-pressed='true'] { border-color: var(--teal); background: color-mix(in srgb, var(--teal) 14%, transparent); }
 .sum-field { display: grid; gap: 6px; }
 .sum-field input { font: 700 20px/1 var(--display); padding: 12px 14px; border: 2px solid var(--line); background: var(--paper); color: var(--ink); width: min(100%, 220px); }
+
+/* Comic pages: tap to read large. */
+.reader .zoom.page { padding: 0; border: 0; background: none; cursor: zoom-in; display: block; width: 100%; }
+.tap-hint { display: none; color: var(--dim); }
+@media (max-width: 760px) { .tap-hint { display: block; } }
+.lightbox.full { display: block; overflow: auto; padding: calc(env(safe-area-inset-top, 0px) + 56px) 0 24px; -webkit-overflow-scrolling: touch; }
+.lightbox.full img { max-width: none; max-height: none; width: max(100%, 1080px); margin: 0 auto; display: block; }
+.lightbox.full .icon-btn { position: fixed; z-index: 1; background: rgba(6, 10, 14, 0.7); }
+
+/* Hero dossier: deranged vs back to themselves. */
+.twin { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr)); gap: 14px; }
+.twin .side { padding: 20px 22px 22px; display: grid; gap: 10px; align-content: start; border-top: 4px solid var(--hc, var(--seam)); }
+.twin .mad { --hc: var(--coral); }
+.twin .back { --hc: var(--teal); }
+.twin p { margin: 0; }
+.twin .dim { color: var(--dim); font-size: 14px; }
+.twin blockquote { margin: 0; font: 700 18px/1.35 var(--display); }
