@@ -6,7 +6,9 @@ import type { GameEvent, World } from '../core/world';
 import { animSets, BUILDING_ANCHOR, originOf } from './assets';
 import { sound } from './audio';
 import { C, CELL, CHANNEL, STEP, TECH_COLOR } from './layout';
+import { buzz, comfort } from './comfort';
 import { Quarantine, type RevealKind } from './Quarantine';
+import { Bars, drawWeakOrbs, weaknessesOf, type Weakness } from './Vitals';
 import { glyph, TXT } from './ui';
 
 const ME = 0;
@@ -95,6 +97,8 @@ export class BoardView {
   private zoneG?: Phaser.GameObjects.Graphics;
   private lost: GameEvent[] = [];
   private readonly quarantine: Quarantine;
+  private readonly vitals = new Bars();
+  private readonly weakCache = new Map<number, Weakness[]>();
 
   constructor(
     private readonly scene: Phaser.Scene,
@@ -293,6 +297,7 @@ export class BoardView {
         break;
       case 'center_hit':
         this.shake(100, 0.002);
+        buzz(30);
         break;
       case 'demon_blast': {
         this.shake(220, 0.006);
@@ -309,12 +314,14 @@ export class BoardView {
       }
       case 'building_lost':
         this.lost.push(e);
+        buzz([40, 40, 80]);
         this.fxAtCell('explosion', e.x, e.y, 1.8);
         this.shake(160, 0.004);
         break;
       case 'nest_open':
       case 'heavy_nest_open':
         this.fxAtCell('explosion', e.x, e.y, e.type === 'heavy_nest_open' ? 2 : 1.5);
+        buzz(70);
         this.shake(180, 0.004);
         break;
       case 'nest_destroyed':
@@ -364,6 +371,7 @@ export class BoardView {
 
   /** Shake only the board camera; HUD and dock stay still. */
   private shake(ms: number, intensity: number): void {
+    if (!comfort().shake) return;
     const cams = this.scene.cameras.cameras;
     (cams[1] ?? cams[0]).shake(ms, intensity);
   }
@@ -539,7 +547,7 @@ export class BoardView {
       g.fillRect(px, py, CELL, CELL);
       g.lineStyle(6, 0x0b1117, 0.5);
       this.check(g, cx, cy + 1);
-      g.lineStyle(5, 0x8fe35a, 1);
+      g.lineStyle(5, C.green, 1);
       this.check(g, cx, cy);
     } else if (risk) {
       const col = risk === 'threat' ? C.coral : C.violet;
@@ -802,7 +810,7 @@ export class BoardView {
     if (b.owner !== ME) spr.setTint(0xffc2a8);
     const g = this.topG;
     const p = this.center(b.x, b.y);
-    if (b.complete && b.hp < def.hp) this.bar(g, p.x - 22, p.y - 40, 44, b.hp / def.hp, b.hp / def.hp > 0.4 ? C.green : C.coralInk);
+    if (b.complete && b.hp < def.hp) this.vitals.draw(g, `b:${b.id}`, p.x - 28, p.y - 46, 56, b.hp / def.hp, 'building', this.scene.time.now);
     void now;
   }
 
@@ -856,6 +864,17 @@ export class BoardView {
   }
 
   // ------------------------------------------------------------------ units
+
+  /** What this enemy is weak to: heroes by their hero entry, adaptants by their nest technology. */
+  private weakOf(u: Unit): Weakness[] {
+    let w = this.weakCache.get(u.id);
+    if (w) return w;
+    if (u.kind === 'hero') w = weaknessesOf({ heroId: u.hero });
+    else if (u.kind === 'heavy_adaptant') w = weaknessesOf({ tech: 'impact' });
+    else w = weaknessesOf({ tech: u.tech });
+    this.weakCache.set(u.id, w);
+    return w;
+  }
 
   private setOf(u: Unit): string {
     switch (u.kind) {
@@ -978,7 +997,10 @@ export class BoardView {
         g.fillStyle(TECH_COLOR[partDefs[part.id]?.tech] ?? 0xffffff, 1);
         g.fillCircle(fx - 14 + k * 9, top + 2, 3.5);
       });
-      if (u.hp < st.hp) this.bar(g, fx - 20, top - 8, 40, u.hp / st.hp, u.owner < 0 ? C.coralInk : C.green);
+      // Health bar: enemies always, our units when hurt or fighting; weakness orbs above enemies (UI_SPEC §3.5).
+      const enemy = u.owner < 0;
+      if (enemy || u.hp < st.hp || u.target !== undefined) this.vitals.draw(g, `u:${u.id}`, fx - 24, top - 12, 48, u.hp / st.hp, enemy ? 'enemy' : 'ally', this.scene.time.now);
+      if (enemy) drawWeakOrbs(g, fx, top - 30, this.weakOf(u));
       if (order === `u:${u.id}`) {
         g.lineStyle(3, C.coral, 1);
         g.strokeEllipse(fx, fy - 2, 46, 18);
@@ -1004,7 +1026,7 @@ export class BoardView {
     for (const site of w.s.sites) {
       if (site.destroyed || site.hp >= site.maxHp) continue;
       const p = this.center(site.x, site.y);
-      this.bar(g, p.x - 22, p.y - 30, 44, site.hp / site.maxHp, C.coralInk);
+      this.vitals.draw(g, `s:${site.x},${site.y}`, p.x - 26, p.y - 34, 52, site.hp / site.maxHp, 'enemy', this.scene.time.now);
     }
   }
 
@@ -1054,12 +1076,5 @@ export class BoardView {
     for (const b of w.s.buildings) {
       if (!b.complete && b.built > 0) arc(b.x, b.y, 1 - b.built / w.buildSeconds(b));
     }
-  }
-
-  private bar(g: Phaser.GameObjects.Graphics, x: number, y: number, width: number, frac: number, color: number): void {
-    g.fillStyle(0x0b1117, 0.75);
-    g.fillRect(x - 2, y - 2, width + 4, 10);
-    g.fillStyle(color, 1);
-    g.fillRect(x, y, width * Math.max(0, Math.min(1, frac)), 6);
   }
 }

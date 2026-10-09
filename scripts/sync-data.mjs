@@ -20,6 +20,8 @@ const jobs = [
   { from: join(root, 'comic'), to: 'src/intro', pick: (f) => f === 'intro-comic.js' },
   // clean: the comic drops panels between versions; stale ones would only bloat the one-file build.
   { from: join(root, 'comic/assets/panels'), to: 'src/assets/comic/panels', pick: (f) => /\.(jpg|png)$/.test(f), clean: true },
+  // Comic illustrations over the win/lose sheets (ART_REVIEW AR-12): screen_win.png, screen_lose.png.
+  { from: join(root, 'art/export/screens'), to: 'src/assets/art/screens', pick: (f) => f.endsWith('.png') },
   { from: join(root, 'comic/assets/sprites'), to: 'src/assets/comic/sprites', pick: (f) => f.endsWith('.png'), clean: true },
   { from: join(root, 'art/export/portraits'), to: 'src/assets/art/portraits', pick: (f) => f.endsWith('.png') && !f.startsWith('s01') && (!f.startsWith('bld_') || f === 'bld_command.png') },
   // Hero comm pop-up (left corner): lines RU+EN and round artbook portraits.

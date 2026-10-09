@@ -17,6 +17,8 @@ import { volumeHeight, volumeSliders } from './volume';
 import { BoardView } from './BoardView';
 import { Comm } from './Comm';
 import { Cameras, UI_DEPTH } from './cameras';
+import { EdgePointer } from './EdgePointer';
+import { SidePanel } from './SidePanel';
 import { clearSlot, loadSettings, loadSlot, saveSlot, touchSlot } from './saves';
 import { BOARD, C, CELL, DOCK, GOAL, GUIDE, HUD, INK, LANDSCAPE, STEP, VIEW } from './layout';
 import { markTutorialDone, TutorialGuide } from './Tutorial';
@@ -109,6 +111,9 @@ function stop(fn: () => void) {
 export class GameScene extends Phaser.Scene {
   private world!: World;
   private board!: BoardView;
+  private edge!: EdgePointer;
+  /** Wide screens only: shift summary in the right column (AR-06). */
+  private side?: SidePanel;
   private cams!: Cameras;
   private start: GameStart = {};
   private slot = 1;
@@ -234,6 +239,8 @@ export class GameScene extends Phaser.Scene {
     brackets(frame, bx - 10, by - 10, bw + 20, bh + 20);
     this.board = new BoardView(this, this.world, bx, by);
     this.cams.setBounds(bx, by, bw, bh);
+    this.edge = new EdgePointer(this, this.world, this.cams.board, (x, y) => this.board.center(x, y));
+    this.side = LANDSCAPE && !this.guide ? new SidePanel(this, this.world, GUIDE.y, GUIDE.h + 20) : undefined;
     this.createZoomButtons();
 
     this.createHud();
@@ -266,7 +273,7 @@ export class GameScene extends Phaser.Scene {
     setBackHandler(() => this.onBack());
     this.music = new SoundDirector(this.world, ME);
     // The city's voice: Контроль, ads, hero bubbles (not in the tutorial, it has its own coach).
-    this.voice = this.guide ? null : new Voice(this, this.world, ME, (at) => this.board.speakerAt(at));
+    this.voice = this.guide ? null : new Voice(this, this.world, ME, (at) => this.board.speakerAt(at), () => this.toasts.some((b) => b.active));
     this.voice?.start(!saved);
     this.tally = this.guide ? null : new RunTally(ME);
     this.ended = false;
@@ -279,13 +286,6 @@ export class GameScene extends Phaser.Scene {
 
   update(time: number, deltaMs: number): void {
     const w = this.world;
-    // Toasts ride above Контроль's strip while it is up, and settle back when it leaves.
-    const floor = this.voice?.barTop() ?? DOCK.y;
-    for (const box of this.toasts) {
-      if (!box.active || this.tweens.isTweening(box)) continue;
-      const want = floor - 8 - (box.getData('h') as number) / 2;
-      box.y += (want - box.y) * Math.min(1, deltaMs / 80);
-    }
     if (!this.paused && !this.overlayPaused && w.s.outcome === 'playing') {
       if (!this.coachedBuild && !this.guide && w.player(ME).energy >= 100) this.coachedBuild = learning().coach('build') || this.coachedBuild;
       w.tick(Math.min(deltaMs, 250) / 1000);
@@ -315,6 +315,8 @@ export class GameScene extends Phaser.Scene {
       focus: this.guide?.focusCells() ?? [],
       showRisk: w.player(ME).assist.mode === 'full',
     });
+    this.edge.update(time);
+    this.side?.update();
     this.updateHud(deltaMs);
     this.updateDock();
     this.cams.route();
@@ -436,13 +438,16 @@ export class GameScene extends Phaser.Scene {
     if (text === this.lastSaid.text && now < this.lastSaid.until) return;
     if (!bad && this.lastSaid.bad && now < this.lastSaid.at + 1500) return;
     this.lastSaid = { text, bad, at: now, until: now + ms };
+    this.side?.note(text);
     const width = DOCK.w - 16;
     const tx = this.add.text(0, 0, text, { ...TXT.body(22, bad ? INK.white : INK.graphite, '600'), align: 'center', lineSpacing: 2, wordWrap: { width: width - 36 } }).setOrigin(0.5);
     const h = Math.max(58, tx.height + 20);
     const g = this.add.graphics();
     chip(g, -width / 2, -h / 2, width, h, bad ? C.coralInk : C.paper, 0.97, 14, bad ? undefined : { color: C.seam, width: 2 });
-    const y = (this.voice?.barTop() ?? DOCK.y) - 8 - h / 2;
-    const box = this.add.container(DOCK.x + DOCK.w / 2, y + 16, [g, tx]).setDepth(21).setAlpha(0).setData('h', h);
+    // Toasts and Контроль share the strip above the dock, never the board (QA-038): the toast wins it.
+    this.voice?.yieldToToast();
+    const y = DOCK.y - 8 - h / 2;
+    const box = this.add.container(DOCK.x + DOCK.w / 2, y + 16, [g, tx]).setDepth(21).setAlpha(0);
     for (const old of this.toasts) this.tweens.add({ targets: old, alpha: 0, duration: 120, onComplete: () => old.destroy() });
     this.toasts = [box];
     this.tweens.add({ targets: box, y, alpha: 1, duration: 180 });
@@ -986,7 +991,9 @@ export class GameScene extends Phaser.Scene {
     };
     this.overlay?.destroy();
     this.overlay = this.sheet({
-      portrait: victory && this.textures.exists(`portrait.${w.s.boss.hero}`) ? `portrait.${w.s.boss.hero}` : victory ? 'portrait.demon' : 'portrait.bld_command',
+      // Comic illustration when the artist's screen is in (style per layer); until then the Command Center sprite, grey on a loss.
+      art: victory ? 'screen.win' : 'screen.lose',
+      portrait: 'portrait.bld_command',
       grey: !victory,
       badge,
       title: victory ? t('win.title') : t('lose.title'),
@@ -1068,7 +1075,7 @@ export class GameScene extends Phaser.Scene {
   }
 
   /** Bottom sheet over the dimmed board (UI_SPEC §5). */
-  private sheet(o: { title: string; lines: string[]; actions: { label: string; act: () => void; primary?: boolean; gold?: boolean; half?: boolean; ref?: (tx: Phaser.GameObjects.Text) => void }[]; badge?: string; portrait?: string; grey?: boolean; animate?: boolean; extra?: { h: number; make: (x: number, y: number, w: number) => Phaser.GameObjects.GameObject[] } }): Phaser.GameObjects.Container {
+  private sheet(o: { title: string; lines: string[]; actions: { label: string; act: () => void; primary?: boolean; gold?: boolean; half?: boolean; ref?: (tx: Phaser.GameObjects.Text) => void }[]; badge?: string; art?: string; portrait?: string; grey?: boolean; animate?: boolean; extra?: { h: number; make: (x: number, y: number, w: number) => Phaser.GameObjects.GameObject[] } }): Phaser.GameObjects.Container {
     const c = this.add.container(0, 0).setDepth(30);
     const shade = this.add.rectangle(0, 0, VIEW.width, VIEW.height, 0x0a1218, 0.55).setOrigin(0).setInteractive();
     shade.on('pointerdown', (_p: Phaser.Input.Pointer, _x: number, _y: number, ev: Ev) => ev.stopPropagation());
@@ -1129,12 +1136,33 @@ export class GameScene extends Phaser.Scene {
     const bg = this.add.graphics();
     plate(bg, 0, 0, w, h, 30);
     const body = this.add.container(x, top, [bg, ...content]);
-    if (o.portrait && this.textures.exists(o.portrait)) {
-      const img = this.add.image(VIEW.width / 2, top + 30, o.portrait).setOrigin(0.5, 1);
-      img.setScale(Math.min(3, 300 / img.height));
+    // Picture above the sheet, never under its edge (ART_REVIEW AR-12).
+    const room = Math.min(380, top - 40);
+    if (o.art && this.textures.exists(o.art) && room > 120) {
+      // Comic illustration: a framed panel with an ink border, like the intro comic.
+      const img = this.add.image(VIEW.width / 2, top - 14, o.art).setOrigin(0.5, 1);
+      img.setScale(Math.min((w - 24) / img.width, room / img.height));
+      const fw = img.displayWidth;
+      const fh = img.displayHeight;
+      const shadow = this.add.graphics();
+      shadow.fillStyle(0x0b1117, 0.35);
+      shadow.fillRect(VIEW.width / 2 - fw / 2 + 6, top - 14 - fh + 8, fw, fh);
+      const frame = this.add.graphics();
+      frame.lineStyle(6, 0x10171c, 1);
+      frame.strokeRect(VIEW.width / 2 - fw / 2, top - 14 - fh, fw, fh);
+      c.add([shadow, img, frame]);
+    } else if (o.portrait && this.textures.exists(o.portrait) && room > 80) {
+      // Pixel sprite: whole-number scale only and no rotation, so pixels stay square.
+      const img = this.add.image(VIEW.width / 2, top - 10, o.portrait).setOrigin(0.5, 1);
+      img.setScale(Math.max(1, Math.min(3, Math.floor(Math.min(room - 20, 300) / img.height))));
       img.texture.setFilter(Phaser.Textures.FilterMode.NEAREST);
-      if (o.grey) img.setTint(0x9aa4aa).setAngle(-8);
-      c.add(img);
+      const shadow = this.add.ellipse(VIEW.width / 2, top - 12, img.displayWidth * 0.9, 22, 0x0b1117, 0.3);
+      if (o.grey) {
+        // Lost: drained of colour (WebGL), dimmed on canvas.
+        img.preFX?.addColorMatrix().grayscale(0.85);
+        img.setTint(0xa9b1b6);
+      }
+      c.add([shadow, img]);
     }
     c.add(body);
     if (o.animate !== false) {

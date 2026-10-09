@@ -64,12 +64,17 @@ export class Voice {
     private me: number,
     /** Board point over a unit's head, or over a cell when there is no unit. */
     private bubbleAt: (at: { unit?: number; x?: number; y?: number }) => { x: number; y: number } | null,
+    /** A toast holds the strip above the dock: Контроль waits for it (QA-038). */
+    private toastUp: () => boolean = () => false,
   ) {}
 
-  /** Top edge of Контроль's strip while it is up, so toasts can stack above it. */
-  barTop(): number | null {
-    const b = this.bar;
-    return b && b.active ? (b.getData('top') as number) : null;
+  /** A toast takes the strip: Контроль's line steps aside (gameplay news wins over flavour). */
+  yieldToToast(): void {
+    const box = this.bar;
+    if (!box) return;
+    this.bar = null;
+    this.typer?.remove();
+    this.scene.tweens.add({ targets: box, alpha: 0, duration: 120, onComplete: () => box.destroy() });
   }
 
   /** A fresh run: Контроль says good morning. */
@@ -188,8 +193,13 @@ export class Voice {
    * Контроль's PA strip (white helmet mask, blue smile) or the HERO | OUT billboard, typed out letter by letter.
    * It sits in the toast strip just above the dock, never over the board (QA-038).
    */
-  private banner(text: string, seconds: number, ad: boolean): void {
+  private banner(text: string, seconds: number, ad: boolean, tries = 0): void {
     const s = this.scene;
+    // The strip is shared with toasts: wait until the toast is gone (ads just skip).
+    if (this.toastUp()) {
+      if (!ad && tries < 12) s.time.delayedCall(500, () => this.banner(text, seconds, ad, tries + 1));
+      return;
+    }
     this.bar?.destroy();
     this.typer?.remove();
     const w = DOCK.w;
@@ -222,7 +232,7 @@ export class Voice {
     }
     items.push(body);
     const y = DOCK.y - 8 - h / 2;
-    const box = s.add.container(x, y + 20, items).setDepth(DEPTH).setAlpha(0).setData('top', y - h / 2);
+    const box = s.add.container(x, y + 20, items).setDepth(DEPTH).setAlpha(0);
     this.bar = box;
     s.tweens.add({ targets: box, y, alpha: 1, duration: 200 });
     let n = prefix.length;

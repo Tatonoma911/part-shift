@@ -6,6 +6,7 @@ import type { AssistMode } from '../core/state';
 import { hasText, lang, setLang, t } from '../i18n';
 import { introSeen, playIntro } from '../intro';
 import { analytics, askAnalyticsConsent } from '../analytics';
+import { canVibrate, comfort, PALETTES, setComfort, TEXT_SCALES } from './comfort';
 import { learning, learningLang } from './learn';
 import { volumeHeight, volumeSliders } from './volume';
 import { BUILDING_ANCHOR, createArt, preloadArt } from './assets';
@@ -22,7 +23,7 @@ import { chip, plate, TXT } from './ui';
 import { closeSocial, dailySeed, dayId, heroOfWeek, invite, openBoard, openDonate, openFeedback, readChallenge, socialOpen } from '../social';
 
 type Ev = Phaser.Types.Input.EventData;
-type Page = 'main' | 'slots' | 'settings';
+type Page = 'main' | 'slots' | 'settings' | 'comfort';
 
 /** HeroOut heroes, all of them infected villains now (lore/VILLAINS.md); the menu shows three at random. */
 const MENU_HEROES = ['kiln', 'lineman', 'frostline', 'seraph', 'current', 'mason', 'beacon', 'canopy', 'sweep', 'patch', 'hive', 'n73', 'doctor', 'demon'];
@@ -264,8 +265,15 @@ export class MenuScene extends Phaser.Scene {
       }
       const color = primary ? INK.white : act ? INK.graphite : INK.dim;
       const tx = this.add.text(cx, y + (sub ? 38 : h / 2), label, TXT.body(29, color, '700')).setOrigin(0.5);
+      // A label never touches the button edges (ART_REVIEW AR-10): shrink it to fit, larger text sizes included.
+      const room = w - 64 - 56;
+      if (tx.width > room) tx.setScale(room / tx.width);
       c.add([g, tx]);
-      if (sub) c.add(this.add.text(cx, y + 78, sub, TXT.body(21, primary ? '#D9F3F8' : INK.dim, '500')).setOrigin(0.5));
+      if (sub) {
+        const st = this.add.text(cx, y + 78, sub, TXT.body(21, primary ? '#D9F3F8' : INK.dim, '500')).setOrigin(0.5);
+        if (st.width > room) st.setScale(room / st.width);
+        c.add(st);
+      }
       if (act) {
         const hit = this.add.zone(x0 + 32, y, w - 64, h).setOrigin(0).setInteractive({ useHandCursor: true });
         hit.on('pointerdown', (_p: Phaser.Input.Pointer, _x: number, _y: number, ev: Ev) => {
@@ -325,6 +333,48 @@ export class MenuScene extends Phaser.Scene {
         }
       }
       button(t('menu.back'), () => this.show('main'));
+    } else if (page === 'comfort') {
+      // «Удобство» (UI_SPEC §4.7): each row cycles its value on tap.
+      const cf = comfort();
+      const onOff = (v: boolean) => t(v ? 'comfort.on' : 'comfort.off');
+      c.add(this.add.text(cx, y + 6, t('settings.comfort').toUpperCase(), TXT.caps()).setOrigin(0.5));
+      y += 40;
+      button(`${t('comfort.palette')}: ${t(`comfort.palette.${cf.palette}`)}`, () => {
+        setComfort({ palette: PALETTES[(PALETTES.indexOf(cf.palette) + 1) % PALETTES.length] });
+        this.show('comfort');
+      }, false, t(`comfort.palette.${cf.palette}.hint`));
+      // Swatch: what "safe" and "danger" look like in this palette.
+      const sw = this.add.graphics();
+      const sy = y - 16 - 110 + 78;
+      sw.fillStyle(C.green, 1);
+      sw.fillCircle(x0 + 80, sy, 10);
+      sw.fillStyle(C.coral, 1);
+      sw.fillTriangle(x0 + w - 92, sy + 9, x0 + w - 68, sy + 9, x0 + w - 80, sy - 11);
+      c.add(sw);
+      button(`${t('comfort.calm')}: ${onOff(cf.calm)}`, () => {
+        setComfort({ calm: !cf.calm });
+        this.show('comfort');
+      }, false, t('comfort.calm.hint'));
+      button(`${t('comfort.shake')}: ${onOff(cf.shake)}`, () => {
+        setComfort({ shake: !cf.shake });
+        this.show('comfort');
+      });
+      button(`${t('comfort.text')}: ${Math.round(cf.textScale * 100)}%`, () => {
+        const i = TEXT_SCALES.indexOf(cf.textScale);
+        setComfort({ textScale: TEXT_SCALES[(i + 1) % TEXT_SCALES.length] });
+        this.show('comfort');
+      });
+      button(
+        `${t('comfort.vibrate')}: ${canVibrate() ? onOff(cf.vibrate) : t('comfort.vibrate.none')}`,
+        canVibrate()
+          ? () => {
+              setComfort({ vibrate: !cf.vibrate });
+              if (!cf.vibrate) navigator.vibrate?.(40);
+              this.show('comfort');
+            }
+          : null,
+      );
+      button(t('menu.back'), () => this.show('settings'), true);
     } else {
       const st = loadSettings();
       c.add(this.add.text(cx, y + 6, t('settings.volume').toUpperCase(), TXT.caps()).setOrigin(0.5));
@@ -339,10 +389,17 @@ export class MenuScene extends Phaser.Scene {
         this.scene.restart();
       });
       const modes: AssistMode[] = ['full', 'scanner', 'off'];
-      button(`${t('settings.assist.title')}: ${t(`assist.mode.${st.assist}`)}`, () => {
-        saveSettings({ ...st, assist: modes[(modes.indexOf(st.assist) + 1) % modes.length] });
-        this.show('settings');
-      });
+      // Short name on the button, the current mode in the sub-line (AR-10: the long label did not fit).
+      button(
+        t('settings.assist'),
+        () => {
+          saveSettings({ ...st, assist: modes[(modes.indexOf(st.assist) + 1) % modes.length] });
+          this.show('settings');
+        },
+        false,
+        t(`assist.mode.${st.assist}.short`),
+      );
+      button(t('settings.comfort'), () => this.show('comfort'));
       button(`${t('analytics.setting')}: ${t(analytics.consent === 'granted' ? 'settings.on' : 'settings.off')}`, () => {
         analytics.setConsent(analytics.consent !== 'granted');
         this.show('settings');

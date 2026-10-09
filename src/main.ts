@@ -4,6 +4,7 @@ import { watchAccountConflicts } from './account/panel';
 import { GameScene } from './game/GameScene';
 import { MenuScene } from './game/MenuScene';
 import { DossierScene } from './game/meta/DossierScene';
+import { applyPalette } from './game/comfort';
 import { chooseLayout, LANDSCAPE, VIEW } from './game/layout';
 import { fontsReady } from './game/ui';
 import { initNative } from './platform/native';
@@ -11,6 +12,7 @@ import { bootAnalytics } from './analytics';
 import { bootSocial } from './social';
 
 initNative();
+applyPalette();
 
 // Cloud saves land in localStorage before the menu reads them (account.boot waits only briefly).
 Promise.all([fontsReady(), account.boot()]).then(() => {
