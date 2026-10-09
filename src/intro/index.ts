@@ -27,5 +27,13 @@ export { introSeen };
 /** Plays the comic over the game; game music pauses while it runs. */
 export async function playIntro(opts: { skipGate?: boolean } = {}): Promise<{ skipped: boolean }> {
   sound.stopMusic(0.2);
-  return playIntroComic({ lang, assets: assetMap(), music: sound.prefs.music, skipGate: opts.skipGate });
+  return playIntroComic({
+    lang,
+    assets: assetMap(),
+    music: sound.musicOn,
+    // Same levels as the game's sliders (squared like the game's buses).
+    musicVolume: (sound.prefs.master * sound.prefs.music) ** 2,
+    sfxVolume: (sound.prefs.master * sound.prefs.effects) ** 2,
+    skipGate: opts.skipGate,
+  });
 }

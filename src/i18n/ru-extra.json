@@ -37,5 +37,11 @@
   "analytics.consent.text": "Можно присылать нам анонимную статистику игры: где сложно, где игроки бросают и сколько длится смена? Без имени, почты и рекламы. Это можно изменить в настройках.",
   "analytics.consent.yes": "Можно",
   "analytics.consent.no": "Не надо",
-  "analytics.setting": "Статистика"
+  "analytics.setting": "Статистика",
+  "settings.volume": "Громкость",
+  "settings.volume.master": "Общая",
+  "settings.volume.music": "Музыка",
+  "settings.volume.effects": "Звуки игры",
+  "settings.volume.ui": "Кнопки и меню",
+  "settings.volume.voice": "Голоса"
 }

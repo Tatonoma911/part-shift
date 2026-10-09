@@ -47,15 +47,35 @@ async function bytesOf(url: string): Promise<ArrayBuffer> {
   return (await fetch(url)).arrayBuffer();
 }
 
+/** Volume per channel, 0..1. Effects = world, combat and alerts; ui = taps and menus; voice = character barks. */
 export interface SoundPrefs {
-  sfx: boolean;
-  music: boolean;
+  master: number;
+  music: number;
+  effects: number;
+  ui: number;
+  voice: number;
+}
+export type VolumeChannel = keyof SoundPrefs;
+export const CHANNELS: VolumeChannel[] = ['master', 'music', 'effects', 'ui', 'voice'];
+const DEFAULT_PREFS: SoundPrefs = { master: 0.8, music: 0.6, effects: 0.8, ui: 0.7, voice: 0.8 };
+
+/** True once the sound designer's manifest has sounds in the "voice" group. */
+export const HAS_VOICE = Object.values(SFX).some((d) => d.group === 'voice');
+
+/** The pre-slider prefs were {sfx: boolean, music: boolean}. */
+function readPrefs(raw: Record<string, unknown>): SoundPrefs {
+  const out = { ...DEFAULT_PREFS };
+  if (typeof raw.sfx === 'boolean' && !raw.sfx) out.effects = out.ui = out.voice = 0;
+  if (typeof raw.music === 'boolean' && !raw.music) out.music = 0;
+  for (const k of CHANNELS) if (typeof raw[k] === 'number') out[k] = Math.min(1, Math.max(0, raw[k] as number));
+  return out;
 }
 
 class SoundBoard {
   private ctx: AudioContext | null = null;
-  private sfxBus!: GainNode;
+  private masterBus!: GainNode;
   private musicBus!: GainNode;
+  private buses!: Record<'effects' | 'ui' | 'voice', GainNode>;
   private buffers = new Map<string, AudioBuffer>();
   private loading = new Map<string, Promise<AudioBuffer | null>>();
   private last = new Map<string, number>();
@@ -63,14 +83,19 @@ class SoundBoard {
   private music: AudioBufferSourceNode | null = null;
   private wantMusic: string | null = null;
   private combo = { step: 0, at: -1e9 };
-  prefs: SoundPrefs = { sfx: true, music: true };
+  prefs: SoundPrefs = { ...DEFAULT_PREFS };
 
   constructor() {
     try {
-      Object.assign(this.prefs, JSON.parse(localStorage.getItem(PREFS_KEY) ?? '{}'));
+      this.prefs = readPrefs(JSON.parse(localStorage.getItem(PREFS_KEY) ?? '{}'));
     } catch {
       /* defaults */
     }
+  }
+
+  /** Music is heard at all (the intro comic asks before starting its own track). */
+  get musicOn(): boolean {
+    return this.prefs.master > 0 && this.prefs.music > 0;
   }
 
   /** Browsers start audio only after a user gesture: call from the first pointerdown. */
@@ -79,10 +104,16 @@ class SoundBoard {
       const Ctx = window.AudioContext ?? (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
       if (!Ctx) return;
       this.ctx = new Ctx();
-      this.sfxBus = this.ctx.createGain();
-      this.musicBus = this.ctx.createGain();
-      this.sfxBus.connect(this.ctx.destination);
-      this.musicBus.connect(this.ctx.destination);
+      const ctx = this.ctx;
+      this.masterBus = ctx.createGain();
+      this.masterBus.connect(ctx.destination);
+      const bus = () => {
+        const g = ctx.createGain();
+        g.connect(this.masterBus);
+        return g;
+      };
+      this.musicBus = bus();
+      this.buses = { effects: bus(), ui: bus(), voice: bus() };
       this.applyPrefs();
       // Warm up the common sounds so the first dig isn't silent.
       for (const id of ['ui_tap', 'dig_done', 'energy_orb_arrive', 'build_place']) SFX[id]?.files.forEach((f) => void this.load(f));
@@ -103,9 +134,16 @@ class SoundBoard {
 
   private applyPrefs(): void {
     if (!this.ctx) return;
-    this.sfxBus.gain.value = this.prefs.sfx ? 1 : 0;
-    // Music bus default 0.5 (contracts.md, "Звук").
-    this.musicBus.gain.value = this.prefs.music ? 0.5 : 0;
+    // Squared so the slider feels even to the ear.
+    const v = (x: number) => x * x;
+    this.masterBus.gain.value = v(this.prefs.master);
+    // Music bus default 0.5 at full slider (contracts.md, "Звук").
+    this.musicBus.gain.value = 0.5 * v(this.prefs.music);
+    for (const k of ['effects', 'ui', 'voice'] as const) this.buses[k].gain.value = v(this.prefs[k]);
+  }
+
+  private channelOf(def: SfxDef): 'effects' | 'ui' | 'voice' {
+    return def.group === 'ui' ? 'ui' : def.group === 'voice' ? 'voice' : 'effects';
   }
 
   private load(file: string): Promise<AudioBuffer | null> {
@@ -132,7 +170,7 @@ class SoundBoard {
 
   play(id: string): void {
     const def = SFX[id];
-    if (!def || !this.ctx || !this.prefs.sfx) return;
+    if (!def || !this.ctx || this.prefs.master <= 0 || this.prefs[this.channelOf(def)] <= 0) return;
     const now = performance.now();
     if (now - (this.last.get(id) ?? -1e9) < def.cooldownMs) return;
     if (this.voices.filter((v) => v.id === id).length >= def.maxInstances) return;
@@ -159,7 +197,7 @@ class SoundBoard {
       src.detune.value = detune;
       const gain = this.ctx.createGain();
       gain.gain.value = def.volume;
-      src.connect(gain).connect(this.sfxBus);
+      src.connect(gain).connect(this.buses[this.channelOf(def)]);
       const voice = { id, priority: def.priority, src };
       this.voices.push(voice);
       src.onended = () => (this.voices = this.voices.filter((v) => v !== voice));

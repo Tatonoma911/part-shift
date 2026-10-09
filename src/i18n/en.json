@@ -143,5 +143,11 @@
   "analytics.consent.text": "May we send anonymous play statistics: where it gets hard, where players quit and how long a shift lasts? No name, no email, no ads. You can change this in settings.",
   "analytics.consent.yes": "Sure",
   "analytics.consent.no": "No thanks",
-  "analytics.setting": "Statistics"
+  "analytics.setting": "Statistics",
+  "settings.volume": "Volume",
+  "settings.volume.master": "Master",
+  "settings.volume.music": "Music",
+  "settings.volume.effects": "Game sounds",
+  "settings.volume.ui": "Buttons and menus",
+  "settings.volume.voice": "Voices"
 }
