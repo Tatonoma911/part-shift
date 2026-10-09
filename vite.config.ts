@@ -2,7 +2,7 @@ import { resolve } from 'node:path';
 import { defineConfig } from 'vite';
 
 // base './' so the build works from any GitHub Pages sub-path.
-// Two pages: the universe site at / (site/) and the game at /play (src/).
+// Pages: the universe site at / (site/), the game at /play (src/), and the bare full-screen game at /mobile (the Android app's start page).
 // ARTIFACT=1 builds only the game script (no page around it) and inlines every image so it fits in one HTML file (npm run artifact).
 // LEARNING=1 builds the learning preview page (learning.html) the same way.
 const artifact = process.env.ARTIFACT === '1';
@@ -18,7 +18,7 @@ export default defineConfig({
         ? resolve(__dirname, 'learning.html')
         : artifact
           ? { game: resolve(__dirname, 'src/main.ts') }
-          : { main: resolve(__dirname, 'index.html'), play: resolve(__dirname, 'play/index.html') },
+          : { main: resolve(__dirname, 'index.html'), play: resolve(__dirname, 'play/index.html'), mobile: resolve(__dirname, 'mobile/index.html') },
     },
   },
 });

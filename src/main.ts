@@ -3,6 +3,9 @@ import { GameScene } from './game/GameScene';
 import { MenuScene } from './game/MenuScene';
 import { chooseLayout, VIEW } from './game/layout';
 import { fontsReady } from './game/ui';
+import { initNative } from './platform/native';
+
+initNative();
 
 fontsReady().then(() => {
   // Wide screens get the landscape canvas; the site's /play page reads this flag to size #app 16:9.

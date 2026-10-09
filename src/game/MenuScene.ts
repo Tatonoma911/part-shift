@@ -10,6 +10,7 @@ import type { GameStart } from './GameScene';
 import { C, INK, LANDSCAPE, VIEW } from './layout';
 import { clearSlot, lastSlot, loadSettings, loadSlot, saveSettings, SLOTS } from './saves';
 import { tutorialDone } from './Tutorial';
+import { setBackHandler } from '../platform/native';
 import { chip, plate, TXT } from './ui';
 
 type Ev = Phaser.Types.Input.EventData;
@@ -23,6 +24,8 @@ type Page = 'main' | 'slots' | 'settings';
 export class MenuScene extends Phaser.Scene {
   private page: Phaser.GameObjects.Container | null = null;
   private armed: number | null = null;
+  private current: Page = 'main';
+  private storyPlaying = false;
 
   constructor() {
     super('menu');
@@ -59,6 +62,17 @@ export class MenuScene extends Phaser.Scene {
     }
     this.drawBackdrop();
     this.show('main');
+    // Android back: skips the intro comic, sub-pages return to the main page; on the main page the app goes to the background.
+    setBackHandler(() => {
+      if (learning().isOpen) return true;
+      if (this.storyPlaying) {
+        document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
+        return true;
+      }
+      if (this.current === 'main') return false;
+      this.show('main');
+      return true;
+    });
     // First launch: the intro comic plays over the menu (its own tap gate unlocks sound).
     if (!introSeen() && !this.registry.get('introShown')) {
       this.registry.set('introShown', true);
@@ -68,7 +82,9 @@ export class MenuScene extends Phaser.Scene {
 
   private story(skipGate: boolean): void {
     this.input.enabled = false;
+    this.storyPlaying = true;
     playIntro({ skipGate }).finally(() => {
+      this.storyPlaying = false;
       if (this.scene.isActive()) this.input.enabled = true;
     });
   }
@@ -119,6 +135,7 @@ export class MenuScene extends Phaser.Scene {
   }
 
   private show(page: Page): void {
+    this.current = page;
     this.page?.destroy();
     this.armed = null;
     const c = this.add.container(0, 0);
