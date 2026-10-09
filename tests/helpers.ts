@@ -1,9 +1,10 @@
+import type { RuleOverrides } from '../src/core/state';
 import type { CellContent } from '../src/core/state';
 import { World } from '../src/core/world';
 
 /** A small hand-made field: '.' ground, '~' water, 'r' rubble, 'v' vein, 'c' cache, 's' survivor, 'n' nest, 'h' heavy nest, 'D' demon hatch. */
-export function handWorld(rows: string[], seed = 1): World {
-  const w = new World({ seed, width: rows[0].length, height: rows.length });
+export function handWorld(rows: string[], seed = 1, rules?: RuleOverrides): World {
+  const w = new World({ seed, width: rows[0].length, height: rows.length, rules });
   const map: Record<string, CellContent> = {
     '.': 'ground', '~': 'water', r: 'rubble', v: 'energy_vein', c: 'cache', s: 'survivor', n: 'nest', h: 'heavy_nest', D: 'demon_hatch',
   };

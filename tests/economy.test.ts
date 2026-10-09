@@ -17,8 +17,8 @@ describe('digging', () => {
     expect(w.player(0).energy).toBeGreaterThan(e0);
   });
 
-  it('a quiet cell auto-queues its covered neighbors; the player queue goes first', () => {
-    const w = handWorld(['.......', '.......', '......n']);
+  it('with the tutorial rule on, a quiet cell auto-queues its covered neighbors', () => {
+    const w = handWorld(['.......', '.......', '......n'], 1, { config: { 'dig.autoQueueZeroNeighbors': true } });
     w.apply({ type: 'placeCommand', x: 0, y: 0 });
     expect(w.player(0).autoQueue.length).toBeGreaterThan(0);
   });
@@ -131,5 +131,13 @@ describe('population and buildings', () => {
     expect(w.player(0).energy).toBe(0);
     const cmd = w.building(w.player(0).command)!;
     expect(cmd.slots.some((s) => s.unit === null)).toBe(true);
+  });
+});
+
+describe('free play digging', () => {
+  it('nothing is queued for the player by default (no pre-selected cells)', () => {
+    const w = handWorld(['.......', '.......', '......n']);
+    w.apply({ type: 'placeCommand', x: 0, y: 0 });
+    expect(w.player(0).autoQueue.length).toBe(0);
   });
 });

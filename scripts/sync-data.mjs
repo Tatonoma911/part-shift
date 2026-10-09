@@ -16,6 +16,10 @@ const jobs = [
   { from: join(root, 'audio/sfx'), to: 'src/assets/audio/sfx', pick: (f) => f.endsWith('.mp3') },
   { from: join(root, 'audio/music'), to: 'src/assets/audio/music', pick: (f) => f.endsWith('.mp3') },
   { from: join(root, 'audio'), to: 'src/assets/audio', pick: (f) => f === 'sounds.json' },
+  // Intro comic (Комикс-вступление thread): component, panels and sprites; its sounds come from the game's own audio.
+  { from: join(root, 'comic'), to: 'src/intro', pick: (f) => f === 'intro-comic.js' },
+  { from: join(root, 'comic/assets/panels'), to: 'src/assets/comic/panels', pick: (f) => f.endsWith('.jpg') },
+  { from: join(root, 'comic/assets/sprites'), to: 'src/assets/comic/sprites', pick: (f) => f.endsWith('.png') },
   { from: join(root, 'art/export/portraits'), to: 'src/assets/art/portraits', pick: (f) => ['demon.png', 'bld_command.png'].includes(f) },
 ];
 for (const { from, to, pick } of jobs) {
