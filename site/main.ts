@@ -1,5 +1,5 @@
 import './style.css';
-import { ARTBOOK, COMICS, DISTRICTS, HEROES, img, REACTIONS, TECH, UI, type Hero, type L, type Lang } from './content';
+import { ADS, ARTBOOK, BARKS, COMICS, DISTRICTS, HEROES, img, REACTIONS, TECH, UI, type Hero, type L, type Lang } from './content';
 
 /**
  * The PARTSHIFT universe site: one page, views switched by plain hash tokens
@@ -132,20 +132,21 @@ function home(): string {
     <ol class="timeline">
       <li><h3>${R('До сирен', 'Before the sirens')}</h3><p>${R('Герои HeroOut снимают котов с деревьев, играют в волейбол на Sunline Beach и раздают автографы. Об этом — комиксы.', 'HeroOut heroes rescue cats, play volleyball on Sunline Beach and sign autographs. That’s what the comics are about.')}</p></li>
       <li><h3>EVERYONE IS ON CALL</h3><p>${R('Протокол «Все на смене» запускают на демонстрации. Splice Medium попадает в реактор.', 'The “Everyone Is On Call” protocol goes live at a demo. Splice Medium reaches the reactor.')}</p></li>
-      <li><h3>${R('Сеть адаптации', 'The adaptation network')}</h3><p>${R('Люди и машины обрастают «решениями задачи». Спасательные протоколы героев становятся навязчивыми и буквальными.', 'People and machines grow “solutions to the task.” The heroes’ rescue protocols turn obsessive and literal.')}</p></li>
-      <li><h3>${R('Первая смена', 'The first shift')}</h3><p>${R('Командный центр открывает город заново, квартал за кварталом. Это твоя игра.', 'A Command Center reopens the city, block by block. That’s your game.')}</p></li>
+      <li><h3>${R('Все на смене', 'Everyone on call')}</h3><p>${R('Гель сводит с ума горожан и всех героев HeroOut. Около пятнадцати спасателей бегают по городу и «спасают» каждый по-своему. Контроль вежливо просит пройти на склад.', 'The gel drives the citizens and every HeroOut hero mad. About fifteen rescuers roam the city, each “rescuing” in their own way. Control politely asks everyone to proceed to the warehouse.')}</p></li>
+      <li><h3>${R('Первая смена', 'The first shift')}</h3><p>${R('Командный центр открывает город заново, квартал за кварталом, и останавливает героев одного за другим. Это твоя игра.', 'A Command Center reopens the city, block by block, and stops the heroes one by one. That’s your game.')}</p></li>
+      <li><h3>${R('42-й этаж', 'Floor 42')}</h3><p>${R('Наверху башни HeroOut сидит совет директоров: «Город платит, пока боится». Финал — добраться туда и выключить протокол.', 'At the top of the HeroOut tower sits the board: “The city pays as long as it’s afraid.” The finale: get there and switch the protocol off.')}</p></li>
     </ol>
   </div></section>
 
   <section class="section" style="padding-top:0"><div class="wrap">
-    ${head(R('ДОСЬЕ // HEROOUT', 'DOSSIERS // HEROOUT'), R('Герои и их части', 'Heroes and their parts'), R('У каждого героя одна функция, один цвет и одна часть тела, которую мечтает забрать любой житель.', 'Each hero has one function, one colour and one body part every resident dreams of claiming.'))}
+    ${head(R('ДОСЬЕ // HEROOUT', 'DOSSIERS // HEROOUT'), R('Герои, они же злодеи', 'Heroes, also the villains'), R('У каждого героя одна функция, один цвет, одна мания и одна часть тела, которую мечтает забрать любой житель.', 'Each hero has one function, one colour, one obsession and one body part every resident dreams of claiming.'))}
     <div class="grid">${canon.map(heroTile).join('')}</div>
     <div class="row" style="margin-top:22px"><a class="btn btn-ghost" href="#heroes">${u('all')} (${HEROES.length})</a></div>
   </div></section>
 
   <section class="section band"><div class="wrap split">
     <div class="stack">
-      ${head(R('ИГРА // ОХОТА НА ДЕМОНА', 'GAME // DEMON HUNT'), R('Открой город квартал за кварталом', 'Reopen the city block by block'), R('Числа на открытых кварталах подсказывают, что прячется рядом. Галочки и подсветка сами покажут, где безопасно.', 'Numbers on opened blocks tell you what hides next door. Ticks and highlights show you where it’s safe.'))}
+      ${head(R('ИГРА // СРОЧНЫЙ ВЫЗОВ', 'GAME // URGENT CALL'), R('Открой город квартал за кварталом', 'Reopen the city block by block'), R('Числа на открытых кварталах подсказывают, что прячется рядом. Галочки и подсветка сами покажут, где безопасно.', 'Numbers on opened blocks tell you what hides next door. Ticks and highlights show you where it’s safe.'))}
       <div class="howto">${howto(true)}</div>
       <div class="row"><a class="btn btn-primary btn-lg" href="${playHref()}">${ICON.play}${u('playFree')}</a></div>
     </div>
@@ -164,7 +165,7 @@ function howto(dark = false): string {
   const steps: [string, string, string, string, string][] = [
     ['⌂', 'Поставь Командный центр', 'Place the Command Center', 'Первое нажатие на поле. Это твоя база: потеряешь её — смена окончена.', 'Your first tap. It’s your base; lose it and the shift is over.'],
     ['↘', 'Проведи по кварталам', 'Swipe across blocks', 'Жители сами пойдут копать. Открытые клетки дают Энергию и место для стройки.', 'Residents go and dig. Opened cells give Energy and room to build.'],
-    ['▲', 'Читай числа', 'Read the numbers', '▲ гнёзда врагов рядом, ◆ находки, ⬡ Демон. Зелёная галочка — точно безопасно.', '▲ nests nearby, ◆ finds, ⬡ the Demon. A green tick means safe for sure.'],
+    ['▲', 'Читай числа', 'Read the numbers', '▲ гнёзда врагов рядом, ◆ находки, ⬡ герой на вызове. Зелёная галочка — точно безопасно.', '▲ nests nearby, ◆ finds, ⬡ the hero on call. A green tick means safe for sure.'],
     ['✚', 'Расти и забирай части', 'Grow and claim parts', 'Школа делает защитников. Победив врага, защитник сам прикрутит его руку или ногу.', 'The school trains defenders. After a win, a defender bolts on the enemy’s arm or leg.'],
   ];
   return steps
@@ -198,11 +199,11 @@ function heroesView(): string {
   const canon = HEROES.filter((h) => h.group === 'canon');
   const city = HEROES.filter((h) => h.group === 'city');
   return `<section class="section"><div class="wrap">
-    ${head(R('ДОСЬЕ // КАНОН', 'DOSSIERS // CANON'), R('Герои', 'Heroes'), R('Позывные, роли и части тела. Имена — только позывные: личные имена героев пока не утверждены.', 'Callsigns, roles and body parts. Callsigns only: the heroes’ personal names aren’t approved yet.'))}
+    ${head(R('ДОСЬЕ // HEROOUT', 'DOSSIERS // HEROOUT'), R('Герои. Они же злодеи', 'Heroes. Also the villains'), R('Гель Splice свёл с ума всех спасателей HeroOut, их около пятнадцати. Каждый всё ещё «спасает», только от такой помощи надо бежать. Главного среди них нет. Победишь героя — заберёшь его часть.', 'Splice gel drove every HeroOut rescuer mad, about fifteen of them. Each one is still “rescuing,” and you should run from that kind of help. None of them is in charge. Beat a hero and take their part.'))}
     <div class="grid">${canon.map(heroTile).join('')}</div>
   </div></section>
   <section class="section" style="padding-top:0"><div class="wrap">
-    ${head(R('ГОРОЖАНЕ // ДО СИРЕН', 'CITIZENS // BEFORE THE SIRENS'), R('Спасатели Lumen City', 'Lumen City rescuers'), R('Герои комиксов. Обычные городские профессии, доведённые до героизма.', 'Comic heroes. Ordinary city jobs taken all the way to heroism.'))}
+    ${head(R('ГОРОД // ДО СИРЕН', 'CITY // BEFORE THE SIRENS'), R('Ещё спасатели Lumen City', 'More Lumen City rescuers'), R('Обычные городские службы, доведённые до героизма, а потом гелем до мании. Пока в комиксах, на поле выйдут позже.', 'Ordinary city services taken to heroism, then by the gel to obsession. In the comics for now, on the board later.'))}
     <div class="grid">${city.map(heroTile).join('')}</div>
   </div></section>`;
 }
@@ -226,10 +227,13 @@ function heroView(id: string): string {
         <span class="chip"><i style="--dot:${h.color}"></i>${tr(h.hud)}</span>
         <h1>${tr(h.name)}</h1>
         <p class="lead">${tr(h.role)}</p>
-        ${h.quote ? `<blockquote class="quote" style="margin:6px 0">${tr(h.quote)}</blockquote>` : ''}
+        ${h.quote ? `<blockquote class="quote" style="margin:6px 0">${tr(h.quote)}<span class="caps" style="display:block;margin-top:6px">${R('ДО СИРЕН', 'BEFORE THE SIRENS')}</span></blockquote>` : ''}
+        ${h.line ? `<div class="bark slab"><span class="caps">${R('СЕЙЧАС, НА СМЕНЕ:', 'NOW, ON SHIFT:')}</span>«${tr(h.line)}»</div>` : ''}
         <div class="facts">
           ${row(R('ДО АВАРИИ', 'BEFORE'), h.before)}
-          ${row(R('ПОСЛЕ', 'AFTER'), h.after)}
+          ${row(R('ПОСЛЕ ГЕЛЯ', 'AFTER THE GEL'), h.mania ?? h.after)}
+          ${row(R('ТРОФЕЙ', 'TROPHY'), h.trophy)}
+          ${row(R('УБЕЖИЩЕ', 'LAIR'), h.lair)}
           ${row(R('МОДУЛЬ', 'MODULE'), h.module)}
           ${row(R('ТЕХНОЛОГИЯ', 'TECH'), h.tech)}
           ${row(R('ОБРАЗ', 'LOOK'), h.look)}
@@ -326,33 +330,33 @@ function worldView(): string {
 }
 
 function villainsView(): string {
-  const barks: [string, string][] = [
-    ['Добро пожаловать на смену. Напоминаем: все сотрудники и жители являются активами HeroOut.', 'Welcome to your shift. Reminder: all staff and residents are HeroOut assets.'],
-    ['Несанкционированная замена модуля. Гарантия аннулирована.', 'Unauthorised module replacement. Warranty void.'],
-    ['Подземный модуль покидает рабочее место. Он всё ещё на смене.', 'The subsurface unit is leaving its post. It is still on shift.'],
-    ['Смена прервана. Активы будут собраны позже.', 'Shift interrupted. Assets will be collected later.'],
-  ];
   const enemies: [string, string, string][] = [
     ['anim-adaptant_thermo', 'Термоадаптант', 'Thermo adaptant'],
     ['anim-adaptant_cryo', 'Криоадаптант', 'Cryo adaptant'],
     ['anim-adaptant_volt', 'Электроадаптант', 'Volt adaptant'],
     ['anim-heavy_adaptant', 'Тяжёлый адаптант', 'Heavy adaptant'],
   ];
+  const mad = HEROES.filter((h) => h.mania);
+  const madTile = (h: Hero) => `<a class="tile slab" href="#hero-${h.id}" style="--hc:${h.color}">
+    <div class="stage"><span class="stripe"></span><img src="${img(h.px)}" alt="${esc(tr(h.name))}" loading="lazy"></div>
+    <div class="meta"><span class="caps">${tr(h.trophy!)}</span><h3>${tr(h.name)}</h3><p>«${tr(h.line!)}»</p></div>
+  </a>`;
   return `<section class="section"><div class="wrap">
-    ${head(R('УГРОЗЫ // ПРОТОКОЛЫ', 'THREATS // PROTOCOLS'), R('Злодеи', 'Villains'), R('Злодеев «со злом внутри» здесь нет. Каждый просто выполняет свой протокол слишком буквально.', 'Nobody here is evil at heart. Each one just follows their protocol far too literally.'))}
+    ${head(R('УГРОЗЫ // ПРОТОКОЛЫ', 'THREATS // PROTOCOLS'), R('Злодеи', 'Villains'), R('Злодеев «со злом внутри» здесь нет. Есть герои, которые спасают слишком буквально, корпорация, которой выгоден страх, и её очень вежливый голос.', 'Nobody here is evil at heart. There are heroes who rescue far too literally, a corporation that profits from fear, and its very polite voice.'))}
 
     <div class="villain">
-      <div class="art slab" style="--hc:#E03552;background:linear-gradient(180deg,#2a1416,#10171c)"><img src="${img('demon-sheet.webp')}" alt="" style="max-height:520px;width:auto"></div>
+      <div class="art slab" style="--hc:#E03552;background:linear-gradient(180deg,#2a1416,#10171c)"><img src="${img('key-art.webp')}" alt="" style="width:100%;height:100%;object-fit:cover"></div>
       <div class="stack">
-        <span class="chip"><i style="--dot:#8A4DFF"></i>${R('БОСС РАЙОНА // UNDERSUN WORKS', 'DISTRICT BOSS // UNDERSUN WORKS')}</span>
-        <h2>${R('Демон', 'Demon')}</h2>
-        <p class="lead">${R('Подземный спасатель с четырьмя руками и буровым хвостом. Уверен, что наверху опасно, и уводит людей вниз, «в безопасность». Обратно никого не выпускает.', 'An underground rescuer with four arms and a drill tail. He’s sure the surface is dangerous and leads people down “to safety.” He lets no one back up.')}</p>
-        <p>${R('В игре он спит под люком Undersun. Фиолетовые числа ⬡ показывают, где. Разбудишь раньше времени — пойдёт на Командный центр. Не говорит: слышен только гул бура и жар труб.', 'In the game he sleeps under an Undersun hatch. Purple ⬡ numbers show where. Wake him too early and he marches on your Command Center. He never speaks; you only hear the drill and the hot pipes.')}</p>
-        <div class="row"><a class="btn btn-ghost" href="#hero-demon">${R('Досье Демона', 'Demon’s dossier')}</a><img src="${img('px/anim-demon.gif')}" alt="" style="height:64px;width:auto;image-rendering:pixelated"></div>
+        <span class="chip"><i style="--dot:#E03552"></i>${R('ВСЕ СРАЗУ // ГЛАВНОГО НЕТ', 'ALL AT ONCE // NONE IN CHARGE')}</span>
+        <h2>${R('Обезумевшие герои', 'The deranged heroes')}</h2>
+        <p class="lead">${R('Гель Splice лечил спасателей и отращивал им конечности. Потом он вышел из-под контроля и свёл с ума горожан и всех героев HeroOut.', 'Splice gel healed rescuers and regrew their limbs. Then it went out of control and drove the citizens and every HeroOut hero mad.')}</p>
+        <p>${R('Около пятнадцати героев бегают по городу как враги. Каждый всё ещё на смене и всё ещё «спасает», у каждого своя мания, стихия и убежище. Главного среди них нет: Демон, Килн, Фростлайн и Серафим равны, просто опасны по-разному. В каждой смене цель — герой, на которого пришёл вызов. Первым в игре сделан Демон.', 'About fifteen heroes roam the city as enemies. Each is still on shift and still “rescuing,” each with an obsession, an element and a lair. None of them is in charge: Demon, Kiln, Frostline and Seraph are equals, just dangerous in different ways. Each shift targets the hero the call came in for. Demon is simply the first one in the game.')}</p>
+        <div class="bark slab"><span class="caps">${R('КОНТРОЛЬ:', 'CONTROL:')}</span>${R('Если вы видите обезумевшего героя, не паникуйте. Он на смене.', 'If you see a deranged hero, do not panic. They are on shift.')}</div>
       </div>
     </div>
+    <div class="grid">${mad.map(madTile).join('')}</div>
 
-    <div class="villain">
+    <div class="villain" style="margin-top:56px">
       <div class="art slab">
         <svg class="control-face" viewBox="0 0 200 200" role="img" aria-label="${R('Маска Контроля', 'Control’s mask')}">
           <defs><linearGradient id="cm" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset="1" stop-color="#dfe8eb"/></linearGradient></defs>
@@ -365,11 +369,23 @@ function villainsView(): string {
         </svg>
       </div>
       <div class="stack">
-        <span class="chip"><i style="--dot:#E03552"></i>${R('ГЛАВНЫЙ АНТАГОНИСТ // ИИ КОРПОРАЦИИ', 'MAIN ANTAGONIST // CORPORATE AI')}</span>
+        <span class="chip"><i style="--dot:#57D8F2"></i>${R('ГОЛОС КОРПОРАЦИИ // ИИ HEROOUT', 'VOICE OF THE CORPORATION // HEROOUT AI')}</span>
         <h2>${R('Контроль', 'Control')}</h2>
-        <p class="lead">${R('Аварийный ИИ HeroOut. До сих пор вежливо выполняет протокол «Все на смене». Жители для него — активы компании, а трофейные модули на защитниках — кража имущества.', 'HeroOut’s emergency AI. Still politely running “Everyone Is On Call.” To Control, residents are company assets and trophy modules on defenders are stolen property.')}</p>
-        <p>${R('У Контроля нет тела: его лицо — маска шлема спасателя на рекламных экранах, вместо рта голубая линия-улыбка. Никогда не кричит. Финал кампании — не уничтожить его, а выключить протокол: «Смена окончена. Все свободны».', 'Control has no body: its face is a rescue-helmet mask on billboard screens, with a thin blue smile for a mouth. It never shouts. The campaign ends not by destroying it but by switching the protocol off: “Shift over. Everyone is free.”')}</p>
-        <div class="stack" style="gap:10px">${barks.map(([ru, en]) => `<div class="bark slab"><span class="caps">${R('КОНТРОЛЬ:', 'CONTROL:')}</span>${R(ru, en)}</div>`).join('')}</div>
+        <p class="lead">${R('Аварийный ИИ HeroOut. До сих пор вежливо выполняет протокол EVERYONE IS ON CALL. Все жители и все герои для него имущество компании, которое надо учесть и вернуть на склад.', 'HeroOut’s emergency AI. Still politely running EVERYONE IS ON CALL. To Control, every resident and every hero is company property to be logged and returned to the warehouse.')}</p>
+        <p>${R('Тела у Контроля нет: лицо — маска шлема спасателя на экранах и дронах-громкоговорителях, вместо рта голубая линия-улыбка. Он никогда не злится. Чем страшнее событие, тем спокойнее голос. Чужие модули на защитниках для него кража.', 'Control has no body: its face is a rescue-helmet mask on screens and loudspeaker drones, with a thin blue smile for a mouth. It never gets angry. The scarier the event, the calmer the voice. Trophy modules on defenders count as theft.')}</p>
+        <div class="stack" style="gap:10px">${BARKS.map(([ru, en]) => `<div class="bark slab"><span class="caps">${R('КОНТРОЛЬ:', 'CONTROL:')}</span>${R(ru, en)}</div>`).join('')}</div>
+      </div>
+    </div>
+
+    <div class="villain">
+      <div class="art slab" style="background:linear-gradient(180deg,#10171c,#0b1117);display:grid;place-items:center">
+        <div style="font:900 clamp(96px,16vw,180px)/1 var(--display);color:#EDF4F5;letter-spacing:-0.04em">42</div>
+      </div>
+      <div class="stack">
+        <span class="chip"><i style="--dot:#E8A33A"></i>${R('КОРПОРАЦИЯ НАВЕРХУ // НАСТОЯЩИЙ ФИНАЛ', 'THE CORPORATION UPSTAIRS // THE REAL FINALE')}</span>
+        <h2>${R('42-й этаж', 'Floor 42')}</h2>
+        <p class="lead">${R('На улице HeroOut — честные усталые спасатели. Наверху, на 42-м этаже, совет директоров давно понял: город платит, пока у него что-то случается.', 'Down on the street, HeroOut means honest, tired rescuers. Upstairs on floor 42, the board figured out long ago that the city pays as long as something keeps happening.')}</p>
+        <p>${R('Кошки на деревьях, краны, которые сходят с ума, пожар ровно за минуту до проезда патруля. Слишком много инцидентов случается слишком вовремя. И гель выпустили, не проверив. Финал кампании — не убить героя, а добраться до 42-го этажа и выключить протокол: «Смена окончена. Все свободны». Тогда герои смогут прийти в себя.', 'Cats up trees, cranes going haywire, a fire exactly one minute before the patrol drives by. Too many incidents happen right on time. And the gel shipped untested. The campaign ends not by killing a hero but by reaching floor 42 and switching the protocol off: “Shift over. Everyone is free.” Then the heroes can come back to themselves.')}</p>
       </div>
     </div>
 
@@ -384,16 +400,21 @@ function villainsView(): string {
         </svg>
       </div>
       <div class="stack">
-        <span class="chip"><i style="--dot:#E8A33A"></i>${R('РАСТУЩАЯ УГРОЗА // RESEARCH CAMPUS', 'GROWING THREAT // RESEARCH CAMPUS')}</span>
+        <span class="chip"><i style="--dot:#8A4DFF"></i>${R('РАСТУЩАЯ УГРОЗА // RESEARCH CAMPUS', 'GROWING THREAT // RESEARCH CAMPUS')}</span>
         <h2>${R('Ядро вспышки', 'Splice Heart')}</h2>
-        <p class="lead">${R('Не персонаж, а место: треснувший реактор с кобальтовой плазмой, с которого началась катастрофа. Он продолжает «адаптировать» город.', 'Not a character but a place: the cracked cobalt-plasma reactor where it all began. It keeps “adapting” the city.')}</p>
-        <p>${R('В игре это шкала «Угроза»: чем дольше смена, тем сильнее адаптанты. Контроль не даёт Ядро выключить — оно тоже имущество компании.', 'In the game it’s the Threat ring: the longer the shift, the stronger the adaptants. Control won’t let anyone shut it down; it’s company property too.')}</p>
+        <p class="lead">${R('Не персонаж, а место: повреждённый контейнер геля в реакторе Research Campus. Треснувшая белая оболочка, пульсирующая голубая плазма, кабели-вены по асфальту.', 'Not a character but a place: a damaged gel container inside the Research Campus reactor. A cracked white shell, pulsing blue plasma, cable veins across the asphalt.')}</p>
+        <p>${R('В игре это шкала «Угроза»: каждые две минуты враги становятся сильнее. Контроль не даёт Ядро заглушить, потому что оно тоже имущество компании.', 'In the game it’s the Threat ring: every two minutes the enemies get stronger. Control won’t let anyone shut it down, because it’s company property too.')}</p>
       </div>
     </div>
   </div></section>
 
-  <section class="section" style="padding-top:0"><div class="wrap">
-    ${head(R('ПОЛЕ // ВРАГИ', 'BOARD // ENEMIES'), R('Адаптанты', 'Adaptants'), R('Люди, звери из вивария и техника, перестроенные Splice Medium под задачу. Каждый отдаёт победителю часть своей технологии.', 'People, vivarium animals and machines rebuilt by Splice Medium for a task. Each one gives its technology to the winner.'))}
+  <section class="section band"><div class="wrap">
+    ${head(R('ФАСАДЫ // РЕКЛАМА HEROOUT', 'BILLBOARDS // HEROOUT ADS'), R('Всегда на смене', 'Always on call'), R('Реклама до сих пор висит по всему городу. Мелкий шрифт прилагается.', 'The ads still hang all over the city. Fine print included.'))}
+    <div class="grid">${ADS.map(([ru, en]) => `<div class="step" style="background:#142028"><span class="caps" style="color:var(--seam)">HERO | OUT</span><p style="font:700 18px/1.35 var(--display);color:#fff;margin:8px 0 0">${R(ru, en)}</p></div>`).join('')}</div>
+  </div></section>
+
+  <section class="section"><div class="wrap">
+    ${head(R('ПОЛЕ // ВРАГИ', 'BOARD // ENEMIES'), R('Адаптанты', 'Adaptants'), R('Обычные горожане, заражённые гелем. Одна часть тела переросла под стихию: термо, криогель, ток. Слабые, но их много, и гнездятся они в закрытых кварталах.', 'Ordinary citizens infected by the gel. One body part overgrew for an element: thermo, cryogel, current. Weak but numerous, nesting in closed blocks.'))}
     <div class="enemies">${enemies.map(([f, ru, en]) => `<div class="enemy slab"><img src="${img(`px/${f}.gif`)}" alt="" loading="lazy"><h3 style="font-size:15px">${R(ru, en)}</h3></div>`).join('')}</div>
   </div></section>`;
 }
