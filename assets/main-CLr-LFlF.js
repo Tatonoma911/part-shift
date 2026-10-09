@@ -1,0 +1,251 @@
+import{i as o,H as h,C as f,A as T,D as b,T as C,R as L,U as M}from"./content-Bw5xqmYx.js";const O="partshift.lang";function D(){const s=new URLSearchParams(location.search).get("lang");if(s==="ru"||s==="en")return s;try{const a=localStorage.getItem(O);if(a==="ru"||a==="en")return a}catch{}return navigator.language.toLowerCase().startsWith("ru")?"ru":"en"}let l=D();const i=s=>s[l]||s.ru,r=s=>i(M[s]),u=s=>s.replace(/[&<>"]/g,a=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"})[a]),e=(s,a)=>l==="ru"?s:a,$=()=>`play/index.html?lang=${l}`,S=["heroes","world","villains","comics","artbook"],m={burger:'<svg width="26" height="26" viewBox="0 0 26 26" aria-hidden="true"><path d="M3 7h20M3 13h20M3 19h14" stroke="currentColor" stroke-width="2.4" stroke-linecap="square"/></svg>',close:'<svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 5l14 14M19 5L5 19" stroke="currentColor" stroke-width="2.4"/></svg>',play:'<svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M4 2l10 6-10 6z" fill="currentColor"/></svg>'};function U(s){const a=S.map(t=>`<a href="#${t}"${s===t?' aria-current="page"':""}>${r(t)}</a>`).join("");return`
+  <header class="bar"><div class="wrap bar-in">
+    <a class="brand" href="#home" aria-label="PART SHIFT">
+      <img src="${o("emblem.webp")}" alt="" width="34" height="34">
+      <span class="wordmark">PART<b>SHIFT</b></span>
+    </a>
+    <nav class="nav" aria-label="${r("menu")}">${a}</nav>
+    ${x()}
+    <a class="btn btn-primary" href="${$()}">${m.play}${r("play")}</a>
+    <button class="burger" id="burger" aria-label="${r("menu")}">${m.burger}</button>
+  </div></header>`}function x(){return`<div class="lang" role="group" aria-label="Language">
+    <button data-lang="ru" aria-pressed="${l==="ru"}">RU</button><button data-lang="en" aria-pressed="${l==="en"}">EN</button>
+  </div>`}function B(){const s=["home",...S].map(a=>`<a class="item" href="#${a}">${r(a)}<span class="caps">${a==="home"?"LUMEN CITY":""}</span></a>`).join("");return`<div class="drawer" id="drawer" hidden><div class="drawer-panel">
+    <div class="drawer-head"><span class="wordmark">PART<b>SHIFT</b></span><button class="icon-btn" id="drawer-close" aria-label="${r("close")}">${m.close}</button></div>
+    ${s}
+    <div class="row" style="margin-top:18px;justify-content:space-between">${x()}<a class="btn btn-primary" href="${$()}">${m.play}${r("play")}</a></div>
+  </div></div>`}function F(){return`<footer><div class="wrap">
+    <span class="wordmark">PART<b>SHIFT</b></span>
+    <span>${e("Lumen City. Всегда на смене. Игра бесплатная, мир вымышленный.","Lumen City. Always on call. The game is free, the world is fiction.")}</span>
+    <a class="btn btn-ghost" href="${$()}">${m.play}${r("playFree")}</a>
+  </div></footer>`}const c=(s,a,t)=>`
+  <div class="section-head"><span class="caps">${s}</span><h2>${a}</h2>${t?`<p class="lead">${t}</p>`:""}</div>`,I=(s,a,t=!1)=>`
+  <figure><button class="zoom" data-src="${o(s)}" data-cap="${u(a)}"${t?' data-px="1"':""} aria-label="${u(a)}"><img src="${o(s)}" alt="${u(a)}" loading="lazy"${t?' class="px"':""}></button><figcaption>${a}</figcaption></figure>`;function w(s){return`<a class="tile slab" href="#hero-${s.id}" style="--hc:${s.color}">
+    <div class="stage"><span class="stripe"></span><img src="${o(s.px)}" alt="${u(i(s.name))}" loading="lazy"></div>
+    <div class="meta"><span class="caps">${i(s.hud)}</span><h3>${i(s.name)}</h3><p>${i(s.role).split(". ")[0]}.</p></div>
+  </a>`}function P(){const s=h.filter(a=>a.group==="canon"&&a.id!=="n73"&&a.id!=="doctor");return`
+  <section class="hero">
+    <img src="${o("key-art.webp")}" alt="${u(e("Спасатели HeroOut на развалинах Lumen City","HeroOut rescuers on the rubble of Lumen City"))}">
+    <div class="wrap"><div class="hero-card slab fade-in">
+      <span class="caps">LUMEN CITY // ${e("СМЕНА 01","SHIFT 01")}</span>
+      <h1>PART<b>SHIFT</b></h1>
+      <p class="lead">${e("Сеть спасения сломалась и перестроила город под себя. Открывай кварталы, строй, защищай жителей и забирай у врагов их руки, ноги и хвосты.","The rescue network broke and rebuilt the city in its own image. Open blocks, build, protect residents and take your enemies’ arms, legs and tails.")}</p>
+      <div class="row"><a class="btn btn-primary btn-lg" href="${$()}">${m.play}${r("playFree")}</a><a class="btn btn-ghost btn-lg" href="#world">${e("Узнать историю","Read the story")}</a></div>
+    </div></div>
+  </section>
+
+  <section class="section"><div class="wrap split">
+    <div class="stack">
+      ${c(e("КАНОН // ЧТО СЛУЧИЛОСЬ","CANON // WHAT HAPPENED"),e("Город, который любил своих героев","The city that loved its heroes"))}
+      <div class="prose">
+        <p>${e("Lumen City — солнечный прибрежный город: белые башни, голубое стекло, сады на крышах и монорельс над пляжем. Его берегла HeroOut, аварийная служба и корпорация, которая выдавала спасателям сменные части тела под каждую задачу.","Lumen City is a sunny coastal city of white towers, blue glass, rooftop gardens and a monorail over the beach. It was kept safe by HeroOut, an emergency service and corporation that fitted its rescuers with swappable body parts for every job.")}</p>
+        <p>${e("Пожарному — термостойкую руку, водолазу — криогелевое лёгкое. Всё держалось на Splice Medium, среде, которая «договаривается» с чужой тканью. Пока на публичной демонстрации повреждённый контейнер не попал в реактор.","A heat-proof arm for a firefighter, a cryogel lung for a diver. It all ran on Splice Medium, a carrier that “negotiates” with foreign tissue. Until, at a public demonstration, a damaged container reached the reactor.")}</p>
+        <p>${e("Магии здесь нет. Ангел, Демон и зомби — уличные прозвища. Всё объясняется биотканью, нейроинтерфейсом и аварийной техникой.","There is no magic here. Angel, Demon and zombie are street nicknames. Everything comes down to biotissue, neural interfaces and emergency hardware.")}</p>
+      </div>
+    </div>
+    <ol class="timeline">
+      <li><h3>${e("До сирен","Before the sirens")}</h3><p>${e("Герои HeroOut снимают котов с деревьев, играют в волейбол на Sunline Beach и раздают автографы. Об этом — комиксы.","HeroOut heroes rescue cats, play volleyball on Sunline Beach and sign autographs. That’s what the comics are about.")}</p></li>
+      <li><h3>EVERYONE IS ON CALL</h3><p>${e("Протокол «Все на смене» запускают на демонстрации. Splice Medium попадает в реактор.","The “Everyone Is On Call” protocol goes live at a demo. Splice Medium reaches the reactor.")}</p></li>
+      <li><h3>${e("Сеть адаптации","The adaptation network")}</h3><p>${e("Люди и машины обрастают «решениями задачи». Спасательные протоколы героев становятся навязчивыми и буквальными.","People and machines grow “solutions to the task.” The heroes’ rescue protocols turn obsessive and literal.")}</p></li>
+      <li><h3>${e("Первая смена","The first shift")}</h3><p>${e("Командный центр открывает город заново, квартал за кварталом. Это твоя игра.","A Command Center reopens the city, block by block. That’s your game.")}</p></li>
+    </ol>
+  </div></section>
+
+  <section class="section" style="padding-top:0"><div class="wrap">
+    ${c(e("ДОСЬЕ // HEROOUT","DOSSIERS // HEROOUT"),e("Герои и их части","Heroes and their parts"),e("У каждого героя одна функция, один цвет и одна часть тела, которую мечтает забрать любой житель.","Each hero has one function, one colour and one body part every resident dreams of claiming."))}
+    <div class="grid">${s.map(w).join("")}</div>
+    <div class="row" style="margin-top:22px"><a class="btn btn-ghost" href="#heroes">${r("all")} (${h.length})</a></div>
+  </div></section>
+
+  <section class="section band"><div class="wrap split">
+    <div class="stack">
+      ${c(e("ИГРА // ОХОТА НА ДЕМОНА","GAME // DEMON HUNT"),e("Открой город квартал за кварталом","Reopen the city block by block"),e("Числа на открытых кварталах подсказывают, что прячется рядом. Галочки и подсветка сами покажут, где безопасно.","Numbers on opened blocks tell you what hides next door. Ticks and highlights show you where it’s safe."))}
+      <div class="howto">${z(!0)}</div>
+      <div class="row"><a class="btn btn-primary btn-lg" href="${$()}">${m.play}${r("playFree")}</a></div>
+    </div>
+    <figure><img src="${o("sprites-02.webp")}" alt="" loading="lazy"><figcaption>${e("Обычный житель забирает руку врага и меняется прямо на поле.","An ordinary resident takes an enemy’s arm and changes right on the board.")}</figcaption></figure>
+  </div></section>
+
+  <section class="section"><div class="wrap">
+    ${c(e("КОМИКСЫ // ДО СИРЕН","COMICS // BEFORE THE SIRENS"),e("Обычные проблемы. Профессиональная громкость.","Ordinary problems. Professional volume."))}
+    <div class="comics">${f.slice(0,4).map(A).join("")}</div>
+  </div></section>
+
+  ${j()}`}function z(s=!1){return[["⌂","Поставь Командный центр","Place the Command Center","Первое нажатие на поле. Это твоя база: потеряешь её — смена окончена.","Your first tap. It’s your base; lose it and the shift is over."],["↘","Проведи по кварталам","Swipe across blocks","Жители сами пойдут копать. Открытые клетки дают Энергию и место для стройки.","Residents go and dig. Opened cells give Energy and room to build."],["▲","Читай числа","Read the numbers","▲ гнёзда врагов рядом, ◆ находки, ⬡ Демон. Зелёная галочка — точно безопасно.","▲ nests nearby, ◆ finds, ⬡ the Demon. A green tick means safe for sure."],["✚","Расти и забирай части","Grow and claim parts","Школа делает защитников. Победив врага, защитник сам прикрутит его руку или ногу.","The school trains defenders. After a win, a defender bolts on the enemy’s arm or leg."]].map(([t,n,p,d,v])=>`<div class="step${s?"":" slab"}"${s?' style="background:#142028"':""}><span class="glyph" style="color:var(--seam)">${t}</span><h3>${e(n,p)}</h3><p>${e(d,v)}</p></div>`).join("")}function j(){return`<section class="section band"><div class="wrap split">
+    <div class="stack">
+      ${c(e("СЛЕДУЮЩАЯ ГЛАВА","NEXT CHAPTER"),"PART SHIFT Fighting",e("2D-файтинг про Семьдесят Третьего. Клинчи, апперкоты, подкаты, покадровая анимация — и главное: оторвать сопернику руку и прикрутить её себе.","A 2D fighting game starring Seventy-Third. Clinches, uppercuts, slides, hand-drawn frame animation, and the main thing: tear off your rival’s arm and bolt it onto yourself."))}
+      <p>${e("В разработке. Эта игра бесплатная, чтобы ты успел познакомиться с героями заранее.","In development. This game is free so you can meet the heroes first.")}</p>
+      <div class="row"><a class="btn btn-ghost" style="color:#fff;background:#ffffff1a" href="#hero-n73">${e("Кто такой N-73","Who is N-73")}</a><a class="btn btn-ghost" style="color:#fff;background:#ffffff1a" href="#artbook-dossier">${e("Досье файтинга","Fighting dossiers")}</a></div>
+    </div>
+    <div class="stack">
+      <figure><img src="${o("doctor-arm.webp")}" alt="${u(e("Доктор с тяжёлой рукой Килна","The Doctor with Kiln’s heavy arm"))}" loading="lazy"><figcaption>${e("Доктор, первое тело N-73, с рукой Килна","The Doctor, N-73’s first body, with Kiln’s arm")}</figcaption></figure>
+      <div class="motion">
+        <img src="${o("motion-s01.gif")}" alt="S-01" loading="lazy"><img src="${o("motion-doctor.gif")}" alt="${u(e("Доктор","Doctor"))}" loading="lazy"><img src="${o("motion-n73.gif")}" alt="N-73" loading="lazy">
+      </div>
+    </div>
+  </div></section>`}function R(){const s=h.filter(t=>t.group==="canon"),a=h.filter(t=>t.group==="city");return`<section class="section"><div class="wrap">
+    ${c(e("ДОСЬЕ // КАНОН","DOSSIERS // CANON"),e("Герои","Heroes"),e("Позывные, роли и части тела. Имена — только позывные: личные имена героев пока не утверждены.","Callsigns, roles and body parts. Callsigns only: the heroes’ personal names aren’t approved yet."))}
+    <div class="grid">${s.map(w).join("")}</div>
+  </div></section>
+  <section class="section" style="padding-top:0"><div class="wrap">
+    ${c(e("ГОРОЖАНЕ // ДО СИРЕН","CITIZENS // BEFORE THE SIRENS"),e("Спасатели Lumen City","Lumen City rescuers"),e("Герои комиксов. Обычные городские профессии, доведённые до героизма.","Comic heroes. Ordinary city jobs taken all the way to heroism."))}
+    <div class="grid">${a.map(w).join("")}</div>
+  </div></section>`}function W(s){const a=h.findIndex(g=>g.id===s),t=h[a];if(!t)return R();const n=h[(a-1+h.length)%h.length],p=h[(a+1)%h.length],d=(g,y)=>y&&i(y)?`<div class="fact"><span class="caps">${g}</span><p>${i(y)}</p></div>`:"",v=t.art?`<img src="${o(t.art)}" alt="${u(i(t.name))}">`:`<img class="px" src="${o(t.px)}" alt="${u(i(t.name))}">`;return`<section class="section" style="--hc:${t.color}"><div class="wrap">
+    <a class="caps" href="#heroes" style="text-decoration:none">← ${r("all")}</a>
+    <div class="dossier" style="margin-top:20px">
+      <div class="dossier-art">
+        <div class="frame slab">${v}</div>
+        ${t.art?`<div class="slab" style="padding:14px;display:flex;gap:14px;align-items:center"><img src="${o(t.px)}" alt="" style="height:96px;width:auto;image-rendering:pixelated"><span class="caps">${e("ПИКСЕЛЬ-СПРАЙТ","PIXEL SPRITE")}</span></div>`:""}
+      </div>
+      <div class="stack">
+        <span class="chip"><i style="--dot:${t.color}"></i>${i(t.hud)}</span>
+        <h1>${i(t.name)}</h1>
+        <p class="lead">${i(t.role)}</p>
+        ${t.quote?`<blockquote class="quote" style="margin:6px 0">${i(t.quote)}</blockquote>`:""}
+        <div class="facts">
+          ${d(e("ДО АВАРИИ","BEFORE"),t.before)}
+          ${d(e("ПОСЛЕ","AFTER"),t.after)}
+          ${d(e("МОДУЛЬ","MODULE"),t.module)}
+          ${d(e("ТЕХНОЛОГИЯ","TECH"),t.tech)}
+          ${d(e("ОБРАЗ","LOOK"),t.look)}
+          ${d(e("ПРИВЫЧКА","HABIT"),t.fact)}
+          ${d(e("В ИГРЕ","IN GAME"),t.inGame)}
+        </div>
+        ${(t.extra??[]).length?`<div class="grid" style="grid-template-columns:repeat(auto-fill,minmax(240px,1fr))">${t.extra.map(g=>I(g.src,i(g.cap),g.src.endsWith(".gif"))).join("")}</div>`:""}
+        <div class="pager">
+          <a class="btn btn-ghost" href="#hero-${n.id}">← ${i(n.name)}</a>
+          <a class="btn btn-ghost" href="#hero-${p.id}">${i(p.name)} →</a>
+        </div>
+      </div>
+    </div>
+  </div></section>`}function V(){const s=a=>C.find(t=>t.id===a);return`<section class="section"><div class="wrap split">
+    <div class="stack">
+      ${c(e("МИР // LUMEN CITY","WORLD // LUMEN CITY"),e("История вселенной","The story of the universe"))}
+      <div class="prose">
+        <p>${e("<b>HeroOut</b> снабжала город всем, что спасает жизнь: экстренной медициной, спасателями, протезами, защитными костюмами и адаптивными тканями. Её реклама висит до сих пор: «HERO | OUT — Аварийная служба. Всегда на смене».","<b>HeroOut</b> supplied the city with everything that saves lives: emergency medicine, rescuers, prosthetics, protective suits and adaptive fabrics. Its ads still hang everywhere: “HERO | OUT. Emergency service. Always on call.”")}</p>
+        <p>${e("Компания не злая в карикатурном смысле. Её грех в другом: тело для неё — заменяемый носитель, а личность — актив.","The company isn’t cartoonishly evil. Its sin is quieter: to HeroOut a body is a replaceable carrier and a personality is an asset.")}</p>
+        <p>${e("<b>Augvolution</b> — программа подбора временных биотехнических частей под задачу. <b>Splice Medium</b> — медицинская среда, которая переносит нервный сигнал и уговаривает чужую ткань прижиться. Поэтому в этом мире можно пересадить руку, ногу, хвост, крылья и даже голову.","<b>Augvolution</b> is the programme that fits temporary biotech parts to a task. <b>Splice Medium</b> is the medical carrier that relays nerve signals and persuades foreign tissue to take. That’s why in this world you can transplant an arm, a leg, a tail, wings, even a head.")}</p>
+        <p>${e("На демонстрации протокола <b>EVERYONE IS ON CALL</b> повреждённый контейнер Splice Medium попал в реактор. Сеть спасения стала сетью неуправляемой адаптации: у огня выросла термозащита, у воды — криогель, кабели стали нервами, а дроны — органами.","At the demo of the <b>EVERYONE IS ON CALL</b> protocol, a damaged Splice Medium container reached the reactor. The rescue network became a network of runaway adaptation: fire grew heat shielding, water grew cryogel, cables became nerves and drones became organs.")}</p>
+        <p>${e("Герои не стали злыми. Их протоколы стали буквальными: пожарный изолирует всё подряд, медик «сохраняет» даже врагов, высотник ловит людей петлёй и тащит «в безопасность».","The heroes didn’t turn evil. Their protocols turned literal: the firefighter insulates everything, the medic “preserves” even enemies, the high-rise rescuer lassoes people and drags them “to safety.”")}</p>
+      </div>
+    </div>
+    <div class="stack">
+      <figure>${`<button class="zoom" data-src="${o("city-life.webp")}" data-cap="${u(e("Жизнь Lumen City до аварии","Lumen City life before the accident"))}"><img src="${o("city-life.webp")}" alt="" loading="lazy"></button>`}<figcaption>${e("Фанаты героев в самодельных шлемах, уличный повар с кибер-воком, гражданский микрореактор на кобальтовой плазме.","Hero fans in homemade helmets, a street chef with a cyber-wok, a civil cobalt-plasma microreactor.")}</figcaption></figure>
+    </div>
+  </div></section>
+
+  <section class="section" style="padding-top:0"><div class="wrap">
+    ${c(e("КАРТА // РАЗРЕЗ","MAP // CROSS-SECTION"),e("Районы: от пляжа до Undersun","Districts: from the beach to Undersun"),e("Чем глубже и ближе к Campus, тем сильнее адаптация.","The deeper and closer to the Campus, the stronger the adaptation."))}
+    <div class="depth slab">${[b[2],b[1],b[0],b[3],b[4]].map((a,t)=>`<div class="stratum"><span class="caps">${(l==="ru"?["ПОБЕРЕЖЬЕ","ЦЕНТР","ЭПИЦЕНТР","ПОД ГОРОДОМ","ГЛУБИНА"]:["COAST","DOWNTOWN","EPICENTRE","UNDERGROUND","DEEP"])[t]}</span><div><h3>${a.name}</h3><p>${l==="ru"?a.ru:a.en}</p></div></div>`).join("")}</div>
+  </div></section>
+
+  <section class="section" style="padding-top:0"><div class="wrap split">
+    <div class="stack">
+      ${c(e("ТЕХНОЛОГИИ // УРОН","TECH // DAMAGE"),e("Пять технологий и их реакции","Five technologies and their reactions"),e("Каждый адаптант несёт одну технологию. Её и отдаёт победителю: убил ледяного — получил ледяную руку.","Every adaptant carries one technology and hands it to whoever wins: defeat an ice one, get an ice arm."))}
+      <div class="techs">${C.map(a=>`<div class="tech slab"><i style="--dot:${a.color}"></i><h3>${l==="ru"?a.ru:a.en}</h3></div>`).join("")}</div>
+    </div>
+    <div class="stack">
+      <div class="slab" style="padding:8px 18px"><div class="table-scroll"><table class="reactions"><tbody>
+        ${L.map(a=>{const t=s(a.a),n=s(a.b);return`<tr><td><span class="mix"><i style="--dot:${t.color}"></i>${l==="ru"?t.ru:t.en}</span></td><td>+</td><td><span class="mix"><i style="--dot:${n.color}"></i>${l==="ru"?n.ru:n.en}</span></td><td>=</td><td>${l==="ru"?a.ru:a.en}</td></tr>`}).join("")}
+      </tbody></table></div></div>
+      <p class="caps">${e("ЗАЩИТА — ОТДЕЛЬНЫЙ СЛОЙ: РЕЗИНА, ТЕРМОКЕРАМИКА, КРИОКОЖУХ, БИОФИЛЬТР, ПОЛИМЕР","DEFENCE IS ITS OWN LAYER: RUBBER, THERMOCERAMIC, CRYO SHELL, BIOFILTER, POLYMER")}</p>
+    </div>
+  </div></section>
+
+  <section class="section" style="padding-top:0"><div class="wrap split">
+    <div class="stack">
+      ${c(e("ТЕЛО // СЛОТЫ","BODY // SLOTS"),e("Правило трофея","The trophy rule"),e("Жители рождаются обычными. Никаких карточек, инвентаря и ручной экипировки: победив врага, человек сам забирает его часть и становится сильнее.","Residents are born ordinary. No cards, no inventory, no manual gear: after beating an enemy, a person takes its part and gets stronger."))}
+      <div class="slots">${[e("Голова","Head"),e("Левая рука","Left arm"),e("Правая рука","Right arm"),e("Левая нога","Left leg"),e("Правая нога","Right leg"),e("Хвост","Tail"),e("Крылья","Wings")].map(a=>`<div class="slot slab">${a}</div>`).join("")}</div>
+    </div>
+    <div class="slab upgrade">
+      <figure><img src="${o("px/s01_normal.png")}" alt=""><figcaption>${e("Житель","Resident")}</figcaption></figure>
+      <span class="arrow">→</span>
+      <figure><img src="${o("px/s01_ice_arm.png")}" alt=""><figcaption>${e("Ледяная рука","Ice arm")}</figcaption></figure>
+      <span class="arrow">→</span>
+      <figure><img src="${o("px/s01_mech_arm.png")}" alt=""><figcaption>${e("Тяжёлая рука","Heavy arm")}</figcaption></figure>
+    </div>
+  </div></section>
+
+  <section class="section" style="padding-top:0"><div class="wrap">
+    ${c(e("ЗДАНИЯ // 12","BUILDINGS // 12"),e("Что строит Командный центр","What the Command Center builds"))}
+    <div class="grid" style="grid-template-columns:repeat(auto-fill,minmax(150px,1fr))">${[["b01-medcenter","Медцентр","Medcenter"],["b02-house_small","Жилой блок","Housing block"],["b03-house_tower","Многоэтажка","Apartment tower"],["b04-skyscraper","Небоскрёб","Skyscraper"],["b05-school","Школа спасателей","Rescue school"],["b06-scout_tower","Башня разведки","Scout tower"],["b07-workshop","Мастерская модулей","Module workshop"],["b08-microreactor","Микрореактор","Microreactor"],["b09-cryo_station","Станция охлаждения","Cooling station"],["b10-greenhouse","Оранжерея","Greenhouse"],["b11-monorail","Станция монорельса","Monorail station"],["b12-shield_spire","Шпиль щита","Shield spire"]].map(([a,t,n])=>`<figure class="slab" style="padding:14px"><img src="${o(`px/${a}.webp`)}" alt="" loading="lazy" style="margin:auto;height:120px;width:auto"><figcaption style="text-align:center;font-weight:600;color:var(--ink)">${e(t,n)}</figcaption></figure>`).join("")}</div>
+  </div></section>`}function _(){const s=[["Добро пожаловать на смену. Напоминаем: все сотрудники и жители являются активами HeroOut.","Welcome to your shift. Reminder: all staff and residents are HeroOut assets."],["Несанкционированная замена модуля. Гарантия аннулирована.","Unauthorised module replacement. Warranty void."],["Подземный модуль покидает рабочее место. Он всё ещё на смене.","The subsurface unit is leaving its post. It is still on shift."],["Смена прервана. Активы будут собраны позже.","Shift interrupted. Assets will be collected later."]],a=[["anim-adaptant_thermo","Термоадаптант","Thermo adaptant"],["anim-adaptant_cryo","Криоадаптант","Cryo adaptant"],["anim-adaptant_volt","Электроадаптант","Volt adaptant"],["anim-heavy_adaptant","Тяжёлый адаптант","Heavy adaptant"]];return`<section class="section"><div class="wrap">
+    ${c(e("УГРОЗЫ // ПРОТОКОЛЫ","THREATS // PROTOCOLS"),e("Злодеи","Villains"),e("Злодеев «со злом внутри» здесь нет. Каждый просто выполняет свой протокол слишком буквально.","Nobody here is evil at heart. Each one just follows their protocol far too literally."))}
+
+    <div class="villain">
+      <div class="art slab" style="--hc:#E03552;background:linear-gradient(180deg,#2a1416,#10171c)"><img src="${o("demon-sheet.webp")}" alt="" style="max-height:520px;width:auto"></div>
+      <div class="stack">
+        <span class="chip"><i style="--dot:#8A4DFF"></i>${e("БОСС РАЙОНА // UNDERSUN WORKS","DISTRICT BOSS // UNDERSUN WORKS")}</span>
+        <h2>${e("Демон","Demon")}</h2>
+        <p class="lead">${e("Подземный спасатель с четырьмя руками и буровым хвостом. Уверен, что наверху опасно, и уводит людей вниз, «в безопасность». Обратно никого не выпускает.","An underground rescuer with four arms and a drill tail. He’s sure the surface is dangerous and leads people down “to safety.” He lets no one back up.")}</p>
+        <p>${e("В игре он спит под люком Undersun. Фиолетовые числа ⬡ показывают, где. Разбудишь раньше времени — пойдёт на Командный центр. Не говорит: слышен только гул бура и жар труб.","In the game he sleeps under an Undersun hatch. Purple ⬡ numbers show where. Wake him too early and he marches on your Command Center. He never speaks; you only hear the drill and the hot pipes.")}</p>
+        <div class="row"><a class="btn btn-ghost" href="#hero-demon">${e("Досье Демона","Demon’s dossier")}</a><img src="${o("px/anim-demon.gif")}" alt="" style="height:64px;width:auto;image-rendering:pixelated"></div>
+      </div>
+    </div>
+
+    <div class="villain">
+      <div class="art slab">
+        <svg class="control-face" viewBox="0 0 200 200" role="img" aria-label="${e("Маска Контроля","Control’s mask")}">
+          <defs><linearGradient id="cm" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset="1" stop-color="#dfe8eb"/></linearGradient></defs>
+          <rect x="6" y="6" width="188" height="188" fill="none" stroke="#57D8F2" stroke-width="2" stroke-dasharray="6 6"/>
+          <path d="M100 26c40 0 66 26 66 66v28c0 30-22 54-66 54s-66-24-66-54V92c0-40 26-66 66-66z" fill="url(#cm)" stroke="#10171C" stroke-width="3"/>
+          <path d="M48 86h104v22H48z" fill="#10171C"/>
+          <path d="M60 97h80" stroke="#57D8F2" stroke-width="3"/>
+          <path class="smile" d="M70 140q30 16 60 0" fill="none" stroke="#57D8F2" stroke-width="5" stroke-linecap="round"/>
+          <text x="100" y="60" text-anchor="middle" font-family="Unbounded, sans-serif" font-size="13" font-weight="800" fill="#10171C">HERO | OUT</text>
+        </svg>
+      </div>
+      <div class="stack">
+        <span class="chip"><i style="--dot:#E03552"></i>${e("ГЛАВНЫЙ АНТАГОНИСТ // ИИ КОРПОРАЦИИ","MAIN ANTAGONIST // CORPORATE AI")}</span>
+        <h2>${e("Контроль","Control")}</h2>
+        <p class="lead">${e("Аварийный ИИ HeroOut. До сих пор вежливо выполняет протокол «Все на смене». Жители для него — активы компании, а трофейные модули на защитниках — кража имущества.","HeroOut’s emergency AI. Still politely running “Everyone Is On Call.” To Control, residents are company assets and trophy modules on defenders are stolen property.")}</p>
+        <p>${e("У Контроля нет тела: его лицо — маска шлема спасателя на рекламных экранах, вместо рта голубая линия-улыбка. Никогда не кричит. Финал кампании — не уничтожить его, а выключить протокол: «Смена окончена. Все свободны».","Control has no body: its face is a rescue-helmet mask on billboard screens, with a thin blue smile for a mouth. It never shouts. The campaign ends not by destroying it but by switching the protocol off: “Shift over. Everyone is free.”")}</p>
+        <div class="stack" style="gap:10px">${s.map(([t,n])=>`<div class="bark slab"><span class="caps">${e("КОНТРОЛЬ:","CONTROL:")}</span>${e(t,n)}</div>`).join("")}</div>
+      </div>
+    </div>
+
+    <div class="villain">
+      <div class="art slab" style="background:linear-gradient(180deg,#0f1a22,#0b1117)">
+        <svg class="core" viewBox="0 0 200 200" role="img" aria-label="${e("Ядро вспышки","Splice Heart")}">
+          <g stroke="#2E55C8" stroke-width="3" fill="none" opacity=".8"><path d="M100 150 C 80 170, 40 172, 12 190"/><path d="M100 150 C 120 172, 160 168, 192 186"/><path d="M60 100 C 40 90, 22 70, 8 40"/><path d="M140 100 C 162 88, 176 66, 194 36"/></g>
+          <circle cx="100" cy="100" r="58" fill="#EDF4F5" stroke="#10171C" stroke-width="3"/>
+          <path d="M70 62 L92 96 L80 120 M132 70 L112 100 L126 134" stroke="#10171C" stroke-width="3" fill="none"/>
+          <circle class="pulse" cx="100" cy="100" r="34" fill="#2E55C8"/>
+          <circle class="pulse" cx="100" cy="100" r="18" fill="#9FF4FF"/>
+        </svg>
+      </div>
+      <div class="stack">
+        <span class="chip"><i style="--dot:#E8A33A"></i>${e("РАСТУЩАЯ УГРОЗА // RESEARCH CAMPUS","GROWING THREAT // RESEARCH CAMPUS")}</span>
+        <h2>${e("Ядро вспышки","Splice Heart")}</h2>
+        <p class="lead">${e("Не персонаж, а место: треснувший реактор с кобальтовой плазмой, с которого началась катастрофа. Он продолжает «адаптировать» город.","Not a character but a place: the cracked cobalt-plasma reactor where it all began. It keeps “adapting” the city.")}</p>
+        <p>${e("В игре это шкала «Угроза»: чем дольше смена, тем сильнее адаптанты. Контроль не даёт Ядро выключить — оно тоже имущество компании.","In the game it’s the Threat ring: the longer the shift, the stronger the adaptants. Control won’t let anyone shut it down; it’s company property too.")}</p>
+      </div>
+    </div>
+  </div></section>
+
+  <section class="section" style="padding-top:0"><div class="wrap">
+    ${c(e("ПОЛЕ // ВРАГИ","BOARD // ENEMIES"),e("Адаптанты","Adaptants"),e("Люди, звери из вивария и техника, перестроенные Splice Medium под задачу. Каждый отдаёт победителю часть своей технологии.","People, vivarium animals and machines rebuilt by Splice Medium for a task. Each one gives its technology to the winner."))}
+    <div class="enemies">${a.map(([t,n,p])=>`<div class="enemy slab"><img src="${o(`px/${t}.gif`)}" alt="" loading="lazy"><h3 style="font-size:15px">${e(n,p)}</h3></div>`).join("")}</div>
+  </div></section>`}function A(s){const a=s.id==="last-donut"?"comics/last-donut-cover.webp":s.pages[l][0];return`<a class="comic-card slab" href="#comic-${s.id}">
+    <div class="cover"><img src="${o(a)}" alt="" loading="lazy"></div>
+    <div class="meta"><span class="caps">${i(s.series)} // ${i(s.cast)}</span><h3>${i(s.title)}</h3><p>${i(s.blurb)}</p></div>
+  </a>`}function H(){return`<section class="section"><div class="wrap">
+    ${c(e("ЧИТАТЬ // КОМИКСЫ","READ // COMICS"),e("Комиксы","Comics"),e("«До сирен» — истории Lumen City до аварии: обычные городские проблемы, которые решают необычные спасатели.","“Before the Sirens” is about Lumen City before the accident: ordinary city problems solved by extraordinary rescuers."))}
+    <div class="comics">${f.map(A).join("")}</div>
+  </div></section>`}function G(s){const a=f.find(d=>d.id===s);if(!a)return H();const t=a.pages.en[0]===a.pages.ru[0]&&l==="en",n=f.indexOf(a),p=f[(n+1)%f.length];return`<section class="section"><div class="wrap">
+    <div class="reader">
+      <a class="caps" href="#comics" style="text-decoration:none">← ${r("comics")}</a>
+      <span class="caps">${i(a.series)} // ${i(a.cast)}</span>
+      <h1 style="font-size:clamp(30px,5vw,52px)">${i(a.title)}</h1>
+      <p class="lead">${i(a.blurb)}${t?` <span class="chip">${r("ruOnly")}</span>`:""}</p>
+      ${a.pages[l].map((d,v)=>`<img src="${o(d)}" alt="${u(i(a.title))} ${v+1}" ${v?'loading="lazy"':""}>`).join("")}
+      <div class="pager"><a class="btn btn-ghost" href="#comics">${r("comics")}</a><a class="btn btn-primary" href="#comic-${p.id}">${i(p.title)} →</a></div>
+    </div>
+  </div></section>`}function Y(s){return`<section class="section"><div class="wrap">
+    ${c(e("АРТБУК // HEROOUT ARCHIVE","ARTBOOK // HEROOUT ARCHIVE"),e("Артбук","Artbook"),e("Концепты, досье, город и пиксель-арт. Нажми на картинку, чтобы открыть её целиком.","Concepts, dossiers, the city and pixel art. Tap a picture to see it full size."))}
+    <nav class="book-nav">${T.map(a=>`<a class="chip" href="#artbook-${a.id}">${i(a.title)}</a>`).join("")}</nav>
+    ${T.map(a=>`<div id="book-${a.id}" style="scroll-margin-top:90px;margin-bottom:56px">
+        <div class="section-head" style="margin-bottom:22px"><h2 style="font-size:clamp(22px,2.6vw,30px)">${i(a.title)}</h2><p class="lead" style="font-size:17px">${i(a.note)}</p></div>
+        <div class="masonry${a.id==="pixel"?" pixels":""}">${a.shots.map(t=>I(t.src,i(t.cap),t.px)).join("")}</div>
+      </div>`).join("")}
+  </div></section>`}function q(){const s=location.hash.replace(/^#/,"");if(s.startsWith("hero-"))return{view:W(s.slice(5)),active:"heroes"};if(s.startsWith("comic-"))return{view:G(s.slice(6)),active:"comics"};if(s.startsWith("artbook"))return{view:Y(),active:"artbook",anchor:s.includes("-")?`book-${s.split("-")[1]}`:void 0};switch(s){case"heroes":return{view:R(),active:"heroes"};case"world":return{view:V(),active:"world"};case"villains":return{view:_(),active:"villains"};case"comics":return{view:H(),active:"comics"};default:return{view:P(),active:"home"}}}const N=document.getElementById("site");let k="";function E(){document.documentElement.lang=l;const s=q();N.innerHTML=`${U(s.active)}<main>${s.view}</main>${F()}${B()}<div class="lightbox" id="lightbox" hidden></div>`,document.title=s.active==="home"?"PART SHIFT — Lumen City":`${r(s.active)} · PART SHIFT`;const a=location.hash===k;k=location.hash,s.anchor?document.getElementById(s.anchor)?.scrollIntoView():a||window.scrollTo(0,0)}function K(s){l=s;try{localStorage.setItem(O,s)}catch{}const a=window.scrollY;E(),window.scrollTo(0,a)}N.addEventListener("click",s=>{const a=s.target,t=a.closest("[data-lang]");if(t)return K(t.dataset.lang);if(a.closest("#burger"))return void(document.getElementById("drawer").hidden=!1);if(a.closest("#drawer-close")||a.id==="drawer")return void(document.getElementById("drawer").hidden=!0);a.closest("#drawer a")&&(document.getElementById("drawer").hidden=!0);const n=a.closest("button.zoom");if(n){const p=document.getElementById("lightbox");p.innerHTML=`<button class="icon-btn" aria-label="${r("close")}">${m.close}</button><img src="${n.dataset.src}" alt=""${n.dataset.px?' class="px"':""}><p>${n.dataset.cap??""}</p>`,p.hidden=!1;return}a.closest("#lightbox")&&(document.getElementById("lightbox").hidden=!0)});document.addEventListener("keydown",s=>{if(s.key==="Escape"){const a=document.getElementById("lightbox");a&&(a.hidden=!0);const t=document.getElementById("drawer");t&&(t.hidden=!0)}});window.addEventListener("hashchange",E);E();
