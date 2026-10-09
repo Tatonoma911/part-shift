@@ -6,6 +6,7 @@ import type { GameEvent, World } from '../core/world';
 import { animSets, BUILDING_ANCHOR, originOf } from './assets';
 import { sound } from './audio';
 import { C, CELL, CHANNEL, STEP, TECH_COLOR } from './layout';
+import { Quarantine, type RevealKind } from './Quarantine';
 import { glyph, TXT } from './ui';
 
 const ME = 0;
@@ -75,6 +76,7 @@ export class BoardView {
   private readonly topG: Phaser.GameObjects.Graphics;
   private ghostSpr: Phaser.GameObjects.Image | null = null;
   private lost: GameEvent[] = [];
+  private readonly quarantine: Quarantine;
 
   constructor(
     private readonly scene: Phaser.Scene,
@@ -110,6 +112,7 @@ export class BoardView {
     this.clueG = scene.add.graphics().setDepth(D.clue + 0.1);
     this.arcG = scene.add.graphics().setDepth(D.arc);
     this.topG = scene.add.graphics().setDepth(D.top);
+    this.quarantine = new Quarantine(scene, world, bx, by, this.width, this.height);
   }
 
   /** Quarantine film over closed blocks: one hex pattern across the whole board (BRAND_UI "Поле"). */
@@ -224,6 +227,10 @@ export class BoardView {
     switch (e.type) {
       case 'dig_done': {
         at('fx.dig_dust');
+        const content = this.world.cell(e.x, e.y).content;
+        const kind: RevealKind =
+          content === 'cache' ? 'cache' : content === 'survivor' ? 'survivor' : content === 'nest' || content === 'heavy_nest' ? 'nest' : content === 'boss_hatch' || content === 'hero_lair' ? 'hatch' : 'safe';
+        this.quarantine.reveal(e.x, e.y, `closed_${hash(e.x, e.y) % 4}`, kind);
         const i = e.y * this.world.s.width + e.x;
         const t = this.tiles[i];
         t.setScale(0.55).setPosition(t.x + CELL * 0.225, t.y + CELL * 0.225);
@@ -332,6 +339,7 @@ export class BoardView {
     const frame4 = Math.floor(now / 250) % 4;
     const frame3 = Math.floor(now / 300) % 3;
     const flicker = 0.8 + 0.12 * Math.sin(now / 900);
+    this.quarantine.update(now);
     const veinFull = mapgen.energyVein.energy;
 
     for (let y = 0; y < s.height; y++) {

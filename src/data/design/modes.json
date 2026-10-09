@@ -12,7 +12,7 @@
     },
     {
       "id": "quick",
-      "name_ru": "Короткий вызов",
+      "name_ru": "Обеденный вызов",
       "solo": true,
       "online": false,
       "usesDifficulty": false,

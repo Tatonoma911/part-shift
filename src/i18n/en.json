@@ -196,5 +196,6 @@
   "enemy.seraph.name": "Seraph",
   "enemy.doctor.name": "Doctor",
   "enemy.demon.name": "Demon",
-  "enemy.n73.name": "Seventy-Three"
+  "enemy.n73.name": "Seventy-Three",
+  "menu.on_call": "on call"
 }
