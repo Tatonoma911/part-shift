@@ -1,0 +1,940 @@
+{
+ "_doc": "Фразы героев для всплывающего портрета (комм-окно, левый верхний угол). lines: при появлении героя; build: когда игрок открыл/построил здание; defeat: последняя фраза. Ключи writer-а (hero.line.*, hero.defeat.*) взяты из text/ru.json. Владелец текстов: Сценарист.",
+ "version": 1,
+ "heroes": {
+  "standard": {
+   "name": {
+    "ru": "Стандарт",
+    "en": "Standard"
+   },
+   "tech": "kinetic",
+   "portrait": "standard",
+   "voice": "voice_hero_standard",
+   "lines": [
+    {
+     "key": "hero.line.standard.1",
+     "ru": "Мы Стандарт. Мы Стандарт. Мы Стандарт.",
+     "en": "We are Standard. We are Standard. We are Standard."
+    },
+    {
+     "key": "hero.line.standard.2",
+     "ru": "Ваша модель устарела. Пройдите обновление.",
+     "en": "Your model is outdated. Please update."
+    },
+    {
+     "key": "hero.line.standard.3",
+     "ru": "Мы одинаковые. Это и есть индивидуальный подход.",
+     "en": "We're all the same. That IS the personal approach."
+    },
+    {
+     "key": "hero.line.standard.4",
+     "ru": "Один из нас лишний. Не скажем какой.",
+     "en": "One of us is extra. We won't say which."
+    },
+    {
+     "ru": "Не волнуйтесь, нас много. Гарантия на каждого — до первого удара.",
+     "en": "Don't worry, there are lots of us. Each comes with a warranty until the first punch."
+    },
+    {
+     "ru": "Мы пришли по вызову. По трём вызовам. Одновременно.",
+     "en": "We answered the call. Three calls. At once."
+    },
+    {
+     "ru": "Жалобы принимает Стандарт номер два. Он занят. Он всегда занят.",
+     "en": "Complaints go to Standard number two. He's busy. He's always busy."
+    },
+    {
+     "ru": "Вы тоже Стандарт? Нет? Это поправимо.",
+     "en": "Are you a Standard too? No? That's fixable."
+    }
+   ],
+   "build": [
+    {
+     "ru": "Новое здание. Тоже серийное? Нет? Жаль.",
+     "en": "A new building. Mass-produced too? No? Pity."
+    },
+    {
+     "ru": "Мы оценили постройку. Три раза. Оценка одинаковая.",
+     "en": "We rated the building. Three times. Same score."
+    }
+   ],
+   "defeat": {
+    "key": "hero.defeat.standard",
+    "ru": "Ошибка… серийного… номера…",
+    "en": "Error… serial… number…"
+   }
+  },
+  "patch": {
+   "name": {
+    "ru": "Патч",
+    "en": "Patch"
+   },
+   "tech": "kinetic",
+   "portrait": "patch",
+   "voice": "voice_hero_patch",
+   "lines": [
+    {
+     "key": "hero.line.patch.1",
+     "ru": "Гав. (Принёс вас. Кому — неважно.)",
+     "en": "Woof. (Brought you. To whom? Doesn't matter.)"
+    },
+    {
+     "key": "hero.line.patch.2",
+     "ru": "Гав! (Апорт. Энергия — это апорт.)",
+     "en": "Woof! (Fetch. Energy is fetch.)"
+    },
+    {
+     "key": "hero.line.patch.3",
+     "ru": "Р-р-р… (Хороший мальчик. Очень хороший. Отдай.)",
+     "en": "Grrr… (Good boy. Very good boy. Drop it.)"
+    },
+    {
+     "key": "hero.line.patch.4",
+     "ru": "Гав-гав! (Хозяин? Нет. Хозяин? Нет. Ладно, вы.)",
+     "en": "Woof-woof! (Owner? No. Owner? No. Fine, you.)"
+    },
+    {
+     "ru": "Гав! (Кто хороший мальчик? Я. Кто спасатель? Я. Кто кусается? Тоже я.)",
+     "en": "Woof! (Who's a good boy? Me. Who's a rescuer? Me. Who bites? Also me.)"
+    },
+    {
+     "ru": "Гав-гав! (Вы кидали палку? Не кидали? Тогда я принесу вас.)",
+     "en": "Woof-woof! (Did you throw a stick? No? Then I'll fetch you.)"
+    },
+    {
+     "ru": "Тяф. (Механическая лапа не устаёт. Хвост тоже.)",
+     "en": "Yip. (The robot leg never gets tired. Neither does the tail.)"
+    },
+    {
+     "ru": "Р-р-гав! (Чесать за ухом — потом. Сначала апорт.)",
+     "en": "Grr-woof! (Ear scratches later. Fetch first.)"
+    }
+   ],
+   "build": [
+    {
+     "ru": "Гав! (Новая будка! Большая! Кто там живёт? Сейчас вынесу.)",
+     "en": "Woof! (New doghouse! A big one! Who lives there? Fetching them out.)"
+    },
+    {
+     "ru": "Гав-гав! (Пометил. Теперь это моё здание.)",
+     "en": "Woof-woof! (Marked it. My building now.)"
+    }
+   ],
+   "defeat": {
+    "key": "hero.defeat.patch",
+    "ru": "Скулит. (Не надо было брать Энергию. Понял.)",
+    "en": "Whimper. (Shouldn't have taken the Energy. Got it.)"
+   }
+  },
+  "canopy": {
+   "name": {
+    "ru": "Садовница",
+    "en": "Canopy"
+   },
+   "tech": "toxin",
+   "portrait": "canopy",
+   "voice": "voice_hero_canopy",
+   "lines": [
+    {
+     "key": "hero.line.canopy.1",
+     "ru": "Вам не хватает зелени. Сейчас исправим.",
+     "en": "You're lacking greenery. Let's fix that."
+    },
+    {
+     "key": "hero.line.canopy.2",
+     "ru": "Ой, какой бледненький. Сейчас прорастёшь, милок.",
+     "en": "Oh, so pale. You'll sprout in no time, sweetie."
+    },
+    {
+     "key": "hero.line.canopy.3",
+     "ru": "Сорняк — это просто растение, которое ещё не полили.",
+     "en": "A weed is just a plant nobody watered yet."
+    },
+    {
+     "key": "hero.line.canopy.4",
+     "ru": "Сиди смирно, я тебя подвяжу. Помидоры не жалуются.",
+     "en": "Sit still, I'll tie you to a stake. Tomatoes don't complain."
+    },
+    {
+     "ru": "Я сорок лет полю этот город. Вы просто очередная грядка, золотце.",
+     "en": "I've weeded this city for forty years. You're just another garden bed, sweetie."
+    },
+    {
+     "ru": "Кушать будешь? Нет? Тогда расти. Полью удобрением.",
+     "en": "Hungry? No? Then grow. I'll add fertilizer."
+    },
+    {
+     "ru": "Ох, мои колени… Ничего, лианы донесут.",
+     "en": "Oh, my knees… Never mind, the vines will carry you."
+    },
+    {
+     "ru": "В моё время рассаду сажали весной. Тебя посажу прямо сейчас.",
+     "en": "In my day we planted seedlings in spring. You I'm planting right now."
+    },
+    {
+     "ru": "Не бегай, милок, корни не любят суеты.",
+     "en": "Don't run, dear. Roots hate a fuss."
+    }
+   ],
+   "build": [
+    {
+     "ru": "Голый бетон? Ни единого кустика? Ох, я этого так не оставлю.",
+     "en": "Bare concrete? Not a single shrub? Oh, I won't stand for this."
+    },
+    {
+     "ru": "Красивый домик. Станет ещё красивее, когда его оплетёт плющ. Весь. С жильцами.",
+     "en": "Lovely little house. Even lovelier once the ivy covers it. All of it. Tenants too."
+    }
+   ],
+   "defeat": {
+    "key": "hero.defeat.canopy",
+    "ru": "Ох… прополола меня жизнь.",
+    "en": "Oh… life weeded me out."
+   }
+  },
+  "current": {
+   "name": {
+    "ru": "Течение",
+    "en": "Current"
+   },
+   "tech": "cryo",
+   "portrait": "current",
+   "voice": "voice_hero_current",
+   "lines": [
+    {
+     "key": "hero.line.current.1",
+     "ru": "Человек за бортом! Сейчас будет.",
+     "en": "Man overboard! In a moment."
+    },
+    {
+     "key": "hero.line.current.2",
+     "ru": "Спокойно, я вас спасу. Только сначала уроню в воду.",
+     "en": "Relax, I'll save you. First I'll drop you in the water."
+    },
+    {
+     "key": "hero.line.current.3",
+     "ru": "Вы сухой? Это тревожный признак.",
+     "en": "You're dry? That's a warning sign."
+    },
+    {
+     "key": "hero.line.current.4",
+     "ru": "Держитесь за круг! Круга нет. Держитесь за меня. Я тоже тону.",
+     "en": "Grab the ring! No ring. Grab me. I'm drowning too."
+    },
+    {
+     "ru": "Плавать умеете? Неважно. Сейчас научитесь. Или нет.",
+     "en": "Can you swim? Doesn't matter. You're about to learn. Or not."
+    },
+    {
+     "ru": "Сначала волна, потом вопросы. Вопросов не будет.",
+     "en": "Wave first, questions later. There won't be questions."
+    },
+    {
+     "ru": "Залив тёплый, течение сильное, вы лёгкий. Идеальная спасательная операция.",
+     "en": "The bay is warm, the current is strong, you're light. A perfect rescue."
+    },
+    {
+     "ru": "Не кричите, наберёте воды. А, вы на суше. Сейчас исправим.",
+     "en": "Don't scream, you'll swallow water. Oh, you're on land. Let's fix that."
+    }
+   ],
+   "build": [
+    {
+     "ru": "Здание сухое. Подозрительно сухое. Вызываю волну.",
+     "en": "This building is dry. Suspiciously dry. Calling a wave."
+    },
+    {
+     "ru": "Отличный фундамент! Проверим на всплытие.",
+     "en": "Great foundation! Let's see if it floats."
+    }
+   ],
+   "defeat": {
+    "key": "hero.defeat.current",
+    "ru": "Буль…",
+    "en": "Glub…"
+   }
+  },
+  "lineman": {
+   "name": {
+    "ru": "Линейщик",
+    "en": "Lineman"
+   },
+   "tech": "volt",
+   "portrait": "lineman",
+   "voice": "voice_hero_lineman",
+   "lines": [
+    {
+     "key": "hero.line.lineman.1",
+     "ru": "Страховка! Всем страховка!",
+     "en": "Safety lines! Safety lines for everyone!"
+    },
+    {
+     "key": "hero.line.lineman.2",
+     "ru": "Не двигайтесь. Я вас закреплю. Навсегда.",
+     "en": "Hold still. I'll secure you. Forever."
+    },
+    {
+     "key": "hero.line.lineman.3",
+     "ru": "Высота безопасна, если вы к ней привязаны.",
+     "en": "Heights are safe if you're tied to them."
+    },
+    {
+     "key": "hero.line.lineman.4",
+     "ru": "Второй узел для надёжности. Третий для красоты.",
+     "en": "Second knot for safety. Third for style."
+    },
+    {
+     "ru": "Держитесь за провод! Он под напряжением. Я тоже.",
+     "en": "Hold the wire! It's live. So am I."
+    },
+    {
+     "ru": "С высоты вы все как муравьи. Привязанные муравьи. Безопасные.",
+     "en": "From up here you're all ants. Tied-down ants. Safe ants."
+    },
+    {
+     "ru": "Улыбочку! Сейчас будет искра. И фото на память. И ожог.",
+     "en": "Smile! Here comes a spark. And a souvenir photo. And a burn."
+    },
+    {
+     "ru": "Тридцать лет вешаю страховку. Никто ни разу не упал. Висят все.",
+     "en": "Thirty years rigging safety lines. Nobody ever fell. Everybody's hanging."
+    }
+   ],
+   "build": [
+    {
+     "ru": "Хорошая крыша! Протяну к ней кабель. И к вам.",
+     "en": "Nice roof! I'll run a cable to it. And to you."
+    },
+    {
+     "ru": "Новый объект на линии. Заземляю. Вместе с жильцами.",
+     "en": "New site on the line. Grounding it. Tenants included."
+    }
+   ],
+   "defeat": {
+    "key": "hero.defeat.lineman",
+    "ru": "Кабель… оборван…",
+    "en": "Cable… snapped…"
+   }
+  },
+  "frostline": {
+   "name": {
+    "ru": "Фростлайн",
+    "en": "Frostline"
+   },
+   "tech": "cryo",
+   "portrait": "frostline",
+   "voice": "voice_hero_frostline",
+   "lines": [
+    {
+     "key": "hero.line.frostline.1",
+     "ru": "Возгорание не обнаружено. Тушу на всякий случай.",
+     "en": "No fire detected. Extinguishing just in case."
+    },
+    {
+     "key": "hero.line.frostline.2",
+     "ru": "Сохраняйте холод. В смысле, спокойствие. В смысле, холод.",
+     "en": "Stay cool. I mean calm. I mean cool."
+    },
+    {
+     "key": "hero.line.frostline.3",
+     "ru": "Всё горячее — потенциальный пожар. Вы горячий.",
+     "en": "Anything hot is a potential fire. You're hot."
+    },
+    {
+     "key": "hero.line.frostline.4",
+     "ru": "Чай? Тёплый? Это возгорание.",
+     "en": "Tea? Warm? That's a fire."
+    },
+    {
+     "ru": "Тридцать шесть и шесть? Слишком горячо. Охлаждаю.",
+     "en": "98.6 degrees? Way too hot. Cooling you down."
+    },
+    {
+     "ru": "Не двигайтесь, иначе лёд ляжет неровно.",
+     "en": "Hold still or the ice goes on uneven."
+    },
+    {
+     "ru": "Пожара нет? Будет. Я тушу заранее.",
+     "en": "No fire? There will be. I put it out in advance."
+    },
+    {
+     "ru": "Очки запотели. Значит, рядом источник тепла. Значит, вы.",
+     "en": "My glasses fogged up. Something warm nearby. That's you."
+    }
+   ],
+   "build": [
+    {
+     "ru": "Микрореактор! Тёплый! Тревога! Тушу!",
+     "en": "A micro-reactor! It's warm! Alarm! Extinguishing!"
+    },
+    {
+     "ru": "Построили? Молодцы. Сейчас законсервирую. Во льду всё хранится дольше.",
+     "en": "Built it? Good job. I'll preserve it. Everything keeps longer on ice."
+    }
+   ],
+   "defeat": {
+    "key": "hero.defeat.frostline",
+    "ru": "Возгорание… потушено… окончательно.",
+    "en": "Fire… extinguished… for good."
+   }
+  },
+  "mason": {
+   "name": {
+    "ru": "Каменщик",
+    "en": "Mason"
+   },
+   "tech": "impact",
+   "portrait": "mason",
+   "voice": "voice_hero_mason",
+   "lines": [
+    {
+     "key": "hero.line.mason.1",
+     "ru": "Не бойтесь. Я вас укреплю. Изнутри.",
+     "en": "Don't worry. I'll reinforce you. From the inside."
+    },
+    {
+     "key": "hero.line.mason.2",
+     "ru": "Дверь — слабое место конструкции. Убираем.",
+     "en": "A door is a weak point. Removing."
+    },
+    {
+     "key": "hero.line.mason.3",
+     "ru": "Здание не рухнет, если в него никто не войдёт. И не выйдет.",
+     "en": "The building won't collapse if nobody goes in. Or out."
+    },
+    {
+     "key": "hero.line.mason.4",
+     "ru": "Опора здесь. И здесь. И на вас.",
+     "en": "A support here. And here. And on you."
+    },
+    {
+     "ru": "Отец говорил: строй на века. Вот и вас — на века. В стену.",
+     "en": "My father said: build to last. So you'll last too. In a wall."
+    },
+    {
+     "ru": "Хорошая стена — это стена без двери. Отличная — без окон.",
+     "en": "A good wall has no door. A great wall has no windows."
+    },
+    {
+     "ru": "Сначала опалубка, потом бетон, потом вы. Порядок важен.",
+     "en": "Formwork first, then concrete, then you. Order matters."
+    },
+    {
+     "ru": "Расслабьтесь, усадка займёт всего пару лет.",
+     "en": "Relax, settling only takes a couple of years."
+    }
+   ],
+   "build": [
+    {
+     "ru": "Кто строил? Без арматуры? Сейчас укреплю. Изнутри. Всё.",
+     "en": "Who built this? No rebar? I'll reinforce it. From inside. All of it."
+    },
+    {
+     "ru": "Дверь на месте? Это ненадолго.",
+     "en": "Door still there? Not for long."
+    }
+   ],
+   "defeat": {
+    "key": "hero.defeat.mason",
+    "ru": "Конструкция… не выдержала.",
+    "en": "Structure… failed."
+   }
+  },
+  "beacon": {
+   "name": {
+    "ru": "Маяк",
+    "en": "Beacon"
+   },
+   "tech": "volt",
+   "portrait": "beacon",
+   "voice": "voice_hero_beacon",
+   "lines": [
+    {
+     "key": "hero.line.beacon.1",
+     "ru": "Вижу вас! Вижу всех! Внимание всем: я вижу всех!",
+     "en": "I see you! I see everyone! Attention all: I see everyone!"
+    },
+    {
+     "key": "hero.line.beacon.2",
+     "ru": "Пропавший обнаружен! Вы не пропадали? Теперь пропадёте.",
+     "en": "Missing person found! You weren't missing? You will be."
+    },
+    {
+     "key": "hero.line.beacon.3",
+     "ru": "Внимание! Житель за углом! Все сюда!",
+     "en": "Attention! Resident around the corner! Everybody here!"
+    },
+    {
+     "key": "hero.line.beacon.4",
+     "ru": "Найдено: вы. Найдено: гнездо. Найдено: всё. Сообщаю всем.",
+     "en": "Found: you. Found: a nest. Found: everything. Telling everyone."
+    },
+    {
+     "ru": "ВНИМАНИЕ! Человек в зоне видимости! Это вы! Объявляю ваши координаты всему городу!",
+     "en": "ATTENTION! Person in sight! It's you! Broadcasting your location to the whole city!"
+    },
+    {
+     "ru": "Прятаться бесполезно. Я нахожу даже потерянные носки.",
+     "en": "Hiding is pointless. I find even lost socks."
+    },
+    {
+     "ru": "Включаю прожектор. Включаю сирену. Включаю ещё один прожектор.",
+     "en": "Searchlight on. Siren on. Another searchlight on."
+    },
+    {
+     "ru": "Вы не потерялись? Тогда я вас сначала потеряю, а потом найду.",
+     "en": "You're not lost? Then I'll lose you first and find you later."
+    }
+   ],
+   "build": [
+    {
+     "ru": "Обнаружено здание! Внутри обнаружены люди! Все сюда!",
+     "en": "Building detected! People detected inside! Everybody over here!"
+    },
+    {
+     "ru": "Красиво светится. Поставлю рядом прожектор. Пять прожекторов.",
+     "en": "Glows nicely. I'll put a searchlight next to it. Five searchlights."
+    }
+   ],
+   "defeat": {
+    "key": "hero.defeat.beacon",
+    "ru": "Сигнал… потерян…",
+    "en": "Signal… lost…"
+   }
+  },
+  "sweep": {
+   "name": {
+    "ru": "Чистильщик",
+    "en": "Sweep"
+   },
+   "tech": "thermo",
+   "portrait": "sweep",
+   "voice": "voice_hero_sweep",
+   "lines": [
+    {
+     "key": "hero.line.sweep.1",
+     "ru": "Обнаружена грязь. Обнаружен вы. Совпадение?",
+     "en": "Dirt detected. You detected. Coincidence?"
+    },
+    {
+     "key": "hero.line.sweep.2",
+     "ru": "Девяносто девять процентов микробов. И один процент вас.",
+     "en": "Ninety-nine percent of germs. And one percent of you."
+    },
+    {
+     "key": "hero.line.sweep.3",
+     "ru": "Стоять. Санобработка. Будет горячо и чисто.",
+     "en": "Freeze. Sanitizing. It'll be hot and clean."
+    },
+    {
+     "key": "hero.line.sweep.4",
+     "ru": "Руки помыли? Тогда остальное.",
+     "en": "Washed your hands? Now the rest."
+    },
+    {
+     "ru": "Не обнимайтесь! Объятия — это двойной контакт!",
+     "en": "No hugging! A hug is double contact!"
+    },
+    {
+     "ru": "Протокол чистоты: сначала пыль, потом микробы, потом свидетели.",
+     "en": "Cleanliness protocol: dust first, then germs, then witnesses."
+    },
+    {
+     "ru": "Пар двести градусов. Это не больно. Это гигиенично.",
+     "en": "Steam at two hundred degrees. It doesn't hurt. It's hygienic."
+    },
+    {
+     "ru": "Мама говорила: в доме должно быть чисто. Я убираю весь город.",
+     "en": "Mom said a home must be clean. I'm cleaning the whole city."
+    }
+   ],
+   "build": [
+    {
+     "ru": "Свежая штукатурка! Обожаю. Сейчас продезинфицирую до кирпича.",
+     "en": "Fresh plaster! Love it. I'll disinfect it down to the bricks."
+    },
+    {
+     "ru": "Грязные ботинки на пороге. Значит, внутри люди. Значит, внутри грязь.",
+     "en": "Muddy boots at the door. So there are people inside. So there's dirt inside."
+    }
+   ],
+   "defeat": {
+    "key": "hero.defeat.sweep",
+    "ru": "Загрязнение… устранено… мной.",
+    "en": "Contamination… removed… by me."
+   }
+  },
+  "hive": {
+   "name": {
+    "ru": "Улей",
+    "en": "Hive"
+   },
+   "tech": "toxin",
+   "portrait": "hive",
+   "voice": "voice_hero_hive",
+   "lines": [
+    {
+     "key": "hero.line.hive.1",
+     "ru": "Вы нарушаете режим тишины. Жжж.",
+     "en": "You're violating quiet hours. Bzzz."
+    },
+    {
+     "key": "hero.line.hive.2",
+     "ru": "Жжж. Ваш маршрут не согласован.",
+     "en": "Bzzz. Your route was not approved."
+    },
+    {
+     "key": "hero.line.hive.3",
+     "ru": "Мониторинг показывает: вы живы. Это исправимо. Жжж.",
+     "en": "Monitoring shows you're alive. That's fixable. Bzzz."
+    },
+    {
+     "key": "hero.line.hive.4",
+     "ru": "Пчёлы видят всё. Пчёлы жалят всё. Жжж.",
+     "en": "Bees see everything. Bees sting everything. Bzzz."
+    },
+    {
+     "ru": "Я пробую каждый улей. Обожаю свою работу. Ваш дом — тоже улей. Жжж.",
+     "en": "I sample every hive. I love my job. Your home is a hive too. Bzzz."
+    },
+    {
+     "ru": "Бабушка держала пасеку в степи. Пчёлы её слушались. Вы тоже будете. Жжж.",
+     "en": "Grandma kept bees out on the steppe. They obeyed her. So will you. Bzzz."
+    },
+    {
+     "ru": "Не машите руками. Пчёлы считают это согласием.",
+     "en": "Don't wave your arms. The bees take it as consent."
+    },
+    {
+     "ru": "Мёд для хороших жителей. Жала для остальных. Хороших жителей нет. Жжж.",
+     "en": "Honey for good residents. Stingers for the rest. There are no good residents. Bzzz."
+    }
+   ],
+   "build": [
+    {
+     "ru": "Новые соты! В смысле, здание. Заселяю пчёл.",
+     "en": "New honeycomb! I mean, a building. Moving the bees in."
+    },
+    {
+     "ru": "Ваш реактор гудит не в тон. Пчёлы недовольны. Жжж.",
+     "en": "Your reactor hums off-key. The bees are upset. Bzzz."
+    }
+   ],
+   "defeat": {
+    "key": "hero.defeat.hive",
+    "ru": "Жжж… тишина.",
+    "en": "Bzz… silence."
+   }
+  },
+  "kiln": {
+   "name": {
+    "ru": "Килн",
+    "en": "Kiln"
+   },
+   "tech": "impact",
+   "portrait": "kiln",
+   "voice": "voice_hero_kiln",
+   "lines": [
+    {
+     "key": "hero.line.kiln.1",
+     "ru": "Держитесь. Вынесу.",
+     "en": "Hold on. I'll carry you out."
+    },
+    {
+     "key": "hero.line.kiln.2",
+     "ru": "Вынесу. Всех. Отовсюду.",
+     "en": "Carry out. Everyone. From everywhere."
+    },
+    {
+     "key": "hero.line.kiln.3",
+     "ru": "Здесь горит? Здесь будет гореть. Держитесь.",
+     "en": "Is it burning here? It will be. Hold on."
+    },
+    {
+     "key": "hero.line.kiln.4",
+     "ru": "Стены мешают спасению. Стен не будет.",
+     "en": "Walls get in the way of rescue. No more walls."
+    },
+    {
+     "ru": "Мама говорила: Маркус, не ломай двери. Мама не видела этот пожар. Пожара тоже нет. Ломаю.",
+     "en": "Mom said: Marcus, don't break doors. Mom never saw this fire. There's no fire either. Breaking."
+    },
+    {
+     "ru": "Обнимашки! Спасательные. Через стену.",
+     "en": "Hug time! Rescue hugs. Through the wall."
+    },
+    {
+     "ru": "Не бойтесь, я большой и добрый. В основном большой.",
+     "en": "Don't be scared, I'm big and kind. Mostly big."
+    },
+    {
+     "ru": "Выход там, где я пройду.",
+     "en": "The exit is wherever I walk."
+    }
+   ],
+   "build": [
+    {
+     "ru": "Какой уютный дом. Сейчас вынесу оттуда всех. И стену.",
+     "en": "What a cozy home. I'll carry everyone out. And the wall."
+    },
+    {
+     "ru": "Здание целое? Это пока я не зашёл.",
+     "en": "The building's intact? Only until I walk in."
+    }
+   ],
+   "defeat": {
+    "key": "hero.defeat.kiln",
+    "ru": "Не… вынес…",
+    "en": "Couldn't… carry it…"
+   }
+  },
+  "seraph": {
+   "name": {
+    "ru": "Серафим",
+    "en": "Seraph"
+   },
+   "tech": "kinetic",
+   "portrait": "seraph",
+   "voice": "voice_hero_seraph",
+   "lines": [
+    {
+     "key": "hero.line.seraph.1",
+     "ru": "Не двигайтесь, я вас вылечу.",
+     "en": "Hold still, I'll heal you."
+    },
+    {
+     "key": "hero.line.seraph.2",
+     "ru": "Вы ещё не ранены? Это ненадолго. Я помогу.",
+     "en": "Not injured yet? Not for long. I'll help."
+    },
+    {
+     "key": "hero.line.seraph.3",
+     "ru": "В больницу! Все в больницу! Больница наверху!",
+     "en": "To the hospital! Everyone to the hospital! The hospital is up!"
+    },
+    {
+     "key": "hero.line.seraph.4",
+     "ru": "Нимб, лечи всех. Их тоже. Особенно их.",
+     "en": "Halo, heal everyone. Them too. Especially them."
+    },
+    {
+     "ru": "О, ребята, не все сразу! Вас так много! Давайте по очереди, я всех вылечу!",
+     "en": "Oh, guys, not all at once! There are so many of you! Form a line, I'll heal everyone!"
+    },
+    {
+     "ru": "Ангел-хранитель прилетел. Хранить буду в больнице. Долго.",
+     "en": "Your guardian angel is here. I'll guard you in the hospital. For a long time."
+    },
+    {
+     "ru": "Сверху вы такие хрупкие. Срочно в гипс!",
+     "en": "From up here you look so fragile. Into a cast, now!"
+    },
+    {
+     "ru": "Крылья на гарантии, нимб на зарядке, вы — на носилках.",
+     "en": "Wings under warranty, halo charging, you on a stretcher."
+    }
+   ],
+   "build": [
+    {
+     "ru": "Какая крыша! Идеальная посадочная площадка. Жильцы, на носилки!",
+     "en": "What a roof! A perfect landing pad. Tenants, onto the stretchers!"
+    },
+    {
+     "ru": "Построили? Значит, оно может упасть. Подлечу заранее.",
+     "en": "You built it? Then it can fall. I'll heal everyone in advance."
+    }
+   ],
+   "defeat": {
+    "key": "hero.defeat.seraph",
+    "ru": "Нимб… гаснет…",
+    "en": "Halo… fading…"
+   }
+  },
+  "doctor": {
+   "name": {
+    "ru": "Доктор",
+    "en": "Doctor"
+   },
+   "tech": "toxin",
+   "portrait": "doctor",
+   "voice": "voice_hero_doctor",
+   "lines": [
+    {
+     "key": "hero.line.doctor.1",
+     "ru": "Откройте рот. Скажите «а». Держите руку. Нет, другую. Нет, чужую.",
+     "en": "Open wide. Say \"ah\". Hold this arm. No, the other. No, someone else's."
+    },
+    {
+     "key": "hero.line.doctor.2",
+     "ru": "Пациент, у вас две руки. Это лечится.",
+     "en": "Patient, you have two arms. That's treatable."
+    },
+    {
+     "key": "hero.line.doctor.3",
+     "ru": "Анестезии нет. Зато есть гель.",
+     "en": "No anesthesia. But we do have gel."
+    },
+    {
+     "key": "hero.line.doctor.4",
+     "ru": "Не волнуйтесь, это не больно. Мне не больно.",
+     "en": "Don't worry, it doesn't hurt. Doesn't hurt me."
+    },
+    {
+     "ru": "У вас что, нет травм? Не переживайте, мы сейчас это исправим.",
+     "en": "What, no injuries? Don't worry, we'll fix that right now."
+    },
+    {
+     "ru": "Второе мнение? Пожалуйста: вам нужна третья рука.",
+     "en": "Second opinion? Sure: you need a third arm."
+    },
+    {
+     "ru": "Записываться не нужно. Я сам к вам приду.",
+     "en": "No appointment needed. I'll come to you."
+    },
+    {
+     "ru": "Побочные эффекты: рука, нога, вторая голова. Редко — выздоровление.",
+     "en": "Side effects: an arm, a leg, a second head. Rarely: recovery."
+    }
+   ],
+   "build": [
+    {
+     "ru": "Новое отделение? Отлично. Операционная будет здесь.",
+     "en": "A new ward? Excellent. The operating room goes here."
+    },
+    {
+     "ru": "Медцентр? Конкуренты. Перевожу всех пациентов к себе.",
+     "en": "A med center? Competition. Transferring all patients to me."
+    }
+   ],
+   "defeat": {
+    "key": "hero.defeat.doctor",
+    "ru": "Диагноз… неутешительный.",
+    "en": "Diagnosis… not great."
+   }
+  },
+  "demon": {
+   "name": {
+    "ru": "Демон",
+    "en": "Demon"
+   },
+   "tech": "thermo",
+   "portrait": "demon",
+   "voice": "voice_hero_demon",
+   "lines": [
+    {
+     "key": "hero.line.demon.1",
+     "ru": "Внизу безопасно.",
+     "en": "It's safe down below."
+    },
+    {
+     "key": "hero.line.demon.2",
+     "ru": "Наверху опасно. Наверху всегда было опасно.",
+     "en": "It's dangerous up top. It always was."
+    },
+    {
+     "key": "hero.line.demon.3",
+     "ru": "Не бойтесь. Внизу никто не горит. Внизу просто жарко.",
+     "en": "Don't be afraid. Nobody burns down there. It's just hot."
+    },
+    {
+     "key": "hero.line.demon.4",
+     "ru": "Четыре руки — чтобы унести четверых за раз.",
+     "en": "Four arms, to carry four of you at once."
+    },
+    {
+     "ru": "Сорок лет в метро. Наверху у вас солнце. Это тот же ожог, только медленный.",
+     "en": "Forty years in the subway. Up there you have the sun. Same burn, just slower."
+    },
+    {
+     "ru": "Спускайтесь. Лифт не работает. Бур работает.",
+     "en": "Come on down. The elevator's broken. The drill isn't."
+    },
+    {
+     "ru": "Четыре руки, а помахать некому. Поднимайтесь ко мне вниз.",
+     "en": "Four arms and no one to wave to. Come up to me, down here."
+    },
+    {
+     "ru": "Тоннель — лучший друг человека. После меня.",
+     "en": "A tunnel is man's best friend. After me."
+    }
+   ],
+   "build": [
+    {
+     "ru": "Хороший фундамент. Под ним ещё лучше. Проверю.",
+     "en": "Nice foundation. It's even nicer underneath. I'll check."
+    },
+    {
+     "ru": "Строите вверх? Зря. Всё самое безопасное внизу.",
+     "en": "Building up? Mistake. Everything safe is down below."
+    }
+   ],
+   "defeat": {
+    "key": "hero.defeat.demon",
+    "ru": "Наверху… светло…",
+    "en": "Up there… it's bright…"
+   }
+  },
+  "n73": {
+   "name": {
+    "ru": "Семьдесят Третий",
+    "en": "N-73"
+   },
+   "tech": "volt",
+   "portrait": "n73",
+   "voice": "voice_hero_n73",
+   "lines": [
+    {
+     "key": "hero.line.n73.1",
+     "ru": "Это тело не моё. И это тоже.",
+     "en": "This body isn't mine. Neither is this one."
+    },
+    {
+     "key": "hero.line.n73.2",
+     "ru": "Семьдесят два до меня не справились. Я справлюсь.",
+     "en": "Seventy-two before me failed. I won't."
+    },
+    {
+     "key": "hero.line.n73.3",
+     "ru": "Ваши нервы. Можно одолжить? Я верну. Наверное.",
+     "en": "Your nerves. Can I borrow them? I'll give them back. Probably."
+    },
+    {
+     "key": "hero.line.n73.4",
+     "ru": "Контроль, я не актив. Я вопрос.",
+     "en": "Control, I'm not an asset. I'm a question."
+    },
+    {
+     "ru": "Ваше тело в хорошем состоянии. Оформляю бронь.",
+     "en": "Your body is in good condition. Placing a reservation."
+    },
+    {
+     "ru": "Я не злой. Я экспериментальный. Это хуже.",
+     "en": "I'm not evil. I'm experimental. That's worse."
+    },
+    {
+     "ru": "Семьдесят три — счастливое число. Для меня.",
+     "en": "Seventy-three is a lucky number. For me."
+    },
+    {
+     "ru": "Позвоночник у вас хороший. Мой лучше. Давайте меняться.",
+     "en": "Nice spine you have. Mine is better. Let's trade."
+    }
+   ],
+   "build": [
+    {
+     "ru": "Здание — тело для людей. Люди — тело для меня.",
+     "en": "A building is a body for people. People are a body for me."
+    },
+    {
+     "ru": "Регистрирую новый объект. Владелец переписан. Владелец — я.",
+     "en": "Registering a new property. Owner changed. Owner: me."
+    }
+   ],
+   "defeat": {
+    "key": "hero.defeat.n73",
+    "ru": "Перезагрузка…",
+    "en": "Rebooting…"
+   }
+  }
+ }
+}

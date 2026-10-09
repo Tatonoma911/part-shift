@@ -10,6 +10,7 @@ import { sound } from './audio';
 import { learning, setLearningHooks } from './learn';
 import { volumeHeight, volumeSliders } from './volume';
 import { BoardView } from './BoardView';
+import { Comm } from './Comm';
 import { Cameras, UI_DEPTH } from './cameras';
 import { clearSlot, loadSettings, loadSlot, saveSlot, touchSlot } from './saves';
 import { BOARD, C, CELL, DOCK, GOAL, GUIDE, HUD, INK, LANDSCAPE, STEP, VIEW } from './layout';
@@ -71,6 +72,8 @@ export class GameScene extends Phaser.Scene {
   private start: GameStart = {};
   private slot = 1;
   private guide: TutorialGuide | null = null;
+  /** Hero pop-up in the board's top-left corner (free play only). */
+  private comm: Comm | null = null;
 
   private mode: Mode = 'dig';
   private buildType: string = BUILDABLE[0];
@@ -178,6 +181,8 @@ export class GameScene extends Phaser.Scene {
 
     this.createHud();
     this.createDock();
+    this.comm = this.guide ? null : new Comm(this);
+    this.events.once('shutdown', () => this.comm?.destroy());
     this.trackStart(!!saved);
     if (this.guide) this.createGuide(by - 24);
     else if (!this.world.started) this.say(t('place.command'), 6000);
@@ -303,6 +308,7 @@ export class GameScene extends Phaser.Scene {
     if (e.type === 'victory' || e.type === 'defeat') sound.stopMusic();
     sound.play(e.type);
     if (!this.guide) this.coachOn(e);
+    this.comm?.onEvent(e);
     if (e.type === 'center_hit') {
       if (this.time.now - this.lastCenterHit > 6000) this.say(t('event.command_under_attack'), 3000, true);
       this.lastCenterHit = this.time.now;
