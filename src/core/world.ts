@@ -118,7 +118,7 @@ export class World {
   private acc = 0;
   private events: GameEvent[] = [];
   /** Bumped whenever the opened field changes; the scanner result is cached per revision. */
-  private rev = 0;
+  protected rev = 0;
   private known: { rev: number; map: Map<string, Knowledge> } | null = null;
 
   /** Rule tables for this match (design tables plus any overrides). */
@@ -147,6 +147,24 @@ export class World {
   }
 
   // ---------------------------------------------------------------- queries
+
+  /** FFA "Последний центр": rival players fight each other (MVP_RULES §14.1). */
+  get ffa(): boolean {
+    return this.s.match?.mode === 'ffa';
+  }
+
+  /** Do units of these owners fight? Adaptants and the Demon (-1) fight everyone; players only in FFA. */
+  hostile(a: number, b: number): boolean {
+    if (a === b) return false;
+    return a < 0 || b < 0 || this.ffa;
+  }
+
+  /** Owner of an attack target ("u:", "b:"; sites belong to the field, -1). */
+  targetOwner(t: string): number {
+    if (t.startsWith('u:')) return this.unit(Number(t.slice(2)))?.owner ?? -1;
+    if (t.startsWith('b:')) return this.building(Number(t.slice(2)))?.owner ?? -1;
+    return -1;
+  }
 
   get started(): boolean {
     return this.s.players.some((p) => p.command !== null);
@@ -256,6 +274,18 @@ export class World {
     return out;
   }
 
+  /** Events that happened elsewhere (the online client gets them from the server). */
+  pushEvents(list: GameEvent[]): void {
+    this.events.push(...list);
+  }
+
+  /** A player left an online match for good: their center falls (MVP_RULES §14.2). */
+  forfeit(playerId: number): void {
+    const p = this.s.players[playerId];
+    const b = this.building(p?.command);
+    if (b) b.hp = 0;
+  }
+
   // --------------------------------------------------------------- commands
 
   apply(cmd: Command, playerId = 0): ApplyResult {
@@ -328,7 +358,10 @@ export class World {
         return ok;
       }
       case 'attack': {
-        if (!this.targetAlive(cmd.target)) return bad();
+        if (!this.targetAlive(cmd.target) || !this.hostile(playerId, this.targetOwner(cmd.target))) return bad();
+        // Only rival defenders and buildings can be ordered against, not their residents (MVP_RULES §14.1).
+        const foe = cmd.target.startsWith('u:') ? this.unit(Number(cmd.target.slice(2))) : undefined;
+        if (foe && foe.owner >= 0 && foe.kind !== 'defender') return bad();
         // Tapping the same target again lifts the order (MVP_RULES §6).
         p.order = p.order === cmd.target ? null : cmd.target;
         return ok;
@@ -855,7 +888,7 @@ export class World {
       return s.units.find((o) => `u:${o.id}` === t)?.owner === u.owner;
     };
     const near = s.units
-      .filter((e) => isEnemy(e) && e.hp > 0 && inRadius(e.x, e.y))
+      .filter((e) => e.hp > 0 && (isEnemy(e) || (this.ffa && e.owner !== u.owner && e.kind === 'defender')) && inRadius(e.x, e.y))
       .sort((a, b) => Number(mine(b.target)) - Number(mine(a.target)) || dist(a.x, a.y, u.x, u.y) - dist(b.x, b.y, u.x, u.y))[0];
     if (near) return `u:${near.id}`;
     if (this.cfg.defenders.autoAttackNestsInGuardRadius) {
@@ -875,7 +908,7 @@ export class World {
     // Marching on a nest, defenders still answer adaptants that reach them.
     if (target?.startsWith('s:')) {
       const close = s.units
-        .filter((e) => isEnemy(e) && e.hp > 0 && dist(e.x, e.y, u.x, u.y) <= 2)
+        .filter((e) => e.hp > 0 && (isEnemy(e) || (this.ffa && e.owner !== u.owner && e.kind === 'defender')) && dist(e.x, e.y, u.x, u.y) <= 2)
         .sort((a, b) => dist(a.x, a.y, u.x, u.y) - dist(b.x, b.y, u.x, u.y))[0];
       if (close) target = `u:${close.id}`;
     }
@@ -901,9 +934,15 @@ export class World {
     const s = this.s;
     u.repathTimer -= dt;
     if (!this.targetAlive(u.target) || u.repathTimer <= 0) {
-      // Nearest player unit or building.
+      // Nearest player unit or building; in FFA the Demon goes for the nearest center (multiplayer.json demonTarget).
       let best: string | undefined;
       let bestD = Infinity;
+      const centers = u.kind === 'demon' && this.ffa ? s.buildings.filter((b) => b.type === 'command') : [];
+      for (const b of centers) {
+        const d = dist(b.x, b.y, u.x, u.y);
+        if (d < bestD) [best, bestD] = [`b:${b.id}`, d];
+      }
+      if (centers.length) bestD = -1;
       for (const o of s.units) {
         if (isEnemy(o) || o.hp <= 0) continue;
         const d = dist(o.x, o.y, u.x, u.y);
@@ -977,7 +1016,7 @@ export class World {
   }
 
   private splash(attacker: Unit, around: Unit, radius: number, factor: number, max: number): void {
-    const hostile = (o: Unit) => o !== around && o.hp > 0 && isEnemy(o) !== isEnemy(attacker) && o.owner !== attacker.owner;
+    const hostile = (o: Unit) => o !== around && o.hp > 0 && this.hostile(o.owner, attacker.owner);
     const near = this.s.units
       .filter((o) => hostile(o) && dist(o.x, o.y, around.x, around.y) <= radius)
       .sort((a, b) => dist(a.x, a.y, around.x, around.y) - dist(b.x, b.y, around.x, around.y))
@@ -1370,6 +1409,15 @@ export class World {
 
   private checkOutcome(): void {
     const s = this.s;
+    if (this.ffa) {
+      // Last center standing wins; the Demon's death does not end an FFA match.
+      const alive = s.players.filter((p) => p.alive);
+      if (alive.length > 1) return;
+      s.match!.winner = alive[0]?.id ?? null;
+      s.outcome = alive.length ? 'victory' : 'defeat';
+      this.emit(s.outcome, { owner: alive[0]?.id });
+      return;
+    }
     if (s.players.every((p) => !p.alive)) {
       s.outcome = 'defeat';
       this.emit('defeat');

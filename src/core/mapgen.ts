@@ -12,6 +12,8 @@ interface Options {
   commands: { x: number; y: number }[];
   /** Nest count override (multiplayer: nestsPerPlayer × players). */
   nests?: number;
+  /** Multiplayer: caches, survivors, veins and rubble × this, so each player gets the same share. */
+  countScale?: number;
 }
 
 const SITE_KINDS: CellContent[] = ['nest', 'heavy_nest', 'demon_hatch', 'cache', 'survivor'];
@@ -63,7 +65,8 @@ export function generateField(s: GameState, opts: Options): void {
     const p = set(pick(free()), heavy ? 'heavy_nest' : 'nest');
     if (p) cellAt(s, p.x, p.y).tech = heavy ? siteDefs.heavy_nest.tech : nestTech();
   }
-  const counts = mapgen.counts;
+  const k = opts.countScale ?? 1;
+  const counts = { cache: mapgen.counts.cache * k, survivor: mapgen.counts.survivor * k, energy_vein: mapgen.counts.energy_vein * k, rubble: mapgen.counts.rubble * k };
   for (let i = 0; i < counts.cache; i++) set(pick(free()), 'cache');
   for (let i = 0; i < counts.survivor; i++) set(pick(free()), 'survivor');
   for (let i = 0; i < counts.energy_vein; i++) {

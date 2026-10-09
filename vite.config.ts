@@ -9,6 +9,8 @@ const artifact = process.env.ARTIFACT === '1';
 const learning = process.env.LEARNING === '1';
 export default defineConfig({
   base: './',
+  // Threads, not forks: the match server (tests/server.test.ts) talks to process.send when it exists.
+  test: { pool: 'threads' },
   build: {
     chunkSizeWarningLimit: 4000,
     assetsInlineLimit: artifact || learning ? () => true : 4096,
