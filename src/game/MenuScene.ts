@@ -2,6 +2,7 @@ import Phaser from 'phaser';
 import { config } from '../core/data';
 import type { AssistMode } from '../core/state';
 import { lang, setLang, t } from '../i18n';
+import { introSeen, playIntro } from '../intro';
 import { BUILDING_ANCHOR, createArt, preloadArt } from './assets';
 import { sound } from './audio';
 import type { GameStart } from './GameScene';
@@ -57,6 +58,18 @@ export class MenuScene extends Phaser.Scene {
     }
     this.drawBackdrop();
     this.show('main');
+    // First launch: the intro comic plays over the menu (its own tap gate unlocks sound).
+    if (!introSeen() && !this.registry.get('introShown')) {
+      this.registry.set('introShown', true);
+      this.story(false);
+    }
+  }
+
+  private story(skipGate: boolean): void {
+    this.input.enabled = false;
+    playIntro({ skipGate }).finally(() => {
+      if (this.scene.isActive()) this.input.enabled = true;
+    });
   }
 
   private drawBackdrop(): void {
@@ -150,7 +163,7 @@ export class MenuScene extends Phaser.Scene {
       button(t('menu.new_run'), () => this.show('slots'), !last && tutorialDone());
       if (last || tutorialDone()) button(t('menu.tutorial'), () => this.play({ tutorial: true }));
       button(t('menu.settings'), () => this.show('settings'));
-      button(t('menu.story'), null, false, t('menu.soon'));
+      button(t('menu.story'), () => this.story(true));
       button(t('menu.account'), null, false, t('menu.soon'));
     } else if (page === 'slots') {
       c.add(this.add.text(cx, y + 6, t('menu.slots').toUpperCase(), TXT.caps()).setOrigin(0.5));

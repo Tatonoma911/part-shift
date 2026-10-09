@@ -16,7 +16,7 @@
   "dig": {
     "digSeconds": 9,
     "requireAdjacentRevealed": true,
-    "autoQueueZeroNeighbors": true,
+    "autoQueueZeroNeighbors": false,
     "autoQueuePriority": "low"
   },
   "territory": {
