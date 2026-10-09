@@ -8,6 +8,7 @@ describe('digging', () => {
     w.apply({ type: 'placeCommand', x: 0, y: 1 });
     // Start opens x 0..1; queue x=2 row 1.
     expect(w.apply({ type: 'queueDig', x: 2, y: 1 }).ok).toBe(true);
+    w.s.units = w.s.units.slice(0, 1);
     const e0 = w.player(0).energy;
     run(w, config.dig.digSeconds - 1);
     expect(w.cell(2, 1).revealed).toBe(false);
@@ -15,6 +16,19 @@ describe('digging', () => {
     expect(w.cell(2, 1).revealed).toBe(true);
     run(w, 2);
     expect(w.player(0).energy).toBeGreaterThan(e0);
+  });
+
+  it('several residents on one cell dig faster together: 9 / (1 + 0.75 × (n − 1))', () => {
+    const w = handWorld(['.....n.', '.......', '.......']);
+    w.apply({ type: 'placeCommand', x: 0, y: 1 });
+    const first = w.s.units[0];
+    w.s.units = [first, { ...first, id: 900, path: [], task: { type: 'idle' } }, { ...first, id: 901, path: [], task: { type: 'idle' } }];
+    w.apply({ type: 'queueDig', x: 2, y: 1 });
+    run(w, 1);
+    expect(w.s.units.filter((u) => u.task.type === 'dig').length).toBe(3);
+    // Three diggers: 9 / 2.5 = 3.6 s of digging after the walk.
+    run(w, 4.5);
+    expect(w.cell(2, 1).revealed).toBe(true);
   });
 
   it('with the tutorial rule on, a quiet cell auto-queues its covered neighbors', () => {

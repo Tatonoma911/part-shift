@@ -915,7 +915,7 @@ export class BoardView {
       if (u.task.type === 'dig' && u.path.length === 0) arc(u.task.x, u.task.y, 1 - u.task.progress / config.dig.digSeconds);
     }
     for (const b of w.s.buildings) {
-      if (!b.complete && b.built > 0) arc(b.x, b.y, 1 - b.built / buildingDefs[b.type].buildSeconds);
+      if (!b.complete && b.built > 0) arc(b.x, b.y, 1 - b.built / w.buildSeconds(b));
     }
   }
 

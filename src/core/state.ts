@@ -33,6 +33,8 @@ export interface Cell {
   stock?: number;
   /** Seconds of rubble clearing done. */
   work?: number;
+  /** Shared dig progress of everyone digging this cell (config.dig.workers). */
+  dig?: number;
   /** Building standing on this cell. */
   building?: number;
   /** Player's "danger here" flag. */

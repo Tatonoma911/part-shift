@@ -490,7 +490,7 @@ export class World {
     return inBounds(this.s, x, y) && this.cell(x, y).ruin ? Math.ceil(cost * buildingDamage.ruins.rebuildCostFactor) : cost;
   }
 
-  private buildSeconds(b: Building): number {
+  buildSeconds(b: Building): number {
     return buildingDefs[b.type].buildSeconds * (b.rebuild ? buildingDamage.ruins.rebuildSecondsFactor : 1);
   }
 
@@ -742,8 +742,11 @@ export class World {
         if (!this.isQueued(u.owner, t.x, t.y) || this.cell(t.x, t.y).revealed) return this.setTask(u, { type: 'idle' });
         if (u.path.length > 0) return this.move(u, dt);
         if (t.progress === 0) this.emit('dig_start', { x: t.x, y: t.y, owner: u.owner });
-        t.progress += dt;
-        if (t.progress >= this.cfg.dig.digSeconds) {
+        const c = this.cell(t.x, t.y);
+        c.dig = (c.dig ?? 0) + this.workShare(u, (o) => o.task.type === 'dig' && o.task.x === t.x && o.task.y === t.y) * dt;
+        t.progress = Math.max(c.dig, 1e-6);
+        if (c.dig >= this.cfg.dig.digSeconds) {
+          c.dig = undefined;
           this.setTask(u, { type: 'idle' });
           this.reveal(t.x, t.y, u.owner);
         }
@@ -775,7 +778,7 @@ export class World {
         const b = this.building(t.building);
         if (!b || b.complete) return this.setTask(u, { type: 'idle' });
         if (u.path.length > 0) return this.move(u, dt);
-        b.built += dt;
+        b.built += this.workShare(u, (o) => o.task.type === 'build' && o.task.building === b.id) * dt;
         if (b.built >= this.buildSeconds(b)) this.finishBuilding(b);
         return;
       }
@@ -817,7 +820,9 @@ export class World {
   private findJob(u: Unit): void {
     const s = this.s;
     const p = s.players[u.owner];
-    const claimed = (pred: (t: Task) => boolean) => s.units.some((o) => o !== u && pred(o.task));
+    const claims = (pred: (t: Task) => boolean) => s.units.filter((o) => o !== u && o.owner === u.owner && pred(o.task)).length;
+    const claimed = (pred: (t: Task) => boolean) => claims(pred) > 0;
+    const maxPer = this.cfg.dig.workers.maxPerCell;
 
     const site = s.buildings.find(
       (b) => b.owner === u.owner && !b.complete && !claimed((t) => t.type === 'build' && t.building === b.id),
@@ -827,11 +832,14 @@ export class World {
       if (path) return this.go(u, { type: 'build', building: site.id }, path);
     }
 
-    const digFrom = (list: string[]): boolean => {
+    // `join`: help on a cell somebody already digs, up to maxPerCell (config.dig.workers.idleJoin).
+    const digFrom = (list: string[], join = false): boolean => {
       const wanted = new Set(
         list.filter((k) => {
           const { x, y } = parseKey(k);
-          return !this.cell(x, y).revealed && !claimed((t) => t.type === 'dig' && t.x === x && t.y === y);
+          if (this.cell(x, y).revealed) return false;
+          const n = claims((t) => t.type === 'dig' && t.x === x && t.y === y);
+          return join ? n > 0 && n < maxPer : n === 0;
         }),
       );
       if (wanted.size === 0) return false;
@@ -875,6 +883,14 @@ export class World {
     }
 
     if (digFrom(p.autoQueue)) return;
+    if (digFrom(p.queue, true) || digFrom(p.autoQueue, true)) return;
+    const helpBuild = s.buildings.find(
+      (b) => b.owner === u.owner && !b.complete && claims((t) => t.type === 'build' && t.building === b.id) < maxPer,
+    );
+    if (helpBuild) {
+      const path = this.playerPath(u, (x, y) => x === helpBuild.x && y === helpBuild.y);
+      if (path) return this.go(u, { type: 'build', building: helpBuild.id }, path);
+    }
 
     if (u.task.type !== 'rest') {
       const home = this.building(p.command);
@@ -886,6 +902,19 @@ export class World {
         this.go(u, { type: 'rest' }, path ?? []);
       }
     }
+  }
+
+  /**
+   * This worker's share of the job's speed: n workers on site go
+   * 1 + 0.75 × (n − 1) times as fast together (config.dig.workers).
+   */
+  private workShare(u: Unit, same: (o: Unit) => boolean): number {
+    const n = Math.min(
+      this.cfg.dig.workers.maxPerCell,
+      this.s.units.filter((o) => o.owner === u.owner && o.hp > 0 && o.path.length === 0 && same(o)).length,
+    );
+    if (n <= 1) return 1;
+    return (1 + this.cfg.dig.workers.speedBonusPerExtraWorker * (n - 1)) / n;
   }
 
   private go(u: Unit, task: Task, path: { x: number; y: number }[]): void {
