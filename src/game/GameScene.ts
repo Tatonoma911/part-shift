@@ -1,34 +1,39 @@
 import Phaser from 'phaser';
 import { BUILDABLE, buildings as buildingDefs, config } from '../core/data';
 import { cellKey } from '../core/grid';
-import type { AssistMode, GameState, Unit } from '../core/state';
+import type { AssistMode, GameState } from '../core/state';
 import { World, type GameEvent } from '../core/world';
 import { t } from '../i18n';
+import { BUILDING_ANCHOR, createArt, preloadArt } from './assets';
+import { BoardView } from './BoardView';
+import { BOARD, C, CELL, DOCK, GOAL_Y, HUD, INK, STEP, VIEW } from './layout';
 import { markTutorialDone, TutorialGuide, tutorialDone } from './Tutorial';
-import { BAR_HEIGHT, BUILDING_STYLE, CHANNEL_COLOR, COLORS, HUD_HEIGHT, SIDE_MARGIN, TECH_COLOR, VIEW } from './layout';
+import { brackets, chip, glyph, plate, TXT } from './ui';
 
 const SAVE_KEY = 'partshift.save.v1';
 const BEST_KEY = 'partshift.best.v1';
-const LONG_PRESS_MS = 450;
+const LONG_PRESS_MS = 480;
 const ME = 0;
-const CHANNELS = ['threat', 'demon', 'finds'] as const;
 
-/** Events that become a line in the toast bar (writer's text keys). */
-const TOASTS: Record<string, (e: GameEvent) => string> = {
-  nest_open: () => t('event.nest_opened'),
-  heavy_nest_open: () => t('event.heavy_nest_opened'),
-  demon_awake: () => t('event.demon_awake'),
-  demon_warning: () => t('event.demon_warning'),
-  demon_windup: () => t('enemy.demon.windup'),
-  demon_die: () => t('event.demon_dead'),
-  threat_level_up: (e) => t('event.threat_rising', { level: e.amount ?? 0 }),
-  cache_open: (e) => t('event.cache_reward', { energy: e.amount ?? 0 }),
-  nest_destroyed: (e) => t('event.nest_destroyed', { energy: e.amount ?? 0 }),
-  building_lost: (e) => t('event.building_lost', { building: t(`building.${e.text}.name`) }),
-  part_attached: (e) => t('trophy.module_acquired', { part: t(`part.${e.text}.label`) }),
-  part_recycled: (e) => t('part.recycled', { energy: e.amount ?? 0 }),
-  defender_trained: () => t('unit.trained'),
-  build_refused: (e) => t(e.text ?? 'build.invalid_cell'),
+type Mode = 'dig' | 'build' | 'attack';
+type Ev = Phaser.Types.Input.EventData;
+
+/** Events that become a toast (writer's text keys); `bad` ones are coral. */
+const TOASTS: Record<string, { text: (e: GameEvent) => string; bad?: boolean }> = {
+  nest_open: { text: () => t('event.nest_opened'), bad: true },
+  heavy_nest_open: { text: () => t('event.heavy_nest_opened'), bad: true },
+  demon_awake: { text: () => t('event.demon_awake'), bad: true },
+  demon_warning: { text: () => t('event.demon_warning'), bad: true },
+  demon_windup: { text: () => t('enemy.demon.windup'), bad: true },
+  demon_die: { text: () => t('event.demon_dead') },
+  threat_level_up: { text: (e) => t('event.threat_rising', { level: e.amount ?? 0 }), bad: true },
+  cache_open: { text: (e) => t('event.cache_reward', { energy: e.amount ?? 0 }) },
+  nest_destroyed: { text: (e) => t('event.nest_destroyed', { energy: e.amount ?? 0 }) },
+  building_lost: { text: (e) => t('event.building_lost', { building: t(`building.${e.text}.name`) }), bad: true },
+  part_attached: { text: (e) => t('trophy.module_acquired', { part: t(`part.${e.text}.label`) }) },
+  part_recycled: { text: (e) => t('part.recycled', { energy: e.amount ?? 0 }) },
+  defender_trained: { text: () => t('unit.trained') },
+  build_refused: { text: (e) => t(e.text ?? 'build.invalid_cell'), bad: true },
 };
 
 function loadState(): GameState | null {
@@ -45,45 +50,72 @@ function loadState(): GameState | null {
   }
 }
 
+function stop(fn: () => void) {
+  return (_p: Phaser.Input.Pointer, _x: number, _y: number, ev: Ev) => {
+    ev.stopPropagation();
+    fn();
+  };
+}
+
 /**
- * Draws the match with placeholder shapes and turns touches into commands.
- * All rules live in core/World; this scene only reads its state.
+ * One shift: board from BoardView, HUD and dock in the PARTSHIFT brand style
+ * (ui/BRAND_UI.md, ui/UI_SPEC.md). Rules live in core/World; this scene only
+ * reads its state and turns touches into commands.
  */
 export class GameScene extends Phaser.Scene {
   private world!: World;
-  private cs = 0;
-  private ox = 0;
-  private oy = 0;
-  private gfx!: Phaser.GameObjects.Graphics;
-  private top!: Phaser.GameObjects.Graphics;
-  private clueTexts = new Map<number, Phaser.GameObjects.Text[]>();
-  private labels = new Map<number, Phaser.GameObjects.Text>();
-  private hud!: { energy: Phaser.GameObjects.Text; people: Phaser.GameObjects.Text; threat: Phaser.GameObjects.Text; arc: Phaser.GameObjects.Graphics };
-  private toast!: Phaser.GameObjects.Text;
-  private toastUntil = 0;
-  private buttons: { id: string; bg: Phaser.GameObjects.Rectangle; cost: Phaser.GameObjects.Text }[] = [];
+  private board!: BoardView;
+  private guide: TutorialGuide | null = null;
+
+  private mode: Mode = 'dig';
+  private buildType: string = BUILDABLE[0];
+  private ghost: { x: number; y: number } | null = null;
+  private ghostButtons: Phaser.GameObjects.Container | null = null;
+  private spotlight: { x: number; y: number; until: number } | null = null;
+  /** Cell the scanner flagged on the last tap; a second tap there confirms digging it. */
+  private confirmCell: string | null = null;
+
+  private hud!: {
+    energy: Phaser.GameObjects.Text;
+    residents: Phaser.GameObjects.Text;
+    squad: Phaser.GameObjects.Text;
+    threat: Phaser.GameObjects.Text;
+    ring: Phaser.GameObjects.Graphics;
+    ringBox: Phaser.GameObjects.Container;
+    goal: Phaser.GameObjects.Text;
+    goalBg: Phaser.GameObjects.Graphics;
+  };
+  private shownEnergy = 0;
+  private dock!: {
+    tabs: { mode: Mode; g: Phaser.GameObjects.Graphics; label: Phaser.GameObjects.Text; icon: Phaser.GameObjects.Image; x: number; w: number }[];
+    panes: Record<Mode, Phaser.GameObjects.Container>;
+    queue: Phaser.GameObjects.Text;
+    squad: Phaser.GameObjects.Text;
+    scan: Phaser.GameObjects.Text | null;
+    cards: { id: string; g: Phaser.GameObjects.Graphics; cost: Phaser.GameObjects.Text; x: number; y: number; w: number; h: number }[];
+  };
+  private toasts: Phaser.GameObjects.Container[] = [];
   private overlay: Phaser.GameObjects.Container | null = null;
+  private guideBox: { text: Phaser.GameObjects.Text; dots: Phaser.GameObjects.Graphics; g: Phaser.GameObjects.Graphics; y: number; h: number } | null = null;
 
   private paused = false;
-  private selected: string | null = null;
   private dragMode: 'queue' | 'cancel' | null = null;
   private lastDragCell = -1;
   private pressTimer: Phaser.Time.TimerEvent | null = null;
   private saveTimer = 0;
-  /** Cell the scanner flagged on the last tap; a second tap there confirms digging it. */
-  private confirmCell: string | null = null;
-  /** Neighborhood shown around a touched clue (design/ONBOARDING.md §1.2). */
-  private spotlight: { x: number; y: number; until: number } | null = null;
-  private scanButton: Phaser.GameObjects.Text | null = null;
-  private guide: TutorialGuide | null = null;
-  private guideText: Phaser.GameObjects.Text | null = null;
   private lastCenterHit = -99;
+  private lastThreat = 0;
 
   constructor() {
     super('game');
   }
 
+  preload(): void {
+    preloadArt(this);
+  }
+
   create(): void {
+    createArt(this);
     const params = new URLSearchParams(location.search);
     const seedParam = Number(params.get('seed'));
     const saved = params.has('seed') || params.get('tutorial') === '1' ? null : loadState();
@@ -97,26 +129,23 @@ export class GameScene extends Phaser.Scene {
         ? new World({ state: saved })
         : new World({ seed: seedParam || Math.floor(Math.random() * 1e9), assist });
     (window as unknown as { partShift: unknown }).partShift = { world: this.world, scene: this };
+    this.shownEnergy = this.world.player(ME).energy;
+    this.lastThreat = this.world.threatLevel;
 
-    const { width, height } = this.world.s;
-    // The tutorial keeps a text box between the HUD and the board.
-    const top = HUD_HEIGHT + (this.guide ? 130 : 0);
-    const availW = VIEW.width - SIDE_MARGIN * 2;
-    const availH = VIEW.height - top - BAR_HEIGHT;
-    this.cs = Math.floor(Math.min(availW / width, availH / height));
-    this.ox = Math.round((VIEW.width - this.cs * width) / 2);
-    this.oy = top + Math.round((availH - this.cs * height) / 2);
+    this.drawBackground();
+    // Smaller boards (the tutorial) sit at the bottom of the board area; the guide card takes the top.
+    const bw = this.world.s.width * STEP - (STEP - CELL);
+    const bh = this.world.s.height * STEP - (STEP - CELL);
+    const bx = Math.round(BOARD.x + (BOARD.w - bw) / 2);
+    const by = this.guide ? BOARD.y + BOARD.h - bh - 8 : Math.round(BOARD.y + (BOARD.h - bh) / 2);
+    const frame = this.add.graphics().setDepth(0.5);
+    brackets(frame, bx - 10, by - 10, bw + 20, bh + 20);
+    this.board = new BoardView(this, this.world, bx, by);
 
-    this.gfx = this.add.graphics();
-    this.top = this.add.graphics().setDepth(5);
     this.createHud();
-    this.createBuildBar();
-    this.toast = this.add
-      .text(VIEW.width / 2, VIEW.height - BAR_HEIGHT + 6, '', { fontFamily: 'sans-serif', fontSize: '22px', color: COLORS.text, align: 'center', wordWrap: { width: VIEW.width - 24 } })
-      .setOrigin(0.5, 0)
-      .setDepth(6);
-    if (this.guide) this.createGuide();
-    else this.say(this.world.started ? t('tutorial.dig') : t('place.command'), 6000);
+    this.createDock();
+    if (this.guide) this.createGuide(by - 24);
+    else if (!this.world.started) this.say(t('place.command'), 6000);
 
     this.input.mouse?.disableContextMenu();
     this.input.on('pointerdown', this.onDown, this);
@@ -125,15 +154,19 @@ export class GameScene extends Phaser.Scene {
     this.input.on('pointerupoutside', this.onUp, this);
     this.input.keyboard?.on('keydown-SPACE', () => this.setPaused(!this.paused));
     this.input.keyboard?.on('keydown-ESC', () => {
-      if (this.selected) this.select(null);
+      if (this.ghost) this.setGhost(null);
       else this.world.apply({ type: 'cancelOrder' }, ME);
     });
+    this.input.keyboard?.on('keydown-ONE', () => this.setMode('dig'));
+    this.input.keyboard?.on('keydown-TWO', () => this.setMode('build'));
+    this.input.keyboard?.on('keydown-THREE', () => this.setMode('attack'));
     document.addEventListener('visibilitychange', () => {
       if (document.hidden) this.save();
     });
+    this.setMode('dig');
   }
 
-  update(_time: number, deltaMs: number): void {
+  update(time: number, deltaMs: number): void {
     const w = this.world;
     if (!this.paused && w.s.outcome === 'playing') {
       w.tick(Math.min(deltaMs, 250) / 1000);
@@ -145,12 +178,20 @@ export class GameScene extends Phaser.Scene {
     }
     for (const e of w.drainEvents()) {
       this.guide?.onEvent(e);
+      this.board.onEvent(e);
       this.onEvent(e);
     }
     if (this.guide?.update()) this.showGuideStep();
-    if (this.time.now > this.toastUntil) this.toast.setText('');
-    this.draw();
-    this.updateHud();
+    if (this.spotlight && time > this.spotlight.until) this.spotlight = null;
+    this.board.update(time, {
+      buildType: this.mode === 'build' && w.started ? this.buildType : null,
+      ghost: this.mode === 'build' ? this.ghost : null,
+      spotlight: this.spotlight,
+      focus: this.guide?.focusCells() ?? [],
+      showRisk: w.player(ME).assist.mode === 'full',
+    });
+    this.updateHud(deltaMs);
+    this.updateDock();
   }
 
   // ------------------------------------------------------------- persistence
@@ -180,60 +221,18 @@ export class GameScene extends Phaser.Scene {
   private onEvent(e: GameEvent): void {
     if (e.owner !== undefined && e.owner !== ME && e.owner >= 0) return;
     if (e.type === 'center_hit') {
-      if (this.time.now - this.lastCenterHit > 6000) this.say(t('event.command_under_attack'));
+      if (this.time.now - this.lastCenterHit > 6000) this.say(t('event.command_under_attack'), 3000, true);
       this.lastCenterHit = this.time.now;
     } else if (e.type === 'build_done' && e.x !== undefined) {
       const b = this.world.s.buildings.find((x) => x.x === e.x && x.y === e.y);
       if (b) this.say(t('build.done', { building: t(`building.${b.type}.name`) }));
     } else if (TOASTS[e.type]) {
-      this.say(TOASTS[e.type](e));
+      this.say(TOASTS[e.type].text(e), 2800, TOASTS[e.type].bad);
     }
-    if (e.type === 'cache_open' && e.x !== undefined) this.float(e.x, e.y!, `+${e.amount}`, COLORS.energy);
+    if (e.type === 'build_place') this.nextTutorialBuilding();
+    if (e.type === 'cache_open' && e.x !== undefined) this.float(e.x, e.y!, `+${e.amount}`);
     if ((e.type === 'nest_open' || e.type === 'heavy_nest_open') && e.x !== undefined) this.explainNest(e.x, e.y!);
     if (e.type === 'victory' || e.type === 'defeat') this.showEnd(e.type === 'victory');
-  }
-
-  private createGuide(): void {
-    this.guideText = this.add
-      .text(VIEW.width / 2, HUD_HEIGHT - 4, '', {
-        fontFamily: 'sans-serif',
-        fontSize: '24px',
-        color: '#0f1420',
-        backgroundColor: '#ffd54f',
-        align: 'center',
-        padding: { x: 14, y: 10 },
-        wordWrap: { width: VIEW.width - 40 },
-      })
-      .setOrigin(0.5, 0)
-      .setDepth(8);
-    const skip = this.add
-      .text(SIDE_MARGIN + 4, 72, t('tutorial.skip'), { fontFamily: 'sans-serif', fontSize: '22px', color: COLORS.textDim, backgroundColor: '#1d263b', padding: { x: 10, y: 4 } })
-      .setDepth(8)
-      .setInteractive({ useHandCursor: true });
-    skip.on('pointerdown', (_p: Phaser.Input.Pointer, _x: number, _y: number, ev: Phaser.Types.Input.EventData) => {
-      ev.stopPropagation();
-      markTutorialDone();
-      this.restart();
-    });
-    this.hud.people.setVisible(false);
-    this.hud.threat.setVisible(false);
-    this.hud.arc.setVisible(false);
-    this.showGuideStep();
-  }
-
-  private showGuideStep(): void {
-    const g = this.guide!;
-    if (g.finished) {
-      this.guideText?.setVisible(false);
-      this.overlay?.destroy();
-      this.overlay = this.panel(t('tutorial.final.title'), [t('tutorial.final.line1'), t('tutorial.final.line2'), t('tutorial.final.line3')], [
-        { label: t('tutorial.final.go'), act: () => this.restart() },
-      ]);
-      return;
-    }
-    this.guideText?.setText(t(g.step!.text));
-    const build = g.step!.highlightBuild ?? [];
-    for (const b of this.buttons) b.bg.setStrokeStyle(build.includes(b.id) ? 4 : 2, build.includes(b.id) ? 0xffd54f : 0x3b4a6e);
   }
 
   /** Points at an opened clue that warned about the nest (design/ONBOARDING.md §1.4). */
@@ -247,7 +246,7 @@ export class GameScene extends Phaser.Scene {
           const c = w.cell(nx, ny);
           if (c.revealed && c.content === 'ground' && c.building === undefined && w.clues(nx, ny).threat > 0) {
             this.spotlight = { x: nx, y: ny, until: this.time.now + 4000 };
-            this.time.delayedCall(3600, () => this.say(t('cell.accidental_nest'), 4000));
+            this.time.delayedCall(3200, () => this.say(t('cell.accidental_nest'), 4000));
             return;
           }
         }
@@ -255,101 +254,386 @@ export class GameScene extends Phaser.Scene {
     }
   }
 
-  private say(text: string, ms = 3500): void {
-    this.toast.setText(text);
-    this.toastUntil = this.time.now + ms;
+  /** Toast plate in the strip between the board and the dock; a new one replaces the old (UI_SPEC §2). */
+  private say(text: string, ms = 2800, bad = false): void {
+    const width = VIEW.width - 64;
+    const tx = this.add.text(0, 0, text, { ...TXT.body(22, bad ? INK.white : INK.graphite, '600'), align: 'center', lineSpacing: 2, wordWrap: { width: width - 36 } }).setOrigin(0.5);
+    const h = Math.max(58, tx.height + 20);
+    const g = this.add.graphics();
+    chip(g, -width / 2, -h / 2, width, h, bad ? C.coralInk : C.paper, 0.97, 14, bad ? undefined : { color: C.seam, width: 2 });
+    const y = DOCK.y - 8 - h / 2;
+    const box = this.add.container(VIEW.width / 2, y + 16, [g, tx]).setDepth(21).setAlpha(0);
+    for (const old of this.toasts) this.tweens.add({ targets: old, alpha: 0, duration: 120, onComplete: () => old.destroy() });
+    this.toasts = [box];
+    this.tweens.add({ targets: box, y, alpha: 1, duration: 180 });
+    this.time.delayedCall(ms, () => {
+      if (!box.active) return;
+      this.tweens.add({ targets: box, alpha: 0, duration: 200, onComplete: () => box.destroy() });
+      this.toasts = this.toasts.filter((b) => b !== box);
+    });
   }
 
-  private float(x: number, y: number, text: string, color: string): void {
-    const p = this.toPx(x, y);
-    const tx = this.add.text(p.x, p.y, text, { fontFamily: 'monospace', fontSize: '24px', fontStyle: 'bold', color }).setOrigin(0.5).setDepth(10);
-    this.tweens.add({ targets: tx, y: p.y - 44, alpha: 0, duration: 1000, onComplete: () => tx.destroy() });
+  private float(x: number, y: number, text: string): void {
+    const p = this.board.center(x, y);
+    const tx = this.add.text(p.x, p.y, text, { ...TXT.num(28, INK.cobalt), stroke: '#ffffff', strokeThickness: 6 }).setOrigin(0.5).setDepth(15);
+    this.tweens.add({ targets: tx, y: p.y - 70, alpha: 0, duration: 1200, onComplete: () => tx.destroy() });
+  }
+
+  // --------------------------------------------------------------- tutorial
+
+  /** Tutorial card on the live board, above the (smaller) tutorial map. */
+  private createGuide(bottom: number): void {
+    const y = BOARD.y - 4;
+    const h = Math.max(150, bottom - y);
+    const g = this.add.graphics().setDepth(22);
+    const text = this.add.text(VIEW.width / 2, y + 60, '', { ...TXT.body(27, INK.graphite, '600'), align: 'center', lineSpacing: 6, wordWrap: { width: HUD.w - 80 } }).setOrigin(0.5, 0).setDepth(22);
+    const dots = this.add.graphics().setDepth(22);
+    const skip = this.add.text(HUD.x + HUD.w - 34, y + 30, t('tutorial.skip'), TXT.caps(INK.dim)).setOrigin(1, 0.5).setDepth(23).setInteractive({ useHandCursor: true });
+    skip.on(
+      'pointerdown',
+      stop(() => {
+        markTutorialDone();
+        this.restart();
+      }),
+    );
+    this.guideBox = { text, dots, g, y, h };
+    this.hud.ringBox.setVisible(this.world.threatLevel > 0 || this.world.s.rules?.threatEnabled !== false);
+    this.showGuideStep();
+  }
+
+  private showGuideStep(): void {
+    const g = this.guide!;
+    const box = this.guideBox!;
+    if (g.finished) {
+      box.text.setVisible(false);
+      box.g.clear();
+      box.dots.clear();
+      this.overlay?.destroy();
+      this.overlay = this.sheet({
+        badge: t('tutorial.progress', { n: g.stepCount, total: g.stepCount }),
+        title: t('tutorial.final.title'),
+        lines: [t('tutorial.final.line1'), t('tutorial.final.line2'), t('tutorial.final.line3')],
+        actions: [{ label: t('tutorial.final.go'), act: () => this.restart(), primary: true }],
+      });
+      return;
+    }
+    box.text.setText(t(g.step!.text));
+    const h = Math.min(box.h, box.text.height + 96);
+    box.g.clear();
+    plate(box.g, HUD.x, box.y, HUD.w, h, 22);
+    box.g.fillStyle(C.amber, 1);
+    box.g.fillRect(HUD.x + 22, box.y + 18, 6, h - 36);
+    const d = box.dots;
+    d.clear();
+    const n = g.stepCount;
+    for (let k = 0; k < n; k++) {
+      d.fillStyle(k <= g.stepIndex ? C.teal : 0xc6d4d9, 1);
+      d.fillCircle(HUD.x + 50 + k * 22, box.y + 30, k === g.stepIndex ? 7 : 5);
+    }
+    if ((g.step!.highlightBuild ?? []).length) {
+      this.nextTutorialBuilding();
+      this.setMode('build');
+    }
+  }
+
+  /** In a tutorial step that asks for buildings, preselect the first one not built yet. */
+  private nextTutorialBuilding(): void {
+    const want = this.guide?.step?.highlightBuild ?? [];
+    const next = want.find((id) => !this.world.s.buildings.some((b) => b.owner === ME && b.type === id));
+    if (next) this.buildType = next;
   }
 
   // --------------------------------------------------------------------- HUD
 
-  private createHud(): void {
-    const energy = this.add.text(SIDE_MARGIN + 4, 22, '', { fontFamily: 'monospace', fontSize: '40px', fontStyle: 'bold', color: COLORS.energy });
-    const people = this.add.text(SIDE_MARGIN + 4, 72, '', { fontFamily: 'monospace', fontSize: '22px', color: COLORS.text });
-    const threat = this.add.text(VIEW.width - 150, 72, '', { fontFamily: 'sans-serif', fontSize: '20px', color: COLORS.textDim }).setOrigin(0.5, 0);
-    const arc = this.add.graphics();
-    this.hud = { energy, people, threat, arc };
-    const pause = this.add
-      .text(VIEW.width - SIDE_MARGIN - 4, 22, 'II', { fontFamily: 'monospace', fontSize: '40px', fontStyle: 'bold', color: COLORS.text, backgroundColor: '#1d263b', padding: { x: 16, y: 4 } })
-      .setOrigin(1, 0)
-      .setInteractive({ useHandCursor: true });
-    pause.on('pointerdown', (_p: Phaser.Input.Pointer, _x: number, _y: number, ev: Phaser.Types.Input.EventData) => {
-      ev.stopPropagation();
-      this.setPaused(!this.paused);
-    });
-    if (this.world.player(ME).assist.mode === 'scanner') {
-      this.scanButton = this.add
-        .text(VIEW.width - 250, 30, '', { fontFamily: 'sans-serif', fontSize: '24px', color: '#0f1420', backgroundColor: '#7ee0a1', padding: { x: 12, y: 8 } })
-        .setOrigin(1, 0)
-        .setInteractive({ useHandCursor: true });
-      this.scanButton.on('pointerdown', (_p: Phaser.Input.Pointer, _x: number, _y: number, ev: Phaser.Types.Input.EventData) => {
-        ev.stopPropagation();
-        if (!this.world.apply({ type: 'scan' }, ME).ok) this.say(t('assist.scan.empty'));
-      });
+  private drawBackground(): void {
+    const g = this.add.graphics().setDepth(-1);
+    g.fillGradientStyle(0xeaf5f8, 0xeaf5f8, C.sky2, C.sky2, 1);
+    g.fillRect(0, 0, VIEW.width, VIEW.height);
+    // Faint skyline of Lumen City behind the panels.
+    g.fillStyle(0xbfd9e2, 0.55);
+    let x = 0;
+    let k = 0;
+    while (x < VIEW.width) {
+      const w = 40 + ((k * 37) % 50);
+      const h = 120 + ((k * 71) % 160);
+      g.fillRect(x, BOARD.y + BOARD.h - h + 60, w, h);
+      x += w + 6;
+      k++;
     }
   }
 
-  private updateHud(): void {
+  private createHud(): void {
+    const g = this.add.graphics().setDepth(20);
+    plate(g, HUD.x, HUD.y, HUD.w, HUD.h, 24);
+    const midY = HUD.y + HUD.h / 2;
+    // Pause: dark square.
+    const px = HUD.x + 18;
+    chip(g, px, midY - 42, 84, 84, C.graphite, 1, 14);
+    this.add.image(px + 42, midY, 'icon.pause').setScale(1.5).setDepth(20).setTintFill(0xffffff);
+    const pauseHit = this.add.zone(px, midY - 42, 84, 84).setOrigin(0).setDepth(20).setInteractive({ useHandCursor: true });
+    pauseHit.on('pointerdown', stop(() => this.setPaused(!this.paused)));
+
+    const stat = (x: number, label: string, icon: string, color: string) => {
+      this.add.text(x, midY - 26, label.toUpperCase(), TXT.caps()).setOrigin(0, 0.5).setDepth(20);
+      this.add.image(x + 14, midY + 18, icon).setScale(1.25).setDepth(20);
+      return this.add.text(x + 34, midY + 18, '', TXT.num(36, color)).setOrigin(0, 0.5).setDepth(20);
+    };
+    const energy = stat(px + 112, t('hud.label.energy'), 'icon.energy', INK.cobalt);
+    const residents = stat(px + 300, t('hud.label.residents'), 'icon.resident', INK.graphite);
+    const squad = stat(px + 456, t('hud.label.squad'), 'icon.shield', INK.graphite);
+
+    // Threat ring: empties over secondsPerLevel, then the level goes up (UI_SPEC §2.1).
+    const rx = HUD.x + HUD.w - 66;
+    const ring = this.add.graphics();
+    const threat = this.add.text(0, 2, '', TXT.num(34, INK.white)).setOrigin(0.5);
+    const ringBox = this.add.container(rx, midY, [ring, threat]).setDepth(20);
+
+    // Goal line under the HUD.
+    this.add.text(HUD.x + 8, GOAL_Y + 22, t('hud.shift_label').toUpperCase(), TXT.caps()).setOrigin(0, 0.5).setDepth(20);
+    const goalBg = this.add.graphics().setDepth(20);
+    const goal = this.add.text(HUD.x + HUD.w - 24, GOAL_Y + 22, '', TXT.body(23, INK.white, '700')).setOrigin(1, 0.5).setDepth(20);
+    this.hud = { energy, residents, squad, threat, ring, ringBox, goal, goalBg };
+  }
+
+  private updateHud(deltaMs: number): void {
     const w = this.world;
     const mine = w.s.units.filter((u) => u.owner === ME);
     const slots = w.s.buildings.filter((b) => b.owner === ME && b.complete).reduce((n, b) => n + b.slots.length, 0);
     const residents = mine.filter((u) => u.kind === 'resident').length;
     const defenders = mine.filter((u) => u.kind === 'defender').length;
-    this.hud.energy.setText(`⚡ ${Math.floor(w.player(ME).energy)}`);
-    const secs = Math.floor(w.s.time);
-    this.hud.people.setText(
-      `👷 ${residents}/${slots}   🛡 ${defenders}/${w.defenderCapacity(ME)}   ${Math.floor(secs / 60)}:${String(secs % 60).padStart(2, '0')}`,
-    );
-    this.hud.threat.setText(t('hud.threat.level', { level: w.threatLevel }));
-    if (this.scanButton) {
-      const a = w.player(ME).assist;
-      this.scanButton.setText(t('assist.scan.charges', { count: a.charges })).setAlpha(a.charges > 0 || a.scanLeft > 0 ? 1 : 0.5);
-    }
-    // Big arc without digits: time until the next threat level.
-    const g = this.hud.arc;
-    const cx = VIEW.width - 150;
-    const cy = 44;
+    // The counter rolls toward the real value so energy visibly "arrives".
+    const real = Math.floor(w.player(ME).energy);
+    const diff = real - this.shownEnergy;
+    this.shownEnergy = Math.abs(diff) < 1 ? real : this.shownEnergy + diff * Math.min(1, deltaMs / 120);
+    this.hud.energy.setText(String(Math.round(this.shownEnergy)));
+    this.hud.residents.setText(`${residents}/${slots}`);
+    this.hud.squad.setText(`${defenders}/${w.defenderCapacity(ME)}`);
+
+    const level = w.threatLevel;
+    if (level > this.lastThreat) this.tweens.add({ targets: this.hud.ringBox, scale: 1.25, duration: 300, yoyo: true });
+    this.lastThreat = level;
+    const g = this.hud.ring;
     g.clear();
-    g.lineStyle(8, 0x2a3550, 1);
-    g.strokeCircle(cx, cy, 24);
-    g.lineStyle(8, w.s.demon.awake ? 0xc77dff : 0xff7a3d, 1);
+    const col = w.s.demon.awake ? C.violet : C.coral;
+    g.fillStyle(col, 1);
+    g.fillCircle(0, 0, 30);
+    g.lineStyle(9, 0xdbe6ea, 1);
+    g.strokeCircle(0, 0, 42);
+    g.lineStyle(9, w.s.demon.awake ? C.violet : C.amber, 1);
     g.beginPath();
-    g.arc(cx, cy, 24, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * w.threatProgress, false);
+    g.arc(0, 0, 42, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * Math.max(0.001, 1 - w.threatProgress), false);
     g.strokePath();
+    this.hud.threat.setText(String(level));
+
+    let goal = t('mode.demon_hunt.goal');
+    let bg = C.graphite;
+    if (this.paused) {
+      goal = t('pause.plan_banner');
+      bg = C.amber;
+    } else if (w.s.demon.warned && !w.s.demon.awake && !w.s.demon.dead) {
+      goal = t('event.demon_warning');
+      bg = C.violet;
+    }
+    if (this.hud.goal.text !== goal) this.hud.goal.setText(goal);
+    const gb = this.hud.goalBg;
+    gb.clear();
+    const gw = this.hud.goal.width + 36;
+    chip(gb, HUD.x + HUD.w - 6 - gw, GOAL_Y, gw, 44, bg, 1, 12);
   }
 
-  private createBuildBar(): void {
-    const top = VIEW.height - BAR_HEIGHT + 70;
-    const n = BUILDABLE.length;
-    const gap = 8;
-    const bw = (VIEW.width - SIDE_MARGIN * 2 - gap * (n - 1)) / n;
-    BUILDABLE.forEach((id, i) => {
-      const x = SIDE_MARGIN + i * (bw + gap);
-      const bg = this.add.rectangle(x, top, bw, 100, 0x1d263b).setOrigin(0, 0).setStrokeStyle(2, 0x3b4a6e).setInteractive({ useHandCursor: true });
-      const style = BUILDING_STYLE[id];
-      this.add.rectangle(x + bw / 2, top + 26, 34, 34, style.color).setOrigin(0.5);
-      this.add.text(x + bw / 2, top + 26, style.label, { fontFamily: 'sans-serif', fontSize: '20px', fontStyle: 'bold', color: '#ffffff' }).setOrigin(0.5);
-      this.add
-        .text(x + bw / 2, top + 54, t(`building.${id}.name`), { fontFamily: 'sans-serif', fontSize: '15px', color: COLORS.text, align: 'center', wordWrap: { width: bw - 6 } })
-        .setOrigin(0.5, 0);
-      const cost = this.add.text(x + bw - 6, top + 4, `${buildingDefs[id].cost}`, { fontFamily: 'monospace', fontSize: '16px', color: COLORS.energy }).setOrigin(1, 0);
-      bg.on('pointerdown', (_p: Phaser.Input.Pointer, _x: number, _y: number, ev: Phaser.Types.Input.EventData) => {
-        ev.stopPropagation();
-        this.select(this.selected === id ? null : id);
-      });
-      this.buttons.push({ id, bg, cost });
+  // -------------------------------------------------------------------- dock
+
+  private createDock(): void {
+    const g = this.add.graphics().setDepth(20);
+    plate(g, DOCK.x, DOCK.y, DOCK.w, DOCK.h, 28);
+    const modes: Mode[] = ['dig', 'build', 'attack'];
+    const icons = { dig: 'icon.dig', build: 'icon.build', attack: 'icon.attack' };
+    const pad = 22;
+    const gap = 10;
+    const tw = (DOCK.w - pad * 2 - gap * 2) / 3;
+    const ty = DOCK.y + 22;
+    const tabs = modes.map((mode, k) => {
+      const x = DOCK.x + pad + k * (tw + gap);
+      const tg = this.add.graphics().setDepth(20);
+      const icon = this.add.image(x + 46, ty + 40, icons[mode]).setScale(1.25).setDepth(20);
+      const label = this.add.text(x + 70, ty + 40, t(`hud.mode_${mode}`), TXT.body(26, INK.graphite, '700')).setOrigin(0, 0.5).setDepth(20);
+      const hit = this.add.zone(x, ty, tw, 80).setOrigin(0).setDepth(20).setInteractive({ useHandCursor: true });
+      hit.on('pointerdown', stop(() => this.setMode(mode)));
+      return { mode, g: tg, label, icon, x, w: tw };
     });
+
+    const top = DOCK.y + 124;
+    const inner = DOCK.w - pad * 2;
+    // Dig: legend of the clue glyphs + queue chip (+ scan button).
+    const dig = this.add.container(0, 0).setDepth(20);
+    const lg = this.add.graphics();
+    dig.add(lg);
+    const legend: [string, 'threat' | 'finds' | 'demon' | 'safe', number][] = [
+      ['legend.threat', 'threat', C.coralInk],
+      ['legend.finds', 'finds', C.teal],
+      ['legend.demon', 'demon', C.violet],
+      ['legend.safe', 'safe', C.green],
+    ];
+    legend.forEach(([key, kind, color], k) => {
+      const lx = DOCK.x + pad + 14 + (k % 2) * 200;
+      const ly = top + 32 + Math.floor(k / 2) * 52;
+      if (kind === 'safe') {
+        lg.lineStyle(5, color, 1);
+        lg.beginPath();
+        lg.moveTo(lx - 9, ly);
+        lg.lineTo(lx - 2, ly + 7);
+        lg.lineTo(lx + 10, ly - 7);
+        lg.strokePath();
+      } else glyph(lg, kind, lx, ly, 9, color);
+      dig.add(this.add.text(lx + 22, ly, t(key), TXT.body(23, INK.graphite, '500')).setOrigin(0, 0.5));
+    });
+    const qx = DOCK.x + DOCK.w - pad - 250;
+    const qg = this.add.graphics();
+    chip(qg, qx, top + 4, 250, 60, 0xd9f3f8, 1, 12);
+    const queue = this.add.text(qx + 22, top + 34, '', TXT.body(23, INK.deep, '700')).setOrigin(0, 0.5);
+    const qx2 = this.add.text(qx + 226, top + 34, '✕', TXT.body(26, INK.deep, '700')).setOrigin(1, 0.5);
+    const qhit = this.add.zone(qx, top + 4, 250, 60).setOrigin(0).setInteractive({ useHandCursor: true });
+    qhit.on(
+      'pointerdown',
+      stop(() => {
+        const p = this.world.player(ME);
+        for (const k of [...p.queue]) {
+          const [x, y] = k.split(',').map(Number);
+          this.world.apply({ type: 'cancelDig', x, y }, ME);
+        }
+      }),
+    );
+    dig.add([qg, queue, qx2, qhit]);
+    let scan: Phaser.GameObjects.Text | null = null;
+    if (this.world.player(ME).assist.mode === 'scanner') {
+      const sg = this.add.graphics();
+      chip(sg, qx, top + 78, 250, 66, C.teal, 1, 12);
+      scan = this.add.text(qx + 125, top + 111, '', TXT.body(24, INK.white, '700')).setOrigin(0.5);
+      const shit = this.add.zone(qx, top + 78, 250, 66).setOrigin(0).setInteractive({ useHandCursor: true });
+      shit.on(
+        'pointerdown',
+        stop(() => {
+          if (!this.world.apply({ type: 'scan' }, ME).ok) this.say(t('assist.scan.empty'));
+        }),
+      );
+      dig.add([sg, scan, shit]);
+    }
+
+    // Build: five cards with the building sprites.
+    const build = this.add.container(0, 0).setDepth(20);
+    const cgap = 10;
+    const cw = (inner - cgap * (BUILDABLE.length - 1)) / BUILDABLE.length;
+    const ch = 150;
+    const cards = BUILDABLE.map((id, k) => {
+      const x = DOCK.x + pad + k * (cw + cgap);
+      const cg = this.add.graphics();
+      const a = BUILDING_ANCHOR[id] ?? [36, 78, 72, 96];
+      const img = this.add.image(x + cw / 2, top + 66, `building.${id}`).setOrigin(0.5, a[1] / a[3]);
+      img.setScale(Math.min(1, 74 / a[3]));
+      const name = this.add.text(x + cw / 2, top + 98, t(`building.${id}.name`), { ...TXT.body(16, INK.graphite, '600'), align: 'center', wordWrap: { width: cw - 10 } }).setOrigin(0.5, 0.5);
+      const cost = this.add.text(x + cw / 2 + 10, top + 132, `${buildingDefs[id].cost}`, TXT.num(19, INK.cobalt)).setOrigin(0.5);
+      const eicon = this.add.image(x + cw / 2 - cost.width / 2 - 4, top + 132, 'icon.energy');
+      const hit = this.add.zone(x, top, cw, ch).setOrigin(0).setInteractive({ useHandCursor: true });
+      hit.on(
+        'pointerdown',
+        stop(() => {
+          this.buildType = id;
+          this.setGhost(null);
+          this.say(t(`building.${id}.desc`), 3500);
+        }),
+      );
+      build.add([cg, img, name, cost, eicon, hit]);
+      return { id, g: cg, cost, x, y: top, w: cw, h: ch };
+    });
+
+    // Attack: hint + squad chip.
+    const attack = this.add.container(0, 0).setDepth(20);
+    attack.add(this.add.text(DOCK.x + pad + 8, top + 70, t('tutorial.attack'), { ...TXT.body(23, INK.graphite, '500'), wordWrap: { width: inner - 280 } }).setOrigin(0, 0.5));
+    const sg = this.add.graphics();
+    chip(sg, qx, top + 40, 250, 60, 0xfde3e7, 1, 12);
+    const squad = this.add.text(qx + 125, top + 70, '', TXT.body(24, INK.coral, '700')).setOrigin(0.5);
+    attack.add([sg, squad]);
+
+    this.dock = { tabs, panes: { dig, build, attack }, queue, squad, scan, cards };
   }
 
-  private select(id: string | null): void {
-    this.selected = id;
-    for (const b of this.buttons) b.bg.setStrokeStyle(id === b.id ? 4 : 2, id === b.id ? 0x7ee0a1 : 0x3b4a6e);
-    if (id) this.say(t(`building.${id}.desc`), 5000);
+  private setMode(mode: Mode): void {
+    this.mode = mode;
+    if (mode !== 'build') this.setGhost(null);
+    for (const tab of this.dock.tabs) {
+      const on = tab.mode === mode;
+      tab.g.clear();
+      if (on) chip(tab.g, tab.x, DOCK.y + 22, tab.w, 80, mode === 'attack' ? C.coralInk : C.graphite, 1, 14);
+      else chip(tab.g, tab.x, DOCK.y + 22, tab.w, 80, C.graphite, 0.06, 14);
+      tab.label.setColor(on ? INK.white : INK.graphite);
+      if (on) tab.icon.setTintFill(0xffffff);
+      else tab.icon.clearTint();
+    }
+    for (const [m, pane] of Object.entries(this.dock.panes)) pane.setVisible(m === mode);
+  }
+
+  private updateDock(): void {
+    const w = this.world;
+    const p = w.player(ME);
+    if (this.mode === 'dig') {
+      this.dock.queue.setText(t('hud.queue', { count: p.queue.length + p.autoQueue.length }));
+      if (this.dock.scan) {
+        const a = p.assist;
+        this.dock.scan.setText(t('assist.scan.charges', { count: a.charges })).setAlpha(a.charges > 0 || a.scanLeft > 0 ? 1 : 0.5);
+      }
+    } else if (this.mode === 'attack') {
+      this.dock.squad.setText(t('hud.squad_chip', { count: w.s.units.filter((u) => u.owner === ME && u.kind === 'defender').length }));
+    } else {
+      const hl = this.guide?.step?.highlightBuild ?? [];
+      const pulse = 0.5 + 0.5 * Math.sin(this.time.now / 180);
+      for (const c of this.dock.cards) {
+        const sel = c.id === this.buildType;
+        const afford = p.energy >= buildingDefs[c.id].cost;
+        c.g.clear();
+        chip(c.g, c.x, c.y, c.w, c.h, sel ? 0xd9f3f8 : C.white, afford ? 1 : 0.5, 12, {
+          color: hl.includes(c.id) ? C.amber : sel ? C.seam : 0xc6d4d9,
+          width: hl.includes(c.id) ? 4 + 2 * pulse : sel ? 4 : 2,
+        });
+        c.cost.setColor(afford ? INK.cobalt : INK.coral);
+      }
+    }
+    // Tutorial: the Build tab blinks when the step asks for a building.
+    const hl = (this.guide?.step?.highlightBuild ?? []).length > 0;
+    const tab = this.dock.tabs[1];
+    if (hl && this.mode !== 'build') {
+      tab.g.clear();
+      chip(tab.g, tab.x, DOCK.y + 22, tab.w, 80, C.amber, 0.4 + 0.4 * Math.sin(this.time.now / 180), 14);
+    }
+  }
+
+  // ------------------------------------------------------------ build ghost
+
+  private setGhost(at: { x: number; y: number } | null): void {
+    this.ghost = at;
+    this.ghostButtons?.destroy();
+    this.ghostButtons = null;
+    if (!at) return;
+    const p = this.board.center(at.x, at.y);
+    const y = Math.max(BOARD.y + 30, p.y - 110);
+    const mk = (dx: number, dark: boolean, label: string, act: () => void) => {
+      const g = this.add.graphics();
+      chip(g, dx - 40, -40, 80, 80, dark ? C.graphite : C.white, 1, 12, dark ? undefined : { color: C.seam, width: 3 });
+      const tx = this.add.text(dx, 0, label, TXT.num(34, dark ? INK.white : INK.graphite)).setOrigin(0.5);
+      const hit = this.add.zone(dx - 40, -40, 80, 80).setOrigin(0).setInteractive({ useHandCursor: true });
+      hit.on('pointerdown', stop(act));
+      return [g, tx, hit];
+    };
+    const x = Phaser.Math.Clamp(p.x, 110, VIEW.width - 110);
+    this.ghostButtons = this.add
+      .container(x, y, [
+        ...mk(-48, true, '✓', () => {
+          const r = this.world.apply({ type: 'build', building: this.buildType, x: at.x, y: at.y }, ME);
+          if (!r.ok) this.say(t(r.reason === 'invalid' ? 'build.invalid_cell' : r.reason), 2800, true);
+          this.setGhost(null);
+        }),
+        ...mk(48, false, '✕', () => this.setGhost(null)),
+      ])
+      .setDepth(19);
   }
 
   // ---------------------------------------------------------------- overlays
@@ -361,10 +645,14 @@ export class GameScene extends Phaser.Scene {
     this.overlay = null;
     if (!on) return;
     this.save();
-    this.overlay = this.panel(t('pause.title'), [t('pause.hint')], [
-      { label: t('pause.resume'), act: () => this.setPaused(false) },
-      { label: t('pause.restart'), act: () => this.restart() },
-    ]);
+    this.overlay = this.sheet({
+      title: t('pause.title'),
+      lines: [t('pause.hint')],
+      actions: [
+        { label: t('pause.resume'), act: () => this.setPaused(false), primary: true },
+        { label: t('pause.restart'), act: () => this.restart() },
+      ],
+    });
   }
 
   private showEnd(victory: boolean): void {
@@ -374,10 +662,13 @@ export class GameScene extends Phaser.Scene {
       /* ignore */
     }
     const w = this.world;
-    const time = this.fmt(w.s.time);
-    const lines = victory
-      ? [t('win.text'), t('win.time', { time }), t('win.threat', { level: w.threatLevel }), t('win.nests', { count: w.player(ME).stats.nests }), t('win.caches', { count: w.player(ME).stats.caches })]
-      : [t('lose.text')];
+    const tiles: [string, string][] = [
+      [t('win.time', { time: this.fmt(w.s.time) }), ''],
+      [t('win.threat', { level: w.threatLevel }), ''],
+      [t('win.nests', { count: w.player(ME).stats.nests }), ''],
+      [t('win.caches', { count: w.player(ME).stats.caches }), ''],
+    ];
+    let badge: string | undefined;
     if (victory) {
       let best = Infinity;
       try {
@@ -386,12 +677,17 @@ export class GameScene extends Phaser.Scene {
       } catch {
         /* ignore */
       }
-      lines.push(w.s.time < best ? t('win.new_record') : t('win.best_time', { time: this.fmt(best) }));
+      badge = w.s.time < best ? t('win.new_record') : t('win.best_time', { time: this.fmt(best) });
     }
     this.overlay?.destroy();
-    this.overlay = this.panel(victory ? t('win.title') : t('lose.title'), lines, [
-      { label: victory ? t('win.again') : t('lose.again'), act: () => this.restart() },
-    ]);
+    this.overlay = this.sheet({
+      portrait: victory ? 'portrait.demon' : 'portrait.bld_command',
+      grey: !victory,
+      badge,
+      title: victory ? t('win.title') : t('lose.title'),
+      lines: [victory ? t('win.text') : t('lose.text'), ...tiles.map((x) => x[0])],
+      actions: [{ label: victory ? t('win.again') : t('lose.again'), act: () => this.restart(), primary: true }],
+    });
   }
 
   private fmt(seconds: number): string {
@@ -399,134 +695,63 @@ export class GameScene extends Phaser.Scene {
     return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
   }
 
-  private panel(title: string, lines: string[], actions: { label: string; act: () => void }[]): Phaser.GameObjects.Container {
-    const c = this.add.container(0, 0).setDepth(20);
-    const shade = this.add.rectangle(0, 0, VIEW.width, VIEW.height, 0x000000, 0.72).setOrigin(0).setInteractive();
-    shade.on('pointerdown', (_p: Phaser.Input.Pointer, _x: number, _y: number, ev: Phaser.Types.Input.EventData) => ev.stopPropagation());
+  /** Bottom sheet over the dimmed board (UI_SPEC §5). */
+  private sheet(o: { title: string; lines: string[]; actions: { label: string; act: () => void; primary?: boolean }[]; badge?: string; portrait?: string; grey?: boolean }): Phaser.GameObjects.Container {
+    const c = this.add.container(0, 0).setDepth(30);
+    const shade = this.add.rectangle(0, 0, VIEW.width, VIEW.height, 0x0a1218, 0.55).setOrigin(0).setInteractive();
+    shade.on('pointerdown', (_p: Phaser.Input.Pointer, _x: number, _y: number, ev: Ev) => ev.stopPropagation());
     c.add(shade);
-    let y = 360;
-    c.add(this.add.text(VIEW.width / 2, y, title, { fontFamily: 'sans-serif', fontSize: '44px', fontStyle: 'bold', color: '#ffffff' }).setOrigin(0.5, 0));
-    y += 80;
-    for (const line of lines) {
-      const tx = this.add.text(VIEW.width / 2, y, line, { fontFamily: 'sans-serif', fontSize: '24px', color: COLORS.text, align: 'center', wordWrap: { width: VIEW.width - 80 } }).setOrigin(0.5, 0);
-      c.add(tx);
-      y += tx.height + 14;
+    const w = VIEW.width - 56;
+    const x = 28;
+    const content: Phaser.GameObjects.GameObject[] = [];
+    let y = 56;
+    if (o.badge) {
+      const b = this.add.text(w / 2, y, o.badge.toUpperCase(), TXT.caps(INK.amber)).setOrigin(0.5, 0);
+      content.push(b);
+      y += 40;
     }
-    y += 30;
-    for (const a of actions) {
-      const btn = this.add
-        .text(VIEW.width / 2, y, a.label, { fontFamily: 'sans-serif', fontSize: '28px', color: '#0f1420', backgroundColor: '#7ee0a1', padding: { x: 28, y: 14 } })
-        .setOrigin(0.5, 0)
-        .setInteractive({ useHandCursor: true });
-      btn.on('pointerdown', (_p: Phaser.Input.Pointer, _x: number, _y: number, ev: Phaser.Types.Input.EventData) => {
-        ev.stopPropagation();
-        a.act();
-      });
-      c.add(btn);
-      y += 90;
+    const title = this.add.text(w / 2, y, o.title, { ...TXT.num(40, INK.graphite), align: 'center', wordWrap: { width: w - 80 } }).setOrigin(0.5, 0);
+    content.push(title);
+    y += title.height + 24;
+    for (const line of o.lines) {
+      const tx = this.add.text(w / 2, y, line, { ...TXT.body(25, INK.dim, '500'), align: 'center', wordWrap: { width: w - 90 } }).setOrigin(0.5, 0);
+      content.push(tx);
+      y += tx.height + 12;
     }
+    y += 20;
+    for (const a of o.actions) {
+      const bg = this.add.graphics();
+      chip(bg, 40, y, w - 80, 96, a.primary ? C.teal : C.graphite, a.primary ? 1 : 0.1, 18);
+      if (a.primary) {
+        bg.fillStyle(C.graphite, 0.35);
+        bg.fillRect(58, y + 90, w - 116, 6);
+      }
+      const tx = this.add.text(w / 2, y + 48, a.label, TXT.body(29, a.primary ? INK.white : INK.graphite, '700')).setOrigin(0.5);
+      const hit = this.add.zone(40, y, w - 80, 96).setOrigin(0).setInteractive({ useHandCursor: true });
+      hit.on('pointerdown', stop(a.act));
+      content.push(bg, tx, hit);
+      y += 112;
+    }
+    const h = y + 28;
+    const top = VIEW.height - h - 40;
+    const bg = this.add.graphics();
+    plate(bg, 0, 0, w, h, 30);
+    const body = this.add.container(x, top, [bg, ...content]);
+    if (o.portrait && this.textures.exists(o.portrait)) {
+      const img = this.add.image(VIEW.width / 2, top + 30, o.portrait).setOrigin(0.5, 1);
+      img.setScale(Math.min(3, 300 / img.height));
+      img.texture.setFilter(Phaser.Textures.FilterMode.NEAREST);
+      if (o.grey) img.setTint(0x9aa4aa).setAngle(-8);
+      c.add(img);
+    }
+    c.add(body);
+    body.y += 60;
+    body.alpha = 0;
+    this.tweens.add({ targets: body, y: top, alpha: 1, duration: 260, ease: 'Cubic.out' });
     return c;
   }
 
-  // ----------------------------------------------------------------- drawing
-
-  private toPx(x: number, y: number) {
-    return { x: this.ox + (x + 0.5) * this.cs, y: this.oy + (y + 0.5) * this.cs };
-  }
-
-  private draw(): void {
-    const w = this.world;
-    const s = w.s;
-    const g = this.gfx;
-    const cs = this.cs;
-    g.clear();
-    const digging = new Map<string, number>();
-    for (const u of s.units) if (u.task.type === 'dig' && u.path.length === 0) digging.set(cellKey(u.task.x, u.task.y), u.task.progress / config.dig.digSeconds);
-    const showBuild = this.selected !== null;
-    const known = w.started ? w.visibleKnowledge(ME) : new Map();
-
-    for (let y = 0; y < s.height; y++) {
-      for (let x = 0; x < s.width; x++) {
-        const c = w.cell(x, y);
-        const px = this.ox + x * cs;
-        const py = this.oy + y * cs;
-        const idx = y * s.width + x;
-        if (!c.revealed) {
-          this.setClues(idx, x, y, null);
-          g.fillStyle(w.started && w.isFrontier(x, y) ? COLORS.frontier : COLORS.covered, 1);
-          g.fillRoundedRect(px + 2, py + 2, cs - 4, cs - 4, 6);
-          g.lineStyle(2, COLORS.coveredEdge, 1);
-          g.strokeRoundedRect(px + 2, py + 2, cs - 4, cs - 4, 6);
-          if (c.marked) {
-            g.fillStyle(COLORS.marked, 1);
-            g.fillTriangle(px + cs * 0.36, py + cs * 0.22, px + cs * 0.36, py + cs * 0.58, px + cs * 0.72, py + cs * 0.4);
-            g.fillRect(px + cs * 0.33, py + cs * 0.22, 3, cs * 0.56);
-          }
-          const k = cellKey(x, y);
-          const p = w.player(ME);
-          if (p.queue.includes(k) || p.autoQueue.includes(k)) {
-            g.lineStyle(3, p.queue.includes(k) ? COLORS.queued : COLORS.autoQueued, 1);
-            g.strokeRoundedRect(px + 5, py + 5, cs - 10, cs - 10, 5);
-          }
-          const kn = known.get(k);
-          if (kn) this.drawKnowledge(g, kn, px, py);
-          const prog = digging.get(k);
-          if (prog !== undefined) this.bar(g, px + 6, py + cs - 10, cs - 12, prog, COLORS.queued);
-          continue;
-        }
-        const own = w.started && w.inTerritory(ME, x, y);
-        g.fillStyle(own ? COLORS.territory : COLORS.opened, 1);
-        g.fillRect(px + 1, py + 1, cs - 2, cs - 2);
-        if (showBuild && w.canBuild(ME, this.selected!, x, y) === null) {
-          g.lineStyle(3, COLORS.queued, 0.9);
-          g.strokeRect(px + 3, py + 3, cs - 6, cs - 6);
-        }
-        this.drawContent(g, x, y, px, py);
-        if (c.hot) {
-          g.fillStyle(COLORS.hot, 0.25 + 0.35 * Math.min(1, c.hot));
-          g.fillRect(px + 1, py + 1, cs - 2, cs - 2);
-        }
-        const clueCell = c.content === 'ground' || c.content === 'rubble' || c.content === 'energy_vein' || c.resolved;
-        this.setClues(idx, x, y, clueCell && c.building === undefined ? w.clues(x, y) : null);
-      }
-    }
-    this.drawBuildings(g);
-    this.drawSpotlight(g);
-    this.drawUnits();
-  }
-
-  private drawKnowledge(g: Phaser.GameObjects.Graphics, kn: string, px: number, py: number): void {
-    const cs = this.cs;
-    if (kn === 'safe') {
-      g.lineStyle(4, COLORS.queued, 0.9);
-      g.beginPath();
-      g.moveTo(px + cs * 0.3, py + cs * 0.52);
-      g.lineTo(px + cs * 0.45, py + cs * 0.66);
-      g.lineTo(px + cs * 0.72, py + cs * 0.36);
-      g.strokePath();
-      return;
-    }
-    const color = kn === 'demon' ? 0xc77dff : 0xff5a5a;
-    g.fillStyle(color, 0.85);
-    g.fillCircle(px + cs / 2, py + cs / 2, cs * 0.2);
-    g.lineStyle(3, color, 1);
-    g.strokeCircle(px + cs / 2, py + cs / 2, cs * 0.32);
-  }
-
-  private drawSpotlight(g: Phaser.GameObjects.Graphics): void {
-    if (this.guide) {
-      const pulse = 0.5 + 0.5 * Math.sin(this.time.now / 180);
-      g.lineStyle(5, 0xffd54f, 0.4 + 0.6 * pulse);
-      for (const f of this.guide.focusCells()) g.strokeRoundedRect(this.ox + f.x * this.cs + 2, this.oy + f.y * this.cs + 2, this.cs - 4, this.cs - 4, 8);
-    }
-    const sp = this.spotlight;
-    if (!sp || this.time.now > sp.until) return;
-    const cs = this.cs;
-    g.lineStyle(4, 0xffffff, 0.9);
-    g.strokeRect(this.ox + (sp.x - 1) * cs, this.oy + (sp.y - 1) * cs, cs * 3, cs * 3);
-    g.fillStyle(0xffffff, 0.08);
-    g.fillRect(this.ox + (sp.x - 1) * cs, this.oy + (sp.y - 1) * cs, cs * 3, cs * 3);
-  }
+  // ------------------------------------------------------------------- input
 
   /** "Next to this block: 2 nests" with Russian plural forms. */
   private nearText(x: number, y: number): string {
@@ -545,208 +770,23 @@ export class GameScene extends Phaser.Scene {
     return lines.length ? lines.join('\n') : t('cell.near.clear');
   }
 
-  private bar(g: Phaser.GameObjects.Graphics, x: number, y: number, width: number, frac: number, color: number): void {
-    g.fillStyle(COLORS.hpBack, 0.6);
-    g.fillRect(x, y, width, 5);
-    g.fillStyle(color, 1);
-    g.fillRect(x, y, width * Math.max(0, Math.min(1, frac)), 5);
-  }
-
-  private drawContent(g: Phaser.GameObjects.Graphics, x: number, y: number, px: number, py: number): void {
-    const c = this.world.cell(x, y);
-    const cs = this.cs;
-    const cx = px + cs / 2;
-    const cy = py + cs / 2;
-    switch (c.content) {
-      case 'water':
-        g.fillStyle(COLORS.water, 1);
-        g.fillRect(px + 1, py + 1, cs - 2, cs - 2);
-        break;
-      case 'rubble':
-        g.fillStyle(COLORS.rubble, 1);
-        g.fillRect(px + cs * 0.2, py + cs * 0.45, cs * 0.25, cs * 0.3);
-        g.fillRect(px + cs * 0.5, py + cs * 0.3, cs * 0.3, cs * 0.45);
-        break;
-      case 'energy_vein':
-        g.fillStyle(COLORS.vein, 0.5 + 0.5 * ((c.stock ?? 0) / 120));
-        for (const [dx, dy] of [[0.3, 0.3], [0.65, 0.4], [0.4, 0.7]]) g.fillCircle(px + cs * dx, py + cs * dy, cs * 0.09);
-        break;
-      case 'cache':
-      case 'survivor':
-        g.lineStyle(2, 0x5fd3ff, 0.4);
-        g.strokeCircle(cx, cy, cs * 0.25);
-        break;
-      case 'nest':
-      case 'heavy_nest':
-      case 'demon_hatch': {
-        const site = this.world.site(x, y);
-        const dead = c.resolved || site?.destroyed;
-        const color = c.content === 'demon_hatch' ? COLORS.demon : TECH_COLOR[c.tech ?? 'thermo'];
-        g.fillStyle(color, dead ? 0.2 : 0.85);
-        if (c.content === 'heavy_nest') g.fillRect(px + cs * 0.15, py + cs * 0.15, cs * 0.7, cs * 0.7);
-        else g.fillCircle(cx, cy, cs * 0.36);
-        g.lineStyle(3, 0x000000, 0.6);
-        g.strokeCircle(cx, cy, cs * 0.18);
-        if (site && !dead) this.bar(g, px + 4, py + 3, cs - 8, site.hp / site.maxHp, COLORS.hpBad);
-        if (this.world.player(ME).order === `s:${x},${y}`) {
-          g.lineStyle(3, 0xffffff, 0.9);
-          g.strokeCircle(cx, cy, cs * 0.46);
-        }
-        break;
-      }
-    }
-  }
-
-  /** Up to three colored clue digits; a lone clue sits big in the middle. */
-  private setClues(idx: number, x: number, y: number, clues: Record<(typeof CHANNELS)[number], number> | null): void {
-    let texts = this.clueTexts.get(idx);
-    if (!clues) {
-      texts?.forEach((tx) => tx.setText(''));
-      return;
-    }
-    if (!texts) {
-      texts = CHANNELS.map((ch) =>
-        this.add.text(0, 0, '', { fontFamily: 'monospace', fontStyle: 'bold', fontSize: '20px', color: CHANNEL_COLOR[ch] }).setOrigin(0.5).setDepth(2),
-      );
-      this.clueTexts.set(idx, texts);
-    }
-    const active = CHANNELS.filter((ch) => clues[ch] > 0);
-    const p = this.toPx(x, y);
-    CHANNELS.forEach((ch, i) => {
-      const tx = texts![i];
-      const n = clues[ch];
-      const slot = active.indexOf(ch);
-      if (n === 0) return void tx.setText('');
-      tx.setText(String(n));
-      if (active.length === 1) tx.setPosition(p.x, p.y).setFontSize(Math.round(this.cs * 0.55));
-      else {
-        const offs = active.length === 2 ? [-0.2, 0.2] : [-0.27, 0, 0.27];
-        tx.setPosition(p.x + offs[slot] * this.cs, p.y).setFontSize(Math.round(this.cs * 0.4));
-      }
-    });
-  }
-
-  private drawBuildings(g: Phaser.GameObjects.Graphics): void {
-    const s = this.world.s;
-    const cs = this.cs;
-    const alive = new Set<number>();
-    for (const b of s.buildings) {
-      alive.add(b.id);
-      const def = buildingDefs[b.type];
-      const style = BUILDING_STYLE[b.type];
-      const px = this.ox + b.x * cs;
-      const py = this.oy + b.y * cs;
-      const mine = b.owner === ME;
-      g.fillStyle(style.color, b.complete ? 1 : 0.35);
-      g.fillRoundedRect(px + 4, py + 4, cs - 8, cs - 8, 6);
-      if (!mine) {
-        g.lineStyle(3, 0xff5a5a, 1);
-        g.strokeRoundedRect(px + 4, py + 4, cs - 8, cs - 8, 6);
-      }
-      if (!b.complete) this.bar(g, px + 6, py + cs - 11, cs - 12, b.built / def.buildSeconds, COLORS.queued);
-      else if (b.hp < def.hp) this.bar(g, px + 6, py + 2, cs - 12, b.hp / def.hp, b.hp / def.hp > 0.4 ? COLORS.hpGood : COLORS.hpBad);
-      if (b.type === 'school' && !b.recruit) {
-        g.fillStyle(0x888888, 1);
-        g.fillCircle(px + cs - 10, py + 10, 5);
-      }
-      let label = this.labels.get(b.id);
-      if (!label) {
-        label = this.add
-          .text(px + cs / 2, py + cs / 2, style.label, { fontFamily: 'sans-serif', fontSize: `${Math.round(cs * 0.36)}px`, fontStyle: 'bold', color: '#ffffff' })
-          .setOrigin(0.5)
-          .setDepth(3);
-        this.labels.set(b.id, label);
-      }
-      label.setAlpha(b.complete ? 1 : 0.6);
-    }
-    for (const [id, label] of this.labels) {
-      if (!alive.has(id)) {
-        label.destroy();
-        this.labels.delete(id);
-      }
-    }
-  }
-
-  private drawUnits(): void {
-    const g = this.top;
-    const s = this.world.s;
-    const cs = this.cs;
-    g.clear();
-    for (const o of s.orbs) {
-      const p = this.toPx(o.x, o.y);
-      g.fillStyle(COLORS.orb, 1);
-      g.fillCircle(p.x, p.y, 4 + Math.min(6, o.amount / 10));
-    }
-    const order = this.world.player(ME).order;
-    for (const u of s.units) {
-      const p = this.toPx(u.x, u.y);
-      const st = this.world.stats(u);
-      let r = cs * 0.17;
-      let color = COLORS.resident;
-      if (u.kind === 'defender') {
-        r = cs * 0.22;
-        color = COLORS.defender;
-      } else if (u.kind === 'adaptant') {
-        r = cs * 0.2;
-        color = COLORS.enemy;
-      } else if (u.kind === 'heavy_adaptant') {
-        r = cs * 0.3;
-        color = COLORS.enemy;
-      } else if (u.kind === 'demon') {
-        r = cs * 0.42;
-        color = COLORS.demon;
-      }
-      if (u.owner >= 0 && u.owner !== ME) color = 0xff9f43;
-      const bob = u.task.type === 'dig' || u.task.type === 'build' || u.task.type === 'harvest' ? Math.sin(this.time.now / 80 + u.id) * 2 : 0;
-      g.fillStyle(0x000000, 0.35);
-      g.fillEllipse(p.x, p.y + r * 0.9, r * 1.8, r * 0.6);
-      g.fillStyle(color, 1);
-      g.fillCircle(p.x, p.y + bob, r);
-      // Trophy parts: one colored dot per slot.
-      Object.values(u.parts).forEach((part, i) => {
-        if (!part) return;
-        const a = (i / 5) * Math.PI * 2 - Math.PI / 2;
-        g.fillStyle(TECH_COLOR[part.id.split('_')[0]] ?? 0xffffff, 1);
-        g.fillCircle(p.x + Math.cos(a) * r, p.y + Math.sin(a) * r, Math.max(3, r * 0.32));
-      });
-      if (u.hp < st.hp) this.bar(g, p.x - cs * 0.3, p.y - r - 9, cs * 0.6, u.hp / st.hp, u.owner < 0 ? COLORS.hpBad : COLORS.hpGood);
-      if (order === `u:${u.id}`) {
-        g.lineStyle(3, 0xffffff, 0.9);
-        g.strokeCircle(p.x, p.y, r + 5);
-      }
-      if (u.blast?.phase === 'windup') this.drawWindup(g, u);
-    }
-  }
-
-  private drawWindup(g: Phaser.GameObjects.Graphics, u: Unit): void {
-    const b = u.blast!;
-    const from = this.toPx(u.x, u.y);
-    const to = this.toPx(u.x + b.dx * 3.25, u.y + b.dy * 3.25);
-    g.lineStyle(this.cs * 0.5, COLORS.hot, 0.25 + 0.2 * Math.sin(this.time.now / 60));
-    g.lineBetween(from.x, from.y, to.x, to.y);
-  }
-
-  // ------------------------------------------------------------------- input
-
-  private cellOf(p: Phaser.Input.Pointer): { x: number; y: number } | null {
-    const x = Math.floor((p.worldX - this.ox) / this.cs);
-    const y = Math.floor((p.worldY - this.oy) / this.cs);
-    return x >= 0 && y >= 0 && x < this.world.s.width && y < this.world.s.height ? { x, y } : null;
-  }
-
   private onDown(p: Phaser.Input.Pointer): void {
-    if (this.overlay && !this.paused) return;
-    const at = this.cellOf(p);
+    if (this.overlay) return;
+    const at = this.board.cellAt(p.worldX, p.worldY);
     if (!at) return;
     const w = this.world;
     const { x, y } = at;
     if (!w.started) {
-      if (w.apply({ type: 'placeCommand', x, y }, ME).ok && !this.guide) this.say(t('tutorial.dig'), 6000);
+      if (w.apply({ type: 'placeCommand', x, y }, ME).ok && !this.guide) this.say(t('tutorial.dig'), 5000);
       return;
     }
-    if (this.selected) {
-      const r = w.apply({ type: 'build', building: this.selected, x, y }, ME);
-      if (!r.ok) this.say(t(r.reason === 'invalid' ? 'build.invalid_cell' : r.reason));
+    if (this.mode === 'build') {
+      const why = w.canBuild(ME, this.buildType, x, y);
+      if (why === null) this.setGhost({ x, y });
+      else {
+        this.setGhost(null);
+        this.say(t(why === 'invalid' ? 'build.invalid_cell' : why), 2800, true);
+      }
       return;
     }
     const c = w.cell(x, y);
@@ -755,10 +795,8 @@ export class GameScene extends Phaser.Scene {
       else w.apply({ type: 'toggleMark', x, y }, ME);
       return;
     }
-    // Tap an enemy or an opened nest: all defenders attack it.
-    const fx = (p.worldX - this.ox) / this.cs - 0.5;
-    const fy = (p.worldY - this.oy) / this.cs - 0.5;
-    const foe = w.s.units.find((u) => u.owner < 0 && Math.hypot(u.x - fx, u.y - fy) < 0.7);
+    // Tap an enemy or an opened nest: all defenders attack it (any mode).
+    const foe = this.board.enemyAt(p.worldX, p.worldY);
     if (foe) {
       w.apply({ type: 'attack', target: `u:${foe.id}` }, ME);
       return;
@@ -769,9 +807,13 @@ export class GameScene extends Phaser.Scene {
       return;
     }
     const b = w.building(c.building);
-    if (b && b.owner === ME && b.type === 'school') {
+    if (b && b.owner === ME && b.type === 'school' && b.complete) {
       w.apply({ type: 'setRecruit', building: b.id, on: !b.recruit }, ME);
       this.say(t(b.recruit ? 'building.school.train_on' : 'building.school.train_off'));
+      return;
+    }
+    if (this.mode === 'attack') {
+      if (c.revealed && w.player(ME).order) w.apply({ type: 'cancelOrder' }, ME);
       return;
     }
     if (c.revealed && w.player(ME).order && c.content === 'ground') w.apply({ type: 'cancelOrder' }, ME);
@@ -795,7 +837,7 @@ export class GameScene extends Phaser.Scene {
     if (r?.ok) this.guide?.notify('queued');
     if (r && !r.ok && r.reason === 'assist.known_danger') {
       this.confirmCell = k;
-      this.say(t(w.visibleKnowledge(ME).get(k) === 'demon' ? 'cell.confirm_demon.hint' : 'cell.confirm_nest.hint'), 5000);
+      this.say(t(w.visibleKnowledge(ME).get(k) === 'demon' ? 'cell.confirm_demon.hint' : 'cell.confirm_nest.hint'), 4000, true);
       return;
     }
     this.dragMode = r?.ok ? 'queue' : own ? 'cancel' : 'queue';
@@ -812,7 +854,7 @@ export class GameScene extends Phaser.Scene {
 
   private onMove(p: Phaser.Input.Pointer): void {
     if (!this.dragMode || !p.isDown) return;
-    const at = this.cellOf(p);
+    const at = this.board.cellAt(p.worldX, p.worldY);
     if (!at) return;
     this.applyDrag(at.x, at.y);
   }

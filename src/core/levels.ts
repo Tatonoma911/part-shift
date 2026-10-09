@@ -17,6 +17,8 @@ export interface TutorialStep {
   highlightBuild?: string[];
   focus?: string;
   autoAdvanceSeconds?: number;
+  /** The step stays at least this long, even if its condition is already met. */
+  minSeconds?: number;
 }
 
 export function createTutorialWorld(seed = 1): World {

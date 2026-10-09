@@ -1,41 +1,63 @@
-/** Logical portrait canvas; Phaser scales it to fit the phone screen without scrolling. */
-export const VIEW = { width: 720, height: 1280 };
+/**
+ * Screen layout and brand tokens (ui/BRAND_UI.md, ui/UI_SPEC.md).
+ * The UI spec is drawn for a 390 px wide phone; the canvas is twice that,
+ * so the cell-52 art set (art/export/x2) lands on whole pixels.
+ */
+export const VIEW = { width: 780, height: 1600 };
 
-export const HUD_HEIGHT = 112;
-export const BAR_HEIGHT = 180;
-export const SIDE_MARGIN = 12;
+/** Board cell 52 + 2 px gap (UI_SPEC §2.3 at 2×). */
+export const CELL = 52;
+export const STEP = 54;
 
-/** Placeholder palette until the artist's tiles arrive. */
-export const COLORS = {
-  bg: 0x0f1420,
-  covered: 0x2a3550,
-  coveredEdge: 0x3b4a6e,
-  frontier: 0x34446c,
-  queued: 0x7ee0a1,
-  autoQueued: 0x4d8a66,
-  marked: 0xff9f43,
-  opened: 0x1a2133,
-  openedEdge: 0x232c42,
-  water: 0x1d4e89,
-  rubble: 0x6b5d4f,
-  vein: 0x2bd9c8,
-  hot: 0xff6b2b,
-  territory: 0x23304a,
-  resident: 0xf2f2f2,
-  defender: 0x4f9dff,
-  enemy: 0xff5a5a,
-  demon: 0xb000ff,
-  orb: 0xffd54f,
-  hpBack: 0x000000,
-  hpGood: 0x6fe08b,
-  hpBad: 0xff5a5a,
-  text: '#e8ecf5',
-  textDim: '#8a93a8',
-  energy: '#ffd54f',
+export const HUD = { x: 16, y: 18, w: 748, h: 116 };
+export const GOAL_Y = 150;
+/** Board area: 14 × 18 cells at most. Smaller boards are centered in it. */
+export const BOARD = { x: 12, y: 196, w: 756, h: 972 };
+export const DOCK = { x: 16, y: 1268, w: 748, h: 300 };
+
+export const FONT_NUM = 'Unbounded, "Golos Text", system-ui, sans-serif';
+export const FONT = '"Golos Text", system-ui, -apple-system, "Segoe UI", sans-serif';
+
+/** Palette from BRAND_UI.md. Numbers for Graphics, strings for Text. */
+export const C = {
+  night: 0x0b1117,
+  graphite: 0x10171c,
+  paper: 0xf4f7f7,
+  paper2: 0xedf4f5,
+  seam: 0x57d8f2,
+  glow: 0x9ff4ff,
+  deep: 0x115a80,
+  teal: 0x007e89,
+  cobalt: 0x2e55c8,
+  coral: 0xef5c73,
+  coralInk: 0xe03552,
+  amber: 0xe8a33a,
+  violet: 0x8a4dff,
+  green: 0x6fbf3a,
+  sky: 0xdfeef3,
+  sky2: 0xc9e2ea,
+  white: 0xffffff,
 };
 
-/** Clue colors from the writer's help text: red nests, purple Demon, light-blue finds. */
-export const CHANNEL_COLOR = { threat: '#ff5a5a', demon: '#c77dff', finds: '#5fd3ff' } as const;
+export const INK = {
+  graphite: '#10171C',
+  dim: '#5B6B75',
+  deep: '#115A80',
+  teal: '#007E89',
+  cobalt: '#2E55C8',
+  coral: '#E03552',
+  amber: '#B5761A',
+  violet: '#8A4DFF',
+  white: '#FFFFFF',
+  paper: '#F4F7F7',
+};
+
+/** Clue channels: color and the shape that repeats it (UI_SPEC §3.2). */
+export const CHANNEL = {
+  finds: { color: INK.teal, num: C.teal },
+  threat: { color: INK.coral, num: C.coralInk },
+  demon: { color: INK.violet, num: C.violet },
+} as const;
 
 export const TECH_COLOR: Record<string, number> = {
   thermo: 0xff7a3d,
@@ -43,13 +65,4 @@ export const TECH_COLOR: Record<string, number> = {
   volt: 0xffe14d,
   impact: 0xc9a27a,
   toxin: 0x8cff5a,
-};
-
-export const BUILDING_STYLE: Record<string, { color: number; label: string }> = {
-  command: { color: 0x2f80ed, label: 'КЦ' },
-  home: { color: 0x5aa469, label: 'Д' },
-  reactor: { color: 0x2b6cff, label: 'Р' },
-  cooler: { color: 0x5ec8d8, label: 'О' },
-  school: { color: 0xe0a33a, label: 'Ш' },
-  medcenter: { color: 0xe06464, label: '+' },
 };

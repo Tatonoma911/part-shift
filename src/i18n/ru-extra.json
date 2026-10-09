@@ -4,5 +4,15 @@
   "legend.demon": "Демон",
   "legend.finds": "Находки",
   "tutorial.dig": "Проведите по закрытым кварталам, чтобы отправить жителей на расчистку.",
-  "tutorial.attack": "Нажмите на врага или открытое гнездо, чтобы отправить туда всех защитников."
+  "tutorial.attack": "Нажмите на врага или открытое гнездо, чтобы отправить туда всех защитников.",
+  "hud.label.energy": "Энергия",
+  "hud.label.residents": "Жители",
+  "hud.label.squad": "Отряд",
+  "hud.shift_label": "Смена 01 // Sunward",
+  "hud.queue": "В очереди: {count}",
+  "hud.squad_chip": "Отряд: {count}",
+  "legend.safe": "Можно копать",
+  "pause.plan_banner": "Пауза: планируйте, время стоит",
+  "build.confirm_hint": "Нажмите ✓, чтобы построить, или выберите другую клетку",
+  "tutorial.progress": "Обучение {n}/{total}"
 }

@@ -36,6 +36,14 @@ export class TutorialGuide {
     this.world = createTutorialWorld();
   }
 
+  get stepIndex(): number {
+    return this.index;
+  }
+
+  get stepCount(): number {
+    return this.steps.length;
+  }
+
   get step(): TutorialStep | null {
     return this.finished ? null : this.steps[this.index];
   }
@@ -58,7 +66,8 @@ export class TutorialGuide {
     if (!step) return false;
     const w = this.world;
     const elapsed = w.s.time - this.stepStartedAt;
-    if (this.met(step.until) || (step.autoAdvanceSeconds !== undefined && elapsed >= step.autoAdvanceSeconds)) {
+    const done = this.met(step.until) || (step.autoAdvanceSeconds !== undefined && elapsed >= step.autoAdvanceSeconds);
+    if (done && elapsed >= (step.minSeconds ?? 0)) {
       this.index++;
       this.stepStartedAt = w.s.time;
       this.flags.delete('clue_touched');

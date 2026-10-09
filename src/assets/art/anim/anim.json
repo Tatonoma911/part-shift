@@ -1,0 +1,1188 @@
+{
+ "scale": 2,
+ "cell": 52,
+ "note": "Листы art/anim/x2/<id>.png, ряд = анимация. frames — номера кадров листа (ряд*cols+n), fps — кадров в секунду, loop — повтор.",
+ "sets": {
+  "resident": {
+   "sheet": "resident.png",
+   "frameSize": [
+    48,
+    56
+   ],
+   "cols": 8,
+   "anchor": [
+    24,
+    54
+   ],
+   "anims": {
+    "idle": {
+     "frames": [
+      0,
+      1,
+      2,
+      3
+     ],
+     "fps": 4,
+     "loop": true
+    },
+    "walk": {
+     "frames": [
+      8,
+      9,
+      10,
+      11,
+      12,
+      13,
+      14
+     ],
+     "fps": 10,
+     "loop": true
+    },
+    "walk_back": {
+     "frames": [
+      16,
+      17,
+      18,
+      19,
+      20,
+      21,
+      22
+     ],
+     "fps": 10,
+     "loop": true
+    },
+    "dig": {
+     "frames": [
+      24,
+      25,
+      26,
+      27
+     ],
+     "fps": 8,
+     "loop": true
+    },
+    "build": {
+     "frames": [
+      32,
+      33,
+      34,
+      35
+     ],
+     "fps": 8,
+     "loop": true
+    },
+    "flee": {
+     "frames": [
+      40,
+      41,
+      42,
+      43,
+      44,
+      45
+     ],
+     "fps": 14,
+     "loop": true
+    },
+    "death": {
+     "frames": [
+      48,
+      49,
+      50,
+      51,
+      52,
+      53,
+      54,
+      55
+     ],
+     "fps": 10,
+     "loop": false
+    }
+   },
+   "faces": "front",
+   "note": "walk/walk_back — кадры прототипа художника (ряды front_a/back_a); влево — flipX."
+  },
+  "defender": {
+   "sheet": "defender.png",
+   "frameSize": [
+    48,
+    56
+   ],
+   "cols": 8,
+   "anchor": [
+    24,
+    54
+   ],
+   "anims": {
+    "idle": {
+     "frames": [
+      0,
+      1,
+      2,
+      3
+     ],
+     "fps": 4,
+     "loop": true
+    },
+    "walk": {
+     "frames": [
+      8,
+      9,
+      10,
+      11,
+      12,
+      13
+     ],
+     "fps": 10,
+     "loop": true
+    },
+    "attack": {
+     "frames": [
+      16,
+      17,
+      18,
+      19,
+      20,
+      21
+     ],
+     "fps": 12,
+     "loop": false
+    },
+    "hit": {
+     "frames": [
+      24,
+      25,
+      26
+     ],
+     "fps": 12,
+     "loop": false
+    },
+    "install_part": {
+     "frames": [
+      32,
+      33,
+      34,
+      35,
+      36,
+      37
+     ],
+     "fps": 10,
+     "loop": false
+    },
+    "death": {
+     "frames": [
+      40,
+      41,
+      42,
+      43,
+      44,
+      45,
+      46,
+      47
+     ],
+     "fps": 10,
+     "loop": false
+    }
+   },
+   "faces": "right",
+   "temp": true,
+   "note": "Временный вид (S-01 + жилет и каска кодом) до спрайта художника."
+  },
+  "adaptant_thermo": {
+   "sheet": "adaptant_thermo.png",
+   "frameSize": [
+    48,
+    56
+   ],
+   "cols": 8,
+   "anchor": [
+    24,
+    54
+   ],
+   "anims": {
+    "idle": {
+     "frames": [
+      0,
+      1,
+      2,
+      3
+     ],
+     "fps": 4,
+     "loop": true
+    },
+    "walk": {
+     "frames": [
+      8,
+      9,
+      10,
+      11,
+      12,
+      13
+     ],
+     "fps": 10,
+     "loop": true
+    },
+    "attack": {
+     "frames": [
+      16,
+      17,
+      18,
+      19,
+      20,
+      21
+     ],
+     "fps": 12,
+     "loop": false
+    },
+    "hit": {
+     "frames": [
+      24,
+      25,
+      26
+     ],
+     "fps": 12,
+     "loop": false
+    },
+    "death": {
+     "frames": [
+      32,
+      33,
+      34,
+      35,
+      36,
+      37,
+      38,
+      39
+     ],
+     "fps": 10,
+     "loop": false
+    },
+    "rip_part": {
+     "frames": [
+      40,
+      41,
+      42,
+      43,
+      44,
+      45
+     ],
+     "fps": 12,
+     "loop": false
+    }
+   },
+   "faces": "right",
+   "temp": true,
+   "note": "Временный вид (горожанин S-01 + переросшая рука кодом). rip_part заканчивается без руки: дальше death."
+  },
+  "adaptant_cryo": {
+   "sheet": "adaptant_cryo.png",
+   "frameSize": [
+    48,
+    56
+   ],
+   "cols": 8,
+   "anchor": [
+    24,
+    54
+   ],
+   "anims": {
+    "idle": {
+     "frames": [
+      0,
+      1,
+      2,
+      3
+     ],
+     "fps": 4,
+     "loop": true
+    },
+    "walk": {
+     "frames": [
+      8,
+      9,
+      10,
+      11,
+      12,
+      13
+     ],
+     "fps": 10,
+     "loop": true
+    },
+    "attack": {
+     "frames": [
+      16,
+      17,
+      18,
+      19,
+      20,
+      21
+     ],
+     "fps": 12,
+     "loop": false
+    },
+    "hit": {
+     "frames": [
+      24,
+      25,
+      26
+     ],
+     "fps": 12,
+     "loop": false
+    },
+    "death": {
+     "frames": [
+      32,
+      33,
+      34,
+      35,
+      36,
+      37,
+      38,
+      39
+     ],
+     "fps": 10,
+     "loop": false
+    },
+    "rip_part": {
+     "frames": [
+      40,
+      41,
+      42,
+      43,
+      44,
+      45
+     ],
+     "fps": 12,
+     "loop": false
+    }
+   },
+   "faces": "right",
+   "temp": true,
+   "note": "Временный вид (горожанин S-01 + переросшая рука кодом). rip_part заканчивается без руки: дальше death."
+  },
+  "adaptant_volt": {
+   "sheet": "adaptant_volt.png",
+   "frameSize": [
+    48,
+    56
+   ],
+   "cols": 8,
+   "anchor": [
+    24,
+    54
+   ],
+   "anims": {
+    "idle": {
+     "frames": [
+      0,
+      1,
+      2,
+      3
+     ],
+     "fps": 4,
+     "loop": true
+    },
+    "walk": {
+     "frames": [
+      8,
+      9,
+      10,
+      11,
+      12,
+      13
+     ],
+     "fps": 10,
+     "loop": true
+    },
+    "attack": {
+     "frames": [
+      16,
+      17,
+      18,
+      19,
+      20,
+      21
+     ],
+     "fps": 12,
+     "loop": false
+    },
+    "hit": {
+     "frames": [
+      24,
+      25,
+      26
+     ],
+     "fps": 12,
+     "loop": false
+    },
+    "death": {
+     "frames": [
+      32,
+      33,
+      34,
+      35,
+      36,
+      37,
+      38,
+      39
+     ],
+     "fps": 10,
+     "loop": false
+    },
+    "rip_part": {
+     "frames": [
+      40,
+      41,
+      42,
+      43,
+      44,
+      45
+     ],
+     "fps": 12,
+     "loop": false
+    }
+   },
+   "faces": "right",
+   "temp": true,
+   "note": "Временный вид (горожанин S-01 + переросшая рука кодом). rip_part заканчивается без руки: дальше death."
+  },
+  "heavy_adaptant": {
+   "sheet": "heavy_adaptant.png",
+   "frameSize": [
+    72,
+    72
+   ],
+   "cols": 8,
+   "anchor": [
+    36,
+    70
+   ],
+   "anims": {
+    "idle": {
+     "frames": [
+      0,
+      1,
+      2,
+      3
+     ],
+     "fps": 3,
+     "loop": true
+    },
+    "walk": {
+     "frames": [
+      8,
+      9,
+      10,
+      11,
+      12,
+      13
+     ],
+     "fps": 7,
+     "loop": true
+    },
+    "attack": {
+     "frames": [
+      16,
+      17,
+      18,
+      19,
+      20,
+      21
+     ],
+     "fps": 8,
+     "loop": false
+    },
+    "hit": {
+     "frames": [
+      24,
+      25,
+      26
+     ],
+     "fps": 8,
+     "loop": false
+    },
+    "death": {
+     "frames": [
+      32,
+      33,
+      34,
+      35,
+      36,
+      37,
+      38,
+      39
+     ],
+     "fps": 7,
+     "loop": false
+    }
+   },
+   "faces": "right",
+   "temp": true,
+   "note": "Временный вид. Медленнее остальных: fps ×0.7."
+  },
+  "demon": {
+   "sheet": "demon.png",
+   "frameSize": [
+    72,
+    72
+   ],
+   "cols": 8,
+   "anchor": [
+    36,
+    70
+   ],
+   "anims": {
+    "idle": {
+     "frames": [
+      0,
+      1,
+      2,
+      3
+     ],
+     "fps": 4,
+     "loop": true
+    },
+    "walk": {
+     "frames": [
+      8,
+      9,
+      10,
+      11,
+      12,
+      13
+     ],
+     "fps": 10,
+     "loop": true
+    },
+    "attack": {
+     "frames": [
+      16,
+      17,
+      18,
+      19,
+      20,
+      21
+     ],
+     "fps": 12,
+     "loop": false
+    },
+    "tail_swing": {
+     "frames": [
+      24,
+      25,
+      26,
+      27,
+      28,
+      29,
+      30,
+      31
+     ],
+     "fps": 10,
+     "loop": false
+    },
+    "steam": {
+     "frames": [
+      32,
+      33,
+      34,
+      35,
+      36,
+      37
+     ],
+     "fps": 10,
+     "loop": false
+    },
+    "hit": {
+     "frames": [
+      40,
+      41,
+      42
+     ],
+     "fps": 12,
+     "loop": false
+    },
+    "death": {
+     "frames": [
+      48,
+      49,
+      50,
+      51,
+      52,
+      53,
+      54,
+      55
+     ],
+     "fps": 10,
+     "loop": false
+    },
+    "emerge": {
+     "frames": [
+      56,
+      57,
+      58,
+      59,
+      60,
+      61,
+      62,
+      63
+     ],
+     "fps": 8,
+     "loop": false
+    }
+   },
+   "faces": "left"
+  },
+  "nest": {
+   "sheet": "nest.png",
+   "frameSize": [
+    52,
+    52
+   ],
+   "cols": 6,
+   "anchor": [
+    0,
+    0
+   ],
+   "anims": {
+    "pulse": {
+     "frames": [
+      0,
+      1,
+      2,
+      3
+     ],
+     "fps": 6,
+     "loop": true
+    },
+    "spawn": {
+     "frames": [
+      6,
+      7,
+      8,
+      9,
+      10
+     ],
+     "fps": 10,
+     "loop": false
+    },
+    "destroy": {
+     "frames": [
+      12,
+      13,
+      14,
+      15,
+      16,
+      17
+     ],
+     "fps": 12,
+     "loop": false
+    }
+   },
+   "note": "Кадр = клетка, якорь — левый верхний угол клетки."
+  },
+  "heavy_nest": {
+   "sheet": "heavy_nest.png",
+   "frameSize": [
+    52,
+    52
+   ],
+   "cols": 6,
+   "anchor": [
+    0,
+    0
+   ],
+   "anims": {
+    "pulse": {
+     "frames": [
+      0,
+      1,
+      2,
+      3
+     ],
+     "fps": 6,
+     "loop": true
+    },
+    "spawn": {
+     "frames": [
+      6,
+      7,
+      8,
+      9,
+      10
+     ],
+     "fps": 10,
+     "loop": false
+    },
+    "destroy": {
+     "frames": [
+      12,
+      13,
+      14,
+      15,
+      16,
+      17
+     ],
+     "fps": 12,
+     "loop": false
+    }
+   },
+   "note": "Кадр = клетка, якорь — левый верхний угол клетки."
+  },
+  "demon_hatch": {
+   "sheet": "demon_hatch.png",
+   "frameSize": [
+    52,
+    52
+   ],
+   "cols": 6,
+   "anchor": [
+    0,
+    0
+   ],
+   "anims": {
+    "steam": {
+     "frames": [
+      0,
+      1,
+      2,
+      3
+     ],
+     "fps": 10,
+     "loop": false
+    },
+    "open": {
+     "frames": [
+      6,
+      7,
+      8,
+      9,
+      10,
+      11
+     ],
+     "fps": 10,
+     "loop": false
+    }
+   },
+   "note": "steam — поверх жара hatch_2; open — перед emerge Демона."
+  },
+  "bld_command": {
+   "sheet": "bld_command.png",
+   "frameSize": [
+    88,
+    112
+   ],
+   "cols": 8,
+   "anchor": [
+    44,
+    90
+   ],
+   "anims": {
+    "construct": {
+     "frames": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7
+     ],
+     "fps": 8,
+     "loop": false
+    },
+    "damaged": {
+     "frames": [
+      8,
+      9,
+      10,
+      11
+     ],
+     "fps": 6,
+     "loop": true
+    },
+    "destroy": {
+     "frames": [
+      16,
+      17,
+      18,
+      19,
+      20,
+      21,
+      22,
+      23
+     ],
+     "fps": 12,
+     "loop": false
+    }
+   },
+   "note": "construct: кадры 0–6 выбирать по прогрессу стройки (не по времени), 7 — вспышка «готово» 1 кадр."
+  },
+  "bld_home": {
+   "sheet": "bld_home.png",
+   "frameSize": [
+    72,
+    96
+   ],
+   "cols": 8,
+   "anchor": [
+    36,
+    78
+   ],
+   "anims": {
+    "construct": {
+     "frames": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7
+     ],
+     "fps": 8,
+     "loop": false
+    },
+    "damaged": {
+     "frames": [
+      8,
+      9,
+      10,
+      11
+     ],
+     "fps": 6,
+     "loop": true
+    },
+    "destroy": {
+     "frames": [
+      16,
+      17,
+      18,
+      19,
+      20,
+      21,
+      22,
+      23
+     ],
+     "fps": 12,
+     "loop": false
+    }
+   },
+   "note": "construct: кадры 0–6 выбирать по прогрессу стройки (не по времени), 7 — вспышка «готово» 1 кадр."
+  },
+  "bld_reactor": {
+   "sheet": "bld_reactor.png",
+   "frameSize": [
+    72,
+    96
+   ],
+   "cols": 8,
+   "anchor": [
+    36,
+    78
+   ],
+   "anims": {
+    "construct": {
+     "frames": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7
+     ],
+     "fps": 8,
+     "loop": false
+    },
+    "damaged": {
+     "frames": [
+      8,
+      9,
+      10,
+      11
+     ],
+     "fps": 6,
+     "loop": true
+    },
+    "destroy": {
+     "frames": [
+      16,
+      17,
+      18,
+      19,
+      20,
+      21,
+      22,
+      23
+     ],
+     "fps": 12,
+     "loop": false
+    },
+    "working": {
+     "frames": [
+      24,
+      25,
+      26,
+      27
+     ],
+     "fps": 6,
+     "loop": true
+    }
+   },
+   "note": "construct: кадры 0–6 выбирать по прогрессу стройки (не по времени), 7 — вспышка «готово» 1 кадр."
+  },
+  "bld_cooler": {
+   "sheet": "bld_cooler.png",
+   "frameSize": [
+    72,
+    96
+   ],
+   "cols": 8,
+   "anchor": [
+    36,
+    78
+   ],
+   "anims": {
+    "construct": {
+     "frames": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7
+     ],
+     "fps": 8,
+     "loop": false
+    },
+    "damaged": {
+     "frames": [
+      8,
+      9,
+      10,
+      11
+     ],
+     "fps": 6,
+     "loop": true
+    },
+    "destroy": {
+     "frames": [
+      16,
+      17,
+      18,
+      19,
+      20,
+      21,
+      22,
+      23
+     ],
+     "fps": 12,
+     "loop": false
+    }
+   },
+   "note": "construct: кадры 0–6 выбирать по прогрессу стройки (не по времени), 7 — вспышка «готово» 1 кадр."
+  },
+  "bld_school": {
+   "sheet": "bld_school.png",
+   "frameSize": [
+    72,
+    96
+   ],
+   "cols": 8,
+   "anchor": [
+    36,
+    78
+   ],
+   "anims": {
+    "construct": {
+     "frames": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7
+     ],
+     "fps": 8,
+     "loop": false
+    },
+    "damaged": {
+     "frames": [
+      8,
+      9,
+      10,
+      11
+     ],
+     "fps": 6,
+     "loop": true
+    },
+    "destroy": {
+     "frames": [
+      16,
+      17,
+      18,
+      19,
+      20,
+      21,
+      22,
+      23
+     ],
+     "fps": 12,
+     "loop": false
+    }
+   },
+   "note": "construct: кадры 0–6 выбирать по прогрессу стройки (не по времени), 7 — вспышка «готово» 1 кадр."
+  },
+  "bld_medcenter": {
+   "sheet": "bld_medcenter.png",
+   "frameSize": [
+    72,
+    96
+   ],
+   "cols": 8,
+   "anchor": [
+    36,
+    78
+   ],
+   "anims": {
+    "construct": {
+     "frames": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7
+     ],
+     "fps": 8,
+     "loop": false
+    },
+    "damaged": {
+     "frames": [
+      8,
+      9,
+      10,
+      11
+     ],
+     "fps": 6,
+     "loop": true
+    },
+    "destroy": {
+     "frames": [
+      16,
+      17,
+      18,
+      19,
+      20,
+      21,
+      22,
+      23
+     ],
+     "fps": 12,
+     "loop": false
+    }
+   },
+   "note": "construct: кадры 0–6 выбирать по прогрессу стройки (не по времени), 7 — вспышка «готово» 1 кадр."
+  },
+  "fx": {
+   "sheet": "fx.png",
+   "frameSize": [
+    52,
+    52
+   ],
+   "cols": 6,
+   "anchor": [
+    0,
+    0
+   ],
+   "anims": {
+    "dig_dust": {
+     "frames": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5
+     ],
+     "fps": 12,
+     "loop": false
+    },
+    "energy_orb": {
+     "frames": [
+      6,
+      7,
+      8,
+      9
+     ],
+     "fps": 10,
+     "loop": true
+    },
+    "energy_arrive": {
+     "frames": [
+      12,
+      13,
+      14,
+      15,
+      16
+     ],
+     "fps": 15,
+     "loop": false
+    },
+    "cache_open": {
+     "frames": [
+      18,
+      19,
+      20,
+      21,
+      22,
+      23
+     ],
+     "fps": 10,
+     "loop": false
+    },
+    "vein_spark": {
+     "frames": [
+      24,
+      25,
+      26,
+      27
+     ],
+     "fps": 6,
+     "loop": true
+    },
+    "heat_haze": {
+     "frames": [
+      30,
+      31,
+      32,
+      33
+     ],
+     "fps": 6,
+     "loop": true
+    },
+    "resident_born": {
+     "frames": [
+      36,
+      37,
+      38,
+      39,
+      40,
+      41
+     ],
+     "fps": 12,
+     "loop": false
+    }
+   },
+   "note": "Кадр = клетка. Сгусток Энергии летит к центру твином движка."
+  }
+ }
+}

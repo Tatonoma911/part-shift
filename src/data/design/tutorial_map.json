@@ -86,7 +86,8 @@
       "id": 3,
       "text": "tutorial.step3",
       "until": "first_zero_cascade_done",
-      "autoAdvanceSeconds": 6
+      "autoAdvanceSeconds": 6,
+      "minSeconds": 3
     },
     {
       "id": 4,
@@ -98,7 +99,8 @@
       "id": 5,
       "text": "tutorial.step5",
       "focus": "overlapping_threat_clues",
-      "until": "assist_mark_shown:danger"
+      "until": "assist_mark_shown:danger",
+      "minSeconds": 6
     },
     {
       "id": 6,
@@ -118,7 +120,8 @@
     {
       "id": 8,
       "text": "tutorial.step8",
-      "until": "part_attached"
+      "until": "part_attached",
+      "minSeconds": 3
     },
     {
       "id": 9,
