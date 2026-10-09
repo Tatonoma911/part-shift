@@ -26,7 +26,7 @@ export function createTutorialWorld(seed = 1): World {
   const o = t.overrides as Record<string, unknown>;
   const config: Record<string, number | boolean> = {};
   for (const [k, v] of Object.entries(o)) {
-    if (k.startsWith('config.') && typeof v === 'number') config[k.slice('config.'.length)] = v;
+    if (k.startsWith('config.') && (typeof v === 'number' || typeof v === 'boolean')) config[k.slice('config.'.length)] = v;
     if (k === 'defenders.trainSeconds' && typeof v === 'number') config[k] = v;
   }
   const rules: RuleOverrides = {
