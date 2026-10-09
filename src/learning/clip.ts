@@ -117,6 +117,8 @@ export class Timeline {
 }
 
 /** Everything a clip draws. Scripts change it through the helpers below. */
+const ANIM_FALLBACK: Record<string, string> = { attack: 'build', install_part: 'build', rip_part: 'hit', emerge: 'idle', tic: 'idle' };
+
 export class Stage {
   cells: Cell[] = [];
   actors: Actor[] = [];
@@ -131,6 +133,7 @@ export class Stage {
   dock: { active: 'dig' | 'build'; picker: boolean; sel: string | null; t0: number } | null = null;
   chip: { text: string; x: number; y: number; t0: number; pressT: number } | null = null;
   card: { caps: string; title: string; sub?: string; color: string; t0: number } | null = null;
+  pops: { text: string; color: string; x: number; y: number; t0: number }[] = [];
   cap = { key: '', t0: 0 };
 
   constructor(
@@ -197,8 +200,9 @@ export class Stage {
   }
 
   /** The work ring closing on a cell from t to t + d. */
-  work(t: number, d: number, x: number, y: number): void {
-    this.tl.tween(t, d, (k) => (this.cell(x, y).arc = k >= 1 ? undefined : 1 - k), ease.linear);
+  /** Work ring over a cell: shrinks from `from` to `to` of the job left. */
+  work(t: number, d: number, x: number, y: number, from = 1, to = 0): void {
+    this.tl.tween(t, d, (k) => (this.cell(x, y).arc = k >= 1 && to <= 0 ? undefined : from + (to - from) * k), ease.linear);
   }
 
   // ------------------------------------------------------------- actors
@@ -219,11 +223,23 @@ export class Stage {
     return a;
   }
 
+  /** Sets without an animation borrow a close one: residents swing their tools to fight. */
   play(t: number, a: Actor, anim: string): void {
     this.tl.at(t, () => {
+      const anims = animSets[a.set]?.anims;
+      if (anims && !anims[anim]) {
+        const alt = ANIM_FALLBACK[anim];
+        if (!alt || !anims[alt]) return;
+        anim = alt;
+      }
       a.anim = anim;
       a.t0 = t;
     });
+  }
+
+  /** A damage number rising over a cell (element multipliers, reactions). */
+  pop(t: number, x: number, y: number, text: string, color: string): void {
+    this.tl.at(t, () => this.pops.push({ text, color, x, y, t0: t }));
   }
 
   face(t: number, a: Actor, dx: number): void {
@@ -901,6 +917,27 @@ export function render(ctx: CanvasRenderingContext2D, s: Stage, now: number): vo
     const y = o.y0 + (o.y1 - o.y0) * e - Math.sin(k * Math.PI) * 40;
     if (o.icon) drawImage(ctx, o.icon, x - 16, y - 16, 32, 32);
     else drawFrame(ctx, 'fx', frameAt('fx', 'energy_orb', now - o.t0), x - 26, y - 26);
+  }
+
+  // damage numbers
+  for (const p of s.pops) {
+    const k = (now - p.t0) / 1.1;
+    if (k < 0 || k > 1) continue;
+    const c = s.px(p.x, Math.max(-0.1, p.y - 0.55) - 0.35 * ease.out(k));
+    ctx.save();
+    ctx.globalAlpha = k < 0.75 ? 1 : 1 - (k - 0.75) / 0.25;
+    const sc = k < 0.15 ? 0.6 + (k / 0.15) * 0.5 : 1.1 - Math.min(0.1, (k - 0.15) * 0.4);
+    ctx.translate(c.x, c.y);
+    ctx.scale(sc, sc);
+    ctx.font = '800 20px Unbounded, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.lineWidth = 5;
+    ctx.strokeStyle = COL.night;
+    ctx.strokeText(p.text, 0, 0);
+    ctx.fillStyle = p.color;
+    ctx.fillText(p.text, 0, 0);
+    ctx.restore();
   }
 
   if (s.hud) drawHud(ctx, s, now);

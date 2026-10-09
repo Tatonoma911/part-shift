@@ -94,7 +94,14 @@ const CSS = `
 .psl-stats{display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:6px}
 .psl-stat{background:#fff;padding:8px 10px;clip-path:polygon(7px 0,100% 0,100% calc(100% - 7px),calc(100% - 7px) 100%,0 100%,0 7px)}
 .psl-stat-k{font-size:11px;color:#5B6B75}
-.psl-stat-v{font-family:Unbounded,sans-serif;font-weight:800;font-size:15px;margin-top:2px}
+.psl-stat-v{font-family:Unbounded,sans-serif;font-weight:800;font-size:15px;margin-top:2px;overflow-wrap:anywhere}
+.psl-stat.wide{grid-column:span 2}
+.psl-stat.wide .psl-stat-v{font-size:12.5px;line-height:1.35}
+.psl-items{display:grid;gap:6px;margin:4px 0 6px}
+.psl-item{background:#fff;padding:10px 12px;font-size:14px;line-height:1.4;clip-path:polygon(8px 0,100% 0,100% calc(100% - 8px),calc(100% - 8px) 100%,0 100%,0 8px)}
+.psl-item b{display:block;font-family:Unbounded,sans-serif;font-weight:800;font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:#115A80;margin-bottom:3px}
+.psl-cycle{display:block;height:180px;width:auto;max-width:100%}
+.psl-thumb .psl-cycle,.psl-card .psl-cycle{height:48px}
 .psl-tip{display:flex;gap:10px;align-items:flex-start;margin-top:12px;padding:10px 12px;background:rgba(232,163,58,.14);border-left:3px solid #E8A33A;font-size:14px;line-height:1.4}
 .psl-tip b{font-family:Unbounded,sans-serif;font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:#B5761A;flex:none;margin-top:2px}
 .psl-chips{display:flex;flex-wrap:wrap;gap:6px}
