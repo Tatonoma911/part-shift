@@ -112,7 +112,7 @@ def main():
     for f in os.listdir(f'{PF}/art/source/cutouts/buildings'):
         if f.endswith('.png'):
             webp(f'{PF}/art/source/cutouts/buildings/{f}', 'px/' + f[:-4], 360)
-    anim_gifs()
+    # anim_gifs()  # Anton 2026-10-09: no character animations on the site for now
 
     total = sum(os.path.getsize(os.path.join(r, f)) for r, _, fs in os.walk(OUT) for f in fs)
     print(f'public/universe: {total / 1e6:.1f} MB')

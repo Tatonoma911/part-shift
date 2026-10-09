@@ -52,7 +52,7 @@ document.getElementById('frame')!.innerHTML = `
       <div class="slab pcard">
         <span class="caps">${R('ЦЕЛЬ СМЕНЫ', 'SHIFT GOAL')}</span>
         <p>${R('Вызов пришёл на <b>Демона</b>, одного из обезумевших героев. Найди люк Undersun, где он спит, подготовь защитников и победи его, пока Угроза не выросла.', 'The call is for <b>Demon</b>, one of the deranged heroes. Find the Undersun hatch where he sleeps, train defenders and beat him before the Threat grows.')}</p>
-        <img class="pxs" src="${A('px/anim-demon.gif')}" alt="">
+        <img class="pxs" src="${A('px/demon.png')}" alt="">
       </div>
     </aside>
 

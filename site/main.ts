@@ -188,9 +188,6 @@ function fightingTeaser(): string {
     </div>
     <div class="stack">
       <figure><img src="${img('doctor-arm.webp')}" alt="${esc(R('Доктор с тяжёлой рукой Килна', 'The Doctor with Kiln’s heavy arm'))}" loading="lazy"><figcaption>${R('Доктор, первое тело N-73, с рукой Килна', 'The Doctor, N-73’s first body, with Kiln’s arm')}</figcaption></figure>
-      <div class="motion">
-        <img src="${img('motion-s01.gif')}" alt="S-01" loading="lazy"><img src="${img('motion-doctor.gif')}" alt="${esc(R('Доктор', 'Doctor'))}" loading="lazy"><img src="${img('motion-n73.gif')}" alt="N-73" loading="lazy">
-      </div>
     </div>
   </div></section>`;
 }
@@ -199,7 +196,7 @@ function heroesView(): string {
   const canon = HEROES.filter((h) => h.group === 'canon');
   const city = HEROES.filter((h) => h.group === 'city');
   return `<section class="section"><div class="wrap">
-    ${head(R('ДОСЬЕ // HEROOUT', 'DOSSIERS // HEROOUT'), R('Герои. Они же злодеи', 'Heroes. Also the villains'), R('Гель Splice свёл с ума всех спасателей HeroOut, их около пятнадцати. Каждый всё ещё «спасает», только от такой помощи надо бежать. Главного среди них нет. Победишь героя — заберёшь его часть.', 'Splice gel drove every HeroOut rescuer mad, about fifteen of them. Each one is still “rescuing,” and you should run from that kind of help. None of them is in charge. Beat a hero and take their part.'))}
+    ${head(R('ДОСЬЕ // HEROOUT', 'DOSSIERS // HEROOUT'), R('Герои. Они же злодеи', 'Heroes. Also the villains'), R('Гель Splice свёл с ума всех спасателей HeroOut, их пятнадцать. Каждый всё ещё «спасает», только от такой помощи надо бежать. Главного среди них нет. Победишь героя — заберёшь его часть, а победишь много раз — он вернётся в себя и станет союзником.', 'Splice gel drove every HeroOut rescuer mad, fifteen of them. Each one is still “rescuing,” and you should run from that kind of help. None of them is in charge. Beat a hero and take their part; beat them enough times and they come back to themselves as your ally.'))}
     <div class="grid">${canon.map(heroTile).join('')}</div>
   </div></section>
   <section class="section" style="padding-top:0"><div class="wrap">
@@ -234,6 +231,8 @@ function heroView(id: string): string {
           ${row(R('ПОСЛЕ ГЕЛЯ', 'AFTER THE GEL'), h.mania ?? h.after)}
           ${row(R('ТРОФЕЙ', 'TROPHY'), h.trophy)}
           ${row(R('УБЕЖИЩЕ', 'LAIR'), h.lair)}
+          ${row(R('ВЕРНЁТСЯ СОЮЗНИКОМ', 'COMES BACK AS AN ALLY'), h.ally)}
+          ${row(R('КАК ВЕРНУТЬ', 'HOW TO BRING BACK'), h.unlock)}
           ${row(R('МОДУЛЬ', 'MODULE'), h.module)}
           ${row(R('ТЕХНОЛОГИЯ', 'TECH'), h.tech)}
           ${row(R('ОБРАЗ', 'LOOK'), h.look)}
@@ -330,12 +329,6 @@ function worldView(): string {
 }
 
 function villainsView(): string {
-  const enemies: [string, string, string][] = [
-    ['anim-adaptant_thermo', 'Термоадаптант', 'Thermo adaptant'],
-    ['anim-adaptant_cryo', 'Криоадаптант', 'Cryo adaptant'],
-    ['anim-adaptant_volt', 'Электроадаптант', 'Volt adaptant'],
-    ['anim-heavy_adaptant', 'Тяжёлый адаптант', 'Heavy adaptant'],
-  ];
   const mad = HEROES.filter((h) => h.mania);
   const madTile = (h: Hero) => `<a class="tile slab" href="#hero-${h.id}" style="--hc:${h.color}">
     <div class="stage"><span class="stripe"></span><img src="${img(h.px)}" alt="${esc(tr(h.name))}" loading="lazy"></div>
@@ -350,7 +343,7 @@ function villainsView(): string {
         <span class="chip"><i style="--dot:#E03552"></i>${R('ВСЕ СРАЗУ // ГЛАВНОГО НЕТ', 'ALL AT ONCE // NONE IN CHARGE')}</span>
         <h2>${R('Обезумевшие герои', 'The deranged heroes')}</h2>
         <p class="lead">${R('Гель Splice лечил спасателей и отращивал им конечности. Потом он вышел из-под контроля и свёл с ума горожан и всех героев HeroOut.', 'Splice gel healed rescuers and regrew their limbs. Then it went out of control and drove the citizens and every HeroOut hero mad.')}</p>
-        <p>${R('Около пятнадцати героев бегают по городу как враги. Каждый всё ещё на смене и всё ещё «спасает», у каждого своя мания, стихия и убежище. Главного среди них нет: Демон, Килн, Фростлайн и Серафим равны, просто опасны по-разному. В каждой смене цель — герой, на которого пришёл вызов. Первым в игре сделан Демон.', 'About fifteen heroes roam the city as enemies. Each is still on shift and still “rescuing,” each with an obsession, an element and a lair. None of them is in charge: Demon, Kiln, Frostline and Seraph are equals, just dangerous in different ways. Each shift targets the hero the call came in for. Demon is simply the first one in the game.')}</p>
+        <p>${R('Пятнадцать героев бегают по городу как враги, включая тройки серийных Стандартов. Каждый всё ещё на смене и всё ещё «спасает», у каждого своя мания, стихия и убежище. Главного среди них нет: Демон, Килн, Фростлайн и Серафим равны, просто опасны по-разному. В каждой смене цель — герой, на которого пришёл вызов. Первым в игре сделан Демон. Победи героя достаточно раз, и он вернётся в себя: «Герой вернулся. Больше не на смене у HeroOut. Теперь на вашей».', 'Fifteen heroes roam the city as enemies, Standard copies in threes included. Each is still on shift and still “rescuing,” each with an obsession, an element and a lair. None of them is in charge: Demon, Kiln, Frostline and Seraph are equals, just dangerous in different ways. Each shift targets the hero the call came in for. Demon is simply the first one in the game. Beat a hero enough times and they come back to themselves: “The hero is back. No longer on shift for HeroOut. Now on yours.”')}</p>
         <div class="bark slab"><span class="caps">${R('КОНТРОЛЬ:', 'CONTROL:')}</span>${R('Если вы видите обезумевшего героя, не паникуйте. Он на смене.', 'If you see a deranged hero, do not panic. They are on shift.')}</div>
       </div>
     </div>
@@ -411,11 +404,6 @@ function villainsView(): string {
   <section class="section band"><div class="wrap">
     ${head(R('ФАСАДЫ // РЕКЛАМА HEROOUT', 'BILLBOARDS // HEROOUT ADS'), R('Всегда на смене', 'Always on call'), R('Реклама до сих пор висит по всему городу. Мелкий шрифт прилагается.', 'The ads still hang all over the city. Fine print included.'))}
     <div class="grid">${ADS.map(([ru, en]) => `<div class="step" style="background:#142028"><span class="caps" style="color:var(--seam)">HERO | OUT</span><p style="font:700 18px/1.35 var(--display);color:#fff;margin:8px 0 0">${R(ru, en)}</p></div>`).join('')}</div>
-  </div></section>
-
-  <section class="section"><div class="wrap">
-    ${head(R('ПОЛЕ // ВРАГИ', 'BOARD // ENEMIES'), R('Адаптанты', 'Adaptants'), R('Обычные горожане, заражённые гелем. Одна часть тела переросла под стихию: термо, криогель, ток. Слабые, но их много, и гнездятся они в закрытых кварталах.', 'Ordinary citizens infected by the gel. One body part overgrew for an element: thermo, cryogel, current. Weak but numerous, nesting in closed blocks.'))}
-    <div class="enemies">${enemies.map(([f, ru, en]) => `<div class="enemy slab"><img src="${img(`px/${f}.gif`)}" alt="" loading="lazy"><h3 style="font-size:15px">${R(ru, en)}</h3></div>`).join('')}</div>
   </div></section>`;
 }
 
