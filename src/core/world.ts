@@ -544,6 +544,11 @@ export class World {
 
   // ------------------------------------------------------------- simulation
 
+  /** How far the clock is between two fixed steps (0..1), so views can draw movers between steps. */
+  get stepAlpha(): number {
+    return Math.min(1, this.acc / STEP);
+  }
+
   tick(dt: number): void {
     this.acc = Math.min(this.acc + dt, 1);
     while (this.acc >= STEP) {
