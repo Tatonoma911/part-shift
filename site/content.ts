@@ -28,6 +28,15 @@ export interface Hero {
   quote?: L;
   fact?: L;
   inGame: L;
+  /** After the gel: what the hero still "rescues" (lore/ENEMIES.md v3). */
+  mania?: L;
+  /** What the hero says now (text/ru.json hero.line.*). */
+  line?: L;
+  trophy?: L;
+  lair?: L;
+  /** Beaten enough times, the hero comes back to themselves and joins you (design/HEROES.md). */
+  ally?: L;
+  unlock?: L;
 }
 
 export const HEROES: Hero[] = [
@@ -39,7 +48,6 @@ export const HEROES: Hero[] = [
     color: '#57D8F2',
     px: 'px/n73.png',
     art: 'dossier-n73.webp',
-    extra: [{ src: 'motion-n73.gif', cap: { ru: 'Движение нейроконтура, кадры файтинга', en: 'Neurocore motion, fighting-game frames' } }],
     role: { ru: 'Экспериментальный нейроконтур HeroOut. Не человек: костяной позвоночник с циановым ядром, в котором записаны навыки и личность героя.', en: 'An experimental HeroOut neurocore. Not a person: a bone spine with a cyan core that stores a hero’s skills and personality.' },
     before: { ru: 'HeroOut научилась сохранять самое дорогое в героях: не тело, а управляющий контур. N-73 был одним из таких «активов» в капсуле на нижнем уровне.', en: 'HeroOut learned to keep the most valuable part of a hero: not the body, but the controlling circuit. N-73 was one such “asset” in a capsule on a lower level.' },
     after: { ru: 'Ночью Доктор запустил связку контура с тяжёлой рукой героя. Рука сжалась не как рефлекс. N-73 проснулся и теперь сам выбирает себе тело.', en: 'One night the Doctor linked the circuit to a hero’s heavy arm. The hand closed, and it was no reflex. N-73 woke up and now chooses his own body.' },
@@ -58,7 +66,6 @@ export const HEROES: Hero[] = [
     art: 'doctor-arm.webp',
     extra: [
       { src: 'dossier-doctor.webp', cap: { ru: 'Досье: лабораторный врач', en: 'Dossier: lab doctor' } },
-      { src: 'motion-doctor.gif', cap: { ru: 'Бег, кадры файтинга', en: 'Run cycle, fighting-game frames' } },
     ],
     role: { ru: 'Лабораторный врач и специалист нейроинтерфейса. Первое тело N-73. Обычный мужчина в белом халате, без имени: игрок знает его просто как Доктора.', en: 'A lab physician and neurointerface specialist. N-73’s first body. An ordinary man in a white coat with no name; players know him only as the Doctor.' },
     before: { ru: 'Переводил показания приборов в решения, понятные пациентам. Мечтал о клинике, где интерфейсы подстраиваются под жизнь человека, а не наоборот.', en: 'Turned instrument readings into decisions patients could understand. Dreamed of a clinic where interfaces fit around people’s lives, not the other way round.' },
@@ -79,7 +86,6 @@ export const HEROES: Hero[] = [
     art: 'dossier-s01.webp',
     extra: [
       { src: 'sprites-02.webp', cap: { ru: 'Обычный житель забирает руку врага: ледяная, потом механическая', en: 'A resident takes an enemy’s arm: ice first, then mechanical' } },
-      { src: 'motion-s01.gif', cap: { ru: 'Бег S-01', en: 'S-01 run' } },
     ],
     role: { ru: 'Серийное резервное человеческое шасси из капсулы. Обычный человек: светлая рубашка, тёмные брюки, обычные руки и ноги.', en: 'A serial backup human chassis from a capsule. An ordinary person: light shirt, dark trousers, ordinary arms and legs.' },
     before: { ru: 'Склады HeroOut хранили тысячи таких тел про запас: «носитель заменяем, личность бесценна».', en: 'HeroOut warehouses kept thousands of these bodies in reserve: “the carrier is replaceable, the personality is priceless.”' },
@@ -104,7 +110,7 @@ export const HEROES: Hero[] = [
     look: { ru: 'Охра и янтарь поверх белой керамики, таранная перчатка', en: 'Ochre and amber over white ceramic, a ram gauntlet' },
     quote: { ru: '«Вес на мне. Ты бери человека.»', en: '“I have the weight. You take the person.”' },
     fact: { ru: '«Этот стул настроен оптимистично.»', en: '“This chair is optimistic.”' },
-    inGame: { ru: 'В планах: редкая встреча на поле и цель прокачки. Собрать жителю руку Килна.', en: 'Planned: a rare encounter on the board and an upgrade goal. Give a resident Kiln’s arm.' },
+    inGame: { ru: 'Один из первых героев на поле: выходит из убежища и уносит жителей, проламывая стены. Победишь — житель заберёт руку Килна.', en: 'One of the first heroes on the board: leaves his lair and carries residents off through walls. Win and a resident takes Kiln’s arm.' },
   },
   {
     id: 'lineman',
@@ -122,7 +128,7 @@ export const HEROES: Hero[] = [
     look: { ru: 'Кобальт и белая куртка, оранжевый кабель на предплечье', en: 'Cobalt and white jacket, orange cable on the forearm' },
     quote: { ru: '«Не смотри вниз. Смотри на меня и сделай один шаг.»', en: '“Do not look down. Look at me, then take one step.”' },
     fact: { ru: '«Кабель в порядке. Это здание пересматривает свои решения.»', en: '“The cable is fine. The building is reconsidering its choices.”' },
-    inGame: { ru: 'В планах: кабельные змеи из Transit Veins с похожим захватом.', en: 'Planned: cable serpents in Transit Veins with a similar grapple.' },
+    inGame: { ru: 'Один из первых героев на поле: привязывает жителей кабелем к опорам. Победишь — заберёшь кабельный захват.', en: 'One of the first heroes on the board: ties residents to pylons with cable. Win and take the cable grapple.' },
   },
   {
     id: 'frostline',
@@ -157,7 +163,7 @@ export const HEROES: Hero[] = [
     module: { ru: 'Большие механические крылья и нимб-дрон, который лечит.', en: 'Large mechanical wings and a halo-drone that heals.' },
     look: { ru: 'Белый и мягкое золото, крылья больше корпуса', en: 'White and soft gold, wings larger than her body' },
     quote: { ru: '«Смотри на меня. Город подождёт один вдох.»', en: '“Look at me. The city can wait for one breath.”' },
-    inGame: { ru: 'В планах: сломанный респондент, босс своего района в следующих режимах.', en: 'Planned: a broken responder, the boss of her district in later modes.' },
+    inGame: { ru: 'Одна из первых героинь на поле: прячется в убежище, её нимб-дрон лечит врагов вокруг.', en: 'One of the first heroes on the board: hides in her lair while her halo-drone heals nearby enemies.' },
   },
   {
     id: 'demon',
@@ -167,7 +173,6 @@ export const HEROES: Hero[] = [
     color: '#E03552',
     px: 'px/demon.png',
     art: 'demon-sheet.webp',
-    extra: [{ src: 'px/anim-demon.gif', cap: { ru: 'Демон в игре: анимации аниматора', en: 'Demon in the game: animator’s frames' } }],
     role: { ru: 'Подземный аварийно-спасательный модуль HeroOut: метро, шахты, геотермальные трубы. Четыре полноценные руки и тяжёлый буровой хвост.', en: 'HeroOut’s subsurface rescue unit: metro, mines, geothermal pipes. Four full arms and a heavy drill tail.' },
     before: { ru: 'Стучит по каждой трубе дважды и говорит ей «Не сегодня». Растит помидоры под списанными лампами. Мечтает сделать из старого тоннеля подземный сад и музей.', en: 'Taps every pipe twice and tells it “Not today.” Grows tomatoes under retired inspection lamps. Dreams of turning an old tunnel into an underground garden and museum.' },
     after: { ru: 'Протокол подземного спасения сломался: Демон уверен, что наверху опасно, и уводит людей вниз, в Undersun Works. Обратно никого не выпускает.', en: 'His subsurface rescue protocol broke: Demon is sure the surface is dangerous and leads people down into Undersun Works. He lets no one back up.' },
@@ -175,24 +180,24 @@ export const HEROES: Hero[] = [
     tech: { ru: 'Термо + удар', en: 'Thermo + impact' },
     look: { ru: 'Чёрно-красная техноброня, четыре руки, бур', en: 'Black-and-red tech armour, four arms, a drill' },
     quote: { ru: '«Земля честная. Изыскания бывают оптимистичны.»', en: '“Ground is honest. Surveys are sometimes optimistic.”' },
-    inGame: { ru: 'Босс режима «Охота на Демона». Спит под люком Undersun, фиолетовые числа показывают, где. Победишь — получишь буровой хвост.', en: 'The boss of “Demon Hunt.” Sleeps under an Undersun hatch; purple numbers show where. Beat him and win the drill tail.' },
+    inGame: { ru: 'Первый герой на вызове в «Срочном вызове». Не главный, просто сделан первым. Спит под люком Undersun, фиолетовые числа ⬡ показывают, где. Победишь — заберёшь буровой хвост.', en: 'The first hero on call in “Urgent Call.” Not the main villain, just the first one built. Sleeps under an Undersun hatch; purple ⬡ numbers show where. Beat him and take the drill tail.' },
   },
   // Lumen City rescuers from the concept sheets: comic heroes, not in the current game.
   ...(
     [
-      ['current', 'Течение', 'Current', '#1F7FD1', 'Водная спасательница: наводнения, пожары, побережье.', 'Water rescuer: floods, fires and the coast.', 'Водяная пушка и ранец', 'Water cannon and pack', '«Город не обесточен. Просто одна цепь драматизирует.»', '“The city is not dark. One circuit is being dramatic.”'],
-      ['mason', 'Мейсон', 'Mason', '#C8612F', 'Геотехник: напорные магистрали, плывущий грунт, фундаменты.', 'Geotechnical responder: pressure mains, unstable ground, foundations.', 'Минеральные анкеры и сканер грунта', 'Mineral anchors and a ground scanner', '«Стена не нервничает. Я нервничаю за неё.»', '“The wall is not nervous. I am nervous on its behalf.”'],
+      ['current', 'Течение', 'Current', '#1F7FD1', 'Водный спасатель: наводнения, пожары, побережье.', 'Water rescuer: floods, fires and the coast.', 'Водяная пушка и ранец', 'Water cannon and pack', '«Город не обесточен. Просто одна цепь драматизирует.»', '“The city is not dark. One circuit is being dramatic.”'],
+      ['mason', 'Каменщик', 'Mason', '#C8612F', 'Геотехник: напорные магистрали, плывущий грунт, фундаменты.', 'Geotechnical responder: pressure mains, unstable ground, foundations.', 'Минеральные анкеры и сканер грунта', 'Mineral anchors and a ground scanner', '«Стена не нервничает. Я нервничаю за неё.»', '“The wall is not nervous. I am nervous on its behalf.”'],
       ['beacon', 'Маяк', 'Beacon', '#9BC53D', 'Эвакуация и поиск пропавших. Зелёная линия ведёт людей к выходу.', 'Evacuation and missing-person search. Her green line guides people out.', 'Сигнальные маяки и сканеры', 'Signal beacons and scanners', '«Зелёная линия. Медленные шаги. Говори со мной.»', '“Green line. Slow steps. Keep talking to me.”'],
-      ['canopy', 'Крона', 'Canopy', '#4E9E3A', 'Городская садовница: сады на крышах, опасные ветки, вертикальные парки.', 'City gardener: rooftop gardens, dangerous branches, vertical parks.', 'Секатор и дроны-растения', 'Pruners and plant drones', '«Сад — это инфраструктура, которая лучше пахнет.»', '“A garden is infrastructure that happens to smell better.”'],
-      ['sweep', 'Свип', 'Sweep', '#4FB7A8', 'Санитар: убирает опасный мусор и возвращает людям улицы.', 'Sanitation responder: clears hazardous debris and gives streets back to people.', 'Хим-костюм и уборочный модуль', 'Hazmat suit and a cleaning module', '«Чисто — это не красиво. Чисто — это безопасно трогать.»', '“Clean is not cosmetic. Clean means safe to touch.”'],
+      ['canopy', 'Садовница', 'Canopy', '#4E9E3A', 'Городская садовница: сады на крышах, опасные ветки, вертикальные парки.', 'City gardener: rooftop gardens, dangerous branches, vertical parks.', 'Секатор и дроны-растения', 'Pruners and plant drones', '«Сад — это инфраструктура, которая лучше пахнет.»', '“A garden is infrastructure that happens to smell better.”'],
+      ['sweep', 'Чистильщик', 'Sweep', '#4FB7A8', 'Санитар: убирает опасный мусор и возвращает людям улицы.', 'Sanitation responder: clears hazardous debris and gives streets back to people.', 'Хим-костюм и уборочный модуль', 'Hazmat suit and a cleaning module', '«Чисто — это не красиво. Чисто — это безопасно трогать.»', '“Clean is not cosmetic. Clean means safe to touch.”'],
       ['patch', 'Патч', 'Patch', '#8A6A4A', 'Спасательная собака с механической лапой. Находит людей, утечки и безопасные проходы.', 'A rescue dog with a mechanical leg. Finds people, leaks and safe passages.', 'Механическая лапа, сенсорная шлейка', 'Mechanical leg, sensor harness', '', ''],
-      ['hive', 'Хайв', 'Hive', '#E0A126', 'Городской пчеловод: опыление, ульи на крышах, экология.', 'Urban apiarist: pollination, rooftop hives, ecology.', 'Сотовая рука и пчёлы-мониторы', 'Honeycomb arm and monitor bees', '«Маленькое не значит необязательное.»', '“Small does not mean optional.”'],
+      ['hive', 'Улей', 'Hive', '#E0A126', 'Городской пчеловод: опыление, ульи на крышах, экология.', 'Urban apiarist: pollination, rooftop hives, ecology.', 'Сотовая рука и пчёлы-мониторы', 'Honeycomb arm and monitor bees', '«Маленькое не значит необязательное.»', '“Small does not mean optional.”'],
     ] as const
   ).map(
     ([id, ru, en, color, roleRu, roleEn, modRu, modEn, qRu, qEn]): Hero => ({
       id,
       name: { ru, en },
-      hud: { ru: `${ru.toUpperCase()} // ГОРОЖАНИН`, en: `${en.toUpperCase()} // CITIZEN` },
+      hud: { ru: `${ru.toUpperCase()} // HEROOUT`, en: `${en.toUpperCase()} // HEROOUT` },
       group: 'city',
       color,
       px: `px/${id}.png`,
@@ -202,9 +207,80 @@ export const HEROES: Hero[] = [
       module: { ru: modRu, en: modEn },
       look: { ru: '', en: '' },
       quote: qRu ? { ru: qRu, en: qEn } : undefined,
-      inGame: { ru: 'Пока только в комиксах. В будущем может встретиться как союзник из тайника.', en: 'Comics only for now. Later may appear as an ally found in a cache.' },
+      inGame: { ru: 'Пока в комиксах. На поле выйдет в следующих картах как герой на вызове.', en: 'Comics for now. Comes to the board on later maps as the hero on call.' },
     }),
   ),
+];
+
+/** The gel's version of each hero: lore/ENEMIES.md v3 and text/ru.json (enemy.*, hero.line.*). */
+const MAD: Record<string, [string, string, string, string, string, string, string, string]> = {
+  // id: mania ru/en, line ru/en, trophy ru/en, lair ru/en
+  kiln: ['Всё ещё выносит людей из огня: хватает жителей и уносит прочь, проламывая стены. Огня при этом нет.', 'Still carries people out of fires: grabs residents and hauls them away through walls. There is no fire.', 'Вынесу. Всех. Отовсюду.', 'I’ll carry you out. Everyone. From everywhere.', 'Рука Килна (Таран)', 'Kiln’s arm (Ram)', 'Пожарная часть', 'The fire station'],
+  lineman: ['Всё ещё страхует: привязывает людей кабелем к опорам, «чтобы не упали».', 'Still on belay duty: ties people to pylons with cable “so they don’t fall.”', 'Не двигайтесь. Я вас закреплю. Навсегда.', 'Hold still. I’ll secure you. For good.', 'Кабельный захват (Захват)', 'Cable grapple (Grab)', 'Вышка ЛЭП', 'A power-line tower'],
+  frostline: ['Всё ещё тушит: заливает криогелем всё подряд, даже микрореакторы.', 'Still putting out fires: floods everything with cryogel, microreactors included.', 'Всё горячее — потенциальный пожар. Вы горячий.', 'Anything hot is a potential fire. You are hot.', 'Криогелевая нога (Криоудар)', 'Cryogel leg (Cryo strike)', 'Станция криогеля', 'The cryogel station'],
+  seraph: ['Всё ещё лечит: её нимб-дрон чинит врагов вокруг, а жителей она уносит по воздуху «в больницу».', 'Still healing: her halo-drone patches up enemies, and she flies residents off “to the hospital.”', 'Вы ещё не ранены? Это ненадолго. Я помогу.', 'Not hurt yet? That won’t last. I’ll help.', 'Крылья (Полёт)', 'Wings (Flight)', 'Вертолётная площадка', 'The helipad'],
+  demon: ['Всё ещё спасает под землёй: уводит людей вниз, в Undersun Works, «в безопасность». Обратно никого не выпускает.', 'Still rescuing underground: leads people down into Undersun Works “to safety.” Lets no one back up.', 'Не бойтесь. Внизу никто не горит. Внизу просто жарко.', 'Don’t be afraid. Nobody burns down here. It’s just hot.', 'Буровой хвост (Тепловой выброс)', 'Drill tail (Heat burst)', 'Люк Undersun', 'An Undersun hatch'],
+  current: ['«Спасает утопающих»: смывает людей водомётом в залив, чтобы было кого спасать.', '“Saves the drowning”: hoses people into the bay so there’s someone to save.', 'Человек за бортом! Сейчас будет.', 'Man overboard! Any second now.', 'Водомётная рука', 'Water-cannon arm', 'Спасательная станция на пляже', 'The beach rescue station'],
+  mason: ['Укрепляет всё: замуровывает двери и окна, «чтобы не обрушилось». Изнутри тоже не выйти.', 'Reinforces everything: walls up doors and windows “so nothing collapses.” Nobody gets out either.', 'Не бойтесь. Я вас укреплю. Изнутри.', 'Don’t worry. I’ll reinforce you. From the inside.', 'Поршневые ноги, щит-опора', 'Piston legs, a brace shield', 'Склад опор', 'The shoring depot'],
+  beacon: ['Находит всех: светит прожектором и громко объявляет координаты каждого, кого видит.', 'Finds everyone: shines a searchlight and announces the coordinates of everyone she sees.', 'Вижу вас! Вижу всех! Внимание всем: я вижу всех!', 'I see you! I see everyone! Attention all: I see everyone!', 'Сигнальная голова (видит закрытые кварталы)', 'Signal head (sees into closed blocks)', 'Поисковый пост', 'The search post'],
+  canopy: ['Озеленяет всё подряд: заращивает улицы, дома и людей.', 'Greens everything: grows over streets, houses and people.', 'Вам не хватает зелени. Сейчас исправим.', 'You’re short on greenery. Let’s fix that.', 'Секатор-рука', 'Pruner arm', 'Сад на крыше', 'A rooftop garden'],
+  sweep: ['Дезинфицирует всё, включая жителей. Особенно жителей.', 'Disinfects everything, residents included. Residents especially.', 'Обнаружена грязь. Обнаружен вы. Совпадение?', 'Dirt detected. You detected. Coincidence?', 'Хим-рука (снимает яд)', 'Hazmat arm (cleanses toxin)', 'Санитарный пункт', 'The sanitation depot'],
+  patch: ['Приносит людей хозяевам. Любых людей любым хозяевам.', 'Brings people back to their owners. Any people to any owners.', 'Гав. (Принёс вас. Кому — неважно.)', 'Woof. (Fetched you. For whom doesn’t matter.)', 'Механическая нога (скорость)', 'Mechanical leg (speed)', 'Кинологический пост', 'The K-9 post'],
+  hive: ['Следит за всеми пчёлами-дронами и жалит «нарушителей режима».', 'Watches everyone through drone bees and stings “rule breakers.”', 'Вы нарушаете режим тишины. Жжж.', 'You are breaking quiet hours. Bzzz.', 'Сотовая рука с пчёлами', 'Honeycomb arm with bees', 'Пасека на крыше Glassline', 'The Glassline rooftop apiary'],
+  n73: ['Меняет тела в поисках себя. Контроль очень хочет вернуть его на склад.', 'Swaps bodies looking for himself. Control very much wants him back in the warehouse.', 'Это тело не моё. И это тоже.', 'This body isn’t mine. Neither is this one.', 'Нейроконтур (особый трофей, позже)', 'Neurocore (a special trophy, later)', 'Капсула на нижнем уровне', 'A capsule on a lower level'],
+  s01: ['Серийные резервные тела HeroOut, которые встали сами. Обезумевшие копии приходят тройкой одинаковых: компания экономит на индивидуальности.', 'HeroOut’s serial backup bodies that stood up on their own. The deranged copies come in identical threes: the company saves on individuality.', 'Мы Стандарт. Мы Стандарт. Мы Стандарт.', 'We are Standard. We are Standard. We are Standard.', 'Серийный выпуск', 'Mass production', 'Склад HeroOut', 'A HeroOut warehouse'],
+  doctor: ['«Оперирует» всех подряд и щедро раздаёт чужие конечности.', '“Operates” on everyone and hands out other people’s limbs.', 'Откройте рот. Скажите «а». Держите руку. Нет, другую. Нет, чужую.', 'Open wide. Say “ah.” Hold this arm. No, the other one. No, someone else’s.', 'Инъектор-рука', 'Injector arm', 'Клиника Research Campus', 'The Research Campus clinic'],
+};
+const ALLY: Record<string, [string, string, string, string]> = {
+  // id: ally ru/en, unlock ru/en (text/ru.json ally.*.desc, unlock.*)
+  s01: ['Серийный выпуск теперь работает на вас: жители появляются на 15 % чаще.', 'Mass production now works for you: residents appear 15% more often.', 'Пройти обучение', 'Finish the tutorial'],
+  patch: ['Хороший мальчик снова дома: сгустки Энергии летят к центру вдвое быстрее, а копка даёт на 10 % больше.', 'The good boy is home again: Energy orbs fly to the centre twice as fast and digging gives 10% more.', 'Открыть 30 тайников за все смены', 'Open 30 caches across all shifts'],
+  canopy: ['Снова сажает то, что нужно: Микрореакторы и копка дают на 25 % больше Энергии.', 'Plants the right things again: Microreactors and digging give 25% more Energy.', 'Заработать 1000 Энергии за одну смену', 'Earn 1000 Energy in one shift'],
+  current: ['Течение снова на нашем берегу: смывает с жителей ожоги, яд и холод и ходит по воде.', 'Current is on our shore again: washes burns, toxin and frost off residents and walks on water.', 'Победить Течение 15 раз', 'Beat Current 15 times'],
+  lineman: ['Страхует теперь врагов, и очень крепко: подтягивает их к жителям, а удары рядом с ним бьют током.', 'Now he secures enemies, very firmly: pulls them to residents, and hits near him shock.', 'Вызвать реакцию «Проводящая цепь» 50 раз', 'Trigger Conductive Chain 50 times'],
+  frostline: ['Тушит теперь только врагов: все враги рядом с ней замедлены.', 'Now she only puts out enemies: every enemy near her is slowed.', 'Заморозить 200 врагов', 'Freeze 200 enemies'],
+  mason: ['Укрепляет то, что надо: здания на 50 % прочнее, завалы разбираются вдвое быстрее.', 'Reinforces the right things: buildings are 50% sturdier, rubble clears twice as fast.', 'Построить 100 зданий за все смены', 'Build 100 buildings across all shifts'],
+  sweep: ['Чистит теперь по делу: жители рядом не страдают от раскалённой земли и яда, а лишние части перерабатываются вдвое выгоднее.', 'Cleans for a reason now: nearby residents ignore hot ground and toxin, and spare parts recycle for double.', 'Переработать 50 лишних частей', 'Recycle 50 spare parts'],
+  beacon: ['Ищет теперь опасность: даёт сканеру 2 лишних заряда и раз в минуту помечает безопасный квартал.', 'Searches for danger now: gives the scanner 2 extra charges and marks a safe block every minute.', 'Победить, ни разу не вскрыв гнездо случайно', 'Win without ever opening a nest by accident'],
+  hive: ['Рой теперь следит за врагами: раз в минуту отмечает одно скрытое гнездо или убежище.', 'The swarm watches enemies now: once a minute it marks a hidden nest or lair.', 'Победить Улей 20 раз', 'Beat Hive 20 times'],
+  kiln: ['Снова выносит на себе всё: жители рядом с Килном получают на 20 % меньше урона.', 'Carries everything again: residents near Kiln take 20% less damage.', 'Победить Килна 50 раз', 'Beat Kiln 50 times'],
+  seraph: ['Лечит теперь своих: жители рядом с ней восстанавливают здоровье.', 'Heals her own now: residents near her regain health.', 'Победить, не потеряв ни одного жителя', 'Win without losing a single resident'],
+  doctor: ['Лечение снова по назначению: раз в 90 секунд поднимает погибшего жителя, а новая часть лечит жителя полностью.', 'Treatment as prescribed again: every 90 seconds he revives a fallen resident, and a new part fully heals.', 'Собрать одному жителю все конечности сразу: две руки, две ноги, хвост и крылья', 'Give one resident every limb at once: two arms, two legs, a tail and wings'],
+  demon: ['Наверху ему наконец не страшно: жители копают на 30 % быстрее, а сам Демон пробуривает квартал за 2 секунды.', 'Up top he is finally not afraid: residents dig 30% faster and Demon drills a block in 2 seconds.', 'Победить Демона 10 раз', 'Beat Demon 10 times'],
+  n73: ['Нашёл, на чьей он стороне: все жители бьют на 20 % быстрее, а раз в 30 секунд он переманивает адаптанта.', 'Found which side he is on: all residents strike 20% faster, and every 30 seconds he turns an adaptant.', 'Открыть всех остальных 14 героев', 'Unlock all 14 other heroes'],
+};
+for (const h of HEROES) {
+  const a = ALLY[h.id];
+  if (a) {
+    h.ally = { ru: a[0], en: a[1] };
+    h.unlock = { ru: a[2], en: a[3] };
+  }
+  const m = MAD[h.id];
+  if (!m) continue;
+  h.mania = { ru: m[0], en: m[1] };
+  h.line = { ru: m[2], en: m[3] };
+  h.trophy = { ru: m[4], en: m[5] };
+  h.lair = { ru: m[6], en: m[7] };
+}
+
+/** Control's barks and HeroOut ads for the site (text/ru.json control.bark.*, ad.*). */
+export const BARKS: [string, string][] = [
+  ['Доброе утро, Lumen City! Напоминаем: все жители являются имуществом HeroOut. Пожалуйста, пройдите на склад.', 'Good morning, Lumen City! A reminder: all residents are HeroOut property. Please proceed to the warehouse.'],
+  ['Ваше спасение очень важно для нас. Оставайтесь на линии.', 'Your rescue is very important to us. Please stay on the line.'],
+  ['Если вы видите обезумевшего героя, не паникуйте. Он на смене.', 'If you see a deranged hero, do not panic. They are on shift.'],
+  ['Кошка снята с дерева. Кошка зарегистрирована как актив HeroOut. Дерево тоже.', 'Cat retrieved from tree. Cat registered as a HeroOut asset. So is the tree.'],
+  ['Сопротивление спасению является нарушением пользовательского соглашения, пункт 14.', 'Resisting rescue violates the user agreement, clause 14.'],
+  ['Вы довольны тем, что живы? Ответьте «да» или пройдите на склад.', 'Are you satisfied with being alive? Answer “yes” or proceed to the warehouse.'],
+  ['Найдена бесхозная рука. Владельца просим пройти на склад. Вместе с остальным телом.', 'An unclaimed arm has been found. The owner is asked to come to the warehouse. With the rest of the body.'],
+  ['Напоминаем: на смене находятся четырнадцать героев HeroOut. Все они вас любят.', 'A reminder: fourteen HeroOut heroes are on shift. They all love you.'],
+];
+export const ADS: [string, string][] = [
+  ['Потеряли руку? Не теряйте надежду! Гель Splice: отрастёт к понедельнику.', 'Lost an arm? Don’t lose hope! Splice gel: grows back by Monday.'],
+  ['Купол Lumen. Небо, которое не протекает.', 'The Lumen Dome. A sky that never leaks.'],
+  ['Кошка на дереве? Это не случайность. Это повод позвонить.', 'Cat up a tree? That’s no accident. That’s a reason to call.'],
+  ['Застрахуйте ногу. Вторая в подарок.', 'Insure one leg. Get the second free.'],
+  ['Тариф «Спасение Lite»: спасаем по будним дням с 9 до 18.', '“Rescue Lite” plan: we save you on weekdays, 9 to 6.'],
+  ['Ваша семья в безопасности. Ваша семья на складе. Это одно и то же.', 'Your family is safe. Your family is in the warehouse. Same thing.'],
 ];
 
 export interface Comic {
@@ -237,7 +313,7 @@ export const COMICS: Comic[] = [
     id: 'pressure-test',
     title: { ru: 'Проверка давления', en: 'Pressure Test' },
     series: { ru: 'До сирен', en: 'Before the Sirens' },
-    cast: { ru: 'Фростлайн, Мейсон', en: 'Frostline, Mason' },
+    cast: { ru: 'Фростлайн, Каменщик', en: 'Frostline, Mason' },
     blurb: { ru: 'Фростлайн замораживает фонтан из прорванной магистрали. Давление не согласно.', en: 'Frostline freezes a geyser from a burst main. The pressure disagrees.' },
     pages: { ru: ['comics/pressure-test-ru.webp'], en: ['comics/pressure-test-en.webp'] },
   },
@@ -245,7 +321,7 @@ export const COMICS: Comic[] = [
     id: 'two-kinds',
     title: { ru: 'Два вида энергии', en: 'Two Kinds of Power' },
     series: { ru: 'До сирен', en: 'Before the Sirens' },
-    cast: { ru: 'Хайв, Линейщик', en: 'Hive, Lineman' },
+    cast: { ru: 'Улей, Линейщик', en: 'Hive, Lineman' },
     blurb: { ru: 'Банка мёда на 900 000 калорий и электрик, который отвечает за другую энергию.', en: 'A 900,000-calorie jar of honey and an electrician who handles the other kind of power.' },
     pages: { ru: ['comics/two-kinds-ru.webp'], en: ['comics/two-kinds-en.webp'] },
   },
@@ -253,7 +329,7 @@ export const COMICS: Comic[] = [
     id: 'last-donut',
     title: { ru: 'Последний пончик', en: 'The Last Donut' },
     series: { ru: 'До сирен', en: 'Before the Sirens' },
-    cast: { ru: 'Хайв, Маяк', en: 'Hive, Beacon' },
+    cast: { ru: 'Улей, Маяк', en: 'Hive, Beacon' },
     blurb: { ru: 'Коробка домашних пончиков на смене, идеально чистый пульт и честный дележ пополам.', en: 'A box of homemade donuts on shift, a spotless console and a perfectly fair split.' },
     pages: {
       ru: [1, 2, 3, 4].map((k) => `comics/last-donut-${k}-ru.webp`),
@@ -315,20 +391,10 @@ export const ARTBOOK: { id: string; title: L; note: L; shots: Shot[] }[] = [
   {
     id: 'pixel',
     title: { ru: 'Пиксель-арт игры', en: 'Game pixel art' },
-    note: { ru: 'Спрайты и покадровые анимации для поля. Каждый кадр нарисован, а не сгенерирован скелетом.', en: 'Sprites and frame animation for the board. Every frame is drawn, not generated by a skeleton.' },
+    note: { ru: 'Спрайты героев и жителей для поля.', en: 'Hero and resident sprites for the board.' },
     shots: [
       { src: 'sprites-01.webp', cap: { ru: 'Канон в пикселях', en: 'The canon in pixels' } },
       { src: 'sprites-02.webp', cap: { ru: 'Горожане и автоапгрейд жителя', en: 'Citizens and the resident auto-upgrade' } },
-      { src: 'px/anim-resident.gif', cap: { ru: 'Житель', en: 'Resident' }, px: true },
-      { src: 'px/anim-defender.gif', cap: { ru: 'Защитник', en: 'Defender' }, px: true },
-      { src: 'px/anim-adaptant_thermo.gif', cap: { ru: 'Термоадаптант', en: 'Thermo adaptant' }, px: true },
-      { src: 'px/anim-adaptant_cryo.gif', cap: { ru: 'Криоадаптант', en: 'Cryo adaptant' }, px: true },
-      { src: 'px/anim-adaptant_volt.gif', cap: { ru: 'Электроадаптант', en: 'Volt adaptant' }, px: true },
-      { src: 'px/anim-heavy_adaptant.gif', cap: { ru: 'Тяжёлый адаптант', en: 'Heavy adaptant' }, px: true },
-      { src: 'px/anim-demon.gif', cap: { ru: 'Демон', en: 'Demon' }, px: true },
-      { src: 'px/anim-bld_reactor.gif', cap: { ru: 'Микрореактор', en: 'Microreactor' }, px: true },
-      { src: 'px/anim-bld_command.gif', cap: { ru: 'Командный центр', en: 'Command Center' }, px: true },
-      { src: 'px/anim-nest.gif', cap: { ru: 'Гнездо адаптантов', en: 'Adaptant nest' }, px: true },
     ],
   },
 ];
