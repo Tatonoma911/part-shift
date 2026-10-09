@@ -7,6 +7,7 @@ import { t } from '../i18n';
 import { BUILDING_ANCHOR } from './assets';
 import { sound } from './audio';
 import { learning, setLearningHooks } from './learn';
+import { volumeHeight, volumeSliders } from './volume';
 import { BoardView } from './BoardView';
 import { Cameras, UI_DEPTH } from './cameras';
 import { clearSlot, loadSettings, loadSlot, saveSlot, touchSlot } from './saves';
@@ -712,26 +713,12 @@ export class GameScene extends Phaser.Scene {
     this.overlay = null;
     if (!on) return;
     this.save();
-    const onOff = (v: boolean) => t(v ? 'settings.on' : 'settings.off');
     this.overlay = this.sheet({
       title: t('pause.title'),
       lines: [t('pause.hint')],
       actions: [
         { label: t('pause.resume'), act: () => this.setPaused(false), primary: true },
-        {
-          label: `${t('settings.sfx')}: ${onOff(sound.prefs.sfx)}`,
-          act: () => {
-            sound.setPrefs({ sfx: !sound.prefs.sfx });
-            this.setPaused(true);
-          },
-        },
-        {
-          label: `${t('settings.music')}: ${onOff(sound.prefs.music)}`,
-          act: () => {
-            sound.setPrefs({ music: !sound.prefs.music });
-            this.setPaused(true);
-          },
-        },
+        { label: t('settings.volume'), act: () => this.showVolume() },
         {
           label: t('menu.guide'),
           act: () => {
@@ -742,6 +729,18 @@ export class GameScene extends Phaser.Scene {
         { label: t('pause.restart'), act: () => this.restart() },
         { label: t('menu.quit_to_menu'), act: () => this.toMenu() },
       ],
+      animate: false,
+    });
+  }
+
+  /** Volume sliders over the paused game; "Back" returns to the pause sheet. */
+  private showVolume(): void {
+    this.overlay?.destroy();
+    this.overlay = this.sheet({
+      title: t('settings.volume'),
+      lines: [],
+      extra: { h: volumeHeight() + 24, make: (x, y, w) => volumeSliders(this, x, y, w) },
+      actions: [{ label: t('menu.back'), act: () => this.setPaused(true), primary: true }],
       animate: false,
     });
   }
@@ -786,7 +785,7 @@ export class GameScene extends Phaser.Scene {
   }
 
   /** Bottom sheet over the dimmed board (UI_SPEC §5). */
-  private sheet(o: { title: string; lines: string[]; actions: { label: string; act: () => void; primary?: boolean }[]; badge?: string; portrait?: string; grey?: boolean; animate?: boolean }): Phaser.GameObjects.Container {
+  private sheet(o: { title: string; lines: string[]; actions: { label: string; act: () => void; primary?: boolean }[]; badge?: string; portrait?: string; grey?: boolean; animate?: boolean; extra?: { h: number; make: (x: number, y: number, w: number) => Phaser.GameObjects.GameObject[] } }): Phaser.GameObjects.Container {
     const c = this.add.container(0, 0).setDepth(30);
     const shade = this.add.rectangle(0, 0, VIEW.width, VIEW.height, 0x0a1218, 0.55).setOrigin(0).setInteractive();
     shade.on('pointerdown', (_p: Phaser.Input.Pointer, _x: number, _y: number, ev: Ev) => ev.stopPropagation());
@@ -809,6 +808,10 @@ export class GameScene extends Phaser.Scene {
       y += tx.height + 12;
     }
     y += 20;
+    if (o.extra) {
+      content.push(...o.extra.make(64, y, w - 128));
+      y += o.extra.h;
+    }
     for (const a of o.actions) {
       const bg = this.add.graphics();
       chip(bg, 40, y, w - 80, 96, a.primary ? C.teal : C.graphite, a.primary ? 1 : 0.1, 18);

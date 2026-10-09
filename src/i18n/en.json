@@ -138,5 +138,11 @@
   "assist.mode.scanner": "Scan button",
   "assist.mode.off": "Off",
   "menu.guide": "Field guide",
-  "settings.reset_hints": "Reset tips"
+  "settings.reset_hints": "Reset tips",
+  "settings.volume": "Volume",
+  "settings.volume.master": "Master",
+  "settings.volume.music": "Music",
+  "settings.volume.effects": "Game sounds",
+  "settings.volume.ui": "Buttons and menus",
+  "settings.volume.voice": "Voices"
 }

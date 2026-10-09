@@ -32,5 +32,11 @@
   "settings.language.en": "English",
   "menu.zoom_hint": "Колесо мыши или два пальца: приблизить поле",
   "menu.guide": "Справочник",
-  "settings.reset_hints": "Сбросить подсказки"
+  "settings.reset_hints": "Сбросить подсказки",
+  "settings.volume": "Громкость",
+  "settings.volume.master": "Общая",
+  "settings.volume.music": "Музыка",
+  "settings.volume.effects": "Звуки игры",
+  "settings.volume.ui": "Кнопки и меню",
+  "settings.volume.voice": "Голоса"
 }

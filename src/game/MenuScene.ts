@@ -4,6 +4,7 @@ import type { AssistMode } from '../core/state';
 import { lang, setLang, t } from '../i18n';
 import { introSeen, playIntro } from '../intro';
 import { learning, learningLang } from './learn';
+import { volumeHeight, volumeSliders } from './volume';
 import { BUILDING_ANCHOR, createArt, preloadArt } from './assets';
 import { sound } from './audio';
 import type { GameStart } from './GameScene';
@@ -132,7 +133,8 @@ export class MenuScene extends Phaser.Scene {
     c.add(bg);
     let y = top + 40;
     const button = (label: string, act: (() => void) | null, primary = false, sub?: string) => {
-      const h = sub ? 110 : 92;
+      // Landscape is short: slimmer rows so settings fit without scrolling.
+      const h = sub ? 110 : LANDSCAPE ? 76 : 92;
       const g = this.add.graphics();
       chip(g, x0 + 32, y, w - 64, h, primary ? C.teal : C.graphite, act ? (primary ? 1 : 0.08) : 0.04, 18);
       if (primary) {
@@ -198,15 +200,10 @@ export class MenuScene extends Phaser.Scene {
       button(t('menu.back'), () => this.show('main'));
     } else {
       const st = loadSettings();
-      const onOff = (v: boolean) => t(v ? 'settings.on' : 'settings.off');
-      button(`${t('settings.sfx')}: ${onOff(sound.prefs.sfx)}`, () => {
-        sound.setPrefs({ sfx: !sound.prefs.sfx });
-        this.show('settings');
-      });
-      button(`${t('settings.music')}: ${onOff(sound.prefs.music)}`, () => {
-        sound.setPrefs({ music: !sound.prefs.music });
-        this.show('settings');
-      });
+      c.add(this.add.text(cx, y + 6, t('settings.volume').toUpperCase(), TXT.caps()).setOrigin(0.5));
+      y += 40;
+      c.add(volumeSliders(this, x0 + 64, y, w - 128));
+      y += volumeHeight() + 8;
       button(`${t('settings.language')}: ${t(`settings.language.${lang}`)}`, () => {
         const next = lang === 'ru' ? 'en' : 'ru';
         setLang(next);
@@ -219,7 +216,6 @@ export class MenuScene extends Phaser.Scene {
         saveSettings({ ...st, assist: modes[(modes.indexOf(st.assist) + 1) % modes.length] });
         this.show('settings');
       });
-      button(t('settings.replay_tutorial'), () => this.play({ tutorial: true }));
       button(t('settings.reset_hints'), () => {
         learning().resetProgress();
         this.show('settings');
