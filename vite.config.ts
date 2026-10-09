@@ -21,6 +21,8 @@ export default defineConfig({
         : artifact
           ? { game: resolve(__dirname, 'src/main.ts') }
           : { main: resolve(__dirname, 'index.html'), play: resolve(__dirname, 'play/index.html'), mobile: resolve(__dirname, 'mobile/index.html') },
+      // One file for the single-page builds: lazy chunks (Firebase) are folded into the main script.
+      output: artifact || learning ? { inlineDynamicImports: true } : {},
     },
   },
 });

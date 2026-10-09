@@ -1,0 +1,15 @@
+rules_version = '2';
+// Paste into Firebase console → Firestore Database → Rules → Publish.
+// Each player reads and writes only their own document: users/{uid}.
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /users/{uid} {
+      allow read: if request.auth != null && request.auth.uid == uid;
+      allow write: if request.auth != null && request.auth.uid == uid
+        && request.resource.data.keys().hasOnly(['v', 'blob', 'changedAt', 'name', 'updatedAt'])
+        && request.resource.data.blob is string
+        && request.resource.data.blob.size() < 900000
+        && request.resource.data.changedAt is number;
+    }
+  }
+}

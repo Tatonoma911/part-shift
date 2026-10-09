@@ -1,4 +1,6 @@
 import Phaser from 'phaser';
+import { account } from '../account/cloud';
+import { openAccountPanel } from '../account/panel';
 import { config } from '../core/data';
 import type { AssistMode } from '../core/state';
 import { lang, setLang, t } from '../i18n';
@@ -197,7 +199,9 @@ export class MenuScene extends Phaser.Scene {
       button(t('menu.guide'), () => learning().openGuide());
       button(t('menu.settings'), () => this.show('settings'));
       button(t('menu.story'), () => this.story(true));
-      button(t('menu.account'), null, false, t('menu.soon'));
+      const acc = account.view;
+      const accSub = acc.status === 'disabled' ? t('menu.soon') : acc.status === 'signed' ? acc.name || acc.email : undefined;
+      button(t('menu.account'), () => openAccountPanel(), false, accSub);
     } else if (page === 'slots') {
       c.add(this.add.text(cx, y + 6, t('menu.slots').toUpperCase(), TXT.caps()).setOrigin(0.5));
       y += 44;
