@@ -25,7 +25,7 @@ function assetMap(): Record<string, string> {
 export { introSeen };
 
 /** Plays the comic over the game; game music pauses while it runs. */
-export async function playIntro(opts: { skipGate?: boolean } = {}): Promise<void> {
+export async function playIntro(opts: { skipGate?: boolean } = {}): Promise<{ skipped: boolean }> {
   sound.stopMusic(0.2);
-  await playIntroComic({ lang, assets: assetMap(), music: sound.prefs.music, skipGate: opts.skipGate });
+  return playIntroComic({ lang, assets: assetMap(), music: sound.prefs.music, skipGate: opts.skipGate });
 }

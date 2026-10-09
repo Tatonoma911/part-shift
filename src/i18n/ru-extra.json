@@ -32,5 +32,10 @@
   "settings.language.en": "English",
   "menu.zoom_hint": "Колесо мыши или два пальца: приблизить поле",
   "menu.guide": "Справочник",
-  "settings.reset_hints": "Сбросить подсказки"
+  "settings.reset_hints": "Сбросить подсказки",
+  "analytics.consent.title": "Помочь игре?",
+  "analytics.consent.text": "Можно присылать нам анонимную статистику игры: где сложно, где игроки бросают и сколько длится смена? Без имени, почты и рекламы. Это можно изменить в настройках.",
+  "analytics.consent.yes": "Можно",
+  "analytics.consent.no": "Не надо",
+  "analytics.setting": "Статистика"
 }

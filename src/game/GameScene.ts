@@ -12,6 +12,7 @@ import { Cameras, UI_DEPTH } from './cameras';
 import { clearSlot, loadSettings, loadSlot, saveSlot, touchSlot } from './saves';
 import { BOARD, C, CELL, DOCK, GOAL, GUIDE, HUD, INK, LANDSCAPE, STEP, VIEW } from './layout';
 import { markTutorialDone, TutorialGuide } from './Tutorial';
+import { analytics } from '../analytics';
 import { brackets, chip, glyph, plate, TXT } from './ui';
 import { setBackHandler } from '../platform/native';
 
@@ -110,6 +111,8 @@ export class GameScene extends Phaser.Scene {
   private saveTimer = 0;
   private lastCenterHit = -99;
   private lastThreat = 0;
+  /** Last tutorial step reported to analytics. */
+  private trackedStep = -1;
 
   constructor() {
     super('game');
@@ -133,6 +136,7 @@ export class GameScene extends Phaser.Scene {
     this.coachedBuild = false;
     this.dragMode = null;
     this.saveTimer = 0;
+    this.trackedStep = -1;
   }
 
   create(): void {
@@ -172,6 +176,7 @@ export class GameScene extends Phaser.Scene {
 
     this.createHud();
     this.createDock();
+    this.trackStart(!!saved);
     if (this.guide) this.createGuide(by - 24);
     else if (!this.world.started) this.say(t('place.command'), 6000);
 
@@ -243,12 +248,14 @@ export class GameScene extends Phaser.Scene {
   }
 
   private restart(): void {
+    if (this.world.s.outcome === 'playing') this.trackEnd('restart');
     if (!this.guide) clearSlot(this.slot);
     sound.stopMusic(0.2);
     this.scene.restart({ slot: this.slot, fresh: true, tutorial: this.start.tutorial });
   }
 
   private toMenu(): void {
+    if (this.world.s.outcome === 'playing') analytics.track(this.guide ? 'tutorial_leave' : 'match_leave', this.matchParams());
     this.save();
     sound.stopMusic(0.3);
     this.scene.start('menu');
@@ -367,6 +374,7 @@ export class GameScene extends Phaser.Scene {
     skip.on(
       'pointerdown',
       stop(() => {
+        analytics.track('tutorial_skip', this.matchParams());
         markTutorialDone();
         this.toMenu();
       }),
@@ -379,6 +387,12 @@ export class GameScene extends Phaser.Scene {
   private showGuideStep(): void {
     const g = this.guide!;
     const box = this.guideBox!;
+    // stepIndex reaches stepCount when the tutorial is finished.
+    if (g.stepIndex !== this.trackedStep) {
+      this.trackedStep = g.stepIndex;
+      if (g.finished) analytics.track('tutorial_complete', { seconds: this.world.s.time });
+      else analytics.track('tutorial_step', { step: g.stepIndex, step_id: g.step!.id, seconds: this.world.s.time });
+    }
     if (g.finished) {
       box.text.setVisible(false);
       box.g.clear();
@@ -766,6 +780,7 @@ export class GameScene extends Phaser.Scene {
   }
 
   private showEnd(victory: boolean): void {
+    this.trackEnd(victory ? 'victory' : 'defeat');
     if (!this.guide) clearSlot(this.slot);
     const w = this.world;
     const tiles: [string, string][] = [
@@ -797,6 +812,36 @@ export class GameScene extends Phaser.Scene {
         { label: t('menu.quit_to_menu'), act: () => this.toMenu() },
       ],
     });
+  }
+
+  // -------------------------------------------------------------- analytics
+
+  /** What every match event carries; also read when the player leaves the app mid-match. */
+  private matchParams(): Record<string, string | number> {
+    const w = this.world;
+    const p = w.player(ME);
+    return {
+      mode: this.guide ? 'tutorial' : 'free',
+      seconds: w.s.time,
+      started: w.started ? 1 : 0,
+      threat: w.threatLevel,
+      nests: p.stats.nests,
+      caches: p.stats.caches,
+      buildings: w.s.buildings.filter((b) => b.owner === ME).length,
+      defenders: w.s.units.filter((u) => u.owner === ME && u.kind === 'defender').length,
+      ...(this.guide ? { step: this.guide.stepIndex } : {}),
+    };
+  }
+
+  private trackStart(continued: boolean): void {
+    analytics.where(this.guide ? 'tutorial' : 'match', () => this.matchParams());
+    if (this.guide) analytics.track('tutorial_begin');
+    else analytics.track('match_start', { slot: this.slot, continued, assist: this.world.player(ME).assist.mode, seconds: this.world.s.time });
+  }
+
+  /** result: victory, defeat or restart (the player gave up and started over). */
+  private trackEnd(result: string): void {
+    analytics.track(this.guide ? 'tutorial_end' : 'match_end', { result, ...this.matchParams() });
   }
 
   private fmt(seconds: number): string {
