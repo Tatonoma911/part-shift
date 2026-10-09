@@ -1,6 +1,9 @@
 import type { FirebaseApp } from 'firebase/app';
 import type { Auth, User } from 'firebase/auth';
 import type { Firestore } from 'firebase/firestore/lite';
+
+/** False in the one-file Artifact preview, which ships without Firebase (vite.config.ts). */
+declare const __CLOUD__: boolean;
 import { FIREBASE_CONFIG } from './config';
 import { ACCOUNT_PREFIX, fingerprint, isRunKey, merge, readLocal, runsOf, writeLocal, type MergeResult, type Snapshot } from './snapshot';
 
@@ -146,6 +149,7 @@ class Account {
 
   private connect(): Promise<Fb> {
     if (this.fb) return Promise.resolve(this.fb);
+    if (!__CLOUD__) return Promise.reject(new Error('cloud saves are off in this build'));
     return (async () => {
       const [appMod, authMod, dbMod] = await Promise.all([import('firebase/app'), import('firebase/auth'), import('firebase/firestore/lite')]);
       const app = appMod.initializeApp(FIREBASE_CONFIG!);
