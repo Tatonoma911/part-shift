@@ -7,12 +7,15 @@ import { World, type GameEvent } from '../core/world';
 import { t } from '../i18n';
 import { BUILDING_ANCHOR } from './assets';
 import { sound } from './audio';
+import { learning, setLearningHooks } from './learn';
+import { volumeHeight, volumeSliders } from './volume';
 import { BoardView } from './BoardView';
 import { Cameras, UI_DEPTH } from './cameras';
 import { clearSlot, loadSettings, loadSlot, saveSlot, touchSlot } from './saves';
 import { BOARD, C, CELL, DOCK, GOAL, GUIDE, HUD, INK, LANDSCAPE, STEP, VIEW } from './layout';
 import { markTutorialDone, TutorialGuide } from './Tutorial';
 import { brackets, chip, glyph, plate, TXT } from './ui';
+import { setBackHandler } from '../platform/native';
 
 const BEST_KEY = 'partshift.best.v1';
 const LONG_PRESS_MS = 480;
@@ -99,6 +102,9 @@ export class GameScene extends Phaser.Scene {
   private guideBox: { text: Phaser.GameObjects.Text; dots: Phaser.GameObjects.Graphics; g: Phaser.GameObjects.Graphics; y: number; h: number } | null = null;
 
   private paused = false;
+  /** The field guide or a coach card is open: the world waits, no pause sheet. */
+  private overlayPaused = false;
+  private coachedBuild = false;
   private rightClick: { x: number; y: number; px: number; py: number } | null = null;
   private dragMode: 'queue' | 'cancel' | null = null;
   private lastDragCell = -1;
@@ -125,6 +131,8 @@ export class GameScene extends Phaser.Scene {
     this.overlay = null;
     this.guideBox = null;
     this.paused = false;
+    this.overlayPaused = false;
+    this.coachedBuild = false;
     this.dragMode = null;
     this.saveTimer = 0;
   }
@@ -182,17 +190,25 @@ export class GameScene extends Phaser.Scene {
     this.input.keyboard?.on('keydown-ONE', () => this.setMode('dig'));
     this.input.keyboard?.on('keydown-TWO', () => this.setMode('build'));
     const onHide = () => {
-      if (document.hidden) this.save();
+      if (!document.hidden) return;
+      // Leaving the tab or the app (home button, a call) pauses the run, which also saves it.
+      if (!this.paused) this.setPaused(true);
+      this.save();
     };
     document.addEventListener('visibilitychange', onHide);
     this.events.once('shutdown', () => document.removeEventListener('visibilitychange', onHide));
+    setBackHandler(() => this.onBack());
     if (this.world.s.outcome === 'playing') sound.playMusic('theme_lumen');
     this.setMode('dig');
+    // The tutorial teaches by itself; coach cards and the guide come with free play.
+    setLearningHooks({ pause: () => (this.overlayPaused = true), resume: () => (this.overlayPaused = false) });
+    this.events.once('shutdown', () => setLearningHooks(null));
   }
 
   update(time: number, deltaMs: number): void {
     const w = this.world;
-    if (!this.paused && w.s.outcome === 'playing') {
+    if (!this.paused && !this.overlayPaused && w.s.outcome === 'playing') {
+      if (!this.coachedBuild && !this.guide && w.player(ME).energy >= 100) this.coachedBuild = learning().coach('build') || this.coachedBuild;
       w.tick(Math.min(deltaMs, 250) / 1000);
       this.saveTimer += deltaMs / 1000;
       if (this.saveTimer >= config.save.autosaveSeconds) {
@@ -246,6 +262,8 @@ export class GameScene extends Phaser.Scene {
       ['+', () => this.cams.zoomBy(1.3)],
       ['−', () => this.cams.zoomBy(1 / 1.3)],
       ['⟲', () => this.cams.reset()],
+      // Field guide (Learning thread).
+      ['?', () => learning().openGuide()],
     ];
     items.forEach(([label, act], k) => {
       const x = (LANDSCAPE ? BOARD.x + BOARD.w : VIEW.width) - 24 - 56;
@@ -261,10 +279,23 @@ export class GameScene extends Phaser.Scene {
 
   // ------------------------------------------------------------------ events
 
+  /** First-time coach cards (Learning thread): world events plus clue moments the world doesn't name. */
+  private coachOn(e: GameEvent): void {
+    const l = learning();
+    if (l.onGameEvent(e.type)) return;
+    if (e.type === 'scan') l.coach('deduce');
+    if (e.type === 'dig_done' && e.x !== undefined && e.y !== undefined) {
+      const c = this.world.clues(e.x, e.y);
+      if (c.threat > 0) l.coach('clue');
+      else if (c.finds > 0) l.coach('finds');
+    }
+  }
+
   private onEvent(e: GameEvent): void {
     if (e.owner !== undefined && e.owner !== ME && e.owner >= 0) return;
     if (e.type === 'victory' || e.type === 'defeat') sound.stopMusic();
     sound.play(e.type);
+    if (!this.guide) this.coachOn(e);
     if (e.type === 'center_hit') {
       if (this.time.now - this.lastCenterHit > 6000) this.say(t('event.command_under_attack'), 3000, true);
       this.lastCenterHit = this.time.now;
@@ -602,6 +633,7 @@ export class GameScene extends Phaser.Scene {
 
   private setMode(mode: Mode): void {
     this.mode = mode;
+    if (mode === 'build' && !this.guide && !this.coachedBuild) this.coachedBuild = learning().coach('build');
     if (mode !== 'build') this.setGhost(null);
     for (const tab of this.dock.tabs) {
       const on = tab.mode === mode;
@@ -679,6 +711,20 @@ export class GameScene extends Phaser.Scene {
 
   // ---------------------------------------------------------------- overlays
 
+  /** Android back: drop the building ghost, else pause; on the pause menu or an end screen, back to the main menu. */
+  private onBack(): boolean {
+    // The field guide and coach cards are DOM overlays without a close hook yet: back waits for their own button.
+    if (learning().isOpen) return true;
+    if (this.ghost) {
+      this.setGhost(null);
+    } else if (this.overlay || this.paused || this.world.s.outcome !== 'playing') {
+      this.toMenu();
+    } else {
+      this.setPaused(true);
+    }
+    return true;
+  }
+
   private setPaused(on: boolean): void {
     if (this.world.s.outcome !== 'playing') return;
     if (on !== this.paused) sound.play(on ? 'pause' : 'resume');
@@ -687,30 +733,35 @@ export class GameScene extends Phaser.Scene {
     this.overlay = null;
     if (!on) return;
     this.save();
-    const onOff = (v: boolean) => t(v ? 'settings.on' : 'settings.off');
     this.overlay = this.sheet({
       title: t('pause.title'),
       lines: [t('pause.hint')],
       actions: [
         { label: t('pause.resume'), act: () => this.setPaused(false), primary: true },
+        { label: t('settings.volume'), act: () => this.showVolume() },
         {
-          label: `${t('settings.sfx')}: ${onOff(sound.prefs.sfx)}`,
+          label: t('menu.guide'),
           act: () => {
-            sound.setPrefs({ sfx: !sound.prefs.sfx });
-            this.setPaused(true);
-          },
-        },
-        {
-          label: `${t('settings.music')}: ${onOff(sound.prefs.music)}`,
-          act: () => {
-            sound.setPrefs({ music: !sound.prefs.music });
-            this.setPaused(true);
+            this.setPaused(false);
+            learning().openGuide();
           },
         },
         { label: t('pause.account'), act: () => openAccountPanel() },
         { label: t('pause.restart'), act: () => this.restart() },
         { label: t('menu.quit_to_menu'), act: () => this.toMenu() },
       ],
+      animate: false,
+    });
+  }
+
+  /** Volume sliders over the paused game; "Back" returns to the pause sheet. */
+  private showVolume(): void {
+    this.overlay?.destroy();
+    this.overlay = this.sheet({
+      title: t('settings.volume'),
+      lines: [],
+      extra: { h: volumeHeight() + 24, make: (x, y, w) => volumeSliders(this, x, y, w) },
+      actions: [{ label: t('menu.back'), act: () => this.setPaused(true), primary: true }],
       animate: false,
     });
   }
@@ -755,7 +806,7 @@ export class GameScene extends Phaser.Scene {
   }
 
   /** Bottom sheet over the dimmed board (UI_SPEC §5). */
-  private sheet(o: { title: string; lines: string[]; actions: { label: string; act: () => void; primary?: boolean }[]; badge?: string; portrait?: string; grey?: boolean; animate?: boolean }): Phaser.GameObjects.Container {
+  private sheet(o: { title: string; lines: string[]; actions: { label: string; act: () => void; primary?: boolean }[]; badge?: string; portrait?: string; grey?: boolean; animate?: boolean; extra?: { h: number; make: (x: number, y: number, w: number) => Phaser.GameObjects.GameObject[] } }): Phaser.GameObjects.Container {
     const c = this.add.container(0, 0).setDepth(30);
     const shade = this.add.rectangle(0, 0, VIEW.width, VIEW.height, 0x0a1218, 0.55).setOrigin(0).setInteractive();
     shade.on('pointerdown', (_p: Phaser.Input.Pointer, _x: number, _y: number, ev: Ev) => ev.stopPropagation());
@@ -778,6 +829,10 @@ export class GameScene extends Phaser.Scene {
       y += tx.height + 12;
     }
     y += 20;
+    if (o.extra) {
+      content.push(...o.extra.make(64, y, w - 128));
+      y += o.extra.h;
+    }
     for (const a of o.actions) {
       const bg = this.add.graphics();
       chip(bg, 40, y, w - 80, 96, a.primary ? C.teal : C.graphite, a.primary ? 1 : 0.1, 18);
@@ -832,7 +887,7 @@ export class GameScene extends Phaser.Scene {
   }
 
   private onDown(p: Phaser.Input.Pointer): void {
-    if (this.overlay || !this.cams.inBoardView(p) || this.cams.busy) return;
+    if (this.overlay || this.overlayPaused || !this.cams.inBoardView(p) || this.cams.busy) return;
     const wp = this.cams.worldAt(p);
     const at = this.board.cellAt(wp.x, wp.y);
     if (!at) return;

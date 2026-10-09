@@ -4,12 +4,16 @@ import { openAccountPanel } from '../account/panel';
 import { config } from '../core/data';
 import type { AssistMode } from '../core/state';
 import { lang, setLang, t } from '../i18n';
+import { introSeen, playIntro } from '../intro';
+import { learning, learningLang } from './learn';
+import { volumeHeight, volumeSliders } from './volume';
 import { BUILDING_ANCHOR, createArt, preloadArt } from './assets';
 import { sound } from './audio';
 import type { GameStart } from './GameScene';
 import { C, INK, LANDSCAPE, VIEW } from './layout';
 import { clearSlot, lastSlot, loadSettings, loadSlot, saveSettings, SLOTS } from './saves';
 import { tutorialDone } from './Tutorial';
+import { setBackHandler } from '../platform/native';
 import { chip, plate, TXT } from './ui';
 
 type Ev = Phaser.Types.Input.EventData;
@@ -23,6 +27,8 @@ type Page = 'main' | 'slots' | 'settings';
 export class MenuScene extends Phaser.Scene {
   private page: Phaser.GameObjects.Container | null = null;
   private armed: number | null = null;
+  private current: Page = 'main';
+  private storyPlaying = false;
 
   constructor() {
     super('menu');
@@ -59,6 +65,31 @@ export class MenuScene extends Phaser.Scene {
     }
     this.drawBackdrop();
     this.show('main');
+    // Android back: skips the intro comic, sub-pages return to the main page; on the main page the app goes to the background.
+    setBackHandler(() => {
+      if (learning().isOpen) return true;
+      if (this.storyPlaying) {
+        document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
+        return true;
+      }
+      if (this.current === 'main') return false;
+      this.show('main');
+      return true;
+    });
+    // First launch: the intro comic plays over the menu (its own tap gate unlocks sound).
+    if (!introSeen() && !this.registry.get('introShown')) {
+      this.registry.set('introShown', true);
+      this.story(false);
+    }
+  }
+
+  private story(skipGate: boolean): void {
+    this.input.enabled = false;
+    this.storyPlaying = true;
+    playIntro({ skipGate }).finally(() => {
+      this.storyPlaying = false;
+      if (this.scene.isActive()) this.input.enabled = true;
+    });
   }
 
   private drawBackdrop(): void {
@@ -107,6 +138,7 @@ export class MenuScene extends Phaser.Scene {
   }
 
   private show(page: Page): void {
+    this.current = page;
     this.page?.destroy();
     this.armed = null;
     const c = this.add.container(0, 0);
@@ -120,7 +152,8 @@ export class MenuScene extends Phaser.Scene {
     c.add(bg);
     let y = top + 40;
     const button = (label: string, act: (() => void) | null, primary = false, sub?: string) => {
-      const h = sub ? 110 : 92;
+      // Landscape is short: slimmer rows so settings fit without scrolling.
+      const h = sub ? 110 : LANDSCAPE ? 76 : 92;
       const g = this.add.graphics();
       chip(g, x0 + 32, y, w - 64, h, primary ? C.teal : C.graphite, act ? (primary ? 1 : 0.08) : 0.04, 18);
       if (primary) {
@@ -151,8 +184,9 @@ export class MenuScene extends Phaser.Scene {
       } else if (!tutorialDone()) button(t('menu.tutorial'), () => this.play({ tutorial: true }), true);
       button(t('menu.new_run'), () => this.show('slots'), !last && tutorialDone());
       if (last || tutorialDone()) button(t('menu.tutorial'), () => this.play({ tutorial: true }));
+      button(t('menu.guide'), () => learning().openGuide());
       button(t('menu.settings'), () => this.show('settings'));
-      button(t('menu.story'), null, false, t('menu.soon'));
+      button(t('menu.story'), () => this.story(true));
       const acc = account.view;
       const accSub = acc.status === 'disabled' ? t('menu.soon') : acc.status === 'signed' ? acc.name || acc.email : undefined;
       button(t('menu.account'), () => openAccountPanel(), false, accSub);
@@ -187,18 +221,14 @@ export class MenuScene extends Phaser.Scene {
       button(t('menu.back'), () => this.show('main'));
     } else {
       const st = loadSettings();
-      const onOff = (v: boolean) => t(v ? 'settings.on' : 'settings.off');
-      button(`${t('settings.sfx')}: ${onOff(sound.prefs.sfx)}`, () => {
-        sound.setPrefs({ sfx: !sound.prefs.sfx });
-        this.show('settings');
-      });
-      button(`${t('settings.music')}: ${onOff(sound.prefs.music)}`, () => {
-        sound.setPrefs({ music: !sound.prefs.music });
-        this.show('settings');
-      });
+      c.add(this.add.text(cx, y + 6, t('settings.volume').toUpperCase(), TXT.caps()).setOrigin(0.5));
+      y += 40;
+      c.add(volumeSliders(this, x0 + 64, y, w - 128));
+      y += volumeHeight() + 8;
       button(`${t('settings.language')}: ${t(`settings.language.${lang}`)}`, () => {
         const next = lang === 'ru' ? 'en' : 'ru';
         setLang(next);
+        learningLang(next);
         saveSettings({ ...st, lang: next });
         this.scene.restart();
       });
@@ -207,7 +237,10 @@ export class MenuScene extends Phaser.Scene {
         saveSettings({ ...st, assist: modes[(modes.indexOf(st.assist) + 1) % modes.length] });
         this.show('settings');
       });
-      button(t('settings.replay_tutorial'), () => this.play({ tutorial: true }));
+      button(t('settings.reset_hints'), () => {
+        learning().resetProgress();
+        this.show('settings');
+      });
       button(t('menu.back'), () => this.show('main'), true);
     }
     const h = y - top + 24;

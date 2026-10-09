@@ -27,7 +27,8 @@
       "partDropChance": 1.0,
       "partSlot": "arm"
     },
-    "nestTech": "cryo"
+    "nestTech": "cryo",
+    "config.dig.autoQueueZeroNeighbors": true
   },
   "steps": [
     {

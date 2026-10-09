@@ -1,15 +1,26 @@
+import { resolve } from 'node:path';
 import { defineConfig } from 'vite';
 
 // base './' so the build works from any GitHub Pages sub-path.
-// ARTIFACT=1 inlines every image so the build fits in one HTML file (npm run artifact).
+// Pages: the universe site at / (site/), the game at /play (src/), and the bare full-screen game at /mobile (the Android app's start page).
+// ARTIFACT=1 builds only the game script (no page around it) and inlines every image so it fits in one HTML file (npm run artifact).
+// LEARNING=1 builds the learning preview page (learning.html) the same way.
 const artifact = process.env.ARTIFACT === '1';
+const learning = process.env.LEARNING === '1';
 export default defineConfig({
   base: './',
   build: {
     chunkSizeWarningLimit: 4000,
-    assetsInlineLimit: artifact ? () => true : 4096,
-    outDir: artifact ? 'dist-artifact' : 'dist',
-    // One file for the artifact: lazy chunks (Firebase) are folded into the main script.
-    rollupOptions: artifact ? { output: { inlineDynamicImports: true } } : {},
+    assetsInlineLimit: artifact || learning ? () => true : 4096,
+    outDir: learning ? 'dist-learning' : artifact ? 'dist-artifact' : 'dist',
+    rollupOptions: {
+      input: learning
+        ? resolve(__dirname, 'learning.html')
+        : artifact
+          ? { game: resolve(__dirname, 'src/main.ts') }
+          : { main: resolve(__dirname, 'index.html'), play: resolve(__dirname, 'play/index.html'), mobile: resolve(__dirname, 'mobile/index.html') },
+      // One file for the single-page builds: lazy chunks (Firebase) are folded into the main script.
+      output: artifact || learning ? { inlineDynamicImports: true } : {},
+    },
   },
 });

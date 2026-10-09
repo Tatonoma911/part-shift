@@ -5,11 +5,18 @@ import { GameScene } from './game/GameScene';
 import { MenuScene } from './game/MenuScene';
 import { chooseLayout, VIEW } from './game/layout';
 import { fontsReady } from './game/ui';
+import { initNative } from './platform/native';
+
+initNative();
 
 // Cloud saves land in localStorage before the menu reads them (account.boot waits only briefly).
 Promise.all([fontsReady(), account.boot()]).then(() => {
   watchAccountConflicts();
-  chooseLayout(window.innerWidth, window.innerHeight);
+  // Wide screens get the landscape canvas; the site's /play page reads this flag to size #app 16:9.
+  if (window.innerWidth > 860 && window.innerWidth > window.innerHeight * 1.15) document.body.dataset.layout = 'landscape';
+  // Pick the layout from the game's own box, so an embedding page (site /play) decides.
+  const box = document.getElementById('app')?.getBoundingClientRect();
+  chooseLayout(box?.width || window.innerWidth, box?.height || window.innerHeight);
   new Phaser.Game({
     type: Phaser.AUTO,
     parent: 'app',
