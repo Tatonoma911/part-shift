@@ -67,6 +67,7 @@
   "account.error.popup-blocked": "Браузер заблокировал окно входа. Разрешите всплывающие окна и попробуйте снова.",
   "account.error.generic": "Не получилось. Попробуйте ещё раз.",
   "pause.account": "Аккаунт и сохранения",
+  "comm.no_weakness": "Слабых мест нет",
   "social.menu.board": "Рейтинг",
   "social.menu.invite": "Позвать",
   "social.menu.feedback": "Отзыв",

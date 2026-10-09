@@ -20,6 +20,9 @@ const jobs = [
   { from: join(root, 'comic'), to: 'src/intro', pick: (f) => f === 'intro-comic.js' },
   { from: join(root, 'comic/assets/panels'), to: 'src/assets/comic/panels', pick: (f) => f.endsWith('.jpg') },
   { from: join(root, 'comic/assets/sprites'), to: 'src/assets/comic/sprites', pick: (f) => f.endsWith('.png') },
+  // Hero comm pop-up (left corner): lines RU+EN and round artbook portraits.
+  { from: join(root, 'text'), to: 'src/data/text', pick: (f) => f === 'comm.json' },
+  { from: join(root, 'art/comm/game'), to: 'src/assets/comm', pick: (f) => f.endsWith('.webp') },
   { from: join(root, 'art/export/portraits'), to: 'src/assets/art/portraits', pick: (f) => ['demon.png', 'bld_command.png'].includes(f) },
 ];
 for (const { from, to, pick } of jobs) {

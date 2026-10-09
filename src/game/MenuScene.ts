@@ -9,6 +9,7 @@ import { analytics, askAnalyticsConsent } from '../analytics';
 import { learning, learningLang } from './learn';
 import { volumeHeight, volumeSliders } from './volume';
 import { BUILDING_ANCHOR, createArt, preloadArt } from './assets';
+import { preloadComm } from './Comm';
 import { sound } from './audio';
 import type { GameStart } from './GameScene';
 import { C, INK, LANDSCAPE, VIEW } from './layout';
@@ -38,6 +39,7 @@ export class MenuScene extends Phaser.Scene {
 
   preload(): void {
     preloadArt(this);
+    preloadComm(this);
     const bar = this.add.graphics();
     this.load.on('progress', (v: number) => {
       bar.clear();
