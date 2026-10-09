@@ -7,7 +7,7 @@
 export const GAME_URL = 'https://tatonoma911.github.io/part-shift/play/';
 
 /** Author's ЮMoney wallet number (starts with 4100). Not a secret: it only lets people send money. */
-export const YOOMONEY_WALLET: string = '';
+export const YOOMONEY_WALLET: string = '410013264342582';
 
 /** Ruble presets on the donation sheet; the free field accepts any amount from MIN to MAX. */
 export const DONATE_PRESETS = [50, 100, 300, 500, 1000];
