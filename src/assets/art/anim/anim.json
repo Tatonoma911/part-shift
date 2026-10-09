@@ -18,9 +18,7 @@
     "idle": {
      "frames": [
       0,
-      1,
-      2,
-      3
+      1
      ],
      "fps": 4,
      "loop": true
@@ -34,9 +32,8 @@
       12,
       13
      ],
-     "fps": 24,
-     "loop": true,
-     "pxPerCycle": 42
+     "fps": 10,
+     "loop": true
     },
     "walk_back": {
      "frames": [
@@ -47,9 +44,8 @@
       20,
       21
      ],
-     "fps": 24,
-     "loop": true,
-     "pxPerCycle": 42
+     "fps": 10,
+     "loop": true
     },
     "dig": {
      "frames": [
@@ -82,9 +78,8 @@
       44,
       45
      ],
-     "fps": 24,
-     "loop": true,
-     "pxPerCycle": 42
+     "fps": 14,
+     "loop": true
     },
     "death": {
      "frames": [
@@ -102,7 +97,7 @@
     }
    },
    "faces": "right",
-   "note": "Все кадры нарисованы заново из одной позы (front_a/back_a idle_0); бег вбок лицом по движению, влево — flipX. pxPerCycle: путь за цикл, при котором ноги не скользят (AR-20)."
+   "note": "Покой и ходьба — нарисованные кадры художника (resident_sheet). Копание/стройка: кадр покоя целиком + лопата/искры."
   },
   "defender": {
    "sheet": "defender.png",
@@ -119,9 +114,7 @@
     "idle": {
      "frames": [
       0,
-      1,
-      2,
-      3
+      1
      ],
      "fps": 4,
      "loop": true
@@ -135,9 +128,8 @@
       12,
       13
      ],
-     "fps": 24,
-     "loop": true,
-     "pxPerCycle": 42
+     "fps": 10,
+     "loop": true
     },
     "attack": {
      "frames": [
@@ -189,7 +181,7 @@
    },
    "faces": "right",
    "temp": true,
-   "note": "Временный вид (S-01 + жилет и каска кодом) до спрайта художника."
+   "note": "Житель в бою: те же нарисованные кадры; удар — кадр покоя целиком с выпадом. Заменится кадрами из пакета GPT."
   },
   "adaptant_thermo": {
    "sheet": "adaptant_thermo.png",
@@ -713,18 +705,6 @@
      ],
      "fps": 12,
      "loop": false
-    },
-    "tic": {
-     "frames": [
-      48,
-      49,
-      50,
-      51,
-      52,
-      53
-     ],
-     "fps": 8,
-     "loop": true
     }
    },
    "faces": "right",
@@ -1000,18 +980,6 @@
      ],
      "fps": 12,
      "loop": false
-    },
-    "tic": {
-     "frames": [
-      48,
-      49,
-      50,
-      51,
-      52,
-      53
-     ],
-     "fps": 8,
-     "loop": true
     }
    },
    "faces": "right",
@@ -1174,18 +1142,6 @@
      ],
      "fps": 12,
      "loop": false
-    },
-    "tic": {
-     "frames": [
-      48,
-      49,
-      50,
-      51,
-      52,
-      53
-     ],
-     "fps": 8,
-     "loop": true
     }
    },
    "faces": "right",
@@ -1348,18 +1304,6 @@
      ],
      "fps": 12,
      "loop": false
-    },
-    "tic": {
-     "frames": [
-      48,
-      49,
-      50,
-      51,
-      52,
-      53
-     ],
-     "fps": 8,
-     "loop": true
     }
    },
    "faces": "right",
@@ -1522,18 +1466,6 @@
      ],
      "fps": 12,
      "loop": false
-    },
-    "tic": {
-     "frames": [
-      48,
-      49,
-      50,
-      51,
-      52,
-      53
-     ],
-     "fps": 8,
-     "loop": true
     }
    },
    "faces": "right",
@@ -1696,18 +1628,6 @@
      ],
      "fps": 12,
      "loop": false
-    },
-    "tic": {
-     "frames": [
-      48,
-      49,
-      50,
-      51,
-      52,
-      53
-     ],
-     "fps": 8,
-     "loop": true
     }
    },
    "faces": "right",
@@ -1870,18 +1790,6 @@
      ],
      "fps": 12,
      "loop": false
-    },
-    "tic": {
-     "frames": [
-      48,
-      49,
-      50,
-      51,
-      52,
-      53
-     ],
-     "fps": 8,
-     "loop": true
     }
    },
    "faces": "right",
@@ -2044,18 +1952,6 @@
      ],
      "fps": 12,
      "loop": false
-    },
-    "tic": {
-     "frames": [
-      48,
-      49,
-      50,
-      51,
-      52,
-      53
-     ],
-     "fps": 8,
-     "loop": true
     }
    },
    "faces": "right",
@@ -2218,18 +2114,6 @@
      ],
      "fps": 12,
      "loop": false
-    },
-    "tic": {
-     "frames": [
-      48,
-      49,
-      50,
-      51,
-      52,
-      53
-     ],
-     "fps": 8,
-     "loop": true
     }
    },
    "faces": "right",
@@ -2392,18 +2276,6 @@
      ],
      "fps": 12,
      "loop": false
-    },
-    "tic": {
-     "frames": [
-      48,
-      49,
-      50,
-      51,
-      52,
-      53
-     ],
-     "fps": 8,
-     "loop": true
     }
    },
    "faces": "right",
@@ -2566,18 +2438,6 @@
      ],
      "fps": 12,
      "loop": false
-    },
-    "tic": {
-     "frames": [
-      48,
-      49,
-      50,
-      51,
-      52,
-      53
-     ],
-     "fps": 8,
-     "loop": true
     }
    },
    "faces": "right",
@@ -2740,18 +2600,6 @@
      ],
      "fps": 12,
      "loop": false
-    },
-    "tic": {
-     "frames": [
-      48,
-      49,
-      50,
-      51,
-      52,
-      53
-     ],
-     "fps": 8,
-     "loop": true
     }
    },
    "faces": "right",
@@ -2914,18 +2762,6 @@
      ],
      "fps": 12,
      "loop": false
-    },
-    "tic": {
-     "frames": [
-      48,
-      49,
-      50,
-      51,
-      52,
-      53
-     ],
-     "fps": 8,
-     "loop": true
     }
    },
    "faces": "right",
@@ -3088,18 +2924,6 @@
      ],
      "fps": 12,
      "loop": false
-    },
-    "tic": {
-     "frames": [
-      48,
-      49,
-      50,
-      51,
-      52,
-      53
-     ],
-     "fps": 8,
-     "loop": true
     }
    },
    "faces": "right",
