@@ -1,4 +1,4 @@
-import{i as o,H as h,C as f,A as T,D as b,T as C,R as L,U as M}from"./content-Bw5xqmYx.js";const O="partshift.lang";function D(){const s=new URLSearchParams(location.search).get("lang");if(s==="ru"||s==="en")return s;try{const a=localStorage.getItem(O);if(a==="ru"||a==="en")return a}catch{}return navigator.language.toLowerCase().startsWith("ru")?"ru":"en"}let l=D();const i=s=>s[l]||s.ru,r=s=>i(M[s]),u=s=>s.replace(/[&<>"]/g,a=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"})[a]),e=(s,a)=>l==="ru"?s:a,$=()=>`play/index.html?lang=${l}`,S=["heroes","world","villains","comics","artbook"],m={burger:'<svg width="26" height="26" viewBox="0 0 26 26" aria-hidden="true"><path d="M3 7h20M3 13h20M3 19h14" stroke="currentColor" stroke-width="2.4" stroke-linecap="square"/></svg>',close:'<svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 5l14 14M19 5L5 19" stroke="currentColor" stroke-width="2.4"/></svg>',play:'<svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M4 2l10 6-10 6z" fill="currentColor"/></svg>'};function U(s){const a=S.map(t=>`<a href="#${t}"${s===t?' aria-current="page"':""}>${r(t)}</a>`).join("");return`
+import"./modulepreload-polyfill-B5Qt9EMX.js";import{i as o,H as h,C as f,A as T,D as b,T as C,R as L,U as M}from"./content-C9P0gmRj.js";const O="partshift.lang";function D(){const s=new URLSearchParams(location.search).get("lang");if(s==="ru"||s==="en")return s;try{const a=localStorage.getItem(O);if(a==="ru"||a==="en")return a}catch{}return navigator.language.toLowerCase().startsWith("ru")?"ru":"en"}let l=D();const i=s=>s[l]||s.ru,r=s=>i(M[s]),m=s=>s.replace(/[&<>"]/g,a=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"})[a]),e=(s,a)=>l==="ru"?s:a,$=()=>`play/index.html?lang=${l}`,S=["heroes","world","villains","comics","artbook"],u={burger:'<svg width="26" height="26" viewBox="0 0 26 26" aria-hidden="true"><path d="M3 7h20M3 13h20M3 19h14" stroke="currentColor" stroke-width="2.4" stroke-linecap="square"/></svg>',close:'<svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 5l14 14M19 5L5 19" stroke="currentColor" stroke-width="2.4"/></svg>',play:'<svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M4 2l10 6-10 6z" fill="currentColor"/></svg>'};function U(s){const a=S.map(t=>`<a href="#${t}"${s===t?' aria-current="page"':""}>${r(t)}</a>`).join("");return`
   <header class="bar"><div class="wrap bar-in">
     <a class="brand" href="#home" aria-label="PART SHIFT">
       <img src="${o("emblem.webp")}" alt="" width="34" height="34">
@@ -6,31 +6,31 @@ import{i as o,H as h,C as f,A as T,D as b,T as C,R as L,U as M}from"./content-Bw
     </a>
     <nav class="nav" aria-label="${r("menu")}">${a}</nav>
     ${x()}
-    <a class="btn btn-primary" href="${$()}">${m.play}${r("play")}</a>
-    <button class="burger" id="burger" aria-label="${r("menu")}">${m.burger}</button>
+    <a class="btn btn-primary" href="${$()}">${u.play}${r("play")}</a>
+    <button class="burger" id="burger" aria-label="${r("menu")}">${u.burger}</button>
   </div></header>`}function x(){return`<div class="lang" role="group" aria-label="Language">
     <button data-lang="ru" aria-pressed="${l==="ru"}">RU</button><button data-lang="en" aria-pressed="${l==="en"}">EN</button>
   </div>`}function B(){const s=["home",...S].map(a=>`<a class="item" href="#${a}">${r(a)}<span class="caps">${a==="home"?"LUMEN CITY":""}</span></a>`).join("");return`<div class="drawer" id="drawer" hidden><div class="drawer-panel">
-    <div class="drawer-head"><span class="wordmark">PART<b>SHIFT</b></span><button class="icon-btn" id="drawer-close" aria-label="${r("close")}">${m.close}</button></div>
+    <div class="drawer-head"><span class="wordmark">PART<b>SHIFT</b></span><button class="icon-btn" id="drawer-close" aria-label="${r("close")}">${u.close}</button></div>
     ${s}
-    <div class="row" style="margin-top:18px;justify-content:space-between">${x()}<a class="btn btn-primary" href="${$()}">${m.play}${r("play")}</a></div>
+    <div class="row" style="margin-top:18px;justify-content:space-between">${x()}<a class="btn btn-primary" href="${$()}">${u.play}${r("play")}</a></div>
   </div></div>`}function F(){return`<footer><div class="wrap">
     <span class="wordmark">PART<b>SHIFT</b></span>
     <span>${e("Lumen City. Всегда на смене. Игра бесплатная, мир вымышленный.","Lumen City. Always on call. The game is free, the world is fiction.")}</span>
-    <a class="btn btn-ghost" href="${$()}">${m.play}${r("playFree")}</a>
+    <a class="btn btn-ghost" href="${$()}">${u.play}${r("playFree")}</a>
   </div></footer>`}const c=(s,a,t)=>`
   <div class="section-head"><span class="caps">${s}</span><h2>${a}</h2>${t?`<p class="lead">${t}</p>`:""}</div>`,I=(s,a,t=!1)=>`
-  <figure><button class="zoom" data-src="${o(s)}" data-cap="${u(a)}"${t?' data-px="1"':""} aria-label="${u(a)}"><img src="${o(s)}" alt="${u(a)}" loading="lazy"${t?' class="px"':""}></button><figcaption>${a}</figcaption></figure>`;function w(s){return`<a class="tile slab" href="#hero-${s.id}" style="--hc:${s.color}">
-    <div class="stage"><span class="stripe"></span><img src="${o(s.px)}" alt="${u(i(s.name))}" loading="lazy"></div>
+  <figure><button class="zoom" data-src="${o(s)}" data-cap="${m(a)}"${t?' data-px="1"':""} aria-label="${m(a)}"><img src="${o(s)}" alt="${m(a)}" loading="lazy"${t?' class="px"':""}></button><figcaption>${a}</figcaption></figure>`;function w(s){return`<a class="tile slab" href="#hero-${s.id}" style="--hc:${s.color}">
+    <div class="stage"><span class="stripe"></span><img src="${o(s.px)}" alt="${m(i(s.name))}" loading="lazy"></div>
     <div class="meta"><span class="caps">${i(s.hud)}</span><h3>${i(s.name)}</h3><p>${i(s.role).split(". ")[0]}.</p></div>
   </a>`}function P(){const s=h.filter(a=>a.group==="canon"&&a.id!=="n73"&&a.id!=="doctor");return`
   <section class="hero">
-    <img src="${o("key-art.webp")}" alt="${u(e("Спасатели HeroOut на развалинах Lumen City","HeroOut rescuers on the rubble of Lumen City"))}">
+    <img src="${o("key-art.webp")}" alt="${m(e("Спасатели HeroOut на развалинах Lumen City","HeroOut rescuers on the rubble of Lumen City"))}">
     <div class="wrap"><div class="hero-card slab fade-in">
       <span class="caps">LUMEN CITY // ${e("СМЕНА 01","SHIFT 01")}</span>
       <h1>PART<b>SHIFT</b></h1>
       <p class="lead">${e("Сеть спасения сломалась и перестроила город под себя. Открывай кварталы, строй, защищай жителей и забирай у врагов их руки, ноги и хвосты.","The rescue network broke and rebuilt the city in its own image. Open blocks, build, protect residents and take your enemies’ arms, legs and tails.")}</p>
-      <div class="row"><a class="btn btn-primary btn-lg" href="${$()}">${m.play}${r("playFree")}</a><a class="btn btn-ghost btn-lg" href="#world">${e("Узнать историю","Read the story")}</a></div>
+      <div class="row"><a class="btn btn-primary btn-lg" href="${$()}">${u.play}${r("playFree")}</a><a class="btn btn-ghost btn-lg" href="#world">${e("Узнать историю","Read the story")}</a></div>
     </div></div>
   </section>
 
@@ -61,7 +61,7 @@ import{i as o,H as h,C as f,A as T,D as b,T as C,R as L,U as M}from"./content-Bw
     <div class="stack">
       ${c(e("ИГРА // ОХОТА НА ДЕМОНА","GAME // DEMON HUNT"),e("Открой город квартал за кварталом","Reopen the city block by block"),e("Числа на открытых кварталах подсказывают, что прячется рядом. Галочки и подсветка сами покажут, где безопасно.","Numbers on opened blocks tell you what hides next door. Ticks and highlights show you where it’s safe."))}
       <div class="howto">${z(!0)}</div>
-      <div class="row"><a class="btn btn-primary btn-lg" href="${$()}">${m.play}${r("playFree")}</a></div>
+      <div class="row"><a class="btn btn-primary btn-lg" href="${$()}">${u.play}${r("playFree")}</a></div>
     </div>
     <figure><img src="${o("sprites-02.webp")}" alt="" loading="lazy"><figcaption>${e("Обычный житель забирает руку врага и меняется прямо на поле.","An ordinary resident takes an enemy’s arm and changes right on the board.")}</figcaption></figure>
   </div></section>
@@ -78,9 +78,9 @@ import{i as o,H as h,C as f,A as T,D as b,T as C,R as L,U as M}from"./content-Bw
       <div class="row"><a class="btn btn-ghost" style="color:#fff;background:#ffffff1a" href="#hero-n73">${e("Кто такой N-73","Who is N-73")}</a><a class="btn btn-ghost" style="color:#fff;background:#ffffff1a" href="#artbook-dossier">${e("Досье файтинга","Fighting dossiers")}</a></div>
     </div>
     <div class="stack">
-      <figure><img src="${o("doctor-arm.webp")}" alt="${u(e("Доктор с тяжёлой рукой Килна","The Doctor with Kiln’s heavy arm"))}" loading="lazy"><figcaption>${e("Доктор, первое тело N-73, с рукой Килна","The Doctor, N-73’s first body, with Kiln’s arm")}</figcaption></figure>
+      <figure><img src="${o("doctor-arm.webp")}" alt="${m(e("Доктор с тяжёлой рукой Килна","The Doctor with Kiln’s heavy arm"))}" loading="lazy"><figcaption>${e("Доктор, первое тело N-73, с рукой Килна","The Doctor, N-73’s first body, with Kiln’s arm")}</figcaption></figure>
       <div class="motion">
-        <img src="${o("motion-s01.gif")}" alt="S-01" loading="lazy"><img src="${o("motion-doctor.gif")}" alt="${u(e("Доктор","Doctor"))}" loading="lazy"><img src="${o("motion-n73.gif")}" alt="N-73" loading="lazy">
+        <img src="${o("motion-s01.gif")}" alt="S-01" loading="lazy"><img src="${o("motion-doctor.gif")}" alt="${m(e("Доктор","Doctor"))}" loading="lazy"><img src="${o("motion-n73.gif")}" alt="N-73" loading="lazy">
       </div>
     </div>
   </div></section>`}function R(){const s=h.filter(t=>t.group==="canon"),a=h.filter(t=>t.group==="city");return`<section class="section"><div class="wrap">
@@ -90,7 +90,7 @@ import{i as o,H as h,C as f,A as T,D as b,T as C,R as L,U as M}from"./content-Bw
   <section class="section" style="padding-top:0"><div class="wrap">
     ${c(e("ГОРОЖАНЕ // ДО СИРЕН","CITIZENS // BEFORE THE SIRENS"),e("Спасатели Lumen City","Lumen City rescuers"),e("Герои комиксов. Обычные городские профессии, доведённые до героизма.","Comic heroes. Ordinary city jobs taken all the way to heroism."))}
     <div class="grid">${a.map(w).join("")}</div>
-  </div></section>`}function W(s){const a=h.findIndex(g=>g.id===s),t=h[a];if(!t)return R();const n=h[(a-1+h.length)%h.length],p=h[(a+1)%h.length],d=(g,y)=>y&&i(y)?`<div class="fact"><span class="caps">${g}</span><p>${i(y)}</p></div>`:"",v=t.art?`<img src="${o(t.art)}" alt="${u(i(t.name))}">`:`<img class="px" src="${o(t.px)}" alt="${u(i(t.name))}">`;return`<section class="section" style="--hc:${t.color}"><div class="wrap">
+  </div></section>`}function W(s){const a=h.findIndex(g=>g.id===s),t=h[a];if(!t)return R();const n=h[(a-1+h.length)%h.length],p=h[(a+1)%h.length],d=(g,y)=>y&&i(y)?`<div class="fact"><span class="caps">${g}</span><p>${i(y)}</p></div>`:"",v=t.art?`<img src="${o(t.art)}" alt="${m(i(t.name))}">`:`<img class="px" src="${o(t.px)}" alt="${m(i(t.name))}">`;return`<section class="section" style="--hc:${t.color}"><div class="wrap">
     <a class="caps" href="#heroes" style="text-decoration:none">← ${r("all")}</a>
     <div class="dossier" style="margin-top:20px">
       <div class="dossier-art">
@@ -130,7 +130,7 @@ import{i as o,H as h,C as f,A as T,D as b,T as C,R as L,U as M}from"./content-Bw
       </div>
     </div>
     <div class="stack">
-      <figure>${`<button class="zoom" data-src="${o("city-life.webp")}" data-cap="${u(e("Жизнь Lumen City до аварии","Lumen City life before the accident"))}"><img src="${o("city-life.webp")}" alt="" loading="lazy"></button>`}<figcaption>${e("Фанаты героев в самодельных шлемах, уличный повар с кибер-воком, гражданский микрореактор на кобальтовой плазме.","Hero fans in homemade helmets, a street chef with a cyber-wok, a civil cobalt-plasma microreactor.")}</figcaption></figure>
+      <figure>${`<button class="zoom" data-src="${o("city-life.webp")}" data-cap="${m(e("Жизнь Lumen City до аварии","Lumen City life before the accident"))}"><img src="${o("city-life.webp")}" alt="" loading="lazy"></button>`}<figcaption>${e("Фанаты героев в самодельных шлемах, уличный повар с кибер-воком, гражданский микрореактор на кобальтовой плазме.","Hero fans in homemade helmets, a street chef with a cyber-wok, a civil cobalt-plasma microreactor.")}</figcaption></figure>
     </div>
   </div></section>
 
@@ -238,7 +238,7 @@ import{i as o,H as h,C as f,A as T,D as b,T as C,R as L,U as M}from"./content-Bw
       <span class="caps">${i(a.series)} // ${i(a.cast)}</span>
       <h1 style="font-size:clamp(30px,5vw,52px)">${i(a.title)}</h1>
       <p class="lead">${i(a.blurb)}${t?` <span class="chip">${r("ruOnly")}</span>`:""}</p>
-      ${a.pages[l].map((d,v)=>`<img src="${o(d)}" alt="${u(i(a.title))} ${v+1}" ${v?'loading="lazy"':""}>`).join("")}
+      ${a.pages[l].map((d,v)=>`<img src="${o(d)}" alt="${m(i(a.title))} ${v+1}" ${v?'loading="lazy"':""}>`).join("")}
       <div class="pager"><a class="btn btn-ghost" href="#comics">${r("comics")}</a><a class="btn btn-primary" href="#comic-${p.id}">${i(p.title)} →</a></div>
     </div>
   </div></section>`}function Y(s){return`<section class="section"><div class="wrap">
@@ -248,4 +248,4 @@ import{i as o,H as h,C as f,A as T,D as b,T as C,R as L,U as M}from"./content-Bw
         <div class="section-head" style="margin-bottom:22px"><h2 style="font-size:clamp(22px,2.6vw,30px)">${i(a.title)}</h2><p class="lead" style="font-size:17px">${i(a.note)}</p></div>
         <div class="masonry${a.id==="pixel"?" pixels":""}">${a.shots.map(t=>I(t.src,i(t.cap),t.px)).join("")}</div>
       </div>`).join("")}
-  </div></section>`}function q(){const s=location.hash.replace(/^#/,"");if(s.startsWith("hero-"))return{view:W(s.slice(5)),active:"heroes"};if(s.startsWith("comic-"))return{view:G(s.slice(6)),active:"comics"};if(s.startsWith("artbook"))return{view:Y(),active:"artbook",anchor:s.includes("-")?`book-${s.split("-")[1]}`:void 0};switch(s){case"heroes":return{view:R(),active:"heroes"};case"world":return{view:V(),active:"world"};case"villains":return{view:_(),active:"villains"};case"comics":return{view:H(),active:"comics"};default:return{view:P(),active:"home"}}}const N=document.getElementById("site");let k="";function E(){document.documentElement.lang=l;const s=q();N.innerHTML=`${U(s.active)}<main>${s.view}</main>${F()}${B()}<div class="lightbox" id="lightbox" hidden></div>`,document.title=s.active==="home"?"PART SHIFT — Lumen City":`${r(s.active)} · PART SHIFT`;const a=location.hash===k;k=location.hash,s.anchor?document.getElementById(s.anchor)?.scrollIntoView():a||window.scrollTo(0,0)}function K(s){l=s;try{localStorage.setItem(O,s)}catch{}const a=window.scrollY;E(),window.scrollTo(0,a)}N.addEventListener("click",s=>{const a=s.target,t=a.closest("[data-lang]");if(t)return K(t.dataset.lang);if(a.closest("#burger"))return void(document.getElementById("drawer").hidden=!1);if(a.closest("#drawer-close")||a.id==="drawer")return void(document.getElementById("drawer").hidden=!0);a.closest("#drawer a")&&(document.getElementById("drawer").hidden=!0);const n=a.closest("button.zoom");if(n){const p=document.getElementById("lightbox");p.innerHTML=`<button class="icon-btn" aria-label="${r("close")}">${m.close}</button><img src="${n.dataset.src}" alt=""${n.dataset.px?' class="px"':""}><p>${n.dataset.cap??""}</p>`,p.hidden=!1;return}a.closest("#lightbox")&&(document.getElementById("lightbox").hidden=!0)});document.addEventListener("keydown",s=>{if(s.key==="Escape"){const a=document.getElementById("lightbox");a&&(a.hidden=!0);const t=document.getElementById("drawer");t&&(t.hidden=!0)}});window.addEventListener("hashchange",E);E();
+  </div></section>`}function q(){const s=location.hash.replace(/^#/,"");if(s.startsWith("hero-"))return{view:W(s.slice(5)),active:"heroes"};if(s.startsWith("comic-"))return{view:G(s.slice(6)),active:"comics"};if(s.startsWith("artbook"))return{view:Y(),active:"artbook",anchor:s.includes("-")?`book-${s.split("-")[1]}`:void 0};switch(s){case"heroes":return{view:R(),active:"heroes"};case"world":return{view:V(),active:"world"};case"villains":return{view:_(),active:"villains"};case"comics":return{view:H(),active:"comics"};default:return{view:P(),active:"home"}}}const N=document.getElementById("site");let k="";function E(){document.documentElement.lang=l;const s=q();N.innerHTML=`${U(s.active)}<main>${s.view}</main>${F()}${B()}<div class="lightbox" id="lightbox" hidden></div>`,document.title=s.active==="home"?"PART SHIFT — Lumen City":`${r(s.active)} · PART SHIFT`;const a=location.hash===k;k=location.hash,s.anchor?document.getElementById(s.anchor)?.scrollIntoView():a||window.scrollTo(0,0)}function K(s){l=s;try{localStorage.setItem(O,s)}catch{}const a=window.scrollY;E(),window.scrollTo(0,a)}N.addEventListener("click",s=>{const a=s.target,t=a.closest("[data-lang]");if(t)return K(t.dataset.lang);if(a.closest("#burger"))return void(document.getElementById("drawer").hidden=!1);if(a.closest("#drawer-close")||a.id==="drawer")return void(document.getElementById("drawer").hidden=!0);a.closest("#drawer a")&&(document.getElementById("drawer").hidden=!0);const n=a.closest("button.zoom");if(n){const p=document.getElementById("lightbox");p.innerHTML=`<button class="icon-btn" aria-label="${r("close")}">${u.close}</button><img src="${n.dataset.src}" alt=""${n.dataset.px?' class="px"':""}><p>${n.dataset.cap??""}</p>`,p.hidden=!1;return}a.closest("#lightbox")&&(document.getElementById("lightbox").hidden=!0)});document.addEventListener("keydown",s=>{if(s.key==="Escape"){const a=document.getElementById("lightbox");a&&(a.hidden=!0);const t=document.getElementById("drawer");t&&(t.hidden=!0)}});window.addEventListener("hashchange",E);E();
