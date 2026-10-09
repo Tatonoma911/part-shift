@@ -42,171 +42,159 @@ export const SCRIPT = [
   },
   { // 2
     tag: { ru: 'БОЛЬШОЙ ГОРОД // ВЫЗОВЫ', en: 'BIG CITY // CALLS' },
-    wide: { cols: '0.95fr 1.15fr 0.85fr', rows: '1fr 1fr', areas: '"a b b" "a c d"' },
-    tall: { cols: '1fr 1fr', rows: '0.95fr 0.7fr 0.85fr', areas: '"a a" "b b" "c d"' },
+    wide: { cols: '1fr 0.85fr 1fr', rows: '1fr', areas: '"a b c"' },
+    tall: { cols: '1fr 1fr', rows: '0.95fr 1fr', areas: '"a a" "b c"' },
     panels: [
       { art: 'log', area: 'a', beats: [
         { k: 'cap', at: [4, 80], w: 92, ru: 'В большом городе всегда что-то случается.', en: 'In a big city, something is always happening.' },
       ] },
-      { img: 'crane_spin', area: 'b', kb: [1.0, 1.04, 0, 0], beats: [
-        { k: 'cap', at: [3, 5], w: 56, ru: 'Кран сошёл с ума и строит что попало.', en: 'A crane went crazy and builds whatever it likes.' },
-        { k: 'ad', at: [40, 66], w: 58, ru: 'Краны HeroOut Build: строят сами. Иногда даже то, что нужно.', en: 'HeroOut Build cranes: they build by themselves. Sometimes even what you need.' },
+      { img: 'geyser', area: 'b', kb: [1.0, 1.04, 0, 0], beats: [
+        { k: 'cap', at: [4, 4], w: 92, ru: 'Люк решил стать фонтаном.', en: 'A manhole decided to be a fountain.' },
       ] },
-      { img: 'kiln_crane', area: 'c', pos: '18% 50%', kb: [1.0, 1.04, 0, 0], beats: [
-        { k: 'say', who: 'kiln', at: [5, 5], w: 80, tail: 'b', ru: 'Семь секунд! Дольше не удержу!', en: 'Seven seconds! I can’t hold it longer!' },
-      ] },
-      { img: 'frost_ice', area: 'd', kb: [1.0, 1.04, 0, 0], beats: [
-        { k: 'cap', at: [4, 4], w: 92, ru: 'Фростлайн заморозила гейзер.', en: 'Frostline froze a geyser.' },
+      { img: 'frost_ice', area: 'c', kb: [1.0, 1.04, 0, 0], beats: [
+        { k: 'cap', at: [4, 4], w: 92, ru: 'Фростлайн заморозила гейзер.', en: 'Frostline froze the geyser.' },
         { k: 'cap', at: [30, 80], w: 66, ru: 'Гейзер был против.', en: 'The geyser disagreed.' },
       ] },
     ],
   },
   { // 3
     tag: { ru: 'HEROOUT // ВСЕГДА НА СМЕНЕ', en: 'HEROOUT // ALWAYS ON SHIFT' },
-    wide: { cols: '0.55fr 0.7fr 1.3fr', rows: '1.1fr 1fr', areas: '"a a a" "b c d"' },
-    tall: { cols: '1fr 1fr', rows: '0.9fr 1.15fr 0.75fr', areas: '"a a" "b c" "d d"' },
+    wide: { cols: '1fr 1fr 0.9fr 1.05fr', rows: '0.55fr 1fr', areas: '"a a a a" "b c d e"' },
+    tall: { cols: '1fr 1fr', rows: '0.42fr 1fr 1fr', areas: '"a a" "b c" "d e"' },
     panels: [
-      { img: 'city_rescue', area: 'a', kb: [1.05, 1.0, -1, 0], fx: 'embers', beats: [
-        { k: 'cap', at: [3, 4], w: 50, ru: 'На вызов едут спасатели HeroOut. Не супергерои, а городская служба, как пожарные.', en: 'HeroOut rescuers answer the call. Not superheroes: a city service, like firefighters.' },
+      { img: 'crowd_top', area: 'a', kb: [1.0, 1.04, 0, 0], beats: [
+        { k: 'cap', at: [3, 8], w: 64, ru: 'На вызов едут спасатели HeroOut. Не супергерои, а городская служба, как пожарные.', en: 'HeroOut rescuers answer the call. Not superheroes: a city service, like firefighters.' },
       ] },
-      { img: 'kiln_carry', area: 'b', fit: 'contain', kb: [1.0, 1.04, 0, 0], fx: 'embers', beats: [
-        { k: 'say', who: 'kiln', at: [6, 4], w: 88, tail: 'b', ru: 'Держитесь. Вынесу.', en: 'Hold on. I’ve got you.' },
+      { img: 'lineman_kid', area: 'b', kb: [1.0, 1.04, 0, 0], beats: [
+        { k: 'say', who: 'lineman', at: [8, 64], w: 84, tail: 't', ru: 'Держись. Я тебя поймал.', en: 'Hold on. I’ve got you.' },
       ] },
-      { img: 'seraph', area: 'c', fit: 'contain', kb: [1.0, 1.04, 0, 0], beats: [
-        { k: 'say', who: 'seraph', at: [6, 74], w: 88, tail: 't', ru: 'Пострадавших нет!', en: 'No casualties!' },
+      { img: 'frost_fire', area: 'c', kb: [1.0, 1.04, 0, 0], fx: 'embers', beats: [] },
+      { img: 'kiln_fire', area: 'd', kb: [1.0, 1.04, 0, 0], fx: 'embers', beats: [
+        { k: 'say', who: 'kiln', at: [6, 64], w: 88, tail: 't', ru: 'Осторожно. Вы горячая штучка.', en: 'Careful. You’re a hot one.' },
       ] },
-      { img: 'kid_sign', area: 'd', kb: [1.04, 1.0, 0, 0], beats: [
-        { k: 'cap', at: [3, 70], w: 74, ru: 'Дети их обожают. Автограф спасателя — лучший день в жизни.', en: 'Kids adore them. A rescuer’s autograph is the best day ever.' },
+      { img: 'seraph_fly', area: 'e', kb: [1.0, 1.04, 0, 0], beats: [
+        { k: 'say', who: 'seraph', at: [8, 70], w: 84, tail: 't', ru: 'Пострадавших нет!', en: 'No casualties!' },
       ] },
     ],
   },
   { // 4
     tag: { ru: 'СРОЧНЫЕ НОВОСТИ', en: 'BREAKING NEWS' },
-    wide: { cols: '1fr 1fr', rows: '1fr 1.3fr', areas: '"a b" "c c"' },
-    tall: { cols: '1fr 1fr', rows: '0.85fr 1fr', areas: '"a b" "c c"' },
+    wide: { cols: '1fr', rows: '1fr', areas: '"c"' },
+    tall: { cols: '1fr', rows: '1fr', areas: '"c"' },
     panels: [
-      { img: 'news_serious', area: 'a', kb: [1.0, 1.03, 0, 0], beats: [
-        { k: 'say', who: 'anchor', at: [5, 56], w: 90, tail: 't', ru: 'Срочные новости. В нашем прекрасном городе сегодня…', en: 'Breaking news. Today in our beautiful city…' },
-      ] },
-      { img: 'news_smile', area: 'b', kb: [1.0, 1.03, 0, 0], beats: [
-        { k: 'say', who: 'anchor', at: [5, 62], w: 90, tail: 't', ru: '…ничего не произошло.', en: '…nothing happened.' },
-      ] },
       { img: 'beach', area: 'c', kb: [1.04, 1.0, 0, 0], beats: [
-        { k: 'cap', at: [3, 5], w: 50, ru: 'Герои отдыхают. Город работает. Пока.', en: 'The heroes are resting. The city is working. For now.' },
+        { k: 'say', who: 'anchor', at: [4, 5], w: 60, ru: 'Срочные новости. В нашем прекрасном городе сегодня…', en: 'Breaking news. Today in our beautiful city…' },
+        { k: 'say', who: 'anchor', at: [4, 5], w: 60, ru: '…ничего не произошло.', en: '…nothing happened.', replace: true },
+        { k: 'cap', at: [4, 80], w: 60, ru: 'Герои отдыхают. Город работает. Пока.', en: 'The heroes are resting. The city is working. For now.' },
       ] },
     ],
   },
   { // 5
     tag: { ru: 'ЦЕНА СПАСЕНИЯ // SPLICE', en: 'THE PRICE OF RESCUE // SPLICE' },
-    wide: { cols: '0.8fr 1.1fr 1fr', rows: '1fr 1fr', areas: '"a b c" "a b d"' },
-    tall: { cols: '1fr 1fr', rows: '1.1fr 0.75fr 0.75fr', areas: '"a b" "c c" "d d"' },
+    wide: { cols: '1.6fr 1fr', rows: '1fr', areas: '"a b"' },
+    tall: { cols: '1fr', rows: '1fr 1.15fr', areas: '"a" "b"' },
     panels: [
-      { img: 'clinic', area: 'a', kb: [1.0, 1.04, 0, 0], beats: [
-        { k: 'cap', at: [5, 4], w: 90, ru: 'Работа опасная. Спасатели теряли руки и ноги.', en: 'The job was dangerous. Rescuers lost arms and legs.' },
+      { img: 'lab_team', area: 'a', kb: [1.0, 1.04, 0, 0], beats: [
+        { k: 'cap', at: [3, 4], w: 62, ru: 'Работа опасная. Спасатели получали травмы и теряли руки и ноги.', en: 'The job was dangerous. Rescuers got hurt and lost arms and legs.' },
+        { k: 'cap', at: [3, 74], w: 70, ru: 'Без магии: биоткань, гель и нейроинтерфейс. Хоть руку, которая не горит, хоть ногу, которая не мёрзнет.', en: 'No magic: bio-tissue, gel and a neural interface. An arm that won’t burn, a leg that won’t freeze.' },
       ] },
-      { img: 'leg_tank', area: 'b', kb: [1.0, 1.05, 0, -1], fx: 'glow', beats: [
-        { k: 'cap', at: [5, 4], w: 90, ru: 'Тогда HeroOut создала гель Splice.', en: 'So HeroOut created Splice gel.' },
-        { k: 'cap', at: [5, 74], w: 90, ru: 'Он заживлял раны и отращивал потерянные конечности.', en: 'It healed wounds and regrew lost limbs.' },
-      ] },
-      { img: 'prosthetic', area: 'c', kb: [1.0, 1.04, 0, 0], beats: [
-        { k: 'cap', at: [4, 56], w: 92, ru: 'Без магии: биоткань и гель. Хоть руку, которая не горит, хоть ногу, которая не мёрзнет.', en: 'No magic: bio-tissue and gel. An arm that won’t burn, a leg that won’t freeze.' },
-      ] },
-      { img: 'modules', area: 'd', kb: [1.04, 1.0, 0, 0], beats: [
-        { k: 'ad', at: [4, 50], w: 92, ru: 'Потеряли руку? Не теряйте надежду! Гель Splice: отрастёт к понедельнику.', en: 'Lost an arm? Don’t lose hope! Splice gel: regrown by Monday.' },
+      { img: 'gel_capsule', area: 'b', kb: [1.0, 1.05, 0, 0], fx: 'glow', beats: [
+        { k: 'cap', at: [5, 4], w: 90, ru: 'Тогда HeroOut создала гель Splice. Он заживлял раны и отращивал потерянные конечности.', en: 'So HeroOut created Splice gel. It healed wounds and regrew lost limbs.' },
+        { k: 'ad', at: [5, 70], w: 90, ru: 'Потеряли руку? Не теряйте надежду! Гель Splice: отрастёт к понедельнику.', en: 'Lost an arm? Don’t lose hope! Splice gel: regrown by Monday.' },
       ] },
     ],
   },
   { // 6
     tag: { ru: 'УРОВЕНЬ 42 // РУКОВОДСТВО', en: 'LEVEL 42 // EXECUTIVE' },
-    wide: { cols: '1fr 1fr', rows: '1fr 1fr', areas: '"a a" "b c"' },
-    tall: { cols: '1fr', rows: '1fr 0.9fr 0.9fr', areas: '"a" "b" "c"' },
+    wide: { cols: '0.75fr 1.25fr', rows: '1.1fr 0.62fr', areas: '"a a" "b c"' },
+    tall: { cols: '1fr', rows: '1fr 0.85fr 0.45fr', areas: '"a" "b" "c"' },
     panels: [
       { img: 'boardroom', area: 'a', kb: [1.0, 1.04, 0, 0], beats: [
         { k: 'say', who: 'exec', at: [30, 6], w: 40, tail: 'r', ru: 'Город платит, пока у него что-то случается.', en: 'The city pays as long as something keeps happening.' },
         { k: 'say', who: 'boss', at: [56, 58], w: 40, tail: 'l', ru: 'Значит, пусть случается почаще.', en: 'Then let it happen more often.' },
       ] },
       { img: 'button', area: 'b', kb: [1.0, 1.05, 1, 1], fx: 'redpulse', beats: [
-        { k: 'cap', at: [4, 5], w: 84, ru: 'С тех пор кошки чаще залезали на деревья, а краны чаще сходили с ума.', en: 'From then on, cats climbed trees more often, and cranes went crazy more often.', sfx: 'ui_tap' },
-        { k: 'cap', at: [4, 68], w: 84, ru: 'А гель Splice сделал HeroOut самой богатой корпорацией города.', en: 'And Splice gel made HeroOut the richest corporation in the city.' },
+        { k: 'cap', at: [4, 5], w: 90, ru: 'С тех пор кошки чаще залезали на деревья, а краны чаще сходили с ума.', en: 'From then on, cats climbed trees more often, and cranes went crazy more often.', sfx: 'ui_tap' },
+        { k: 'cap', at: [4, 66], w: 90, ru: 'А гель Splice сделал HeroOut самой богатой корпорацией города.', en: 'And Splice gel made HeroOut the richest corporation in the city.' },
       ] },
-      { img: 'capsule_crack', area: 'c', kb: [1.0, 1.05, 1, 0], beats: [
-        { k: 'cap', at: [4, 6], w: 70, ru: 'Пока однажды капсула с гелем не треснула.', en: 'Until one day, a capsule of gel cracked.', fx: 'crack', sfx: 'nest_open' },
+      { img: 'glass_crack', area: 'c', fit: 'cover', kb: [1.0, 1.0, 0, 0], glow: 'glass_crack_glow', beats: [
+        { k: 'cap', at: [3, 6], w: 70, ru: 'Пока однажды капсула с гелем не треснула.', en: 'Until one day, a capsule of gel cracked.', fx: 'crackglow', sfx: 'nest_open' },
       ] },
     ],
   },
   { // 7
     dark: true,
     tag: { ru: 'ПРОТОКОЛ // EVERYONE IS ON CALL', en: 'PROTOCOL // EVERYONE IS ON CALL' },
-    wide: { cols: '1fr', rows: '1fr', areas: '"b"' },
-    tall: { cols: '1fr', rows: '1fr', areas: '"b"' },
+    wide: { cols: '0.42fr 1.58fr', rows: '0.85fr 1fr', areas: '"a b" "c c"' },
+    tall: { cols: '1fr', rows: '0.75fr 0.95fr 0.45fr', areas: '"b" "c" "a"' },
     panels: [
-      { art: 'billboard', area: 'b', beats: [
-        { k: 'ctrl', at: [6, 6], w: 88, ru: 'Запущен протокол EVERYONE IS ON CALL. Сохраняйте спокойствие.', en: 'Protocol EVERYONE IS ON CALL is now active. Please remain calm.', fx: 'split', sfx: 'threat_level_up' },
-        { k: 'cap', at: [6, 72], w: 88, ru: 'Гель вырвался в реактор и в сеть спасения. И начал заражать людей.', en: 'The gel burst into the reactor and the rescue network. And it began infecting people.' },
+      { img: 'alarm_lamp', area: 'a', kb: [1.0, 1.04, 0, 0], fx: 'redpulse', beats: [] },
+      { img: 'heroes_alarm', area: 'b', fit: 'cover', kb: [1.0, 1.04, 0, 0], beats: [
+        { k: 'ctrl', at: [4, 5], w: 74, ru: 'Запущен протокол EVERYONE IS ON CALL. Сохраняйте спокойствие.', en: 'Protocol EVERYONE IS ON CALL is now active. Please remain calm.', sfx: 'threat_level_up' },
+      ] },
+      { img: 'gel_burst', area: 'c', kb: [1.0, 1.05, 0, 0], fx: 'alarm', beats: [
+        { k: 'cap', at: [3, 5], w: 60, ru: 'Гель вырвался в реактор и в сеть спасения. И начал заражать людей.', en: 'The gel burst into the reactor and the rescue network. And it began infecting people.' },
       ] },
     ],
   },
   { // 8
     tag: { ru: 'ЗАРАЖЕНИЕ // ГЕРОИ ВНЕ СМЕНЫ', en: 'INFECTION // HEROES OFF THE LEASH' },
-    wide: { cols: '1.45fr 1fr', rows: '1fr 1fr', areas: '"a b" "a c"' },
-    tall: { cols: '1fr', rows: '1.15fr 0.8fr 0.7fr', areas: '"a" "b" "c"' },
+    wide: { cols: '1.25fr 1fr', rows: '1fr 1fr', areas: '"a c" "b c"' },
+    tall: { cols: '1fr', rows: '0.5fr 0.5fr 1fr', areas: '"a" "b" "c"' },
     panels: [
-      { img: 'mad_heroes', area: 'a', kb: [1.0, 1.04, 0, 0], fx: 'alarm', beats: [
-        { k: 'cap', at: [3, 4], w: 60, ru: 'Заражённые менялись руками и ногами и сходили с ума. Герои тоже.', en: 'The infected swapped arms and legs and lost their minds. So did the heroes.', sfx: 'threat_level_up' },
-        { k: 'cap', at: [38, 76], w: 60, ru: 'Они всё ещё спасают. Только теперь от их помощи приходится бежать.', en: 'They still rescue people. Only now, people run from their help.' },
+      { img: 'heroes_before', area: 'a', fit: 'contain', kb: [1.0, 1.02, 0, 0], beats: [
+        { k: 'cap', at: [3, 4], w: 60, ru: 'Было: лучшие спасатели города.', en: 'Before: the best rescuers in the city.' },
       ] },
-      { art: 'dossier', area: 'b', beats: [
-        { k: 'cap', at: [4, 4], w: 92, ru: 'Килн, Линейщик, Фростлайн, Серафим носятся по городу.', en: 'Kiln, Lineman, Frostline and Seraph roam the city.', fx: 'stamp' },
+      { img: 'heroes_after', area: 'b', fit: 'contain', kb: [1.0, 1.02, 0, 0], fx: 'alarm', beats: [
+        { k: 'cap', at: [3, 4], w: 70, ru: 'Стало: чужие руки, чужие ноги. Заражённые сходили с ума. Герои тоже.', en: 'After: someone else’s arms, someone else’s legs. The infected lost their minds. So did the heroes.', sfx: 'threat_level_up' },
       ] },
-      { img: 'factory', area: 'c', kb: [1.0, 1.05, -1, 0], beats: [
-        { k: 'cap', at: [4, 62], w: 92, ru: 'Заражённых горожан зовут адаптантами. Они гнездятся в закрытых кварталах.', en: 'Infected citizens are called adaptants. They nest in the sealed blocks.' },
+      { art: 'dossier', area: 'c', beats: [
+        { k: 'cap', at: [3, 3], w: 94, ru: 'Килн, Линейщик, Фростлайн, Серафим носятся по городу.', en: 'Kiln, Lineman, Frostline and Seraph roam the city.', fx: 'stamp' },
+        { k: 'cap', at: [3, 86], w: 94, ru: 'Они всё ещё спасают. Только теперь от их помощи приходится бежать.', en: 'They still rescue people. Only now, people run from their help.' },
       ] },
     ],
   },
   { // 9
-    tag: { ru: 'НИЖНИЕ УРОВНИ // UNDERSUN', en: 'LOWER LEVELS // UNDERSUN' },
-    wide: { cols: '1fr 1fr', rows: '1fr', areas: '"b c"' },
-    tall: { cols: '1fr', rows: '1.1fr 1fr', areas: '"b" "c"' },
+    tag: { ru: 'ГЕРОИ ВНЕ СМЕНЫ // ИХ МНОГО', en: 'HEROES OFF THE LEASH // THERE ARE MANY' },
+    wide: { cols: '1fr', rows: '0.8fr 1fr', areas: '"a" "b"' },
+    tall: { cols: '1fr', rows: '0.8fr 1fr', areas: '"a" "b"' },
     panels: [
-      { img: 'demon_tank', area: 'b', fit: 'cover', kb: [1.0, 1.04, 0, 1], beats: [
-        { k: 'cap', at: [5, 4], w: 90, ru: 'Глубже всех, в шахтах под городом, проснулся Демон.', en: 'Deepest of all, in the shafts below the city, the Demon woke up.' },
+      { img: 'heroes_action', area: 'a', fit: 'contain', kb: [1.0, 1.04, 0, 0], fx: 'alarm', beats: [
+        { k: 'cap', at: [3, 5], w: 70, ru: 'Килн выносит людей из домов, где нет пожара. Фростлайн тушит всё, что тёплое. Серафим лечит тех, кто не болен. Демон уводит всех под землю, «в безопасность».', en: 'Kiln carries people out of houses that aren’t on fire. Frostline puts out anything warm. Seraph heals people who aren’t sick. The Demon takes everyone underground, “to safety”.', sfx: 'demon_awake' },
       ] },
-      { img: 'demon_face', area: 'c', kb: [1.0, 1.05, 0, 0], fx: 'eyes', beats: [
-        { k: 'cap', at: [4, 70], w: 92, ru: 'Он уводит людей вниз, «в безопасность». И никого не отпускает.', en: 'He drags people down below, “to safety”. And never lets them go.', sfx: 'demon_awake' },
+      { img: 'heroes_turn', area: 'b', kb: [1.0, 1.05, 0, 0], beats: [
+        { k: 'cap', at: [4, 80], w: 60, ru: 'Их больше десятка. И все на смене.', en: 'There are more than a dozen of them. And they’re all on shift.' },
       ] },
     ],
   },
   { // 10
     tag: { ru: 'КАРАНТИН // ГОЛОС КОНТРОЛЯ', en: 'QUARANTINE // THE VOICE OF CONTROL' },
-    wide: { cols: '1fr 1.25fr', rows: '1fr 1fr', areas: '"a b" "a c"' },
-    tall: { cols: '1fr', rows: '1fr 0.75fr 0.75fr', areas: '"a" "b" "c"' },
+    wide: { cols: '0.85fr 1.4fr', rows: '1fr', areas: '"a b"' },
+    tall: { cols: '1fr', rows: '0.8fr 1.2fr', areas: '"a" "b"' },
     panels: [
-      { art: 'control', area: 'a', beats: [
-        { k: 'ctrl', at: [6, 62], w: 88, ru: 'Уважаемые жители! Вы являетесь имуществом HeroOut.', en: 'Dear residents! You are the property of HeroOut.' },
-        { k: 'ctrl', at: [6, 62], w: 88, ru: 'Пожалуйста, пройдите на склад.', en: 'Please proceed to the warehouse.', replace: true },
-        { k: 'ctrl', at: [6, 62], w: 88, ru: 'Склад работает круглосуточно. Очередь на склад тоже является заботой о вас.', en: 'The warehouse is open 24/7. The queue for the warehouse is also part of our care.', replace: true },
+      { img: 'tendril', area: 'a', kb: [1.0, 1.05, 0, 0], fx: 'glow', beats: [
+        { k: 'cap', at: [4, 5], w: 90, ru: 'Заражение ползёт дальше, квартал за кварталом.', en: 'The infection crawls on, block after block.' },
       ] },
       { img: 'city_sunset', area: 'b', kb: [1.05, 1.0, 0, 0], fx: 'hex', beats: [
-        { k: 'cap', at: [4, 6], w: 70, ru: 'Купол стал карантином. Город заперли вместе с заразой.', en: 'The Dome became a quarantine. The city was locked in with the infection.' },
-        { k: 'ctrl', at: [28, 56], w: 68, ru: 'Купол защищает вас от внешнего мира. Внешний мир защищён от вас.', en: 'The Dome protects you from the outside world. The outside world is protected from you.' },
-      ] },
-      { art: 'core', area: 'c', beats: [
-        { k: 'cap', at: [4, 6], w: 70, ru: 'А в центре бьётся Ядро вспышки. С каждой минутой заражение ползёт дальше.', en: 'And at the center beats the Outbreak Core. Every minute, the infection spreads further.' },
+        { k: 'cap', at: [4, 5], w: 60, ru: 'Купол стал карантином. Город заперли вместе с заразой.', en: 'The Dome became a quarantine. The city was locked in with the infection.' },
+        { k: 'ctrl', at: [6, 56], w: 80, ru: 'Уважаемые жители! Вы являетесь имуществом HeroOut.', en: 'Dear residents! You are the property of HeroOut.' },
+        { k: 'ctrl', at: [6, 56], w: 80, ru: 'Пожалуйста, пройдите на склад.', en: 'Please proceed to the warehouse.', replace: true },
+        { k: 'ctrl', at: [6, 56], w: 80, ru: 'Склад работает круглосуточно. Очередь на склад тоже является заботой о вас.', en: 'The warehouse is open 24/7. The queue for the warehouse is also part of our care.', replace: true },
       ] },
     ],
   },
   { // 11
     tag: { ru: 'СМЕНА 01 // ТВОЙ ХОД', en: 'SHIFT 01 // YOUR MOVE' },
-    wide: { cols: '1.3fr 1fr', rows: '1fr', areas: '"a b"' },
-    tall: { cols: '1fr', rows: '1.1fr 1fr', areas: '"a" "b"' },
+    wide: { cols: '0.7fr 1.3fr', rows: '1fr', areas: '"a b"' },
+    tall: { cols: '1fr', rows: '1fr 1fr', areas: '"a" "b"' },
     panels: [
-      { art: 'swap', area: 'a', beats: [
-        { k: 'cap', at: [4, 5], w: 92, ru: 'Но обычные люди не сдались.', en: 'But ordinary people didn’t give up.' },
-        { k: 'cap', at: [4, 72], w: 92, ru: 'Житель побеждает адаптанта или даже героя и сам забирает его руку или ногу. А с ней и его силу.', en: 'A resident beats an adaptant, or even a hero, and takes its arm or leg. And its power with it.', fx: 'swap', sfx: 'part_attached' },
+      { img: 'lineman_arm', area: 'a', kb: [1.0, 1.05, 0, 0], beats: [
+        { k: 'cap', at: [4, 4], w: 92, ru: 'Но у каждой чужой руки есть сила.', en: 'But every stolen arm has a power.' },
+        { k: 'cap', at: [4, 70], w: 92, ru: 'Житель побеждает заражённого и забирает его руку или ногу. А с ней и его силу.', en: 'A resident beats an infected one and takes their arm or leg. And their power with it.' },
       ] },
-      { art: 'command', area: 'b', beats: [
-        { k: 'cap', at: [5, 5], w: 90, ru: 'Ты — командир последнего Командного центра.', en: 'You command the last Command Center.' },
-        { k: 'cap', at: [5, 72], w: 90, ru: 'Открывай кварталы. Строй дома. Верни город людям.', en: 'Open the blocks. Build homes. Give the city back to its people.' },
+      { img: 'roof_wide', area: 'b', kb: [1.0, 1.05, 1, 0], beats: [
+        { k: 'cap', at: [4, 5], w: 70, ru: 'Ты командир последнего Командного центра.', en: 'You command the last Command Center.' },
+        { k: 'cap', at: [4, 74], w: 70, ru: 'Открывай кварталы. Строй дома. Верни город людям.', en: 'Open the blocks. Build homes. Give the city back to its people.' },
       ] },
     ],
   },
@@ -228,7 +216,10 @@ const CSS = `
  font-family:'Golos Text',system-ui,sans-serif;overflow:hidden;user-select:none;-webkit-user-select:none;touch-action:manipulation;-webkit-tap-highlight-color:transparent}
 .psc *{box-sizing:border-box}
 .psc-top{position:absolute;left:0;right:0;top:0;height:52px;display:flex;align-items:center;gap:12px;padding:0 max(16px,env(safe-area-inset-left));z-index:5}
-.psc-tag{font:700 10px/1 Unbounded,sans-serif;letter-spacing:.14em;color:var(--seam);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:1;min-width:0}
+.psc-tag{font:700 10px/1 Unbounded,sans-serif;letter-spacing:.14em;color:var(--seam);white-space:nowrap;flex:1;min-width:0;display:flex;gap:8px;align-items:baseline}
+.psc-tag .t{overflow:hidden;text-overflow:ellipsis;min-width:0}
+.psc-tag .n{flex:0 0 auto;color:#fff;opacity:.8}
+@media (max-width:480px){.psc-prog{display:none}}
 .psc-prog{display:flex;gap:4px;flex:0 0 auto}
 .psc-prog i{display:block;width:16px;height:3px;background:#ffffff26;clip-path:polygon(2px 0,100% 0,calc(100% - 2px) 100%,0 100%)}
 .psc-prog i.on{background:var(--seam)}
@@ -236,7 +227,7 @@ const CSS = `
  clip-path:polygon(8px 0,100% 0,100% calc(100% - 8px),calc(100% - 8px) 100%,0 100%,0 8px);min-height:36px}
 .psc-btn:hover{background:#ffffff26}
 .psc-btn.icon{width:40px;padding:0;display:grid;place-items:center}
-.psc-stage{position:absolute;left:0;right:0;top:52px;bottom:0;display:grid;place-items:center;padding:6px 12px max(14px,env(safe-area-inset-bottom))}
+.psc-stage{position:absolute;left:0;right:0;top:52px;bottom:0;display:grid;place-items:center;padding:6px 12px max(30px,env(safe-area-inset-bottom))}
 .psc-page{position:relative;display:grid;gap:8px;padding:8px;background:var(--paper);box-shadow:0 30px 80px #0009;
  clip-path:polygon(12px 0,100% 0,100% calc(100% - 12px),calc(100% - 12px) 100%,0 100%,0 12px);transition:transform .5s cubic-bezier(.2,.8,.2,1),opacity .5s}
 .psc-page::after{content:'';position:absolute;inset:3px;border:1px solid var(--seam);pointer-events:none;
@@ -249,12 +240,15 @@ const CSS = `
 .psc-panel>img.bg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transform-origin:50% 50%;will-change:transform}
 .psc-panel>img.bd{position:absolute;inset:-8%;width:116%;height:116%;object-fit:cover;filter:blur(16px) brightness(.62) saturate(.9);display:none}
 .psc-panel.contain>img.bd{display:block}
+.psc-panel>img.gl{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;mix-blend-mode:screen;opacity:0;pointer-events:none}
+.psc-panel>img.gl.on{animation:psc-crackglow 1.6s ease-in-out infinite}
+@keyframes psc-crackglow{0%{opacity:0}25%{opacity:1}60%{opacity:.55}100%{opacity:1}}
 .psc-panel.contain>img.bg{box-shadow:0 0 0 2px var(--graph),0 10px 30px #0008}
-.psc-dos{background:linear-gradient(#0f1a21,#0B1117);display:flex;gap:2.5%;padding:16% 3% 6%;align-items:stretch;justify-content:center}
-.psc-card{position:relative;flex:1;max-width:24%;background:var(--paper);border:2px solid var(--graph);overflow:hidden;opacity:0;transform:translateY(14px) rotate(var(--r));transition:opacity .4s,transform .5s cubic-bezier(.2,.9,.3,1.3);
+.psc-dos{background:linear-gradient(#0f1a21,#0B1117);display:flex;gap:2.5%;padding:clamp(38px,9vh,70px) 3% clamp(40px,8vh,64px);align-items:center;justify-content:center}
+.psc-card{position:relative;flex:1;max-width:24%;aspect-ratio:.6;max-height:100%;background:var(--paper);border:2px solid var(--graph);overflow:hidden;opacity:0;transform:translateY(14px) rotate(var(--r));transition:opacity .4s,transform .5s cubic-bezier(.2,.9,.3,1.3);
  clip-path:polygon(8px 0,100% 0,100% calc(100% - 8px),calc(100% - 8px) 100%,0 100%,0 8px)}
 .psc-card.on{opacity:1;transform:rotate(var(--r))}
-.psc-card img{position:absolute;inset:0 0 16% 0;width:100%;height:84%;object-fit:contain;object-position:50% 100%}
+.psc-card img{position:absolute;inset:0 0 16% 0;width:100%;height:84%;object-fit:contain;object-position:50% 100%;background:linear-gradient(#4f9fdc,#c7dfee)}
 .psc-card .nm{position:absolute;left:0;right:0;bottom:0;height:16%;display:grid;place-items:center;background:var(--graph);color:#fff;font:800 clamp(7px,1.3vmin,12px)/1.1 Unbounded,sans-serif;letter-spacing:.1em;text-align:center}
 .psc-card .scan{position:absolute;left:0;right:0;height:18%;background:linear-gradient(#EF5C7300,#EF5C7366,#EF5C7300);animation:psc-scan 2.2s linear infinite}
 @keyframes psc-scan{from{top:-18%}to{top:100%}}
@@ -273,7 +267,7 @@ const CSS = `
 .psc-b.say.t-t::after{left:30%;top:-9px;transform:rotate(-135deg) skew(12deg,12deg)}
 .psc-b.say.t-r::after{right:18%;bottom:-9px;transform:rotate(45deg) skew(12deg,12deg)}
 .psc-b.say.t-l::after{left:14%;bottom:-9px;transform:rotate(45deg) skew(12deg,12deg)}
-.psc-who{display:block;font:800 9px/1 Unbounded,sans-serif;letter-spacing:.14em;color:var(--deep);margin-bottom:4px}
+.psc-who{display:block;font:800 9px/1.3 Unbounded,sans-serif;letter-spacing:.14em;color:var(--deep);margin-bottom:4px}
 .psc-b.ctrl{background:var(--paper);color:var(--graph);padding:9px 12px 10px;border:2px solid var(--coral);box-shadow:0 6px 18px #0006;font-weight:600;
  clip-path:polygon(8px 0,100% 0,100% calc(100% - 8px),calc(100% - 8px) 100%,0 100%,0 8px)}
 .psc-ctrlhead{display:flex;gap:8px;align-items:center;margin-bottom:5px;font:800 9px/1 Unbounded,sans-serif;letter-spacing:.14em}
@@ -340,10 +334,11 @@ const CSS = `
 .psc-floor{position:absolute;left:0;right:0;bottom:0;height:34%;background:linear-gradient(#EFE8D8,#E2D8C2);border-top:3px solid var(--graph)}
 .psc-floor::before{content:'';position:absolute;inset:0;background:repeating-linear-gradient(90deg,#0000 0 46px,#0000000f 46px 48px)}
 .psc-spr{position:absolute;bottom:20%;image-rendering:pixelated;transition:transform .5s,opacity .5s,filter .4s}
-.psc-adapt{left:10%;height:42%;aspect-ratio:96/112;background-repeat:no-repeat;background-size:400% 100%;animation:psc-idle .6s steps(4) infinite;image-rendering:pixelated}
-@keyframes psc-idle{to{background-position:133.33% 0}}
+.psc-adapt{left:14%;height:60%;aspect-ratio:50/106;image-rendering:pixelated;animation:psc-sway 1.4s ease-in-out infinite;filter:drop-shadow(0 0 6px #EF5C73aa)}
+.psc-adapt img{width:100%;height:100%;image-rendering:pixelated;display:block}
+@keyframes psc-sway{50%{transform:translateY(-3%)}}
 .psc-adapt.dead{opacity:0;transform:translateY(10%) scale(.8);filter:brightness(3)}
-.psc-res{right:14%;height:58%}
+.psc-res{right:16%;height:54%}
 .psc-res img{image-rendering:pixelated;height:100%;position:absolute;right:0;bottom:0;transition:opacity .25s}
 .psc-orb{position:absolute;width:22px;height:22px;border-radius:50%;background:radial-gradient(#fff,#9FF4FF 40%,#57D8F200 70%);left:22%;bottom:40%;opacity:0}
 .psc-orb.fly{animation:psc-orb .8s cubic-bezier(.4,0,.2,1) forwards}
@@ -373,7 +368,7 @@ const CSS = `
 .psc-main{font:800 14px/1 Unbounded,sans-serif;letter-spacing:.06em;color:#fff;background:var(--teal);border:0;padding:16px 26px;cursor:pointer;box-shadow:inset 0 -4px 0 #00000040;
  clip-path:polygon(10px 0,100% 0,100% calc(100% - 10px),calc(100% - 10px) 100%,0 100%,0 10px)}
 .psc-main:hover{filter:brightness(1.1)}
-.psc-hint{position:absolute;right:16px;bottom:max(10px,env(safe-area-inset-bottom));font:700 9px/1 Unbounded,sans-serif;letter-spacing:.14em;color:#ffffff66;z-index:5;pointer-events:none}
+.psc-hint{position:absolute;right:16px;bottom:max(9px,calc(env(safe-area-inset-bottom) - 18px));font:700 9px/1 Unbounded,sans-serif;letter-spacing:.14em;color:#ffffff66;z-index:5;pointer-events:none}
 @media (max-width:520px){.psc-prog{display:none}.psc-tag{font-size:9px}}
 @media (prefers-reduced-motion:reduce){.psc *{animation:none!important;transition:opacity .2s!important}}
 `;
@@ -473,7 +468,7 @@ export function playIntroComic(opts = {}) {
   const isWide = () => stage.clientWidth / Math.max(1, stage.clientHeight) > 0.95;
   const fitPage = (page) => {
     // fill the screen, but keep the page between 4:3 and 16:9 on wide screens and at least 9:20 on tall ones
-    const W = stage.clientWidth - 24, H = stage.clientHeight - 20;
+    const cs = getComputedStyle(stage), W = stage.clientWidth - 24, H = stage.clientHeight - parseFloat(cs.paddingTop) - parseFloat(cs.paddingBottom) - 4;
     const [lo, hi] = isWide() ? [4 / 3, 16 / 9] : [9 / 20, 3 / 4];
     const ratio = Math.min(hi, Math.max(lo, W / H));
     let w = W, h = W / ratio; if (h > H) { h = H; w = H * ratio; }
@@ -523,11 +518,12 @@ export function playIntroComic(opts = {}) {
     swap(p) {
       const a = el('div', 'psc-art psc-swap');
       a.append(el('div', 'psc-floor'));
-      const ad = el('div', 'psc-spr psc-adapt'); ad.style.backgroundImage = `url(${url('sprites/adaptant_idle.png')})`;
+      // an infected hero (Frostline) and a resident, both game sprites at the same pixel scale
+      const ad = el('div', 'psc-spr psc-adapt', `<img src="${url('sprites/hero_frostline.png')}" alt="">`);
       const res = el('div', 'psc-spr psc-res');
-      res.style.aspectRatio = '100/175';
-      const i1 = el('img'); i1.src = url('sprites/s01_normal.png'); i1.alt = '';
-      const i2 = el('img'); i2.src = url('sprites/s01_ice_arm.png'); i2.alt = ''; i2.style.opacity = 0;
+      res.style.aspectRatio = '55/96';
+      const i1 = el('img'); i1.src = url('sprites/res_normal.png'); i1.alt = '';
+      const i2 = el('img'); i2.src = url('sprites/res_ice_arm.png'); i2.alt = ''; i2.style.opacity = 0;
       res.append(i1, i2);
       const orb = el('div', 'psc-orb');
       const badge = el('div', 'psc-badge', lang === 'ru' ? '+ КРИОРУКА' : '+ CRYO ARM');
@@ -553,7 +549,7 @@ export function playIntroComic(opts = {}) {
     },
     dossier(p) {
       const a = el('div', 'psc-art psc-dos');
-      const H = [['d_lineman', lang === 'ru' ? 'ЛИНЕЙЩИК' : 'LINEMAN', '-3deg'], ['d_frostline', lang === 'ru' ? 'ФРОСТЛАЙН' : 'FROSTLINE', '2deg'], ['d_kiln', lang === 'ru' ? 'КИЛН' : 'KILN', '-1.5deg'], ['seraph', lang === 'ru' ? 'СЕРАФИМ' : 'SERAPH', '2.5deg']];
+      const H = [['c_lineman', lang === 'ru' ? 'ЛИНЕЙЩИК' : 'LINEMAN', '-3deg'], ['c_frostline', lang === 'ru' ? 'ФРОСТЛАЙН' : 'FROSTLINE', '2deg'], ['c_kiln', lang === 'ru' ? 'КИЛН' : 'KILN', '-1.5deg'], ['c_seraph', lang === 'ru' ? 'СЕРАФИМ' : 'SERAPH', '2.5deg']];
       const cards = H.map(([img, name, r]) => {
         const c = el('div', 'psc-card', `<img src="${url('panels/' + img + '.jpg')}" alt=""><div class="scan"></div><div class="nm">${name}</div><div class="st">${lang === 'ru' ? 'ЗАРАЖЁН' : 'INFECTED'}</div>`);
         c.style.setProperty('--r', r); a.appendChild(c); return c;
@@ -678,6 +674,7 @@ export function playIntroComic(opts = {}) {
         };
         img.addEventListener('load', ctx.fit);
         n.append(bd, img);
+        if (p.glow) { const gl = el('img', 'gl'); gl.src = url('panels/' + p.glow + '.png'); gl.alt = ''; n.appendChild(gl); ctx.glow = gl; }
       } else if (p.art) {
         n.appendChild(ART[p.art](ctx));
       }
@@ -687,7 +684,7 @@ export function playIntroComic(opts = {}) {
       return ctx;
     });
     prog.querySelectorAll('i').forEach((e, i) => e.classList.toggle('on', i <= idx));
-    tag.textContent = def.tag[lang] + `  ·  ${String(idx + 1).padStart(2, '0')}/${String(SCRIPT.length).padStart(2, '0')}`;
+    tag.innerHTML = `<span class="t"></span><span class="n">${idx + 1}/${SCRIPT.length}</span>`; tag.firstChild.textContent = def.tag[lang];
     return { el: page, def, panels };
   };
 
@@ -701,6 +698,7 @@ export function playIntroComic(opts = {}) {
     } else if (name === 'split') { ctx.fxSplit && ctx.fxSplit(); ctx.flash.classList.add('go'); ctx.node.classList.add('psc-shake'); fadeMusic(soundOn ? .18 : 0, 400); }
     else if (name === 'swap') { ctx.fxSwap && ctx.fxSwap(); }
     else if (name === 'stamp') { ctx.fxStamp && ctx.fxStamp(); }
+    else if (name === 'crackglow') { ctx.glow && ctx.glow.classList.add('on'); ctx.flash.classList.add('go'); ctx.node.classList.add('psc-shake'); }
     else if (FX[name]) FX[name](ctx.fx);
   };
 

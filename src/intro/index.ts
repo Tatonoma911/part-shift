@@ -8,7 +8,7 @@ import { introSeen, playIntroComic } from './intro-comic.js';
  * artifact build inlines them; its sounds reuse the game's mp3s.
  */
 const files = import.meta.glob('../assets/comic/**/*.{jpg,png}', { eager: true, query: '?url', import: 'default' }) as Record<string, string>;
-const audio = import.meta.glob('../assets/audio/**/*.mp3', { eager: true, query: '?url', import: 'default' }) as Record<string, string>;
+const audio = import.meta.glob(['../assets/audio/**/*.mp3', '!../assets/audio/music/theme_lumen.mp3'], { eager: true, query: '?url', import: 'default' }) as Record<string, string>;
 
 function assetMap(): Record<string, string> {
   const map: Record<string, string> = {};
@@ -19,6 +19,9 @@ function assetMap(): Record<string, string> {
     map[`audio/${name}.mp3`] = url;
     map[`audio/${name}.ogg`] = url;
   }
+  // The comic still asks for the old chiptune; the menu theme replaced it (audio/MUSIC.md).
+  const menu = Object.entries(audio).find(([path]) => path.endsWith('/music/menu.mp3'))?.[1];
+  if (menu) map['audio/theme_lumen.mp3'] = map['audio/theme_lumen.ogg'] = menu;
   return map;
 }
 

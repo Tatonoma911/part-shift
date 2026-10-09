@@ -8,18 +8,27 @@ export interface RunResult {
   /** Energy the player earned during the run (spending doesn't lower it). */
   energy: number;
   heroes?: number;
+  /** The call target (boss) was stopped. */
+  callTarget?: boolean;
+  /** difficulty.json level id. */
+  difficulty?: string;
+  mode?: 'call' | 'quick' | 'coop_call';
 }
 
 const S = meta.runScore;
 
 export function runScore(r: RunResult): number {
   let s = Math.floor(r.energy) * S.energyEarned + r.nests * S.nestDestroyed + (r.heroes ?? 0) * S.heroDefeated;
+  if (r.callTarget) s += S.callTargetDefeatedExtra;
   if (r.victory) {
-    s += S.demonDefeated + S.winBonus;
-    if (r.seconds < 600) s += S.timeBonus.under10min;
-    else if (r.seconds < 900) s += S.timeBonus.under15min;
+    s += S.winBonus;
+    const steps = S.timeBonusByMode[r.mode === 'quick' ? 'quick' : 'call'].underSeconds;
+    const step = steps.find(([sec]) => r.seconds < sec);
+    if (step) s += step[1];
   }
-  return Math.max(0, Math.round(s));
+  const diff = (S.multiplierByDifficulty as Record<string, number>)[r.difficulty ?? 'shift'] ?? 1;
+  const mode = (S.multiplierByMode as Record<string, number>)[r.mode ?? 'call'] ?? 1;
+  return Math.max(0, Math.round(s * diff * mode));
 }
 
 /** Career titles by lifetime score; text keys rank.0 … rank.6. */

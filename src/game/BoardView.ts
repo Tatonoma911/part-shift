@@ -1,11 +1,12 @@
 import Phaser from 'phaser';
-import { buildings as buildingDefs, config, mapgen } from '../core/data';
+import { buildings as buildingDefs, config, mapgen, parts as partDefs } from '../core/data';
 import { cellKey } from '../core/grid';
 import type { Building, Unit } from '../core/state';
 import type { GameEvent, World } from '../core/world';
 import { animSets, BUILDING_ANCHOR, originOf } from './assets';
 import { sound } from './audio';
 import { C, CELL, CHANNEL, STEP, TECH_COLOR } from './layout';
+import { Quarantine, type RevealKind } from './Quarantine';
 import { glyph, TXT } from './ui';
 
 const ME = 0;
@@ -26,6 +27,8 @@ interface UnitView {
   oneShot: boolean;
   windup: boolean;
   anim: string;
+  /** Element tint that status tints fall back to (stand-in adaptants). */
+  tint?: number;
 }
 
 export interface ViewState {
@@ -42,11 +45,17 @@ function hash(x: number, y: number): number {
   return (Math.imul(x + 17, 73856093) ^ Math.imul(y + 31, 19349663)) >>> 0;
 }
 
-function adaptantSet(tech: string | undefined): string {
-  if (tech === 'cryo') return 'adaptant_cryo';
-  if (tech === 'volt' || tech === 'toxin') return 'adaptant_volt';
-  return 'adaptant_thermo';
-}
+/**
+ * Stand-in for adaptants: the chunky shield-armed sheets clash with the hero
+ * style and Антон rejected them (2026-10-09). Until the animator redraws them,
+ * adaptants are smaller Standard-style infected residents tinted by element.
+ */
+const ADAPTANT_SET = 'standard';
+const ADAPTANT_TINT: Record<string, number> = { thermo: 0xffb6a0, cryo: 0xb4e2ff, volt: 0xfff09a, toxin: 0xc6f29e, impact: 0xe0c0a0, kinetic: 0xe0d0c0 };
+const HEAVY_TINT = 0xc8a890;
+
+/** Residents fight now; their swing, flinch and limb install come from the animator's fighter sheet. */
+const RESIDENT_COMBAT_SET = 'defender';
 
 /**
  * Draws the board from the artist's tiles and the animator's sheets.
@@ -74,6 +83,7 @@ export class BoardView {
   private readonly topG: Phaser.GameObjects.Graphics;
   private ghostSpr: Phaser.GameObjects.Image | null = null;
   private lost: GameEvent[] = [];
+  private readonly quarantine: Quarantine;
 
   constructor(
     private readonly scene: Phaser.Scene,
@@ -109,6 +119,7 @@ export class BoardView {
     this.clueG = scene.add.graphics().setDepth(D.clue + 0.1);
     this.arcG = scene.add.graphics().setDepth(D.arc);
     this.topG = scene.add.graphics().setDepth(D.top);
+    this.quarantine = new Quarantine(scene, world, bx, by, this.width, this.height);
   }
 
   /** Quarantine film over closed blocks: one hex pattern across the whole board (BRAND_UI "Поле"). */
@@ -200,10 +211,9 @@ export class BoardView {
     return b ? { x: this.center(b.x, b.y).x, y: this.center(b.x, b.y).y - 20 } : null;
   }
 
-  /** Hit effect by the attacker's technology: its first trophy part, or its own kind. */
-  private hitAnim(u: Unit, set: string): string {
-    const part = Object.values(u.parts).find(Boolean);
-    const tech = part ? part.id.split('_')[0] : set.startsWith('adaptant_') ? set.slice('adaptant_'.length) : '';
+  /** Hit effect by the element the attacker strikes with. */
+  private hitAnim(u: Unit, target?: Unit): string {
+    const tech = this.world.attackOf(u, target).tech;
     if (tech === 'thermo') return 'hit_thermo';
     if (tech === 'cryo') return 'hit_cryo';
     if (tech === 'volt' || tech === 'toxin') return 'hit_volt';
@@ -224,6 +234,10 @@ export class BoardView {
     switch (e.type) {
       case 'dig_done': {
         at('fx.dig_dust');
+        const content = this.world.cell(e.x, e.y).content;
+        const kind: RevealKind =
+          content === 'cache' ? 'cache' : content === 'survivor' ? 'survivor' : content === 'nest' || content === 'heavy_nest' ? 'nest' : content === 'boss_hatch' || content === 'hero_lair' ? 'hatch' : 'safe';
+        this.quarantine.reveal(e.x, e.y, `closed_${hash(e.x, e.y) % 4}`, kind);
         const i = e.y * this.world.s.width + e.x;
         const t = this.tiles[i];
         t.setScale(0.55).setPosition(t.x + CELL * 0.225, t.y + CELL * 0.225);
@@ -245,8 +259,10 @@ export class BoardView {
       case 'demon_blast': {
         this.shake(220, 0.006);
         // Steam blast: a line of explosions in the wind-up direction.
-        const demon = this.world.s.units.find((u) => u.kind === 'demon');
+        const demon = this.world.s.units.find((u) => u.id === e.unit);
         const b = demon?.blast;
+        const dv = demon && this.units.get(demon.id);
+        if (dv && animSets[dv.set].anims.steam) this.oneShot(dv, 'steam');
         for (let k = 0; k <= 3; k++) {
           const p = this.center(e.x + (b?.dx ?? 0) * k, e.y + (b?.dy ?? 0) * k);
           sc.time.delayedCall(k * 70, () => this.fx('explosion', p.x, p.y, 1.3));
@@ -270,18 +286,33 @@ export class BoardView {
       case 'enemy_die':
         this.fxAtCell('explosion', e.x, e.y, 0.9);
         break;
-      case 'demon_die':
+      case 'hero_defeated':
         for (let k = 0; k < 5; k++) sc.time.delayedCall(k * 160, () => this.fxAtCell('explosion', e.x! + (k % 2 ? 0.5 : -0.5) * (k > 2 ? 1 : 0.4), e.y! - 0.3 * k, 2.4));
         this.shake(600, 0.008);
         break;
-      case 'defender_die':
+      case 'hero_spawn':
+        this.fxAtCell('explosion', e.x, e.y, 2.2);
+        this.shake(300, 0.006);
+        break;
+      case 'hero_ability': {
+        const hv = e.unit !== undefined ? this.units.get(e.unit) : undefined;
+        if (hv && animSets[hv.set].anims.attack) this.oneShot(hv, 'attack');
+        const tech = this.world.unit(e.unit)?.attackTech;
+        this.fxAtCell(tech === 'thermo' ? 'hit_thermo' : tech === 'cryo' ? 'hit_cryo' : tech === 'volt' || tech === 'toxin' ? 'hit_volt' : 'hit_impact', e.x, e.y, 2.2);
+        break;
+      }
+      case 'reaction':
+      case 'frozen':
+        this.fxAtCell(e.type === 'frozen' ? 'hit_cryo' : 'explosion', e.x, e.y - 0.4, 1.4);
+        break;
       case 'resident_die':
         this.fxAtCell('hit_impact', e.x, e.y, 1.2);
         break;
-      case 'part_attached': {
-        // Instant limb swap: a flash on the defender and the install animation.
+      case 'part_attached':
+      case 'hero_part_taken': {
+        // Instant limb swap: a flash on the resident and the install animation.
         const v = e.unit !== undefined ? this.units.get(e.unit) : undefined;
-        if (v && animSets[v.set].anims.install_part) this.oneShot(v, 'install_part');
+        if (v) this.oneShot(v, 'install_part', RESIDENT_COMBAT_SET);
         const p = this.center(e.x, e.y);
         this.fx('energy_arrive', p.x, p.y - 26, 1.4);
         this.fx('hit_volt', p.x, p.y - 26, 0.9);
@@ -315,6 +346,7 @@ export class BoardView {
     const frame4 = Math.floor(now / 250) % 4;
     const frame3 = Math.floor(now / 300) % 3;
     const flicker = 0.8 + 0.12 * Math.sin(now / 900);
+    this.quarantine.update(now);
     const veinFull = mapgen.energyVein.energy;
 
     for (let y = 0; y < s.height; y++) {
@@ -348,12 +380,17 @@ export class BoardView {
               key = (c.content === 'nest' ? 'nest' : 'nest_heavy') + (dead ? '_dead' : '');
               break;
             }
-            case 'demon_hatch':
-              key = `hatch_${s.demon.awake || s.demon.dead ? 2 : s.demon.warned ? 1 : 0}`;
+            case 'boss_hatch':
+              key = `hatch_${s.boss.awake || s.boss.dead ? 2 : s.boss.warned ? 1 : 0}`;
+              break;
+            case 'hero_lair':
+              key = c.resolved ? GROUND[h % 8] : 'hatch_2';
               break;
             default:
               key = GROUND[h % 8];
           }
+          // Ruins of a lost building: rubble until it is rebuilt at half price.
+          if (c.ruin && c.building === undefined) key = `rubble_${h % 2}`;
         }
         if (this.tileKey[i] !== key) {
           this.tiles[i].setTexture(`tile.${key}`);
@@ -557,7 +594,7 @@ export class BoardView {
   private updateSite(x: number, y: number): void {
     const w = this.world;
     const c = w.cell(x, y);
-    if (!c.revealed || (c.content !== 'nest' && c.content !== 'heavy_nest' && c.content !== 'demon_hatch')) return;
+    if (!c.revealed || (c.content !== 'nest' && c.content !== 'heavy_nest' && c.content !== 'boss_hatch')) return;
     const k = cellKey(x, y);
     const site = w.site(x, y);
     const set = c.content === 'heavy_nest' ? 'heavy_nest' : c.content === 'nest' ? 'nest' : 'demon_hatch';
@@ -572,7 +609,7 @@ export class BoardView {
       return;
     }
     if (set === 'demon_hatch') {
-      const s = w.s.demon;
+      const s = w.s.boss;
       if ((s.awake || s.dead) && spr.getData('open') !== true) {
         spr.setData('open', true);
         spr.play('demon_hatch.open');
@@ -658,7 +695,7 @@ export class BoardView {
     let state: string;
     if (!b.complete) state = 'construct';
     else if (b.hp < def.hp / 2 && hasSheet) state = 'damaged';
-    else if (b.type === 'reactor' && b.operators.length > 0) state = 'working';
+    else if (b.type === 'reactor') state = 'working';
     else state = 'idle';
     if (state !== v.state) {
       v.state = state;
@@ -679,13 +716,6 @@ export class BoardView {
     const g = this.topG;
     const p = this.center(b.x, b.y);
     if (b.complete && b.hp < def.hp) this.bar(g, p.x - 22, p.y - 40, 44, b.hp / def.hp, b.hp / def.hp > 0.4 ? C.green : C.coralInk);
-    if (b.type === 'school' && b.complete && !b.recruit) {
-      g.fillStyle(0x5b6b75, 1);
-      g.fillCircle(p.x + 20, p.y - 44, 11);
-      g.fillStyle(0xffffff, 1);
-      g.fillRect(p.x + 15, p.y - 50, 4, 12);
-      g.fillRect(p.x + 21, p.y - 50, 4, 12);
-    }
     void now;
   }
 
@@ -712,23 +742,18 @@ export class BoardView {
     switch (u.kind) {
       case 'resident':
         return 'resident';
-      case 'defender':
-        return 'defender';
-      case 'heavy_adaptant':
-        return 'heavy_adaptant';
-      case 'demon':
-        return 'demon';
-      default: {
-        const [nx, ny] = (u.nest ?? '').replace('s:', '').split(',').map(Number);
-        const tech = Number.isFinite(nx) && Number.isFinite(ny) && nx >= 0 && ny >= 0 && nx < this.world.s.width && ny < this.world.s.height ? this.world.cell(nx, ny).tech : undefined;
-        return adaptantSet(tech);
-      }
+      case 'hero':
+        return animSets[u.hero!] ? u.hero! : 'standard';
+      default:
+        return ADAPTANT_SET;
     }
   }
 
-  private oneShot(v: UnitView, anim: string): void {
+  /** Plays `anim` once from this unit's sheet (or `from`, e.g. the resident's fighter sheet), if it exists. */
+  private oneShot(v: UnitView, anim: string, from = v.set): void {
+    if (!animSets[from]?.anims[anim]) return;
     v.oneShot = true;
-    v.spr.play(`${v.set}.${anim}`);
+    v.spr.play(`${from}.${anim}`);
     v.spr.once('animationcomplete', () => (v.oneShot = false));
   }
 
@@ -747,10 +772,19 @@ export class BoardView {
         const set = this.setOf(u);
         const spr = this.scene.add.sprite(fx, fy, set).setOrigin(...originOf(set));
         v = { spr, set, lastX: u.x, lastY: u.y, lastCd: u.attackCooldown, oneShot: false, windup: false, anim: '' };
-        if (u.kind === 'defender') v.ring = this.scene.add.image(fx, fy, 'tile.defender_ring').setOrigin(0.5, 0.75);
+        // The call target stands a size bigger: it must read as the one to beat (QA-014).
+        if (u.kind === 'hero' && u.nest && w.cell(...(u.nest.slice(2).split(',').map(Number) as [number, number])).content === 'boss_hatch') {
+          spr.setScale(1.3);
+          v.ring = this.scene.add.image(fx, fy, 'tile.defender_ring').setOrigin(0.5, 0.75).setScale(1.6).setTint(C.violet);
+        }
+        if (u.kind === 'adaptant' || u.kind === 'heavy_adaptant') {
+          spr.setScale(u.kind === 'heavy_adaptant' ? 1.05 : 0.8);
+          v.tint = u.kind === 'heavy_adaptant' ? HEAVY_TINT : ADAPTANT_TINT[u.tech ?? 'thermo'] ?? ADAPTANT_TINT.thermo;
+          spr.setTint(v.tint);
+        }
         if (u.owner >= 0 && u.owner !== ME) spr.setTint(0xffb080);
         this.units.set(u.id, v);
-        if (u.kind === 'demon') this.oneShot(v, 'emerge');
+        this.oneShot(v, 'emerge');
       }
       const dx = u.x - v.lastX;
       const dy = u.y - v.lastY;
@@ -759,17 +793,22 @@ export class BoardView {
       if (Math.abs(dx) > 0.0005) v.spr.setFlipX(set.faces === 'left' ? dx > 0 : dx < 0);
       // A fresh cooldown means the unit just struck.
       if (u.attackCooldown > v.lastCd + 0.05) {
-        if (set.anims.attack && !v.oneShot) this.oneShot(v, 'attack');
+        if (!v.oneShot) this.oneShot(v, 'attack', u.kind === 'resident' ? RESIDENT_COMBAT_SET : v.set);
         const tp = this.targetPos(u.target ?? (u.owner >= 0 ? w.player(u.owner).order ?? undefined : undefined));
         if (tp) {
-          const big = u.kind === 'demon' || u.kind === 'heavy_adaptant';
-          this.scene.time.delayedCall(180, () => this.fx(this.hitAnim(u, v!.set), tp.x, tp.y, big ? 1.6 : 1.1));
+          const big = u.kind === 'hero' || u.kind === 'heavy_adaptant';
+          const victim = u.target?.startsWith('u:') ? w.unit(Number(u.target.slice(2))) : undefined;
+          const anim = this.hitAnim(u, victim);
+          this.scene.time.delayedCall(180, () => this.fx(anim, tp.x, tp.y, big ? 1.6 : 1.1));
           if (tp.x !== fx) v.spr.setFlipX(set.faces === 'left' ? tp.x > fx : tp.x < fx);
         }
       }
       // Burning and frozen units show it.
       if (u.burn && Math.random() < 0.06) this.fx('hit_thermo', fx + (Math.random() - 0.5) * 20, fy - 30, 0.6);
-      if (u.slow) v.spr.setTint(0x9fdcff);
+      if (u.stun && u.slow) v.spr.setTint(0x7fd0ff);
+      else if (u.slow) v.spr.setTint(0x9fdcff);
+      else if (u.poison) v.spr.setTint(0xb8f08a);
+      else if (v.tint !== undefined) v.spr.setTint(v.tint);
       else if (!(u.owner >= 0 && u.owner !== ME)) v.spr.clearTint();
       const windup = u.blast?.phase === 'windup';
       if (windup && !v.windup) this.oneShot(v, 'tail_swing');
@@ -777,11 +816,12 @@ export class BoardView {
       if (!v.oneShot) {
         let anim = 'idle';
         if (u.kind === 'resident') {
-          if (u.task.type === 'flee') anim = 'flee';
-          else if (moved) anim = dy < -Math.abs(dx) * 0.6 ? 'walk_back' : 'walk';
+          if (moved) anim = dy < -Math.abs(dx) * 0.6 ? 'walk_back' : 'walk';
           else if ((u.task.type === 'dig' || u.task.type === 'harvest') && u.path.length === 0) anim = 'dig';
           else if (u.task.type === 'build' && u.path.length === 0) anim = 'build';
         } else if (moved) anim = 'walk';
+        // A maddened hero with nobody to chase keeps its nervous tic.
+        else if (u.kind === 'hero' && !u.target && set.anims.tic) anim = 'tic';
         if (anim === 'dig' && v.anim !== 'dig' && u.owner === ME) sound.play('dig_start');
         v.anim = anim;
         v.spr.play(`${v.set}.${anim}`, true);
@@ -793,13 +833,13 @@ export class BoardView {
       v.lastCd = u.attackCooldown;
 
       const st = w.stats(u);
-      const top = fy - (u.kind === 'demon' || u.kind === 'heavy_adaptant' ? 70 : 54);
+      const top = fy - (u.kind === 'hero' ? (v.spr.scaleX > 1 ? 104 : 74) : u.kind === 'heavy_adaptant' ? 70 : 54);
       // Trophy parts: a colored pip per slot until the artist's overlays exist.
       Object.values(u.parts).forEach((part, k) => {
         if (!part) return;
         g.fillStyle(0x0b1117, 1);
         g.fillCircle(fx - 14 + k * 9, top + 2, 5);
-        g.fillStyle(TECH_COLOR[part.id.split('_')[0]] ?? 0xffffff, 1);
+        g.fillStyle(TECH_COLOR[partDefs[part.id]?.tech] ?? 0xffffff, 1);
         g.fillCircle(fx - 14 + k * 9, top + 2, 3.5);
       });
       if (u.hp < st.hp) this.bar(g, fx - 20, top - 8, 40, u.hp / st.hp, u.owner < 0 ? C.coralInk : C.green);
@@ -875,7 +915,7 @@ export class BoardView {
       if (u.task.type === 'dig' && u.path.length === 0) arc(u.task.x, u.task.y, 1 - u.task.progress / config.dig.digSeconds);
     }
     for (const b of w.s.buildings) {
-      if (!b.complete && b.built > 0) arc(b.x, b.y, 1 - b.built / buildingDefs[b.type].buildSeconds);
+      if (!b.complete && b.built > 0) arc(b.x, b.y, 1 - b.built / w.buildSeconds(b));
     }
   }
 

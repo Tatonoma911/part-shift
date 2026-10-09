@@ -38,7 +38,9 @@ export const dist = (ax: number, ay: number, bx: number, by: number) => Math.hyp
 /** Sites that are still standing block movement; water always does. */
 export function isSolid(c: Cell): boolean {
   if (c.content === 'water') return true;
-  if ((c.content === 'nest' || c.content === 'heavy_nest' || c.content === 'demon_hatch') && !c.resolved) return true;
+  if ((c.content === 'nest' || c.content === 'heavy_nest') && !c.resolved) return true;
+  // A hero lair is a hole in the ground until it opens; then the hero has left it.
+  if ((c.content === 'hero_lair' || c.content === 'boss_hatch') && !c.revealed) return true;
   return false;
 }
 
@@ -49,8 +51,10 @@ export function walkableForPlayer(s: GameState, x: number, y: number): boolean {
   return c.revealed && !isSolid(c);
 }
 
-/** Enemies walk anywhere except water and standing sites. */
-export function walkableForEnemy(s: GameState, x: number, y: number): boolean {
+/** Enemies walk anywhere except water and standing sites; flyers (Seraph) cross water. */
+export function walkableForEnemy(s: GameState, x: number, y: number, flying = false): boolean {
   if (!inBounds(s, x, y)) return false;
-  return !isSolid(cellAt(s, x, y));
+  const c = cellAt(s, x, y);
+  if (flying && c.content === 'water') return true;
+  return !isSolid(c);
 }

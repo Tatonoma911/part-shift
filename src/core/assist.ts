@@ -12,7 +12,8 @@ export type Knowledge = 'safe' | 'threat' | 'demon';
 const CHANNEL_OF: Partial<Record<Cell['content'], ClueChannel>> = {
   nest: 'threat',
   heavy_nest: 'threat',
-  demon_hatch: 'demon',
+  hero_lair: 'threat',
+  boss_hatch: 'demon',
   cache: 'finds',
   survivor: 'finds',
 };

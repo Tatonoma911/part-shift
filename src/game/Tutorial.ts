@@ -94,8 +94,8 @@ export class TutorialGuide {
         return this.flags.has('clue_touched');
       case 'assist_mark_shown':
         return [...w.visibleKnowledge(0).values()].some((k) => (arg === 'danger' ? k === 'threat' || k === 'demon' : k === arg));
-      case 'defenders_trained':
-        return w.s.units.filter((u) => u.owner === 0 && u.kind === 'defender').length >= Number(arg);
+      case 'residents':
+        return w.s.units.filter((u) => u.owner === 0 && u.kind === 'resident').length >= Number(arg);
       case 'building_built':
         // rules v0.4 tutorial_map: step 6 builds a Microreactor instead of training defenders
         return w.s.buildings.some((b) => b.owner === 0 && b.complete && b.type === arg);

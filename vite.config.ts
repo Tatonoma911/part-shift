@@ -1,5 +1,6 @@
+import { execFileSync } from 'node:child_process';
 import { resolve } from 'node:path';
-import { defineConfig } from 'vite';
+import { defineConfig, type Plugin } from 'vite';
 
 // base './' so the build works from any GitHub Pages sub-path.
 // Pages: the universe site at / (site/), the game at /play (src/), and the bare full-screen game at /mobile (the Android app's start page).
@@ -7,8 +8,28 @@ import { defineConfig } from 'vite';
 // LEARNING=1 builds the learning preview page (learning.html) the same way.
 const artifact = process.env.ARTIFACT === '1';
 const learning = process.env.LEARNING === '1';
+/**
+ * The Artifact must stay under 16 MB, so its audio is re-encoded to mono at a low
+ * bit rate (the orchestral tracks are ~10 MB at full quality). Pages and the APK keep the originals.
+ */
+function smallMusic(): Plugin {
+  return {
+    name: 'small-music',
+    enforce: 'pre',
+    load(id) {
+      const [file, query] = id.split('?');
+      const kind = /[\\/]audio[\\/](music|sfx)[\\/][^\\/]+\.mp3$/.exec(file)?.[1];
+      if (!query?.includes('url') || !kind) return null;
+      const rate = kind === 'music' ? '40k' : '48k';
+      const out = execFileSync('ffmpeg', ['-v', 'error', '-i', file, '-ac', '1', '-b:a', rate, '-f', 'mp3', '-'], { maxBuffer: 64 << 20 });
+      return `export default ${JSON.stringify(`data:audio/mpeg;base64,${out.toString('base64')}`)};`;
+    },
+  };
+}
+
 export default defineConfig({
   base: './',
+  plugins: artifact ? [smallMusic()] : [],
   // The Artifact and learning previews never send analytics, so Firebase Analytics stays out of their one-file builds.
   define: { __ANALYTICS__: JSON.stringify(!artifact && !learning), __CLOUD__: JSON.stringify(!artifact && !learning) },
   build: {

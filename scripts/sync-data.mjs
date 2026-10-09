@@ -1,7 +1,7 @@
 // Copies the game designer's tables, the writer's texts and the artist's and
 // animator's exports (cell 52 set) from the shared project folder into the repo. Run from the repo root: `npm run sync-data`.
 // The shared folder layout is <root>/design/data, <root>/text, <root>/code (this repo).
-import { copyFileSync, existsSync, mkdirSync, readdirSync } from 'node:fs';
+import { copyFileSync, existsSync, mkdirSync, readdirSync, rmSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 
 const root = resolve(process.argv[2] ?? '..');
@@ -18,18 +18,20 @@ const jobs = [
   { from: join(root, 'audio'), to: 'src/assets/audio', pick: (f) => f === 'sounds.json' },
   // Intro comic (Комикс-вступление thread): component, panels and sprites; its sounds come from the game's own audio.
   { from: join(root, 'comic'), to: 'src/intro', pick: (f) => f === 'intro-comic.js' },
-  { from: join(root, 'comic/assets/panels'), to: 'src/assets/comic/panels', pick: (f) => f.endsWith('.jpg') },
-  { from: join(root, 'comic/assets/sprites'), to: 'src/assets/comic/sprites', pick: (f) => f.endsWith('.png') },
+  // clean: the comic drops panels between versions; stale ones would only bloat the one-file build.
+  { from: join(root, 'comic/assets/panels'), to: 'src/assets/comic/panels', pick: (f) => /\.(jpg|png)$/.test(f), clean: true },
+  { from: join(root, 'comic/assets/sprites'), to: 'src/assets/comic/sprites', pick: (f) => f.endsWith('.png'), clean: true },
+  { from: join(root, 'art/export/portraits'), to: 'src/assets/art/portraits', pick: (f) => f.endsWith('.png') && !f.startsWith('s01') && (!f.startsWith('bld_') || f === 'bld_command.png') },
   // Hero comm pop-up (left corner): lines RU+EN and round artbook portraits.
   { from: join(root, 'text'), to: 'src/data/text', pick: (f) => f === 'comm.json' },
   { from: join(root, 'art/comm/game'), to: 'src/assets/comm', pick: (f) => f.endsWith('.webp') },
-  { from: join(root, 'art/export/portraits'), to: 'src/assets/art/portraits', pick: (f) => ['demon.png', 'bld_command.png'].includes(f) },
 ];
-for (const { from, to, pick } of jobs) {
+for (const { from, to, pick, clean } of jobs) {
   if (!existsSync(from)) {
     console.warn(`skip: ${from} not found`);
     continue;
   }
+  if (clean) rmSync(to, { recursive: true, force: true });
   mkdirSync(to, { recursive: true });
   for (const f of readdirSync(from).filter(pick)) {
     copyFileSync(join(from, f), join(to, f));

@@ -1,5 +1,5 @@
 {
-  "version": "0.1",
+  "version": "0.6",
   "buildings": [
     {
       "id": "command",
@@ -10,9 +10,9 @@
       "buildSeconds": 0,
       "hp": 80,
       "defense": 1,
-      "residentSlots": 2,
-      "territoryRadius": 3,
-      "isKeep": true
+      "territoryRadius": 2,
+      "isKeep": true,
+      "spawnPoint": true
     },
     {
       "id": "home",
@@ -23,7 +23,13 @@
       "buildSeconds": 6,
       "hp": 100,
       "defense": 0,
-      "residentSlots": 1
+      "spawnPoint": true,
+      "shelter": {
+        "capacity": 3,
+        "residentsInsideTakeNoDamage": true
+      },
+      "_note": "no longer changes population; new residents appear at the home nearest to the dig queue; fleeing residents hide inside",
+      "territoryRadius": 1
     },
     {
       "id": "reactor",
@@ -34,12 +40,13 @@
       "buildSeconds": 6,
       "hp": 100,
       "defense": 0,
-      "operatorSlots": 1,
       "produce": {
         "energy": 1,
-        "everySeconds": 5,
-        "perOperator": true
-      }
+        "everySeconds": 3,
+        "autonomous": true
+      },
+      "_note": "[Антон] produces energy by itself, no worker needed",
+      "territoryRadius": 1
     },
     {
       "id": "cooler",
@@ -57,7 +64,8 @@
         ],
         "productionSpeedMultiplier": 2,
         "stacks": false
-      }
+      },
+      "territoryRadius": 1
     },
     {
       "id": "school",
@@ -68,10 +76,9 @@
       "buildSeconds": 10,
       "hp": 100,
       "defense": 0,
-      "defenderCapacity": 2,
       "territoryRadius": 2,
-      "trainsDefenders": true,
-      "recruitToggle": true
+      "trainingLevel": 1,
+      "_note": "each school (max 3) raises the training level of ALL residents by 1 (config.school.perLevel)"
     },
     {
       "id": "medcenter",
@@ -85,11 +92,34 @@
       "aura": {
         "radius": 2,
         "targets": [
-          "defender"
+          "resident"
         ],
         "healAmount": 4,
         "healEverySeconds": 2
-      }
+      },
+      "territoryRadius": 2
     }
-  ]
+  ],
+  "territory": {
+    "_doc": "[Антон 21:49] строить можно только на освобождённой территории вокруг построек; дешёвые здания освобождают 1 клетку, дорогие больше. MVP_RULES §7.1",
+    "metric": "chebyshev (square, diagonals count)",
+    "radiusByBuilding": {
+      "command": 2,
+      "home": 1,
+      "reactor": 1,
+      "cooler": 1,
+      "school": 2,
+      "medcenter": 2
+    },
+    "underConstructionCounts": false,
+    "ruinsCount": false,
+    "buildRequires": [
+      "revealed ground",
+      "inside territory",
+      "reachable",
+      "no enemies within 1"
+    ],
+    "showOverlay": "when the build panel is open or the player taps an open cell: liberated cells get a soft green tint, border line; cells that would be added by the chosen building are previewed",
+    "refuseToastKey": "build.refuse.not_liberated"
+  }
 }

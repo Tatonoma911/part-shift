@@ -5,10 +5,12 @@ import { readChallenge } from '../src/social/share';
 describe('social', () => {
   it('scores a run with the designer formula', () => {
     expect(runScore({ victory: false, seconds: 400, nests: 2, energy: 120 })).toBe(120 + 100);
-    // Win under 10 minutes: demon 500 + win 300 + time 200.
-    expect(runScore({ victory: true, seconds: 500, nests: 0, energy: 0 })).toBe(1000);
-    expect(runScore({ victory: true, seconds: 700, nests: 0, energy: 0 })).toBe(900);
-    expect(runScore({ victory: true, seconds: 2000, nests: 0, energy: 0 })).toBe(800);
+    // Win under 10 minutes: call target 200 + 300 extra, win 300, time 200.
+    const win = { victory: true, nests: 0, energy: 0, heroes: 1, callTarget: true };
+    expect(runScore({ ...win, seconds: 500 })).toBe(1000);
+    expect(runScore({ ...win, seconds: 700 })).toBe(900);
+    expect(runScore({ ...win, seconds: 2000 })).toBe(800);
+    expect(runScore({ ...win, seconds: 2000, difficulty: 'rush' })).toBe(1200);
   });
 
   it('gives career titles by lifetime score', () => {
