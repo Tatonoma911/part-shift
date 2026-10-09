@@ -10,10 +10,17 @@ import type { HeroState } from './store';
  */
 const urls = import.meta.glob('../../assets/art/comm/*.webp', { eager: true, query: '?url', import: 'default' }) as Record<string, string>;
 
+/** Hero parts as drawn by the artist (art/export/trophies/<partId>.png, first pose of each sheet). */
+const trophies = import.meta.glob('../../assets/art/trophies/*.png', { eager: true, query: '?url', import: 'default' }) as Record<string, string>;
+
 export function preloadMetaArt(scene: Phaser.Scene): void {
   for (const [path, url] of Object.entries(urls)) {
     const id = path.match(/([\w-]+)\.webp$/)?.[1];
     if (id && !scene.textures.exists(`comm.${id}`)) scene.load.image(`comm.${id}`, url);
+  }
+  for (const [path, url] of Object.entries(trophies)) {
+    const id = path.match(/([\w-]+)\.png$/)?.[1];
+    if (id && !scene.textures.exists(`trophy.${id}`)) scene.load.image(`trophy.${id}`, url);
   }
 }
 

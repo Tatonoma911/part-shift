@@ -1,7 +1,7 @@
 import { lang } from '../i18n';
 import { isNative } from '../platform/native';
 import { Analytics, type Storage } from './analytics';
-import { askConsent } from './consent';
+import { askConsent, closeConsent } from './consent';
 import { loadFirebaseSink } from './firebase';
 
 export type { Params } from './analytics';
@@ -46,3 +46,5 @@ export function bootAnalytics(layout: string): void {
 export function askAnalyticsConsent(): void {
   askConsent(analytics);
 }
+
+export { closeConsent };

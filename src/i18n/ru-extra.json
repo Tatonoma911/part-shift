@@ -195,5 +195,10 @@
   "side.nests": "Гнёзда",
   "side.caches": "Тайники",
   "side.survivors": "Выжившие",
-  "side.threat_next": "Угроза {level} через {time}"
+  "side.threat_next": "Угроза {level} через {time}",
+  "dossier.trophy.title": "Что заберут жители",
+  "dossier.trophy.damage": "{value} урона",
+  "dossier.trophy.hp": "{value} здоровья",
+  "dossier.trophy.defense": "{value} защиты",
+  "dossier.trophy.speed": "{value} скорости"
 }

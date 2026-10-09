@@ -246,6 +246,41 @@ export class DossierScene extends Phaser.Scene {
       para(t(`enemy.${h.id}.desc`), TXT.body(22, INK.graphite, '500'), 16);
       if (hasText(`enemy.${h.id}.ability`)) para(`${t(`enemy.${h.id}.ability`)}${hasText(`enemy.${h.id}.ability.desc`) ? `: ${t(`enemy.${h.id}.ability.desc`)}` : ''}`, TXT.body(21, INK.coral, '700'), 20);
     }
+    // What the residents take from this hero: the artist's drawn parts, never code-drawn limbs (AR-00).
+    if (known && h.drops?.length) {
+      caps('dossier.trophy.title');
+      const n = h.drops.length;
+      const gap = 16;
+      const tw = (iw - gap * (n - 1)) / n;
+      // Tiles keep room for a picture only when at least one part is drawn.
+      const drawn = h.drops.some((d) => this.textures.exists(`trophy.${d.id}`));
+      const top = drawn ? 150 : 18;
+      const th = top + 60;
+      h.drops.forEach((d, i) => {
+        const x = pad + i * (tw + gap);
+        const tg = this.add.graphics();
+        chip(tg, x, y, tw, th, C.graphite, 0.06, 14);
+        sheet.add(tg);
+        const key = `trophy.${d.id}`;
+        if (this.textures.exists(key)) {
+          const img = this.add.image(x + tw / 2, y + 74, key);
+          img.setScale(Math.min((tw - 32) / img.width, 124 / img.height));
+          sheet.add(img);
+        }
+        const label = hasText(`part.${d.id}.label`) ? t(`part.${d.id}.label`) : t(`slot.${d.slot}`).toUpperCase();
+        const lt = this.add.text(x + tw / 2, y + top, label, { ...TXT.caps(INK.deep), fontSize: '15px' }).setOrigin(0.5, 0);
+        if (lt.width > tw - 20) lt.setScale((tw - 20) / lt.width);
+        sheet.add(lt);
+        const bonus = (['damage', 'hp', 'defense', 'speed'] as const).filter((k) => d[k]).map((k) => {
+          const v = d[k] as number;
+          return t(`dossier.trophy.${k}`, { value: `${v > 0 ? '+' : '−'}${Math.abs(v)}` });
+        });
+        const bt = this.add.text(x + tw / 2, y + top + 26, bonus.join(' · '), TXT.body(18, INK.graphite, '700')).setOrigin(0.5, 0);
+        if (bt.width > tw - 20) bt.setScale((tw - 20) / bt.width);
+        sheet.add(bt);
+      });
+      y += th + 22;
+    }
     // How to bring the hero back, with progress.
     caps(st === 'unlocked' ? 'ally.label' : 'unlock.how');
     if (st === 'unlocked') {

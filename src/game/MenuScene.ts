@@ -5,7 +5,7 @@ import { config } from '../core/data';
 import type { AssistMode } from '../core/state';
 import { hasText, lang, setLang, t } from '../i18n';
 import { introSeen, playIntro } from '../intro';
-import { analytics, askAnalyticsConsent } from '../analytics';
+import { analytics, askAnalyticsConsent, closeConsent } from '../analytics';
 import { canVibrate, comfort, PALETTES, setComfort, TEXT_SCALES } from './comfort';
 import { learning, learningLang } from './learn';
 import { volumeHeight, volumeSliders } from './volume';
@@ -100,8 +100,14 @@ export class MenuScene extends Phaser.Scene {
       this.registry.set('introShown', true);
       this.story(false);
     } else {
-      // Statistics are asked about once a shift has been played, not over the first menu (AR-09).
-      if (loadMeta().stats.runs_played) askAnalyticsConsent();
+      // Statistics are asked about once a shift has been played, not over the first menu (AR-09),
+      // and only in a calm main menu: never over the ally choice or carried into the shift (QA-043).
+      if (loadMeta().stats.runs_played) {
+        this.time.delayedCall(1200, () => {
+          if (this.sys.isActive() && this.current === 'main' && !this.allyUi) askAnalyticsConsent();
+        });
+      }
+      this.events.once('shutdown', closeConsent);
       sound.playMusic('menu');
     }
   }
@@ -464,6 +470,7 @@ export class MenuScene extends Phaser.Scene {
   }
 
   private play(start: GameStart): void {
+    closeConsent();
     // A new shift with heroes back on the team: pick who comes along first (META.md, allySelection).
     const meta = loadMeta();
     if (start.fresh && !start.tutorial && meta.unlocked.length && !this.allyUi) {
