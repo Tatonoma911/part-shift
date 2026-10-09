@@ -131,7 +131,8 @@ export interface Player {
   autoQueue: string[];
   /** Attack order for all defenders: unit id or site key. */
   order: string | null;
-  stats: { nests: number; caches: number };
+  /** earned: all Energy income this run (missing in old saves). */
+  stats: { nests: number; caches: number; earned?: number };
   /** Scanner helper (design/ONBOARDING.md §1.3). */
   assist: AssistState;
 }

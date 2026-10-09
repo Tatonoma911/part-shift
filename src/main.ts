@@ -7,6 +7,7 @@ import { chooseLayout, LANDSCAPE, VIEW } from './game/layout';
 import { fontsReady } from './game/ui';
 import { initNative } from './platform/native';
 import { bootAnalytics } from './analytics';
+import { bootSocial } from './social';
 
 initNative();
 
@@ -30,4 +31,5 @@ Promise.all([fontsReady(), account.boot()]).then(() => {
     scene: [MenuScene, GameScene],
   });
   account.markLive();
+  bootSocial();
 });

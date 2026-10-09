@@ -16,6 +16,7 @@ import { clearSlot, lastSlot, loadSettings, loadSlot, saveSettings, SLOTS } from
 import { tutorialDone } from './Tutorial';
 import { setBackHandler } from '../platform/native';
 import { chip, plate, TXT } from './ui';
+import { closeSocial, dailySeed, dayId, heroOfWeek, invite, openBoard, openDonate, openFeedback, readChallenge, socialOpen } from '../social';
 
 type Ev = Phaser.Types.Input.EventData;
 type Page = 'main' | 'slots' | 'settings';
@@ -60,7 +61,9 @@ export class MenuScene extends Phaser.Scene {
     const params = new URLSearchParams(location.search);
     if (!this.registry.get('deepLinked') && (params.has('seed') || params.get('tutorial') === '1')) {
       this.registry.set('deepLinked', true);
-      const start: GameStart = params.get('tutorial') === '1' ? { tutorial: true } : { slot: 3, fresh: true, seed: Number(params.get('seed')) || undefined };
+      // Seed links (a friend's "beat my score" challenge) play in slot 0, outside the three menu slots.
+      const ch = readChallenge(params);
+      const start: GameStart = params.get('tutorial') === '1' ? { tutorial: true } : { slot: 0, fresh: true, seed: Number(params.get('seed')) || undefined, challenge: ch ? { score: ch.score, name: ch.name } : undefined };
       this.scene.start('game', start);
       return;
     }
@@ -71,6 +74,10 @@ export class MenuScene extends Phaser.Scene {
     // Android back: skips the intro comic, sub-pages return to the main page; on the main page the app goes to the background.
     setBackHandler(() => {
       if (learning().isOpen) return true;
+      if (socialOpen()) {
+        closeSocial();
+        return true;
+      }
       if (this.storyPlaying) {
         document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
         return true;
@@ -131,6 +138,12 @@ export class MenuScene extends Phaser.Scene {
     part.y = shift.y = 150 + ay;
     shift.x = part.x + part.width;
     this.add.text(ax + 390, 236 + ay, t('game.subtitle').toUpperCase(), TXT.caps()).setOrigin(0.5);
+    // The week's leader gets their name on everyone's title screen.
+    void heroOfWeek().then((h) => {
+      if (!h || !this.scene.isActive()) return;
+      const tx = this.add.text(ax + 390, 276 + ay, `🏆 ${t('social.hero_week', { name: h.name, score: h.score.toLocaleString('ru-RU') })}`, TXT.body(22, INK.amber, '700')).setOrigin(0.5);
+      if (tx.width > 740) tx.setScale(740 / tx.width);
+    });
 
     // A slice of the city: buildings, residents at work and the Demon looming behind.
     const demon = this.add.image(ax + 560, 560 + ay, 'portrait.demon').setOrigin(0.5, 1).setScale(2.2).setAlpha(0.9);
@@ -202,6 +215,8 @@ export class MenuScene extends Phaser.Scene {
       const acc = account.view;
       const accSub = acc.status === 'disabled' ? t('menu.soon') : acc.status === 'signed' ? acc.name || acc.email : undefined;
       button(t('menu.account'), () => openAccountPanel(), false, accSub);
+      this.socialRow(c, x0 + 32, y, w - 64);
+      y += (LANDSCAPE ? 76 : 92) + 16;
     } else if (page === 'slots') {
       c.add(this.add.text(cx, y + 6, t('menu.slots').toUpperCase(), TXT.caps()).setOrigin(0.5));
       y += 44;
@@ -253,6 +268,7 @@ export class MenuScene extends Phaser.Scene {
         analytics.setConsent(analytics.consent !== 'granted');
         this.show('settings');
       });
+      button(t('settings.feedback'), () => openFeedback('settings'));
       button(t('settings.reset_hints'), () => {
         learning().resetProgress();
         this.show('settings');
@@ -264,6 +280,42 @@ export class MenuScene extends Phaser.Scene {
     // Keep the panel on screen when it grows (settings has six rows).
     const overflow = top + h + 24 - VIEW.height;
     if (overflow > 0) c.y = -overflow;
+  }
+
+  /** Ranking · Invite · Feedback · Coffee (the coffee chip is gold: supporting the author is one tap away). */
+  private socialRow(c: Phaser.GameObjects.Container, x: number, y: number, w: number): void {
+    const h = LANDSCAPE ? 76 : 92;
+    const items: [string, string, () => void, boolean][] = [
+      ['🏆', t('social.menu.board'), () => openBoard({ playDaily: () => this.playDaily() }), false],
+      ['📣', t('social.menu.invite'), () => invite('menu'), false],
+      ['✉', t('social.menu.feedback'), () => openFeedback('menu'), false],
+      ['☕', t('social.menu.coffee'), () => openDonate('menu'), true],
+    ];
+    const gap = 10;
+    const bw = (w - gap * (items.length - 1)) / items.length;
+    items.forEach(([icon, label, act, gold], i) => {
+      const bx = x + i * (bw + gap);
+      const g = this.add.graphics();
+      chip(g, bx, y, bw, h, gold ? C.amber : C.graphite, gold ? 1 : 0.08, 14);
+      const ic = this.add.text(bx + bw / 2, y + h * 0.34, icon, TXT.body(LANDSCAPE ? 24 : 28)).setOrigin(0.5);
+      const tx = this.add.text(bx + bw / 2, y + h * 0.74, label, TXT.body(LANDSCAPE ? 17 : 19, INK.graphite, '700')).setOrigin(0.5);
+      if (tx.width > bw - 10) tx.setScale((bw - 10) / tx.width);
+      const hit = this.add.zone(bx, y, bw, h).setOrigin(0).setInteractive({ useHandCursor: true });
+      hit.on('pointerdown', (_p: Phaser.Input.Pointer, _x: number, _y: number, ev: Ev) => {
+        ev.stopPropagation();
+        sound.play('ui_tap');
+        act();
+      });
+      c.add([g, ic, tx, hit]);
+    });
+  }
+
+  /** City of the day: one map for everybody; slot 4 keeps today's run, a new day starts fresh. */
+  private playDaily(): void {
+    const day = dayId();
+    const seed = dailySeed(day);
+    const s = loadSlot(4);
+    this.play({ slot: 4, fresh: !s || s.seed !== seed, seed, daily: day });
   }
 
   private play(start: GameStart): void {
