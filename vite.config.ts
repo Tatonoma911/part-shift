@@ -1,40 +1,45 @@
 import { execFileSync } from 'node:child_process';
-import { resolve } from 'node:path';
+import { readFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { basename, join, resolve } from 'node:path';
 import { defineConfig, type Plugin } from 'vite';
 
 // base './' so the build works from any GitHub Pages sub-path.
 // Pages: the universe site at / (site/), the game at /play (src/), and the bare full-screen game at /mobile (the Android app's start page).
-// ARTIFACT=1 builds only the game script (no page around it) and inlines every image so it fits in one HTML file (npm run artifact).
+// ARTIFACT=1 builds only the game script (no page around it); art and audio over 16 KB become files published next to it (npm run artifact).
 // LEARNING=1 builds the learning preview page (learning.html) the same way.
 const artifact = process.env.ARTIFACT === '1';
 const learning = process.env.LEARNING === '1';
 /**
- * The Artifact must stay under 16 MB, so its audio is re-encoded to mono at a low
- * bit rate (the orchestral tracks are ~10 MB at full quality). Pages and the APK keep the originals.
+ * The Artifact publishes its art and audio as separate files next to the page (a single inlined
+ * page grew past the 16 MB limit). Intro comic pages, big JPG/PNG paintings, ship as WebP there.
  */
-function smallMusic(): Plugin {
+function smallComic(): Plugin {
   return {
-    name: 'small-music',
+    name: 'small-comic',
     enforce: 'pre',
     load(id) {
       const [file, query] = id.split('?');
-      const kind = /[\\/]audio[\\/](music|sfx)[\\/][^\\/]+\.mp3$/.exec(file)?.[1];
-      if (!query?.includes('url') || !kind) return null;
-      const rate = kind === 'music' ? '40k' : '48k';
-      const out = execFileSync('ffmpeg', ['-v', 'error', '-i', file, '-ac', '1', '-b:a', rate, '-f', 'mp3', '-'], { maxBuffer: 64 << 20 });
-      return `export default ${JSON.stringify(`data:audio/mpeg;base64,${out.toString('base64')}`)};`;
+      if (!query?.includes('url') || !/[\\/]assets[\\/]comic[\\/].+\.(jpe?g|png)$/.test(file)) return null;
+      // A real file, not stdout: the WebP muxer fills in its RIFF size by seeking back.
+      const tmp = join(tmpdir(), `partshift-${basename(file)}.webp`);
+      execFileSync('ffmpeg', ['-v', 'error', '-y', '-i', file, '-c:v', 'libwebp', '-quality', '82', tmp]);
+      const ref = this.emitFile({ type: 'asset', name: `${basename(file).replace(/\.\w+$/, '')}.webp`, source: readFileSync(tmp) });
+      return `export default import.meta.ROLLUP_FILE_URL_${ref};`;
     },
   };
 }
 
 export default defineConfig({
   base: './',
-  plugins: artifact ? [smallMusic()] : [],
+  // The universe site's files are not part of the game preview.
+  publicDir: artifact ? false : 'public',
+  plugins: artifact ? [smallComic()] : [],
   // The Artifact and learning previews never send analytics, so Firebase Analytics stays out of their one-file builds.
   define: { __ANALYTICS__: JSON.stringify(!artifact && !learning), __CLOUD__: JSON.stringify(!artifact && !learning) },
   build: {
     chunkSizeWarningLimit: 4000,
-    assetsInlineLimit: artifact || learning ? () => true : 4096,
+    assetsInlineLimit: learning ? () => true : artifact ? 16384 : 4096,
     outDir: learning ? 'dist-learning' : artifact ? 'dist-artifact' : 'dist',
     rollupOptions: {
       input: learning
