@@ -1,4 +1,5 @@
 import './style.css';
+import { APK_URL, supportBlock, wireSupport } from './support';
 import { ADS, ARTBOOK, BARKS, COMICS, DISTRICTS, HEROES, img, REACTIONS, TECH, UI, type Hero, type L, type Lang } from './content';
 
 /**
@@ -68,6 +69,8 @@ function drawer(): string {
   return `<div class="drawer" id="drawer" hidden><div class="drawer-panel">
     <div class="drawer-head"><span class="wordmark">PART<b>SHIFT</b></span><button class="icon-btn" id="drawer-close" aria-label="${u('close')}">${ICON.close}</button></div>
     ${items}
+    <a class="item" href="${APK_URL}" rel="noopener">${R('Скачать для Android', 'Download for Android')}<span class="caps">APK</span></a>
+    <a class="item" href="#support">${R('Донат автору', 'Tip the author')}<span class="caps">☕</span></a>
     <div class="row" style="margin-top:18px;justify-content:space-between">${langSwitch()}<a class="btn btn-primary" href="${playHref()}">${ICON.play}${u('play')}</a></div>
   </div></div>`;
 }
@@ -76,7 +79,7 @@ function footer(): string {
   return `<footer><div class="wrap">
     <span class="wordmark">PART<b>SHIFT</b></span>
     <span>${R('Lumen City. Всегда на смене. Игра бесплатная, мир вымышленный.', 'Lumen City. Always on call. The game is free, the world is fiction.')}</span>
-    <a class="btn btn-ghost" href="${playHref()}">${ICON.play}${u('playFree')}</a>
+    <div class="row"><a class="btn btn-ghost" href="${APK_URL}" rel="noopener">${R('Скачать для Android', 'Download for Android')}</a><a class="btn btn-ghost" href="#support">☕ ${R('Донат автору', 'Tip the author')}</a><a class="btn btn-ghost" href="${playHref()}">${ICON.play}${u('playFree')}</a></div>
   </div></footer>`;
 }
 
@@ -107,7 +110,7 @@ function home(): string {
         'Сеть спасения сломалась и перестроила город под себя. Открывай кварталы, строй, защищай жителей и забирай у врагов их руки, ноги и хвосты.',
         'The rescue network broke and rebuilt the city in its own image. Open blocks, build, protect residents and take your enemies’ arms, legs and tails.',
       )}</p>
-      <div class="row"><a class="btn btn-primary btn-lg" href="${playHref()}">${ICON.play}${u('playFree')}</a><a class="btn btn-ghost btn-lg" href="#world">${R('Узнать историю', 'Read the story')}</a></div>
+      <div class="row"><a class="btn btn-primary btn-lg" href="${playHref()}">${ICON.play}${u('playFree')}</a><a class="btn btn-ghost btn-lg" href="${APK_URL}" rel="noopener">${R('Скачать для Android', 'Download for Android')}</a><a class="btn btn-ghost btn-lg" href="#world">${R('Узнать историю', 'Read the story')}</a></div>
     </div></div>
   </section>
 
@@ -156,6 +159,11 @@ function home(): string {
   <section class="section"><div class="wrap">
     ${head(R('КОМИКСЫ // ДО СИРЕН', 'COMICS // BEFORE THE SIRENS'), R('Обычные проблемы. Профессиональная громкость.', 'Ordinary problems. Professional volume.'))}
     <div class="comics">${COMICS.slice(0, 4).map(comicCard).join('')}</div>
+  </div></section>
+
+  <section class="section" id="support" style="padding-top:0"><div class="wrap">
+    ${head(R('СКАЧАТЬ // ПОДДЕРЖАТЬ', 'DOWNLOAD // SUPPORT'), R('Игра на телефоне и кофе автору', 'The game on your phone, and a coffee for the author'))}
+    ${supportBlock(lang)}
   </div></section>
 
   ${fightingTeaser()}`;
@@ -469,6 +477,8 @@ function route(): { view: string; active: string; anchor?: string } {
       return { view: villainsView(), active: 'villains' };
     case 'comics':
       return { view: comicsView(), active: 'comics' };
+    case 'support':
+      return { view: home(), active: 'home', anchor: 'support' };
     default:
       return { view: home(), active: 'home' };
   }
@@ -484,6 +494,7 @@ function render(): void {
   document.title = r.active === 'home' ? 'PART SHIFT — Lumen City' : `${u(r.active)} · PART SHIFT`;
   const same = location.hash === lastHash;
   lastHash = location.hash;
+  wireSupport(app, lang);
   if (r.anchor) document.getElementById(r.anchor)?.scrollIntoView();
   else if (!same) window.scrollTo(0, 0);
 }
