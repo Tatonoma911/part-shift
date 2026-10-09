@@ -56,6 +56,27 @@ describe('nests and combat', () => {
     expect(attached).toBeGreaterThan(0);
   });
 
+  it('without an order defenders pick enemies near the base and open nests in the guard radius', () => {
+    const w = armed(['.......', '.......', '.......', '...n...'], 1);
+    const d = w.s.units.find((u) => u.kind === 'defender')!;
+    w.cell(3, 3).revealed = false;
+    (w as unknown as { reveal(x: number, y: number, o: number): void }).reveal(3, 3, 0);
+    for (const f of w.s.units.filter((u) => u.owner < 0)) f.hp = 0;
+    w.s.units = w.s.units.filter((u) => u.hp > 0);
+    run(w, 0.2);
+    expect(d.target).toBe('s:3,3');
+  });
+
+  it('tapping the same target twice lifts the order', () => {
+    const w = armed(['.......', '.......', '......n'], 1);
+    w.cell(6, 2).revealed = false;
+    (w as unknown as { reveal(x: number, y: number, o: number): void }).reveal(6, 2, 0);
+    expect(w.apply({ type: 'attack', target: 's:6,2' }).ok).toBe(true);
+    expect(w.player(0).order).toBe('s:6,2');
+    w.apply({ type: 'attack', target: 's:6,2' });
+    expect(w.player(0).order).toBeNull();
+  });
+
   it('a part goes to a free slot, then replaces only a weaker one, else is recycled', () => {
     const w = armed(['.......', '.......', '.......'], 1);
     const d = w.s.units.find((u) => u.kind === 'defender')!;

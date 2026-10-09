@@ -34,13 +34,16 @@ export function createTutorialWorld(seed = 1): World {
     threatEnabled: o['config.threat.enabled'] !== false,
     demonEnabled: o['config.demon.enabled'] !== false,
     commandInvulnerable: o.commandInvulnerable === true,
-    commandFixed: t.commandFixed,
+    relativeSites: t.commandPlacement?.relativeSites as RuleOverrides['relativeSites'],
+    relativeTech: (o.nestTech as Tech) ?? 'cryo',
     nest: o.nest as RuleOverrides['nest'],
     adaptant: o.adaptant as RuleOverrides['adaptant'],
   };
   const w = new World({ seed, width: t.width, height: t.height, rules, assist: (o['assist.mode'] as 'full') ?? 'full' });
-  const legend = t.legend as Record<string, string>;
-  t.layout.forEach((row, y) =>
+  // An open field: the player picks the center anywhere, sites follow it (commandPlacement).
+  const layout = t.layout as string[] | null;
+  const legend = (t.legend ?? {}) as Record<string, string>;
+  layout?.forEach((row, y) =>
     [...row].forEach((ch, x) => {
       const content = legend[ch] === 'command' ? 'ground' : (legend[ch] as CellContent);
       const c = w.cell(x, y);

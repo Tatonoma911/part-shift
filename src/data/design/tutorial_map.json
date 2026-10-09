@@ -5,30 +5,8 @@
   "width": 8,
   "height": 10,
   "_note": "Hand-made tutorial map (ONBOARDING.md §2). Interim file by game designer until the level designer owns design/levels/.",
-  "layout": [
-    "........",
-    "........",
-    "......C.",
-    "..N.....",
-    "........",
-    "........",
-    "R.......",
-    ".......~",
-    "...K...~",
-    "........"
-  ],
-  "legend": {
-    ".": "ground",
-    "C": "cache",
-    "N": "nest",
-    "R": "rubble",
-    "~": "water",
-    "K": "command"
-  },
-  "commandFixed": {
-    "x": 3,
-    "y": 8
-  },
+  "layout": null,
+  "legend": null,
   "initiallyRevealedRadius": 1,
   "overrides": {
     "config.dig.digSeconds": 3,
@@ -55,32 +33,13 @@
     {
       "id": 1,
       "text": "tutorial.step1",
-      "highlight": [
-        [
-          3,
-          8
-        ]
-      ],
       "until": "command_placed"
     },
     {
       "id": 2,
       "text": "tutorial.step2",
-      "highlight": [
-        [
-          2,
-          6
-        ],
-        [
-          3,
-          6
-        ],
-        [
-          4,
-          6
-        ]
-      ],
-      "until": "cells_queued:3"
+      "until": "cells_queued:3",
+      "hint": "no pre-selected cells; text asks to swipe across any closed cells next to the open ground"
     },
     {
       "id": 3,
@@ -133,5 +92,28 @@
   "finish": {
     "text": "tutorial.final",
     "next": "demon_hunt_easy"
+  },
+  "commandPlacement": {
+    "anyCell": true,
+    "highlight": false,
+    "_note": "Player taps any cell [Антон: no pre-highlighted cells]. Sites are placed relative to the chosen center; if a target cell is off-board it is mirrored to the other side.",
+    "relativeSites": [
+      {
+        "type": "nest",
+        "dx": -1,
+        "dy": -5
+      },
+      {
+        "type": "cache",
+        "dx": 3,
+        "dy": -6
+      },
+      {
+        "type": "rubble",
+        "dx": -3,
+        "dy": -2
+      }
+    ],
+    "waterIgnored": true
   }
 }

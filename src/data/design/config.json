@@ -34,7 +34,10 @@
     "trainSeconds": 8,
     "trainingFreesDwellingSlot": true,
     "guardRadius": 3,
-    "attackNestsOnlyByOrder": true
+    "autoAttack": true,
+    "autoAttackNestsInGuardRadius": true,
+    "tapEnemyDirects": true,
+    "attackModeButton": false
   },
   "combat": {
     "damageFormula": "max(minDamage, attackerDamage - targetDefense)",
