@@ -1,0 +1,109 @@
+/* /play: the game in the middle, the universe around it. The page never scrolls. */
+html:has(body.play), body.play { height: 100%; overflow: hidden; }
+body.play {
+  background:
+    radial-gradient(ellipse 70% 60% at 50% 45%, color-mix(in srgb, var(--seam) 14%, transparent), transparent 70%),
+    linear-gradient(180deg, var(--sky) 0, var(--sky2) 100%);
+  background-color: var(--sky);
+}
+#frame { height: 100%; display: grid; grid-template-rows: auto minmax(0, 1fr); }
+
+.pbar {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  height: 56px;
+  padding: env(safe-area-inset-top, 0px) clamp(12px, 2vw, 28px) 0;
+  background: color-mix(in srgb, var(--paper) 90%, transparent);
+  border-bottom: 1px solid var(--line);
+  box-sizing: content-box;
+}
+.pbar .brand img { width: 28px; height: 28px; }
+.pnav { display: flex; gap: 2px; }
+.pnav a { padding: 8px 11px; text-decoration: none; font-weight: 600; font-size: 15px; color: var(--dim); }
+.pnav a:hover { color: var(--ink); }
+.pshift { margin-left: auto; }
+.pmenu {
+  display: none;
+  margin-left: auto;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border: 0;
+  background: var(--ink);
+  color: var(--paper);
+  font: 700 13px/1 var(--display);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  cursor: pointer;
+  clip-path: polygon(8px 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%, 0 8px);
+}
+
+.pstage {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  gap: clamp(14px, 2vw, 32px);
+  padding: 14px clamp(12px, 2vw, 28px) calc(env(safe-area-inset-bottom, 0px) + 14px);
+  min-height: 0;
+}
+/* The game keeps the phone shape of its canvas (780 × 1600). */
+.pside.left { grid-column: 1; }
+.pside.right { grid-column: 3; }
+.pgame { grid-column: 2; grid-row: 1; height: 100%; aspect-ratio: 780 / 1600; max-width: 100%; position: relative; }
+.pgame::before, .pgame::after {
+  content: '';
+  position: absolute;
+  width: 26px;
+  height: 26px;
+  border: 3px solid var(--deep);
+  pointer-events: none;
+}
+.pgame::before { left: -8px; top: -8px; border-right: 0; border-bottom: 0; }
+.pgame::after { right: -8px; bottom: -8px; border-left: 0; border-top: 0; }
+#app { width: 100%; height: 100%; touch-action: none; user-select: none; -webkit-user-select: none; overflow: hidden; }
+
+.pside { display: flex; flex-direction: column; gap: 14px; min-width: 0; max-width: 360px; overflow-y: auto; scrollbar-width: thin; }
+.pside.left { justify-self: end; }
+.pside.right { justify-self: start; }
+.poster { display: grid; gap: 0; }
+.poster img { aspect-ratio: 4 / 3; object-fit: cover; width: 100%; }
+.poster figcaption { padding: 14px 18px 18px; display: grid; gap: 6px; color: var(--ink); font-size: 15px; }
+.pcard { padding: 18px 20px 20px; display: grid; gap: 10px; font-size: 15px; line-height: 1.5; }
+.pcard .pxs { height: 96px; width: auto; image-rendering: pixelated; justify-self: start; }
+.legend, .keys { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.legend li { display: flex; gap: 12px; align-items: center; }
+.legend b { font: 900 20px/1 var(--display); width: 22px; text-align: center; }
+.keys li { display: flex; gap: 10px; align-items: center; color: var(--dim); }
+kbd {
+  font: 700 12px/1 var(--display);
+  padding: 6px 8px;
+  background: var(--ink);
+  color: var(--paper);
+  min-width: 52px;
+  text-align: center;
+  clip-path: polygon(5px 0, 100% 0, 100% calc(100% - 5px), calc(100% - 5px) 100%, 0 100%, 0 5px);
+}
+.pheroes { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px 8px; }
+.pheroes a { display: grid; justify-items: center; gap: 4px; text-decoration: none; font-size: 13px; font-weight: 600; color: var(--dim); }
+.pheroes img { height: 64px; width: auto; image-rendering: pixelated; object-fit: contain; }
+
+.drawer-panel .resume { border: 0; background: var(--teal); color: var(--on-teal); width: 100%; cursor: pointer; padding: 16px 14px; font: 700 18px/1.2 var(--display); display: flex; justify-content: space-between; margin-bottom: 6px; }
+.drawer-art { margin: 16px 0 0; }
+.drawer-art img { width: 100%; }
+
+/* Narrow desktop: one side column. */
+@media (max-width: 1180px) {
+  .pside.left { display: none; }
+  .pstage { grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); }
+  .pshift { display: none; }
+}
+/* Phones and small tablets: the game takes the whole screen under a slim bar. */
+@media (max-width: 860px), (max-aspect-ratio: 3/4) {
+  .pside, .pnav, .pshift { display: none !important; }
+  .pmenu { display: inline-flex; }
+  .pbar { height: 44px; gap: 10px; }
+  .pbar .wordmark { font-size: 17px; }
+  .pstage { display: block; padding: 0 0 env(safe-area-inset-bottom, 0px); }
+  .pgame { width: 100%; height: 100%; aspect-ratio: auto; }
+  .pgame::before, .pgame::after { display: none; }
+}
