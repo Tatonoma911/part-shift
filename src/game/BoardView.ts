@@ -55,14 +55,6 @@ function hash(x: number, y: number): number {
   return (Math.imul(x + 17, 73856093) ^ Math.imul(y + 31, 19349663)) >>> 0;
 }
 
-/**
- * Stand-in for adaptants: the chunky shield-armed sheets clash with the hero
- * style and Антон rejected them (2026-10-09). Until the animator redraws them,
- * adaptants are smaller Standard-style infected residents tinted by element.
- */
-const ADAPTANT_SET = 'standard';
-const ADAPTANT_TINT: Record<string, number> = { thermo: 0xffb6a0, cryo: 0xb4e2ff, volt: 0xfff09a, toxin: 0xc6f29e, impact: 0xe0c0a0, kinetic: 0xe0d0c0 };
-const HEAVY_TINT = 0xc8a890;
 
 /** Residents fight now; their swing, flinch and limb install come from the animator's fighter sheet. */
 const RESIDENT_COMBAT_SET = 'defender';
@@ -882,8 +874,13 @@ export class BoardView {
         return 'resident';
       case 'hero':
         return animSets[u.hero!] ? u.hero! : 'standard';
-      default:
-        return ADAPTANT_SET;
+      case 'heavy_adaptant':
+        return 'heavy_adaptant';
+      default: {
+        // The animator's redrawn sheets, one per nest element, no shields (AR-18).
+        const set = `adaptant_${u.tech ?? 'thermo'}`;
+        return animSets[set] ? set : 'adaptant_thermo';
+      }
     }
   }
 
@@ -924,11 +921,6 @@ export class BoardView {
         if (u.kind === 'hero' && u.nest && w.cell(...(u.nest.slice(2).split(',').map(Number) as [number, number])).content === 'boss_hatch') {
           spr.setScale(1.3);
           v.ring = this.scene.add.image(fx, fy, 'tile.defender_ring').setOrigin(0.5, 0.75).setScale(1.6).setTint(C.violet);
-        }
-        if (u.kind === 'adaptant' || u.kind === 'heavy_adaptant') {
-          spr.setScale(u.kind === 'heavy_adaptant' ? 1.05 : 0.8);
-          v.tint = u.kind === 'heavy_adaptant' ? HEAVY_TINT : ADAPTANT_TINT[u.tech ?? 'thermo'] ?? ADAPTANT_TINT.thermo;
-          spr.setTint(v.tint);
         }
         if (u.owner >= 0 && u.owner !== ME) spr.setTint(0xffb080);
         this.units.set(u.id, v);

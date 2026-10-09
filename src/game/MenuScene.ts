@@ -14,6 +14,7 @@ import { preloadComm } from './Comm';
 import { sound } from './audio';
 import type { GameStart } from './GameScene';
 import { C, INK, LANDSCAPE, VIEW } from './layout';
+import { menuIcon, type MenuIconId } from './menuIcons';
 import { preloadMetaArt } from './meta/art';
 import { metaPreview } from './meta/preview';
 import { clearSlot, lastSlot, loadSettings, loadSlot, saveSettings, SLOTS } from './saves';
@@ -150,7 +151,7 @@ export class MenuScene extends Phaser.Scene {
     // The week's leader gets their name on everyone's title screen.
     void heroOfWeek().then((h) => {
       if (!h || !this.scene.isActive()) return;
-      const tx = this.add.text(ax + 390, 276 + ay, `🏆 ${t('social.hero_week', { name: h.name, score: h.score.toLocaleString('ru-RU') })}`, TXT.body(22, INK.amber, '700')).setOrigin(0.5);
+      const tx = this.add.text(ax + 390, 276 + ay, `${t('social.hero_week', { name: h.name, score: h.score.toLocaleString('ru-RU') })}`, TXT.body(22, INK.amber, '700')).setOrigin(0.5);
       if (tx.width > 740) tx.setScale(740 / tx.width);
     });
 
@@ -421,11 +422,12 @@ export class MenuScene extends Phaser.Scene {
   /** Ranking · Invite · Feedback · Coffee (the coffee chip is gold: supporting the author is one tap away). */
   private socialRow(c: Phaser.GameObjects.Container, x: number, y: number, w: number): void {
     const h = LANDSCAPE ? 76 : 92;
-    const items: [string, string, () => void, boolean][] = [
-      ['🏆', t('social.menu.board'), () => openBoard({ playDaily: () => this.playDaily() }), false],
-      ['📣', t('social.menu.invite'), () => invite('menu'), false],
-      ['✉', t('social.menu.feedback'), () => openFeedback('menu'), false],
-      ['☕', t('social.menu.coffee'), () => openDonate('menu'), true],
+    // Brand icons, not system emoji (AR-21): emoji look different on every phone.
+    const items: [MenuIconId, string, () => void, boolean][] = [
+      ['leaderboard', t('social.menu.board'), () => openBoard({ playDaily: () => this.playDaily() }), false],
+      ['invite', t('social.menu.invite'), () => invite('menu'), false],
+      ['feedback', t('social.menu.feedback'), () => openFeedback('menu'), false],
+      ['coffee', t('social.menu.coffee'), () => openDonate('menu'), true],
     ];
     const gap = 10;
     const bw = (w - gap * (items.length - 1)) / items.length;
@@ -433,7 +435,7 @@ export class MenuScene extends Phaser.Scene {
       const bx = x + i * (bw + gap);
       const g = this.add.graphics();
       chip(g, bx, y, bw, h, gold ? C.amber : C.graphite, gold ? 1 : 0.08, 14);
-      const ic = this.add.text(bx + bw / 2, y + h * 0.34, icon, TXT.body(LANDSCAPE ? 24 : 28)).setOrigin(0.5);
+      const ic = menuIcon(this, bx + bw / 2, y + h * 0.34, LANDSCAPE ? 32 : 40, icon);
       const tx = this.add.text(bx + bw / 2, y + h * 0.74, label, TXT.body(LANDSCAPE ? 17 : 19, INK.graphite, '700')).setOrigin(0.5);
       if (tx.width > bw - 10) tx.setScale((bw - 10) / tx.width);
       const hit = this.add.zone(bx, y, bw, h).setOrigin(0).setInteractive({ useHandCursor: true });
@@ -442,7 +444,7 @@ export class MenuScene extends Phaser.Scene {
         sound.play('ui_tap');
         act();
       });
-      c.add([g, ic, tx, hit]);
+      c.add([g, ...ic, tx, hit]);
     });
   }
 

@@ -263,12 +263,12 @@
   "end.share": "Share",
   "end.board": "Ranking",
   "end.board_place": "Ranking · #{place}",
-  "end.coffee": "☕ Coffee for the author",
+  "end.coffee": "Coffee for the author",
   "end.challenge_won": "Challenge from {name} beaten: {mine} vs {theirs}. You win!",
   "end.challenge_lost": "Challenge from {name}: {theirs}. You got {mine}, try again.",
   "end.daily": "City of the day {day}",
   "pause.screenshot": "Screenshot",
-  "pause.coffee": "☕ Support",
+  "pause.coffee": "Support",
   "share.title": "Share",
   "share.caption": "Bring friends under the dome",
   "share.invite_text": "A city under a dome is quarantined and its heroes went mad. Jump into Part Shift, free in the browser:",
@@ -337,5 +337,6 @@
   "side.nests": "Nests",
   "side.caches": "Caches",
   "side.survivors": "Survivors",
-  "side.threat_next": "Threat {level} in {time}"
+  "side.threat_next": "Threat {level} in {time}",
+  "dossier.title": "Dossier"
 }
