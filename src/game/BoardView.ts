@@ -61,6 +61,8 @@ export class BoardView {
   private readonly tileKey: string[] = [];
   private readonly film: Phaser.GameObjects.Image[] = [];
   private readonly hot = new Map<number, Phaser.GameObjects.Image>();
+  private readonly haze = new Map<number, Phaser.GameObjects.Sprite>();
+  private readonly sparks = new Map<number, Phaser.GameObjects.Sprite>();
   private readonly sites = new Map<string, Phaser.GameObjects.Sprite>();
   private readonly clueTexts = new Map<number, Phaser.GameObjects.Text[]>();
   private readonly buildingViews = new Map<number, { spr: Phaser.GameObjects.Sprite; state: string; type: string; x: number; y: number }>();
@@ -170,10 +172,48 @@ export class BoardView {
 
   // ----------------------------------------------------------------- events
 
+  /** One-shot effect from the animator's fx sheet, centered on a board pixel. */
+  private fx(anim: string, x: number, y: number, scale = 1, depth = D.top - 0.5): void {
+    if (!this.scene.anims.exists(`fx.${anim}`)) return;
+    const s = this.scene.add.sprite(x, y, 'fx').setScale(scale).setDepth(depth);
+    s.play(`fx.${anim}`).once('animationcomplete', () => s.destroy());
+  }
+
+  private fxAtCell(anim: string, x: number, y: number, scale = 1): void {
+    const p = this.center(x, y);
+    this.fx(anim, p.x, p.y, scale);
+  }
+
+  /** Where a target string ("u:id", "s:x,y", "b:id") stands, in board pixels. */
+  private targetPos(target: string | undefined): { x: number; y: number } | null {
+    if (!target) return null;
+    const w = this.world;
+    if (target.startsWith('u:')) {
+      const u = w.s.units.find((o) => `u:${o.id}` === target);
+      return u ? { x: this.center(u.x, u.y).x, y: this.center(u.x, u.y).y - 8 } : null;
+    }
+    if (target.startsWith('s:')) {
+      const [x, y] = target.slice(2).split(',').map(Number);
+      return this.center(x, y);
+    }
+    const b = w.building(Number(target.slice(2)));
+    return b ? { x: this.center(b.x, b.y).x, y: this.center(b.x, b.y).y - 20 } : null;
+  }
+
+  /** Hit effect by the attacker's technology: its first trophy part, or its own kind. */
+  private hitAnim(u: Unit, set: string): string {
+    const part = Object.values(u.parts).find(Boolean);
+    const tech = part ? part.id.split('_')[0] : set.startsWith('adaptant_') ? set.slice('adaptant_'.length) : '';
+    if (tech === 'thermo') return 'hit_thermo';
+    if (tech === 'cryo') return 'hit_cryo';
+    if (tech === 'volt' || tech === 'toxin') return 'hit_volt';
+    return 'hit_impact';
+  }
+
   onEvent(e: GameEvent): void {
     const sc = this.scene;
     if (e.x === undefined || e.y === undefined) {
-      if (e.type === 'demon_blast') sc.cameras.main.shake(150, 0.004);
+      if (e.type === 'demon_blast') this.shake(150, 0.004);
       return;
     }
     const at = (anim: string) => {
@@ -200,20 +240,63 @@ export class BoardView {
         at('fx.energy_arrive');
         break;
       case 'center_hit':
-        sc.cameras.main.shake(100, 0.002);
+        this.shake(100, 0.002);
         break;
-      case 'demon_blast':
-        sc.cameras.main.shake(150, 0.004);
-        break;
-      case 'building_lost':
-        this.lost.push(e);
-        break;
-      case 'part_attached': {
-        const v = e.unit !== undefined ? this.units.get(e.unit) : undefined;
-        if (v && animSets[v.set].anims.install_part) this.oneShot(v, 'install_part');
+      case 'demon_blast': {
+        this.shake(220, 0.006);
+        // Steam blast: a line of explosions in the wind-up direction.
+        const demon = this.world.s.units.find((u) => u.kind === 'demon');
+        const b = demon?.blast;
+        for (let k = 0; k <= 3; k++) {
+          const p = this.center(e.x + (b?.dx ?? 0) * k, e.y + (b?.dy ?? 0) * k);
+          sc.time.delayedCall(k * 70, () => this.fx('explosion', p.x, p.y, 1.3));
+        }
         break;
       }
+      case 'building_lost':
+        this.lost.push(e);
+        this.fxAtCell('explosion', e.x, e.y, 1.8);
+        this.shake(160, 0.004);
+        break;
+      case 'nest_open':
+      case 'heavy_nest_open':
+        this.fxAtCell('explosion', e.x, e.y, e.type === 'heavy_nest_open' ? 2 : 1.5);
+        this.shake(180, 0.004);
+        break;
+      case 'nest_destroyed':
+        this.fxAtCell('explosion', e.x, e.y, 2);
+        this.shake(200, 0.005);
+        break;
+      case 'enemy_die':
+        this.fxAtCell('explosion', e.x, e.y, 0.9);
+        break;
+      case 'demon_die':
+        for (let k = 0; k < 5; k++) sc.time.delayedCall(k * 160, () => this.fxAtCell('explosion', e.x! + (k % 2 ? 0.5 : -0.5) * (k > 2 ? 1 : 0.4), e.y! - 0.3 * k, 2.4));
+        this.shake(600, 0.008);
+        break;
+      case 'defender_die':
+      case 'resident_die':
+        this.fxAtCell('hit_impact', e.x, e.y, 1.2);
+        break;
+      case 'part_attached': {
+        // Instant limb swap: a flash on the defender and the install animation.
+        const v = e.unit !== undefined ? this.units.get(e.unit) : undefined;
+        if (v && animSets[v.set].anims.install_part) this.oneShot(v, 'install_part');
+        const p = this.center(e.x, e.y);
+        this.fx('energy_arrive', p.x, p.y - 26, 1.4);
+        this.fx('hit_volt', p.x, p.y - 26, 0.9);
+        break;
+      }
+      case 'part_recycled':
+        this.fxAtCell('energy_arrive', e.x, e.y, 1.2);
+        break;
     }
+  }
+
+  /** Shake only the board camera; HUD and dock stay still. */
+  private shake(ms: number, intensity: number): void {
+    const cams = this.scene.cameras.cameras;
+    (cams[1] ?? cams[0]).shake(ms, intensity);
   }
 
   // ----------------------------------------------------------------- update
@@ -277,6 +360,13 @@ export class BoardView {
           this.tileKey[i] = key;
         }
         this.film[i].setVisible(!c.revealed).setAlpha(flicker);
+        const sparking = c.revealed && c.content === 'energy_vein' && (c.stock ?? 0) > 0;
+        let spark = this.sparks.get(i);
+        if (sparking && !spark) {
+          spark = this.scene.add.sprite(px, py, 'fx').setOrigin(0).setDepth(D.site + 0.4).play('fx.vein_spark');
+          this.sparks.set(i, spark);
+        }
+        spark?.setVisible(sparking);
         this.updateHot(i, c.hot ?? 0, px, py, now);
         this.updateSite(x, y);
 
@@ -445,14 +535,21 @@ export class BoardView {
 
   private updateHot(i: number, hot: number, px: number, py: number, now: number): void {
     let img = this.hot.get(i);
+    let haze = this.haze.get(i);
     if (hot <= 0) {
       img?.setVisible(false);
+      haze?.setVisible(false);
       return;
     }
     if (!img) {
       img = this.scene.add.image(px, py, 'tile.hot_0').setOrigin(0).setDepth(D.site + 0.5);
       this.hot.set(i, img);
     }
+    if (!haze) {
+      haze = this.scene.add.sprite(px, py, 'fx').setOrigin(0).setDepth(D.site + 0.6).play('fx.heat_haze');
+      this.haze.set(i, haze);
+    }
+    haze.setVisible(true);
     img.setVisible(true).setTexture(`tile.hot_${Math.floor(now / 400) % 2}`).setAlpha(Math.min(1, 0.4 + hot / 10));
   }
 
@@ -661,7 +758,19 @@ export class BoardView {
       const set = animSets[v.set];
       if (Math.abs(dx) > 0.0005) v.spr.setFlipX(set.faces === 'left' ? dx > 0 : dx < 0);
       // A fresh cooldown means the unit just struck.
-      if (u.attackCooldown > v.lastCd + 0.05 && set.anims.attack && !v.oneShot) this.oneShot(v, 'attack');
+      if (u.attackCooldown > v.lastCd + 0.05) {
+        if (set.anims.attack && !v.oneShot) this.oneShot(v, 'attack');
+        const tp = this.targetPos(u.target ?? (u.owner >= 0 ? w.player(u.owner).order ?? undefined : undefined));
+        if (tp) {
+          const big = u.kind === 'demon' || u.kind === 'heavy_adaptant';
+          this.scene.time.delayedCall(180, () => this.fx(this.hitAnim(u, v!.set), tp.x, tp.y, big ? 1.6 : 1.1));
+          if (tp.x !== fx) v.spr.setFlipX(set.faces === 'left' ? tp.x > fx : tp.x < fx);
+        }
+      }
+      // Burning and frozen units show it.
+      if (u.burn && Math.random() < 0.06) this.fx('hit_thermo', fx + (Math.random() - 0.5) * 20, fy - 30, 0.6);
+      if (u.slow) v.spr.setTint(0x9fdcff);
+      else if (!(u.owner >= 0 && u.owner !== ME)) v.spr.clearTint();
       const windup = u.blast?.phase === 'windup';
       if (windup && !v.windup) this.oneShot(v, 'tail_swing');
       v.windup = windup;

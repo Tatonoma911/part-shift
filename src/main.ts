@@ -1,12 +1,16 @@
 import Phaser from 'phaser';
 import { GameScene } from './game/GameScene';
-import { VIEW } from './game/layout';
+import { MenuScene } from './game/MenuScene';
+import { chooseLayout, VIEW } from './game/layout';
 import { fontsReady } from './game/ui';
 import { initNative } from './platform/native';
 
 initNative();
 
 fontsReady().then(() => {
+  // Pick the layout from the game's own box, so an embedding page (site /play) decides.
+  const box = document.getElementById('app')?.getBoundingClientRect();
+  chooseLayout(box?.width || window.innerWidth, box?.height || window.innerHeight);
   new Phaser.Game({
     type: Phaser.AUTO,
     parent: 'app',
@@ -15,6 +19,6 @@ fontsReady().then(() => {
     height: VIEW.height,
     scale: { mode: Phaser.Scale.FIT, autoCenter: Phaser.Scale.CENTER_BOTH },
     input: { activePointers: 2 },
-    scene: [GameScene],
+    scene: [MenuScene, GameScene],
   });
 });

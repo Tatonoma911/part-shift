@@ -8,14 +8,25 @@ export type Lang = 'ru' | 'en';
 const ru: Record<string, string> = { ...ruWriter, ...ruExtra };
 const tables: Record<Lang, Record<string, string>> = { ru, en };
 
-/** ?lang=en|ru wins, then the browser language; Russian speakers get ru, everyone else en. */
+/** ?lang=en|ru wins, then the language picked in settings, then the browser language. */
 function detect(): Lang {
   const forced = new URLSearchParams(location.search).get('lang');
   if (forced === 'ru' || forced === 'en') return forced;
+  try {
+    const picked = JSON.parse(localStorage.getItem('partshift.settings.v1') ?? '{}').lang;
+    if (picked === 'ru' || picked === 'en') return picked;
+  } catch {
+    /* ignore */
+  }
   return navigator.language.toLowerCase().startsWith('ru') ? 'ru' : 'en';
 }
 
-export const lang: Lang = typeof location === 'undefined' ? 'ru' : detect();
+export let lang: Lang = typeof location === 'undefined' ? 'ru' : detect();
+
+/** Switches the language for texts created from now on (the menu redraws itself). */
+export function setLang(l: Lang): void {
+  lang = l;
+}
 
 /** Looks up a text key and fills {placeholders}; falls back to Russian, then to the key itself. */
 export function t(key: string, params: Record<string, string | number> = {}): string {
