@@ -1,5 +1,5 @@
 {
- "_doc": "Фразы героев для всплывающего портрета (комм-окно, левый верхний угол). lines: при появлении героя; build: когда игрок открыл/построил здание; defeat: последняя фраза. Ключи writer-а (hero.line.*, hero.defeat.*) взяты из text/ru.json. Владелец текстов: Сценарист.",
+ "_doc": "Фразы героев для всплывающего портрета (комм-окно, левый верхний угол). lines: при появлении героя; build: когда игрок открыл/построил здание; defeat: последняя фраза. Ключи writer-а (hero.line.*, hero.defeat.*) взяты из text/ru.json. Владелец текстов: Сценарист. tech и weak (уязвимости, resist > 1, по убыванию) берутся из design/data/heroes.json.",
  "version": 1,
  "heroes": {
   "standard": {
@@ -8,6 +8,7 @@
     "en": "Standard"
    },
    "tech": "kinetic",
+   "weak": [],
    "portrait": "standard",
    "voice": "voice_hero_standard",
    "lines": [
@@ -70,6 +71,7 @@
     "en": "Patch"
    },
    "tech": "kinetic",
+   "weak": [],
    "portrait": "patch",
    "voice": "voice_hero_patch",
    "lines": [
@@ -132,6 +134,9 @@
     "en": "Canopy"
    },
    "tech": "toxin",
+   "weak": [
+    "thermo"
+   ],
    "portrait": "canopy",
    "voice": "voice_hero_canopy",
    "lines": [
@@ -198,6 +203,9 @@
     "en": "Current"
    },
    "tech": "cryo",
+   "weak": [
+    "volt"
+   ],
    "portrait": "current",
    "voice": "voice_hero_current",
    "lines": [
@@ -260,6 +268,10 @@
     "en": "Lineman"
    },
    "tech": "volt",
+   "weak": [
+    "impact",
+    "thermo"
+   ],
    "portrait": "lineman",
    "voice": "voice_hero_lineman",
    "lines": [
@@ -322,6 +334,10 @@
     "en": "Frostline"
    },
    "tech": "cryo",
+   "weak": [
+    "volt",
+    "thermo"
+   ],
    "portrait": "frostline",
    "voice": "voice_hero_frostline",
    "lines": [
@@ -384,6 +400,9 @@
     "en": "Mason"
    },
    "tech": "impact",
+   "weak": [
+    "toxin"
+   ],
    "portrait": "mason",
    "voice": "voice_hero_mason",
    "lines": [
@@ -446,6 +465,9 @@
     "en": "Beacon"
    },
    "tech": "volt",
+   "weak": [
+    "impact"
+   ],
    "portrait": "beacon",
    "voice": "voice_hero_beacon",
    "lines": [
@@ -508,6 +530,9 @@
     "en": "Sweep"
    },
    "tech": "thermo",
+   "weak": [
+    "cryo"
+   ],
    "portrait": "sweep",
    "voice": "voice_hero_sweep",
    "lines": [
@@ -570,6 +595,9 @@
     "en": "Hive"
    },
    "tech": "toxin",
+   "weak": [
+    "thermo"
+   ],
    "portrait": "hive",
    "voice": "voice_hero_hive",
    "lines": [
@@ -632,6 +660,10 @@
     "en": "Kiln"
    },
    "tech": "impact",
+   "weak": [
+    "toxin",
+    "cryo"
+   ],
    "portrait": "kiln",
    "voice": "voice_hero_kiln",
    "lines": [
@@ -694,6 +726,9 @@
     "en": "Seraph"
    },
    "tech": "kinetic",
+   "weak": [
+    "volt"
+   ],
    "portrait": "seraph",
    "voice": "voice_hero_seraph",
    "lines": [
@@ -756,6 +791,9 @@
     "en": "Doctor"
    },
    "tech": "toxin",
+   "weak": [
+    "thermo"
+   ],
    "portrait": "doctor",
    "voice": "voice_hero_doctor",
    "lines": [
@@ -818,6 +856,9 @@
     "en": "Demon"
    },
    "tech": "thermo",
+   "weak": [
+    "cryo"
+   ],
    "portrait": "demon",
    "voice": "voice_hero_demon",
    "lines": [
@@ -880,6 +921,9 @@
     "en": "N-73"
    },
    "tech": "volt",
+   "weak": [
+    "impact"
+   ],
    "portrait": "n73",
    "voice": "voice_hero_n73",
    "lines": [

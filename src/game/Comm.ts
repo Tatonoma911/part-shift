@@ -1,7 +1,7 @@
 import Phaser from 'phaser';
 import commJson from '../data/text/comm.json';
 import type { GameEvent } from '../core/world';
-import { lang } from '../i18n';
+import { lang, t } from '../i18n';
 import { sound } from './audio';
 import { UI_DEPTH } from './cameras';
 import { BOARD, C, INK, TECH_COLOR } from './layout';
@@ -20,6 +20,8 @@ interface Line {
 interface HeroComm {
   name: Line;
   tech: string;
+  /** Elements that hit this hero harder (design/data/heroes.json resist > 1), strongest first. */
+  weak: string[];
   portrait: string;
   voice: string;
   lines: Line[];
@@ -158,8 +160,19 @@ export class Comm {
     // Speech bubble: white, thick ink outline, tail pointing at the face.
     const maxW = Math.min(480, BOARD.x + BOARD.w - (cx + R + 30) - 16);
     const body = s.add.text(0, 0, text, { ...TXT.body(24, INK.graphite, '700'), lineSpacing: 3, wordWrap: { width: maxW - 40, useAdvancedWrap: true } });
-    const bw = Math.max(170, Math.min(maxW, body.width + 40));
-    const bh = body.height + 30;
+    // Footer: the hero's element and what beats it, so the player knows whom to send.
+    const chipOf = (tech: string) => {
+      const hex = '#' + (TECH_COLOR[tech] ?? 0xdde4e8).toString(16).padStart(6, '0');
+      return s.add.text(0, 0, t(`tech.${tech}`).toUpperCase(), { ...TXT.caps(INK.graphite), fontSize: '15px', backgroundColor: hex, padding: { x: 8, y: 4 } });
+    };
+    const foot: Phaser.GameObjects.Text[] = [chipOf(h.tech)];
+    if (h.weak.length) {
+      foot.push(s.add.text(0, 0, t('resist.weak_to', { tech: '' }).trim(), TXT.body(19, INK.dim, '700')));
+      h.weak.forEach((w) => foot.push(chipOf(w)));
+    } else foot.push(s.add.text(0, 0, t('comm.no_weakness'), TXT.body(19, INK.dim, '700')));
+    const footW = foot.reduce((sum, o) => sum + o.width + 10, -10);
+    const bw = Math.max(170, Math.min(maxW, Math.max(body.width, footW) + 40));
+    const bh = body.height + 30 + 44;
     const bx = R + 30;
     const by = -R + 6;
     const bubble = s.add.graphics();
@@ -170,8 +183,14 @@ export class Comm {
     };
     draw(0x10171c, 4);
     draw(0xffffff, 0);
+    bubble.lineStyle(2, 0xdde4e8, 1).lineBetween(bx + 16, by + bh - 46, bx + bw - 16, by + bh - 46);
+    let fx = bx + 20;
+    for (const o of foot) {
+      o.setOrigin(0, 0.5).setPosition(fx, by + bh - 23);
+      fx += o.width + 10;
+    }
     body.setPosition(bx + 20, by + 15).setText('');
-    const talk = s.add.container(0, 0, [bubble, body]).setAlpha(0).setScale(0.6);
+    const talk = s.add.container(0, 0, [bubble, body, ...foot]).setAlpha(0).setScale(0.6);
 
     box.add([talk, head]);
     head.setScale(0.2).setAngle(-12);
