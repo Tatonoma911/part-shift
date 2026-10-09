@@ -25,10 +25,15 @@ function assetMap(): Record<string, string> {
 export { introSeen };
 
 /** Plays the comic over the game; game music pauses while it runs. */
-export async function playIntro(opts: { skipGate?: boolean } = {}): Promise<void> {
+export async function playIntro(opts: { skipGate?: boolean } = {}): Promise<{ skipped: boolean }> {
   sound.stopMusic(0.2);
-  await playIntroComic({ lang, assets: assetMap(), music: sound.musicOn,
+  return playIntroComic({
+    lang,
+    assets: assetMap(),
+    music: sound.musicOn,
     // Same levels as the game's sliders (squared like the game's buses).
     musicVolume: (sound.prefs.master * sound.prefs.music) ** 2,
-    sfxVolume: (sound.prefs.master * sound.prefs.effects) ** 2, skipGate: opts.skipGate });
+    sfxVolume: (sound.prefs.master * sound.prefs.effects) ** 2,
+    skipGate: opts.skipGate,
+  });
 }

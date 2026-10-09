@@ -3,6 +3,7 @@ import { config } from '../core/data';
 import type { AssistMode } from '../core/state';
 import { lang, setLang, t } from '../i18n';
 import { introSeen, playIntro } from '../intro';
+import { analytics, askAnalyticsConsent } from '../analytics';
 import { learning, learningLang } from './learn';
 import { volumeHeight, volumeSliders } from './volume';
 import { BUILDING_ANCHOR, createArt, preloadArt } from './assets';
@@ -63,6 +64,8 @@ export class MenuScene extends Phaser.Scene {
     }
     this.drawBackdrop();
     this.show('main');
+    analytics.where('menu');
+    analytics.track('menu_view', { tutorial_done: tutorialDone(), has_run: lastSlot() !== null });
     // Android back: skips the intro comic, sub-pages return to the main page; on the main page the app goes to the background.
     setBackHandler(() => {
       if (learning().isOpen) return true;
@@ -78,16 +81,25 @@ export class MenuScene extends Phaser.Scene {
     if (!introSeen() && !this.registry.get('introShown')) {
       this.registry.set('introShown', true);
       this.story(false);
-    }
+    } else askAnalyticsConsent();
   }
 
   private story(skipGate: boolean): void {
     this.input.enabled = false;
     this.storyPlaying = true;
-    playIntro({ skipGate }).finally(() => {
-      this.storyPlaying = false;
-      if (this.scene.isActive()) this.input.enabled = true;
-    });
+    const startedAt = Date.now();
+    analytics.where('intro', () => ({ seconds: (Date.now() - startedAt) / 1000, auto: !skipGate }));
+    analytics.track('intro_start', { auto: !skipGate });
+    playIntro({ skipGate })
+      .then((r) => analytics.track('intro_end', { auto: !skipGate, skipped: r.skipped, seconds: (Date.now() - startedAt) / 1000 }))
+      .catch(() => undefined)
+      .finally(() => {
+        analytics.where('menu');
+        // First launch asks about statistics after the comic, not over it.
+        askAnalyticsConsent();
+        this.storyPlaying = false;
+        if (this.scene.isActive()) this.input.enabled = true;
+      });
   }
 
   private drawBackdrop(): void {
@@ -231,6 +243,10 @@ export class MenuScene extends Phaser.Scene {
       const modes: AssistMode[] = ['full', 'scanner', 'off'];
       button(`${t('settings.assist.title')}: ${t(`assist.mode.${st.assist}`)}`, () => {
         saveSettings({ ...st, assist: modes[(modes.indexOf(st.assist) + 1) % modes.length] });
+        this.show('settings');
+      });
+      button(`${t('analytics.setting')}: ${t(analytics.consent === 'granted' ? 'settings.on' : 'settings.off')}`, () => {
+        analytics.setConsent(analytics.consent !== 'granted');
         this.show('settings');
       });
       button(t('settings.reset_hints'), () => {
