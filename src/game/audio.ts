@@ -24,6 +24,16 @@ interface MusicDef {
   loopSeconds: number;
 }
 
+interface MusicTrack {
+  id: string;
+  src: AudioBufferSourceNode;
+  gain: GainNode;
+  volume: number;
+}
+
+const RUN_LAYERS = ['run_calm', 'run_heroes', 'run_danger'];
+/** One bar at 92 bpm, 4/4 (MUSIC.md). */
+const BAR = 2.6087;
 const SFX = (manifest as unknown as { sfx: Record<string, SfxDef> }).sfx;
 const MUSIC = (manifest as unknown as { music: Record<string, MusicDef> }).music;
 const PREFS_KEY = 'partshift.sound.v1';
@@ -80,8 +90,15 @@ class SoundBoard {
   private loading = new Map<string, Promise<AudioBuffer | null>>();
   private last = new Map<string, number>();
   private voices: { id: string; priority: number; src: AudioBufferSourceNode }[] = [];
-  private music: AudioBufferSourceNode | null = null;
+  private tracks: MusicTrack[] = [];
   private wantMusic: string | null = null;
+  private musicToken = 0;
+  /** AudioContext time the run layers started (bar grid for the demon entry). */
+  private runStart: number | null = null;
+  private layerTarget: Record<string, number> = { run_calm: 1, run_heroes: 0, run_danger: 0 };
+  private afterBoss = false;
+  private afterEnd = false;
+  private ducked = false;
   private combo = { step: 0, at: -1e9 };
   prefs: SoundPrefs = { ...DEFAULT_PREFS };
 
@@ -103,7 +120,11 @@ class SoundBoard {
     if (!this.ctx) {
       const Ctx = window.AudioContext ?? (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
       if (!Ctx) return;
-      this.ctx = new Ctx();
+      try {
+        this.ctx = new Ctx({ sampleRate: 44100 });
+      } catch {
+        this.ctx = new Ctx();
+      }
       const ctx = this.ctx;
       this.masterBus = ctx.createGain();
       this.masterBus.connect(ctx.destination);
@@ -137,8 +158,7 @@ class SoundBoard {
     // Squared so the slider feels even to the ear.
     const v = (x: number) => x * x;
     this.masterBus.gain.value = v(this.prefs.master);
-    // Music bus default 0.5 at full slider (contracts.md, "Звук").
-    this.musicBus.gain.value = 0.5 * v(this.prefs.music);
+    this.musicBus.gain.value = this.musicLevel();
     for (const k of ['effects', 'ui', 'voice'] as const) this.buses[k].gain.value = v(this.prefs[k]);
   }
 
@@ -205,36 +225,133 @@ class SoundBoard {
     });
   }
 
+  /**
+   * Music per audio/MUSIC.md. 'run' starts the three run_* layers in sync
+   * (gains follow setLayers); 'demon' crossfades in on the next bar; one-shot
+   * tracks (victory, defeat) hand over to 'menu' when they end.
+   */
   playMusic(id: string): void {
+    if (this.wantMusic === id && this.tracks.length) return;
     this.wantMusic = id;
-    const def = MUSIC[id];
-    if (!def || !this.ctx || this.music) return;
-    void this.load(def.files[0]).then((buf) => {
-      if (!buf || !this.ctx || this.music || this.wantMusic !== id) return;
-      const src = this.ctx.createBufferSource();
-      src.buffer = buf;
-      src.loop = def.loop;
-      src.loopEnd = Math.min(def.loopSeconds, buf.duration);
-      const gain = this.ctx.createGain();
-      gain.gain.value = def.volume;
-      src.connect(gain).connect(this.musicBus);
-      src.start();
-      this.music = src;
+    if (!this.ctx) return;
+    const ctx = this.ctx;
+    const ids = id === 'run' ? RUN_LAYERS : [id];
+    const defs = ids.map((m) => MUSIC[m]).filter(Boolean);
+    if (!defs.length) return;
+    const token = ++this.musicToken;
+    void Promise.all(defs.map((d) => this.load(d.files[0]))).then((bufs) => {
+      if (token !== this.musicToken || this.wantMusic !== id || bufs.some((b) => !b)) return;
+      const old = this.tracks;
+      const now = ctx.currentTime;
+      // Demon enters on a bar line of the running layers (same tempo, MUSIC.md).
+      let at = now + 0.1;
+      if (id === 'demon' && this.runStart !== null) at = this.runStart + Math.ceil((now + 0.1 - this.runStart) / BAR) * BAR;
+      const fadeIn = id === 'run' && this.afterBoss ? 3 : id === 'menu' && this.afterEnd ? 3 : id === 'demon' ? 1.5 : 0.4;
+      this.afterBoss = this.afterEnd = false;
+      this.tracks = ids.map((m, i) => {
+        const def = defs[i];
+        const src = ctx.createBufferSource();
+        src.buffer = bufs[i]!;
+        src.loop = def.loop;
+        if (def.loop) src.loopEnd = Math.min(def.loopSeconds, bufs[i]!.duration);
+        const gain = ctx.createGain();
+        const target = id === 'run' ? (this.layerTarget[m] ?? 0) : 1;
+        gain.gain.setValueAtTime(0, at);
+        gain.gain.linearRampToValueAtTime(target * def.volume, at + fadeIn);
+        src.connect(gain).connect(this.musicBus);
+        src.start(at);
+        if (!def.loop)
+          src.onended = () => {
+            if (this.wantMusic !== id) return;
+            this.afterEnd = true;
+            this.playMusic('menu');
+          };
+        return { id: m, src, gain, volume: def.volume };
+      });
+      this.runStart = id === 'run' ? at : this.runStart;
+      this.fadeOut(old, id === 'demon' ? at + 1.5 - now : 0.4);
     });
+  }
+
+  /** run_heroes / run_danger targets (0..1); ramps up in 1.5 s, down in 4 s. */
+  setLayers(heroes: number, danger: number): void {
+    this.layerTarget = { run_calm: 1, run_heroes: heroes, run_danger: danger };
+    if (!this.ctx || this.wantMusic !== 'run') return;
+    const t = this.ctx.currentTime;
+    for (const tr of this.tracks) {
+      const want = (this.layerTarget[tr.id] ?? 0) * tr.volume;
+      const cur = tr.gain.gain.value;
+      if (Math.abs(want - cur) < 0.01) continue;
+      tr.gain.gain.cancelScheduledValues(t);
+      tr.gain.gain.setValueAtTime(cur, t);
+      tr.gain.gain.linearRampToValueAtTime(want, t + (want > cur ? 1.5 : 4));
+    }
+  }
+
+  /** The call target fell: demon fades in 3 s and the run layers come back. */
+  bossDown(): void {
+    if (this.wantMusic !== 'demon') return;
+    this.afterBoss = true;
+    this.fadeOut(this.tracks, 3);
+    this.tracks = [];
+    this.runStart = null;
+    this.playMusic('run');
+  }
+
+  /** Pause ducks the music bus to 35 % instead of silencing it. */
+  duck(on: boolean): void {
+    this.ducked = on;
+    if (!this.ctx) return;
+    const t = this.ctx.currentTime;
+    const g = this.musicBus.gain;
+    g.cancelScheduledValues(t);
+    g.setValueAtTime(g.value, t);
+    g.linearRampToValueAtTime(this.musicLevel(), t + 0.3);
+  }
+
+  private musicLevel(): number {
+    // Music bus default 0.5 at full slider (contracts.md, "Звук"), squared like the others.
+    return 0.5 * this.prefs.music * this.prefs.music * (this.ducked ? 0.35 : 1);
+  }
+
+  private fadeOut(tracks: MusicTrack[], seconds: number): void {
+    if (!this.ctx) return;
+    const t = this.ctx.currentTime;
+    for (const tr of tracks) {
+      tr.src.onended = null;
+      tr.gain.gain.cancelScheduledValues(t);
+      tr.gain.gain.setValueAtTime(tr.gain.gain.value, t);
+      tr.gain.gain.linearRampToValueAtTime(0, t + seconds);
+      try {
+        tr.src.stop(t + seconds + 0.05);
+      } catch {
+        /* never started */
+      }
+    }
   }
 
   /** Victory and defeat duck the music to zero and stop it (sounds.json note). */
   stopMusic(fadeSeconds = 0.6): void {
     this.wantMusic = null;
-    const src = this.music;
-    this.music = null;
-    if (!src || !this.ctx) return;
-    const t = this.ctx.currentTime;
-    this.musicBus.gain.setValueAtTime(this.musicBus.gain.value, t);
-    this.musicBus.gain.linearRampToValueAtTime(0, t + fadeSeconds);
-    src.stop(t + fadeSeconds);
-    setTimeout(() => this.applyPrefs(), fadeSeconds * 1000 + 50);
+    this.musicToken++;
+    this.fadeOut(this.tracks, fadeSeconds);
+    this.tracks = [];
+    this.runStart = null;
+    if (this.ducked) this.duck(false);
+  }
+
+  /** Victory / defeat sting after the fade; 'menu' follows when it ends. */
+  playEnd(victory: boolean): void {
+    this.stopMusic(0.5);
+    setTimeout(() => this.playMusic(victory ? 'victory' : 'defeat'), 550);
   }
 }
 
 export const sound = new SoundBoard();
+
+// Any tap or key anywhere (menu, a ?seed challenge link straight to the board) unlocks audio.
+if (typeof window !== 'undefined') {
+  const unlock = () => sound.unlock();
+  window.addEventListener('pointerdown', unlock, { capture: true });
+  window.addEventListener('keydown', unlock, { capture: true });
+}

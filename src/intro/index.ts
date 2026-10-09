@@ -19,6 +19,9 @@ function assetMap(): Record<string, string> {
     map[`audio/${name}.mp3`] = url;
     map[`audio/${name}.ogg`] = url;
   }
+  // The comic still asks for the old chiptune; the menu theme replaced it (audio/MUSIC.md).
+  const menu = Object.entries(audio).find(([path]) => path.endsWith('/music/menu.mp3'))?.[1];
+  if (menu) map['audio/theme_lumen.mp3'] = map['audio/theme_lumen.ogg'] = menu;
   return map;
 }
 

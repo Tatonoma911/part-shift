@@ -52,13 +52,6 @@ export class MenuScene extends Phaser.Scene {
 
   create(): void {
     if (!this.anims.exists('resident.idle')) createArt(this);
-    const unlock = () => sound.unlock();
-    window.addEventListener('pointerdown', unlock, { capture: true });
-    window.addEventListener('keydown', unlock, { capture: true });
-    this.events.once('shutdown', () => {
-      window.removeEventListener('pointerdown', unlock, { capture: true });
-      window.removeEventListener('keydown', unlock, { capture: true });
-    });
 
     // Links for tests and sharing: ?seed=…, ?tutorial=1 go straight to the board.
     const params = new URLSearchParams(location.search);
@@ -93,7 +86,10 @@ export class MenuScene extends Phaser.Scene {
     if (!introSeen() && !this.registry.get('introShown')) {
       this.registry.set('introShown', true);
       this.story(false);
-    } else askAnalyticsConsent();
+    } else {
+      askAnalyticsConsent();
+      sound.playMusic('menu');
+    }
   }
 
   private story(skipGate: boolean): void {
@@ -110,7 +106,10 @@ export class MenuScene extends Phaser.Scene {
         // First launch asks about statistics after the comic, not over it.
         askAnalyticsConsent();
         this.storyPlaying = false;
-        if (this.scene.isActive()) this.input.enabled = true;
+        if (this.scene.isActive()) {
+          this.input.enabled = true;
+          sound.playMusic('menu');
+        }
       });
   }
 

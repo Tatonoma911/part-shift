@@ -1317,7 +1317,8 @@ export class World {
     }
     this.cell(x, y).revealed = true;
     this.rev++;
-    this.emit('hero_spawn', { x, y, text: heroId, owner: kind === 'boss_hatch' ? 1 : 0 });
+    // amount 1 marks the call target (its own boss_awake toast follows).
+    this.emit('hero_spawn', { x, y, text: heroId, amount: kind === 'boss_hatch' ? 1 : 0 });
     if (kind === 'boss_hatch') this.emit('boss_awake', { x, y, text: heroId });
   }
 

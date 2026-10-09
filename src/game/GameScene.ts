@@ -7,6 +7,7 @@ import { World, type GameEvent } from '../core/world';
 import { t } from '../i18n';
 import { BUILDING_ANCHOR } from './assets';
 import { sound } from './audio';
+import { SoundDirector } from './soundDirector';
 import { learning, setLearningHooks } from './learn';
 import { volumeHeight, volumeSliders } from './volume';
 import { BoardView } from './BoardView';
@@ -45,7 +46,7 @@ const TOASTS: Record<string, { text: (e: GameEvent) => string; bad?: boolean }> 
   boss_awake: { text: (e) => heroLine('event.boss_awake', e.text), bad: true },
   boss_warning: { text: () => t('event.boss_warning'), bad: true },
   hero_warning: { text: () => t('event.hero_warning'), bad: true },
-  hero_spawn: { text: (e) => (e.owner === 1 ? '' : heroLine('event.hero_appears', e.text)), bad: true },
+  hero_spawn: { text: (e) => (e.amount === 1 ? '' : heroLine('event.hero_appears', e.text)), bad: true },
   hero_defeated: { text: (e) => t('event.hero_defeated', { hero: heroName(e.text) }) },
   hero_part_taken: { text: (e) => t('trophy.module_acquired', { part: t(`part.${e.text}.label`) }) },
   demon_windup: { text: () => t('enemy.demon.windup'), bad: true },
@@ -126,6 +127,7 @@ export class GameScene extends Phaser.Scene {
   private guideBox: { text: Phaser.GameObjects.Text; dots: Phaser.GameObjects.Graphics; g: Phaser.GameObjects.Graphics; y: number; h: number } | null = null;
 
   private paused = false;
+  private music!: SoundDirector;
   /** The field guide or a coach card is open: the world waits, no pause sheet. */
   private overlayPaused = false;
   private coachedBuild = false;
@@ -230,7 +232,8 @@ export class GameScene extends Phaser.Scene {
     document.addEventListener('visibilitychange', onHide);
     this.events.once('shutdown', () => document.removeEventListener('visibilitychange', onHide));
     setBackHandler(() => this.onBack());
-    if (this.world.s.outcome === 'playing') sound.playMusic('theme_lumen');
+    this.music = new SoundDirector(this.world, ME);
+    this.music.start();
     this.setMode('dig');
     // The tutorial teaches by itself; coach cards and the guide come with free play.
     setLearningHooks({ pause: () => (this.overlayPaused = true), resume: () => (this.overlayPaused = false) });
@@ -253,6 +256,7 @@ export class GameScene extends Phaser.Scene {
       this.board.onEvent(e);
       this.onEvent(e);
     }
+    this.music.tick();
     if (this.guide?.update()) this.showGuideStep();
     if (this.spotlight && time > this.spotlight.until) this.spotlight = null;
     this.board.update(time, {
@@ -329,8 +333,7 @@ export class GameScene extends Phaser.Scene {
 
   private onEvent(e: GameEvent): void {
     if (e.owner !== undefined && e.owner !== ME && e.owner >= 0) return;
-    if (e.type === 'victory' || e.type === 'defeat') sound.stopMusic();
-    sound.play(e.type);
+    this.music.onEvent(e);
     if (!this.guide) this.coachOn(e);
     if (e.type === 'center_hit') {
       if (this.time.now - this.lastCenterHit > 6000) this.say(t('event.command_under_attack'), 3000, true);
@@ -775,6 +778,7 @@ export class GameScene extends Phaser.Scene {
     if (this.world.s.outcome !== 'playing') return;
     if (on !== this.paused) sound.play(on ? 'pause' : 'resume');
     this.paused = on;
+    sound.duck(on);
     this.overlay?.destroy();
     this.overlay = null;
     if (!on) return;
