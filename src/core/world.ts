@@ -476,7 +476,7 @@ export class World {
       case 'cache': {
         c.resolved = true;
         const energy = siteDefs.cache.onReveal?.energy ?? this.cfg.economy.cacheEnergy;
-        player.energy += energy;
+        this.earn(player, energy);
         player.stats.caches++;
         this.emit('cache_open', { x, y, owner, amount: energy });
         break;
@@ -1019,7 +1019,7 @@ export class World {
     const def = this.enemyDef(v.kind);
     const part = Object.values(v.parts)[0];
     if (by?.kind === 'defender' && part && rand(s) < def.partDropChance) this.takePart(by, part);
-    if (def.reward && by && by.owner >= 0) s.players[by.owner].energy += def.reward;
+    if (def.reward && by && by.owner >= 0) this.earn(s.players[by.owner], def.reward);
     this.emit(v.kind === 'demon' ? 'demon_die' : 'enemy_die', { x: v.x, y: v.y, owner: by?.owner });
     if (v.kind === 'demon') {
       s.demon.dead = true;
@@ -1155,7 +1155,7 @@ export class World {
     c.resolved = true;
     const reward = this.siteDef(site.kind).reward ?? 0;
     if (by.owner >= 0) {
-      this.s.players[by.owner].energy += reward;
+      this.earn(this.s.players[by.owner], reward);
       this.s.players[by.owner].stats.nests++;
     }
     for (const p of this.s.players) if (p.order === siteKey(site.x, site.y)) p.order = null;
@@ -1308,7 +1308,7 @@ export class World {
       if (!cmd) return false;
       const d = dist(cmd.x, cmd.y, o.x, o.y);
       if (d <= speed) {
-        s.players[o.owner].energy += o.amount;
+        this.earn(s.players[o.owner], o.amount);
         this.emit('energy_orb_arrive', { x: cmd.x, y: cmd.y, owner: o.owner, amount: o.amount });
         return false;
       }
@@ -1377,6 +1377,12 @@ export class World {
       s.outcome = 'victory';
       this.emit('victory');
     }
+  }
+
+  /** Energy income; stats.earned feeds the run score (meta.json runScore.energyEarned). */
+  private earn(p: Player, amount: number): void {
+    p.energy += amount;
+    p.stats.earned = (p.stats.earned ?? 0) + amount;
   }
 
   private emit(type: string, data: Omit<GameEvent, 'type'> = {}): void {

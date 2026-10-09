@@ -18,6 +18,7 @@ import { markTutorialDone, TutorialGuide } from './Tutorial';
 import { analytics } from '../analytics';
 import { brackets, chip, glyph, plate, TXT } from './ui';
 import { setBackHandler } from '../platform/native';
+import { challengeUrl, closeSocial, displayName, openBoard, openDonate, profile, rankOf, recordRun, resultCard, share, shouldNudge, socialOpen, type RecordedRun } from '../social';
 
 const BEST_KEY = 'partshift.best.v1';
 const LONG_PRESS_MS = 480;
@@ -31,6 +32,10 @@ export interface GameStart {
   fresh?: boolean;
   tutorial?: boolean;
   seed?: number;
+  /** City of the day (UTC day id): the run also counts on today's board. */
+  daily?: string;
+  /** Opened from a friend's "beat my score" link. */
+  challenge?: { score: number; name: string };
 }
 type Ev = Phaser.Types.Input.EventData;
 
@@ -118,6 +123,8 @@ export class GameScene extends Phaser.Scene {
   private lastThreat = 0;
   /** Last tutorial step reported to analytics. */
   private trackedStep = -1;
+  /** Score of the run that just ended (for the share card). */
+  private lastRun: RecordedRun | null = null;
 
   constructor() {
     super('game');
@@ -142,6 +149,7 @@ export class GameScene extends Phaser.Scene {
     this.dragMode = null;
     this.saveTimer = 0;
     this.trackedStep = -1;
+    this.lastRun = null;
   }
 
   create(): void {
@@ -185,6 +193,7 @@ export class GameScene extends Phaser.Scene {
     this.events.once('shutdown', () => this.comm?.destroy());
     this.trackStart(!!saved);
     if (this.guide) this.createGuide(by - 24);
+    else if (st.challenge && !saved) this.say(`${t('challenge.banner', { name: st.challenge.name, score: st.challenge.score })}\n${t('place.command')}`, 7000);
     else if (!this.world.started) this.say(t('place.command'), 6000);
 
     this.input.mouse?.disableContextMenu();
@@ -258,7 +267,9 @@ export class GameScene extends Phaser.Scene {
     if (this.world.s.outcome === 'playing') this.trackEnd('restart');
     if (!this.guide) clearSlot(this.slot);
     sound.stopMusic(0.2);
-    this.scene.restart({ slot: this.slot, fresh: true, tutorial: this.start.tutorial });
+    // The city of the day and a friend's challenge replay the same map; free play gets a new one.
+    const st = this.start;
+    this.scene.restart({ slot: this.slot, fresh: true, tutorial: st.tutorial, seed: st.daily || st.challenge ? this.world.s.seed : undefined, daily: st.daily, challenge: st.challenge });
   }
 
   private toMenu(): void {
@@ -735,6 +746,10 @@ export class GameScene extends Phaser.Scene {
   private onBack(): boolean {
     // The field guide and coach cards are DOM overlays without a close hook yet: back waits for their own button.
     if (learning().isOpen) return true;
+    if (socialOpen()) {
+      closeSocial();
+      return true;
+    }
     if (this.ghost) {
       this.setGhost(null);
     } else if (this.overlay || this.paused || this.world.s.outcome !== 'playing') {
@@ -758,8 +773,11 @@ export class GameScene extends Phaser.Scene {
       lines: [t('pause.hint')],
       actions: [
         { label: t('pause.resume'), act: () => this.setPaused(false), primary: true },
-        { label: t('settings.volume'), act: () => this.showVolume() },
+        { label: t('pause.screenshot'), act: () => void this.shareShot(), half: true },
+        { label: t('pause.coffee'), act: () => openDonate('pause'), half: true, gold: true },
+        { label: t('settings.volume'), act: () => this.showVolume(), half: true },
         {
+          half: true,
           label: t('menu.guide'),
           act: () => {
             this.setPaused(false);
@@ -790,12 +808,8 @@ export class GameScene extends Phaser.Scene {
     this.trackEnd(victory ? 'victory' : 'defeat');
     if (!this.guide) clearSlot(this.slot);
     const w = this.world;
-    const tiles: [string, string][] = [
-      [t('win.time', { time: this.fmt(w.s.time) }), ''],
-      [t('win.threat', { level: w.threatLevel }), ''],
-      [t('win.nests', { count: w.player(ME).stats.nests }), ''],
-      [t('win.caches', { count: w.player(ME).stats.caches }), ''],
-    ];
+    const me = w.player(ME);
+    const lines = [victory ? t('win.text') : t('lose.text'), t('win.time', { time: this.fmt(w.s.time) }), t('win.threat', { level: w.threatLevel }), t('win.nests', { count: me.stats.nests }), t('win.caches', { count: me.stats.caches })];
     let badge: string | undefined;
     if (victory) {
       let best = Infinity;
@@ -807,18 +821,69 @@ export class GameScene extends Phaser.Scene {
       }
       badge = w.s.time < best ? t('win.new_record') : t('win.best_time', { time: this.fmt(best) });
     }
+    // Free play scores points for the world ranking; the tutorial doesn't.
+    const rec = this.guide ? null : recordRun({ victory, seconds: w.s.time, nests: me.stats.nests, energy: me.stats.earned ?? 0, threat: w.threatLevel, daily: this.start.daily });
+    this.lastRun = rec;
+    if (rec) {
+      lines.splice(1, 0, t('end.score', { score: rec.score.toLocaleString('ru-RU') }));
+      if (rec.rankAfter > rec.rankBefore) badge = t('social.rank.up', { rank: t(`social.rank.${rec.rankAfter}`) });
+      const ch = this.start.challenge;
+      if (ch) lines.splice(2, 0, t(rec.score > ch.score ? 'end.challenge_won' : 'end.challenge_lost', { name: ch.name, mine: rec.score, theirs: ch.score }));
+      if (shouldNudge()) lines.push(t('donate.nudge'));
+    }
+    const boardBtn: { label: string; act: () => void; half: boolean; ref?: (tx: Phaser.GameObjects.Text) => void } = {
+      label: t('end.board'),
+      act: () => openBoard({ tab: this.start.daily ? 'day' : 'week' }),
+      half: true,
+      ref: (tx) =>
+        void rec?.place.then((place) => {
+          if (place && tx.active) tx.setText(t('end.board_place', { place }));
+        }),
+    };
     this.overlay?.destroy();
     this.overlay = this.sheet({
       portrait: victory ? 'portrait.demon' : 'portrait.bld_command',
       grey: !victory,
       badge,
       title: victory ? t('win.title') : t('lose.title'),
-      lines: [victory ? t('win.text') : t('lose.text'), ...tiles.map((x) => x[0])],
+      lines,
       actions: [
         { label: victory ? t('win.again') : t('lose.again'), act: () => this.restart(), primary: true },
-        { label: t('menu.quit_to_menu'), act: () => this.toMenu() },
+        ...(rec ? [{ label: t('end.share'), act: () => void this.shareShot(), half: true }, boardBtn] : []),
+        { label: t('end.coffee'), act: () => openDonate(victory ? 'win' : 'lose'), half: true, gold: true },
+        { label: t('menu.quit_to_menu'), act: () => this.toMenu(), half: true },
       ],
     });
+  }
+
+  /**
+   * Screenshot of the board as a vertical card (stories, Shorts) and the share sheet.
+   * After a run the link challenges friends to beat the score on the same map.
+   */
+  private async shareShot(): Promise<void> {
+    const w = this.world;
+    const me = w.player(ME);
+    // Hide the sheet for one frame so the card shows the city, not the menu.
+    const ov = this.overlay;
+    ov?.setVisible(false);
+    const shot = await new Promise<HTMLImageElement | null>((res) => {
+      this.game.renderer.snapshot((img) => res(img instanceof HTMLImageElement ? img : null));
+    }).catch(() => null);
+    ov?.setVisible(true);
+    const rec = w.s.outcome === 'playing' ? null : this.lastRun;
+    const name = displayName(t('social.default_name'));
+    const card = await resultCard(shot, {
+      kind: w.s.outcome === 'victory' ? 'win' : w.s.outcome === 'defeat' ? 'lose' : 'live',
+      score: rec?.score,
+      time: this.fmt(w.s.time),
+      threat: w.threatLevel,
+      nests: me.stats.nests,
+      name,
+      rank: t(`social.rank.${rankOf(profile().total)}`),
+      tag: this.start.daily ? t('end.daily', { day: this.start.daily }) : undefined,
+    }).catch(() => undefined);
+    const url = rec && !this.guide ? challengeUrl(w.s.seed, rec.score, name) : undefined;
+    void share({ from: rec ? 'result' : 'pause', text: rec ? t('share.result_text', { score: rec.score }) : t('share.invite_text'), url, image: card });
   }
 
   // -------------------------------------------------------------- analytics
@@ -857,7 +922,7 @@ export class GameScene extends Phaser.Scene {
   }
 
   /** Bottom sheet over the dimmed board (UI_SPEC §5). */
-  private sheet(o: { title: string; lines: string[]; actions: { label: string; act: () => void; primary?: boolean }[]; badge?: string; portrait?: string; grey?: boolean; animate?: boolean; extra?: { h: number; make: (x: number, y: number, w: number) => Phaser.GameObjects.GameObject[] } }): Phaser.GameObjects.Container {
+  private sheet(o: { title: string; lines: string[]; actions: { label: string; act: () => void; primary?: boolean; gold?: boolean; half?: boolean; ref?: (tx: Phaser.GameObjects.Text) => void }[]; badge?: string; portrait?: string; grey?: boolean; animate?: boolean; extra?: { h: number; make: (x: number, y: number, w: number) => Phaser.GameObjects.GameObject[] } }): Phaser.GameObjects.Container {
     const c = this.add.container(0, 0).setDepth(30);
     const shade = this.add.rectangle(0, 0, VIEW.width, VIEW.height, 0x0a1218, 0.55).setOrigin(0).setInteractive();
     shade.on('pointerdown', (_p: Phaser.Input.Pointer, _x: number, _y: number, ev: Ev) => ev.stopPropagation());
@@ -884,19 +949,35 @@ export class GameScene extends Phaser.Scene {
       content.push(...o.extra.make(64, y, w - 128));
       y += o.extra.h;
     }
+    // Half-width actions pair up side by side to keep the sheet short.
+    let col = 0;
     for (const a of o.actions) {
+      const half = !!a.half;
+      if (!half && col) {
+        col = 0;
+        y += 112;
+      }
+      const bw = half ? (w - 96) / 2 : w - 80;
+      const bx = half && col ? 56 + bw : 40;
       const bg = this.add.graphics();
-      chip(bg, 40, y, w - 80, 96, a.primary ? C.teal : C.graphite, a.primary ? 1 : 0.1, 18);
+      chip(bg, bx, y, bw, 96, a.gold ? C.amber : a.primary ? C.teal : C.graphite, a.primary || a.gold ? 1 : 0.1, 18);
       if (a.primary) {
         bg.fillStyle(C.graphite, 0.35);
-        bg.fillRect(58, y + 90, w - 116, 6);
+        bg.fillRect(bx + 18, y + 90, bw - 36, 6);
       }
-      const tx = this.add.text(w / 2, y + 48, a.label, TXT.body(29, a.primary ? INK.white : INK.graphite, '700')).setOrigin(0.5);
-      const hit = this.add.zone(40, y, w - 80, 96).setOrigin(0).setInteractive({ useHandCursor: true });
+      const tx = this.add.text(bx + bw / 2, y + 48, a.label, TXT.body(half ? 25 : 29, a.primary ? INK.white : INK.graphite, '700')).setOrigin(0.5);
+      if (tx.width > bw - 24) tx.setScale((bw - 24) / tx.width);
+      a.ref?.(tx);
+      const hit = this.add.zone(bx, y, bw, 96).setOrigin(0).setInteractive({ useHandCursor: true });
       hit.on('pointerdown', stop(a.act));
       content.push(bg, tx, hit);
-      y += 112;
+      if (half && !col) col = 1;
+      else {
+        col = 0;
+        y += 112;
+      }
     }
+    if (col) y += 112;
     const h = y + 28;
     const top = VIEW.height - h - 40;
     const bg = this.add.graphics();
