@@ -34,6 +34,11 @@ The game code only talks to `src/analytics/analytics.ts` (`analytics.track(name,
 | `tutorial_end` / `match_end` | victory, defeat or restart | `result` + match parameters |
 | `match_start` | free play opens | `slot`, `continued`, `assist`, `seconds` |
 | `app_hide` | tab or app goes to the background | `screen` (boot/intro/menu/tutorial/match) + that screen's details |
+| `run_score` | a free-play run ends | `score`, `victory`, `daily`, `rank` |
+| `donate_open` / `donate_click` | donation sheet opened / a payment way picked | `from` (menu/pause/win/lose); click adds `method`, `sum` |
+| `board_open` | ranking opened | `tab` |
+| `share` | invite, screenshot or result shared | `from`, `via` (native/sheet/cancel), `image` |
+| `feedback_open` / `feedback_sent` | feedback sheet / message sent | `from`; sent adds `kind`, `queued` |
 
 Match parameters: `mode` (tutorial/free), `seconds` (game time), `started` (Command Center placed), `threat`, `nests`, `caches`, `buildings`, `defenders`, and `step` in the tutorial.
 
