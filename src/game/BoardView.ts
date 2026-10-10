@@ -59,6 +59,8 @@ function hash(x: number, y: number): number {
 
 /** Residents fight now; their swing, flinch and limb install come from the animator's fighter sheet. */
 const RESIDENT_COMBAT_SET = 'defender';
+/** Starter heroes (MVP_RULES §4) whose drawn sheets stand in for workers until v0.7 spawns real heroes. */
+const STARTER_LOOKS = ['standard', 'patch', 'canopy', 'current'];
 
 /**
  * Draws the board from the artist's tiles and the animator's sheets.
@@ -350,7 +352,7 @@ export class BoardView {
       case 'hero_part_taken': {
         // Instant limb swap: a flash on the resident and the install animation.
         const v = e.unit !== undefined ? this.units.get(e.unit) : undefined;
-        if (v) this.oneShot(v, 'install_part', RESIDENT_COMBAT_SET);
+        if (v) this.oneShot(v, 'install_part', v.set === 'resident' ? RESIDENT_COMBAT_SET : v.set);
         const p = this.center(e.x, e.y);
         this.fx('energy_arrive', p.x, p.y - 26, 1.4);
         this.fx('hit_volt', p.x, p.y - 26, 0.9);
@@ -830,8 +832,11 @@ export class BoardView {
 
   private setOf(u: Unit): string {
     switch (u.kind) {
-      case 'resident':
-        return 'resident';
+      case 'resident': {
+        // v0.7: no plain residents on screen, our workers are the starter heroes (Антон, 2026-10-10).
+        const set = `ally_${STARTER_LOOKS[u.id % STARTER_LOOKS.length]}`;
+        return animSets[set] ? set : 'resident';
+      }
       case 'hero':
         return animSets[u.hero!] ? u.hero! : 'standard';
       case 'heavy_adaptant':
@@ -898,7 +903,7 @@ export class BoardView {
       if (Math.abs(dx) > 0.0005) v.spr.setFlipX(set.faces === 'left' ? dx > 0 : dx < 0);
       // A fresh cooldown means the unit just struck.
       if (u.attackCooldown > v.lastCd + 0.05) {
-        if (!v.oneShot) this.oneShot(v, 'attack', u.kind === 'resident' ? RESIDENT_COMBAT_SET : v.set);
+        if (!v.oneShot) this.oneShot(v, 'attack', u.kind === 'resident' && v.set === 'resident' ? RESIDENT_COMBAT_SET : v.set);
         const tp = this.targetPos(u.target ?? (u.owner >= 0 ? w.player(u.owner).order ?? undefined : undefined));
         if (tp) {
           const big = u.kind === 'hero' || u.kind === 'heavy_adaptant';
