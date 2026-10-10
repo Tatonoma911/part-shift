@@ -22,6 +22,10 @@ export interface MetaSave {
   blueprintFragments?: Record<string, number>;
   /** Lore record ids collected across runs. */
   loreRecords?: string[];
+  /** Fragments for buildings/heroes (MVP_RULES §5.1): key = `building.<id>` or `hero.<id>`. */
+  fragments?: Record<string, number>;
+  /** Control record ids found in order (Досье → «Архив»). */
+  archive?: string[];
 }
 
 export interface Rank {
@@ -317,4 +321,66 @@ export function pickAllies(m: MetaSave, ids: string[]): void {
 export function boonPoolFor(m: MetaSave): string[] {
   const { index } = rankAt(stat(m, 'total_score'));
   return RANKS.slice(0, index + 1).flatMap((r) => r.unlocksBoons);
+}
+
+// ------------------------------------------------------------- blueprints (MVP_RULES §5.1)
+
+interface Blueprints {
+  buildingsStartUnlocked: string[];
+  buildingFragments: Record<string, number>;
+  heroFragments: number;
+  targetPick: { buildingChance: number; closestToDoneChance: number };
+}
+const BP: Blueprints = (metaJson as unknown as { blueprints?: Blueprints }).blueprints ?? {
+  buildingsStartUnlocked: [],
+  buildingFragments: {},
+  heroFragments: 6,
+  targetPick: { buildingChance: 0.6, closestToDoneChance: 0.5 },
+};
+
+export type FragmentKind = 'building' | 'hero';
+export interface FragmentTarget { kind: FragmentKind; id: string }
+
+/** Buildings gated behind blueprints, sorted by fragment requirement. */
+export const BLUEPRINT_BUILDINGS = Object.keys(BP.buildingFragments).sort((a, b) => BP.buildingFragments[a] - BP.buildingFragments[b]);
+
+export function fragmentNeed(kind: FragmentKind, id: string): number {
+  return kind === 'hero' ? BP.heroFragments : (BP.buildingFragments[id] ?? 0);
+}
+
+export function fragments(m: MetaSave, kind: FragmentKind, id: string): number {
+  return Math.min(m.fragments?.[`${kind}.${id}`] ?? 0, fragmentNeed(kind, id));
+}
+
+export function buildingUnlocked(m: MetaSave, id: string): boolean {
+  const need = BP.buildingFragments[id];
+  return need === undefined || BP.buildingsStartUnlocked.includes(id) || fragments(m, 'building', id) >= need;
+}
+
+export function addFragment(m: MetaSave, kind: FragmentKind, id: string): void {
+  const key = `${kind}.${id}`;
+  m.fragments = m.fragments ?? {};
+  m.fragments[key] = Math.min((m.fragments[key] ?? 0) + 1, fragmentNeed(kind, id));
+  saveMeta(m);
+}
+
+export function addArchive(m: MetaSave, recordId: string): void {
+  m.archive = m.archive ?? [];
+  if (!m.archive.includes(recordId)) { m.archive.push(recordId); saveMeta(m); }
+}
+
+export function pickFragment(m: MetaSave, rnd = Math.random): FragmentTarget | null {
+  const open: FragmentTarget[] = [
+    ...BLUEPRINT_BUILDINGS.filter((id) => !buildingUnlocked(m, id)).map((id) => ({ kind: 'building' as const, id })),
+    ...(fragments(m, 'hero', '') < BP.heroFragments ? [] : []),
+  ];
+  if (open.length === 0) return null;
+  if (rnd() < BP.targetPick.buildingChance) {
+    const bldgs = open.filter((t) => t.kind === 'building');
+    if (bldgs.length > 0) {
+      const closest = bldgs.reduce((a, b) => fragments(m, 'building', a.id) >= fragments(m, 'building', b.id) ? a : b);
+      return rnd() < BP.targetPick.closestToDoneChance ? closest : bldgs[Math.floor(rnd() * bldgs.length)];
+    }
+  }
+  return open[Math.floor(rnd() * open.length)];
 }
