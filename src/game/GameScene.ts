@@ -32,7 +32,7 @@ import { techOf } from './Vitals';
 import { armTechs } from './BoardView';
 import eventsJson from '../data/design/events.json';
 import { setBackHandler } from '../platform/native';
-import { CAMPAIGN_TOTAL, districtText, getCampaignWorld, markShiftCleared } from './campaign';
+import { CAMPAIGN_TOTAL, districtText, getCampaignWorld, markShiftCleared, shiftReward } from './campaign';
 import type { PeerSession as OnlineSession } from '../net/peer';
 import { challengeUrl, closeSocial, displayName, openBoard, openDonate, profile, rankOf, recordRun, resultCard, share, shouldNudge, socialOpen, type RecordedRun } from '../social';
 
@@ -395,6 +395,30 @@ export class GameScene extends Phaser.Scene {
     // The tutorial teaches by itself; coach cards and the guide come with free play.
     setLearningHooks({ pause: () => (this.overlayPaused = true), resume: () => (this.overlayPaused = false), busy: () => this.inFight() });
     this.events.once('shutdown', () => setLearningHooks(null));
+    if (this.start.shiftN && !this.guide && !this.online) this.showShiftCard(this.start.shiftN);
+  }
+
+  /** «Новое в смене» (CAMPAIGN.md §6): one card per shift with the thing it adds. Freezes the board until OK. */
+  private showShiftCard(n: number): void {
+    this.overlayPaused = true;
+    this.overlay?.destroy();
+    this.overlay = this.sheet({
+      badge: t('campaign.new_label'),
+      title: t(`campaign.shift.${n}.title`),
+      lines: [t(`campaign.shift.${n}.new`)],
+      actions: [
+        {
+          label: t('unlock.screen.ok'),
+          primary: true,
+          act: () => {
+            this.overlayPaused = false;
+            this.overlay?.destroy();
+            this.overlay = null;
+            learning().shiftCardShown(n);
+          },
+        },
+      ],
+    });
   }
 
   update(time: number, deltaMs: number): void {
@@ -1371,7 +1395,11 @@ export class GameScene extends Phaser.Scene {
       if (shouldNudge()) lines.push(t('donate.nudge'));
     }
     // Campaign victory: add district debrief text.
-    if (victory && shiftN) lines.push(districtText(shiftN));
+    if (victory && shiftN) {
+      lines.push(districtText(shiftN));
+      const reward = shiftReward(shiftN);
+      if (reward) lines.push(t('campaign.reward', { reward }));
+    }
     // Free play: "Итоги смены" with the meta progress (design/META.md §5); the tutorial keeps the plain sheet.
     if (this.tally) {
       const { view } = this.tally.commit(w, victory ? 'win' : 'lose', 'call', { daily: this.start.daily, coop: !!this.online });
