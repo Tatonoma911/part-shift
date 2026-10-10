@@ -51,17 +51,19 @@ export interface ShiftWorldOptions {
   bonusCapsuleCount?: number;
   medkitCount?: number;
   survivorCount?: number;
+  raids: { enabled: boolean; firstAfterSeconds?: number; everySeconds?: number; size?: number; maxSize?: number };
 }
 
 export function getCampaignWorld(n: number): ShiftWorldOptions {
   const shift = CAMPAIGN.shifts.find((s) => s.n === n);
-  if (!shift) return { width: 9, height: 11, difficulty: 'intern', nestCount: 2, bossHatchCount: 0 };
+  if (!shift) return { width: 9, height: 11, difficulty: 'intern', nestCount: 2, bossHatchCount: 0, raids: { enabled: false } };
   const ovr = shift.overrides as Record<string, unknown>;
   const counts = (ovr['mapgen.counts'] as Record<string, number> | undefined) ?? {};
   const features = shift.features as Record<string, boolean>;
   const nestCount = counts.nest ?? (ovr['mapgen.counts.nest'] as number | undefined) ?? 2;
   const bossHatchCount = counts.boss_hatch ?? (features.callTarget ? 1 : 0);
-  const lairTotal = counts.hero_lair;
+  const lairTotal = features.lairs === false ? 0 : counts.hero_lair;
+  const raids = { enabled: !!features.raids, ...((ovr['raids'] as Record<string, number> | undefined) ?? {}) };
   const mineCount = features.hazards
     ? ((ovr['hazards.mine.count'] as number | undefined) ?? undefined)
     : 0;
@@ -76,6 +78,7 @@ export function getCampaignWorld(n: number): ShiftWorldOptions {
     bonusCapsuleCount: counts.bonus_capsule,
     medkitCount: counts.medkit,
     survivorCount: counts.survivor !== undefined ? counts.survivor : undefined,
+    raids,
   };
 }
 

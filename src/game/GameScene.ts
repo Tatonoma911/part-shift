@@ -326,7 +326,7 @@ export class GameScene extends Phaser.Scene {
         : saved
           ? new World({ state: saved })
           : campaignOpts
-            ? new World({ seed: st.seed || Math.floor(Math.random() * 1e9), assist, rules: { ...rules, counts: { nests: campaignOpts.nestCount, mine: campaignOpts.mineCount, bossHatch: campaignOpts.bossHatchCount, lairTotal: campaignOpts.lairTotal, bonusCapsule: campaignOpts.bonusCapsuleCount, medkit: campaignOpts.medkitCount, survivor: campaignOpts.survivorCount } }, difficulty: campaignOpts.difficulty, width: campaignOpts.width, height: campaignOpts.height })
+            ? new World({ seed: st.seed || Math.floor(Math.random() * 1e9), assist, rules: { ...rules, counts: { nests: campaignOpts.nestCount, mine: campaignOpts.mineCount, bossHatch: campaignOpts.bossHatchCount, lairTotal: campaignOpts.lairTotal, bonusCapsule: campaignOpts.bonusCapsuleCount, medkit: campaignOpts.medkitCount, survivor: campaignOpts.survivorCount }, raids: campaignOpts.raids }, difficulty: campaignOpts.difficulty, width: campaignOpts.width, height: campaignOpts.height })
             : new World({ seed: st.seed || Math.floor(Math.random() * 1e9), assist, rules, difficulty: st.difficulty });
     if (this.online) this.watchOnline(this.online);
     else if (!this.guide) {
