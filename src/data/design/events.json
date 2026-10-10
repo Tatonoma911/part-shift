@@ -1,0 +1,231 @@
+{
+  "version": "0.6",
+  "_doc": "Звонок Контроля. MVP_RULES §17.7. ИТОГ (= 0.4): 19 id, тексты call.<id>.title/line/a/b/a_result/b_result, служебные call.incoming/choose/timeout/unavailable (ru.json 0.35).",
+  "perRun": [
+    2,
+    3
+  ],
+  "firstAtSeconds": [
+    180,
+    240
+  ],
+  "gapSeconds": [
+    180,
+    240
+  ],
+  "notDuring": [
+    "raid_siren",
+    "raid",
+    "enemy_hero_fight"
+  ],
+  "soloPause": true,
+  "timeoutSeconds": 15,
+  "timeoutChoice": "b",
+  "coop": "all vote, tie → host, no pause",
+  "noRepeatInRun": true,
+  "events": [
+    {
+      "id": "buyback",
+      "a": {
+        "civiliansLose": 3,
+        "energy": 80
+      },
+      "b": {
+        "nextRaidSooner": 30
+      },
+      "requires": {
+        "civiliansRescued": 3
+      }
+    },
+    {
+      "id": "dome_check",
+      "a": {
+        "reactorsOffSeconds": 30,
+        "buildingsDefenseAdd": 2
+      },
+      "b": {
+        "commandHpPercent": -10
+      }
+    },
+    {
+      "id": "ad_shoot",
+      "a": {
+        "randomHeroAwaySeconds": 40,
+        "randomBoon": 1
+      },
+      "b": {
+        "energy": -30
+      }
+    },
+    {
+      "id": "overtime",
+      "a": {
+        "heroesDamageFactor": 1.2,
+        "durationSeconds": 45,
+        "then": {
+          "heroesMoveSpeedFactor": 0.8,
+          "durationSeconds": 20
+        }
+      },
+      "b": {
+        "allHeroesToShelterSeconds": 15,
+        "healWhileSheltered": true
+      }
+    },
+    {
+      "id": "cat",
+      "a": {
+        "randomHeroAwaySeconds": 20,
+        "returnsWithStar": 1
+      },
+      "b": {
+        "energy": -20
+      }
+    },
+    {
+      "id": "census",
+      "a": {
+        "allHeroesIdleSeconds": 8,
+        "backupIntegrityPercent": 5
+      },
+      "b": {
+        "nextRaidExtraEnemies": 1
+      }
+    },
+    {
+      "id": "gel_sample",
+      "a": {
+        "randomHeroMutatedArm": "random_element_tier2",
+        "heroMaxHpFactor": 0.8
+      },
+      "b": {
+        "energy": -20
+      }
+    },
+    {
+      "id": "hotline",
+      "a": {
+        "energy": -30,
+        "allyStandardSeconds": 40
+      },
+      "b": {
+        "energy": 15
+      }
+    },
+    {
+      "id": "insurance",
+      "a": {
+        "energy": -40,
+        "commandMaxHpFactor": 1.25
+      },
+      "b": {}
+    },
+    {
+      "id": "limb_recall",
+      "a": {
+        "removeRandomTrophy": 1,
+        "energy": 100
+      },
+      "b": {
+        "spawnEnemyNearHero": "adaptant_collector"
+      },
+      "requires": {
+        "anyTrophy": true
+      }
+    },
+    {
+      "id": "loyalty",
+      "a": {
+        "nextBuildingCostFactor": 0.5
+      },
+      "b": {
+        "scoreBonus": 150
+      }
+    },
+    {
+      "id": "optimization",
+      "a": {
+        "removeRandomHeroForRun": 1,
+        "otherHeroesStars": 1
+      },
+      "b": {
+        "energy": -50
+      },
+      "requires": {
+        "heroesAlive": 3
+      }
+    },
+    {
+      "id": "party",
+      "a": {
+        "allHeroesIdleSeconds": 15,
+        "then": {
+          "heroesDamageFactor": 1.15,
+          "durationSeconds": 60
+        }
+      },
+      "b": {
+        "nextCallCostFactor": 1.5
+      }
+    },
+    {
+      "id": "premium",
+      "a": {
+        "energy": -60,
+        "healAllHeroesFull": true
+      },
+      "b": {
+        "heroesMoveSpeedFactor": 0.8,
+        "durationSeconds": 20
+      }
+    },
+    {
+      "id": "rebrand",
+      "a": {
+        "energy": -40,
+        "buildingsMaxHpFactor": 1.15
+      },
+      "b": {
+        "nextRaidTarget": "buildings_not_command"
+      }
+    },
+    {
+      "id": "rent",
+      "a": {
+        "energy": -50
+      },
+      "b": {
+        "randomBuildingHpPercent": -30
+      }
+    },
+    {
+      "id": "resettle",
+      "a": {
+        "spawnSurvivorSite": 1
+      },
+      "b": {
+        "civiliansRunToCommand": 3,
+        "spawnEnemiesFollowing": 2
+      }
+    },
+    {
+      "id": "survey",
+      "a": {
+        "allHeroesIdleSeconds": 10,
+        "blueprintFragment": 1
+      },
+      "b": {
+        "spawnEnemiesNearestNest": 1
+      }
+    },
+    {
+      "id": "viral",
+      "a": {
+        "energy": 70,
+        "randomHeroNoTrophySeconds": 30
+      },
+      "b": {}
+    }
+  ],
+  "_effectsVocabulary": "energy (never below 0; option grey if unaffordable), civiliansLose, nextRaidSooner, reactorsOffSeconds, buildingsDefenseAdd, commandHpPercent, randomHeroAwaySeconds, randomBoon, allHeroesIdleSeconds, blueprintFragment, spawnEnemiesNearestNest, healAllHeroesFull, heroesMoveSpeedFactor/heroesDamageFactor + durationSeconds, then, removeRandomTrophy (holder gets own limb back), spawnEnemyNearHero (adaptant reskin, normal adaptant stats), allHeroesToShelterSeconds, returnsWithStar, buildingsMaxHpFactor, nextRaidTarget, randomHeroMutatedArm, heroMaxHpFactor, backupIntegrityPercent (meta, lowest-integrity squad hero), nextRaidExtraEnemies, randomBuildingHpPercent (not command), allyStandardSeconds, spawnSurvivorSite (closed, away from territory), civiliansRunToCommand + spawnEnemiesFollowing, randomHeroNoTrophySeconds, commandMaxHpFactor, removeRandomHeroForRun, otherHeroesStars, nextBuildingCostFactor, scoreBonus, nextCallCostFactor (energy costs ×1.5 on next call). requires unmet → event skipped, armorPlateAllHeroes, threatAdvanceSeconds, demolishCheapestBuilding, freeUpgradeCheapest, buildCostFactor, peekCharges, nextNestRewardFactor, nextNestSpawnFactor, heroesDigSpeedFactor"
+}

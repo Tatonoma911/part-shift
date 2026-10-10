@@ -27,6 +27,10 @@ import { brackets, chip, plate, TXT } from './ui';
 import { BuildDrawer, buildOptions, type BuildOption } from './BuildMenu';
 import { buzz } from './comfort';
 import { drawLamp, drawMark, type Channel } from './Sensor';
+import { controlCall, RaidTimer, TempoMeter, type CallCard } from './Pulse';
+import { techOf } from './Vitals';
+import { armTechs } from './BoardView';
+import eventsJson from '../data/design/events.json';
 import { setBackHandler } from '../platform/native';
 import type { OnlineSession } from '../net/online';
 import { challengeUrl, closeSocial, displayName, openBoard, openDonate, profile, rankOf, recordRun, resultCard, share, shouldNudge, socialOpen, type RecordedRun } from '../social';
@@ -124,6 +128,21 @@ function heroLine(key: string, id: string | undefined): string {
   return line && !line.startsWith(key) ? line : t(key, { hero: heroName(id) });
 }
 
+/** Контроль's calls (design/data/events.json, MVP_RULES §17.7). */
+const EVENTS = eventsJson as unknown as { timeoutSeconds: number; timeoutChoice?: string; soloPause?: boolean; events: { id: string; a?: Record<string, unknown>; b?: Record<string, unknown> }[] };
+
+/**
+ * Pace fields the core may add (MVP_RULES §17): all optional, read defensively. Today the core has only
+ * `raidAt` (game time of the next raid, §9.7); the raid timer counts down to it until `raid` arrives.
+ */
+type PaceState = {
+  tempo?: { points: number; level: number; stagnant?: boolean };
+  raid?: { nextIn: number; active?: boolean; techs?: string[]; callEarlyEnergy?: number; canCallEarly?: boolean };
+  controlCall?: { id: string } | null;
+  raidAt?: number;
+  time: number;
+};
+
 function stop(fn: () => void) {
   return (_p: Phaser.Input.Pointer, _x: number, _y: number, ev: Ev) => {
     ev.stopPropagation();
@@ -168,6 +187,14 @@ export class GameScene extends Phaser.Scene {
   private ghostButtons: Phaser.GameObjects.Container | null = null;
   private drawer!: BuildDrawer;
   private spotlight: { x: number; y: number; until: number } | null = null;
+  /** Pace of the shift (Pulse.ts): «Темп», the raid timer, Контроль's call. */
+  private tempo!: TempoMeter;
+  private raidTimer!: RaidTimer;
+  private call: { card: CallCard; id: string; at: number } | null = null;
+  /** The core's call object we already answered: never reopened, even if the core keeps it for a frame. */
+  private answeredCall: unknown = null;
+  /** Building long-pressed: its zone is drawn bright while its name is up (BuildingFeel.ts). */
+  private selected: { id: number; until: number } | null = null;
   /** Cell the scanner flagged on the last tap; a second tap there confirms digging it. */
   private confirmCell: string | null = null;
 
@@ -180,7 +207,6 @@ export class GameScene extends Phaser.Scene {
     ringBox: Phaser.GameObjects.Container;
     goal: Phaser.GameObjects.Text;
     goalBg: Phaser.GameObjects.Graphics;
-    shiftLabel: Phaser.GameObjects.Text;
     buildBtn: Phaser.GameObjects.Container;
     buildBtnBg: Phaser.GameObjects.Graphics;
   };
@@ -238,6 +264,9 @@ export class GameScene extends Phaser.Scene {
     this.ghostButtons = null;
     this.spotlight = null;
     this.confirmCell = null;
+    this.call = null;
+    this.answeredCall = null;
+    this.selected = null;
     this.toasts = [];
     this.overlay = null;
     this.guideBox = null;
@@ -342,7 +371,7 @@ export class GameScene extends Phaser.Scene {
     const w = this.world;
     this.boonCheck();
     // Online there is no pause (MVP_RULES §14.2): menus and hints never stop the server's clock.
-    if (this.online || (!this.paused && !this.overlayPaused && w.s.outcome === 'playing')) {
+    if (this.online || (!this.paused && !this.overlayPaused && !this.callPauses() && w.s.outcome === 'playing')) {
       if (!this.coachedBuild && !this.guide && w.player(this.me).energy >= 100) this.coachedBuild = learning().coach('build') || this.coachedBuild;
       // Real elapsed time: Phaser smooths delta while the window is unfocused, which slowed the game (QA-015).
       w.tick(Math.min(this.game.loop.rawDelta || deltaMs, 250) / 1000);
@@ -362,7 +391,16 @@ export class GameScene extends Phaser.Scene {
     if (this.guide?.update()) this.showGuideStep();
     if (this.spotlight && time > this.spotlight.until) this.spotlight = null;
     if (this.pointTo && time > this.pointTo.until) this.pointTo = null;
+    if (this.selected && time > this.selected.until) this.selected = null;
+    // Elements our heroes hit with: their own element and the arms they wear (closed blocks of those elements glow).
+    this.board.squadTechs = new Set(
+      w.s.units
+        .filter((u) => u.owner === this.me && u.hp > 0)
+        .flatMap((u) => [...armTechs(u), ...(u.hero ? [techOf(u.hero)] : [])])
+        .filter((x) => x !== 'kinetic'),
+    );
     this.board.update(time, {
+      selectedBuilding: this.selected?.id ?? null,
       // Liberated free land pulses while placing and when the tutorial asks for a building.
       buildType: (this.mode === 'build' || this.tutorialWantsBuild()) && w.started ? this.buildType : null,
       ghost: this.mode === 'build' ? this.ghost : null,
@@ -710,11 +748,13 @@ export class GameScene extends Phaser.Scene {
     const threat = this.add.text(0, 2, '', TXT.num(30, INK.white)).setOrigin(0.5);
     const ringBox = this.add.container(rx, midY, [ring, threat]).setDepth(20);
 
-    // Goal line under the HUD.
-    const shiftLabel = this.add.text(HUD.x + 8, GOAL.y + 22, t('hud.shift_label').toUpperCase(), TXT.caps()).setOrigin(0, 0.5).setDepth(20);
+    // Goal row: «Темп» under Energy (MVP_RULES §17.1), the raid timer next to it (§17.4), the goal on the right.
+    // Portrait: a little higher, so the label stays clear of the board camera (it starts at BOARD.y - 16) when zoomed in.
+    this.tempo = new TempoMeter(this, HUD.x + 8, GOAL.y + (LANDSCAPE ? 4 : -4), LANDSCAPE ? 236 : 222, 20);
+    this.raidTimer = new RaidTimer(this, HUD.x + (LANDSCAPE ? 256 : 240), GOAL.y, LANDSCAPE ? 236 : 226, 44, 21, () => this.callRaidEarly(), HUD.w - (LANDSCAPE ? 256 : 240));
     const goalBg = this.add.graphics().setDepth(20);
     const goal = this.add.text(HUD.x + HUD.w - 24, GOAL.y + 22, '', TXT.body(23, INK.white, '700')).setOrigin(1, 0.5).setDepth(20);
-    this.hud = { energy, residents, squad, threat, ring, ringBox, goal, goalBg, shiftLabel, buildBtn, buildBtnBg };
+    this.hud = { energy, residents, squad, threat, ring, ringBox, goal, goalBg, buildBtn, buildBtnBg };
   }
 
   private updateHud(deltaMs: number): void {
@@ -745,6 +785,7 @@ export class GameScene extends Phaser.Scene {
     g.arc(0, 0, 38, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * Math.max(0.001, 1 - w.threatProgress), false);
     g.strokePath();
     this.hud.threat.setText(String(level));
+    this.updatePace();
 
     let goal = t('mode.call.goal', { hero: heroName(w.s.boss.hero) });
     let bg = C.graphite;
@@ -758,10 +799,81 @@ export class GameScene extends Phaser.Scene {
     if (this.hud.goal.text !== goal) this.hud.goal.setText(goal);
     const gb = this.hud.goalBg;
     gb.clear();
-    const gw = this.hud.goal.width + 36;
-    // A long banner wins over the shift name rather than covering it (QA-011).
-    this.hud.shiftLabel.setVisible(this.hud.shiftLabel.width + gw + 24 < HUD.w);
+    // The goal chip shares its row with «Темп» and the raid timer: long goals shrink.
+    const room = HUD.w - (LANDSCAPE ? 504 : 478);
+    this.hud.goal.setScale(this.hud.goal.width + 36 > room ? (room - 36) / this.hud.goal.width : 1);
+    const gw = this.hud.goal.displayWidth + 36;
     chip(gb, HUD.x + HUD.w - 6 - gw, GOAL.y, gw, 44, bg, 1, 12);
+  }
+
+  /**
+   * «Темп», raid timer and Контроль's call from the core (MVP_RULES §17). The core fields are optional
+   * (see PaceState); without them the widgets show a calm default.
+   */
+  private updatePace(): void {
+    const w = this.world;
+    const s = w.s as typeof w.s & PaceState;
+    const now = this.time.now;
+    const steps = (config as unknown as { tempo?: { levels?: number[] } }).tempo?.levels ?? [0, 4, 9, 15];
+    const tp = s.tempo ?? { points: 0, level: 0, stagnant: false };
+    const lo = steps[tp.level] ?? 0;
+    const hi = steps[tp.level + 1] ?? lo + 6;
+    this.tempo.update(tp.level, tp.level >= 3 ? 1 : (tp.points - lo) / Math.max(1, hi - lo), !!tp.stagnant, now);
+    // The raid: the core's `raid` when it has one, otherwise the countdown to `raidAt`. No raids on this map: no timer.
+    const r = s.raid;
+    const nextIn = r ? r.nextIn : s.raidAt !== undefined ? s.raidAt - s.time : null;
+    this.raidTimer.setVisible(nextIn !== null && w.started);
+    if (nextIn !== null) {
+      const left = Math.max(0, nextIn);
+      // Calling early needs the core's `callRaidEarly` command, announced by `raid.canCallEarly`.
+      this.raidTimer.update(left, r?.callEarlyEnergy ?? Math.round(left * (1 + 0.1 * w.threatLevel)), r?.techs ?? [], !!r?.active, !!r && (r.canCallEarly ?? left > 0), now);
+    }
+    // Контроль calls: open the card when the core starts a call; solo waits for the answer, online keeps running.
+    const pending = s.controlCall ?? null;
+    if (pending && !this.call && pending !== this.answeredCall) this.openCall(pending.id, pending);
+    if (this.call?.card.container.active) {
+      this.call.card.update(now);
+      const left = EVENTS.timeoutSeconds - (performance.now() - this.call.at) / 1000;
+      if (left <= 0 && this.call.id) this.answerCall((EVENTS.timeoutChoice ?? 'b') as 'a' | 'b', true);
+    }
+  }
+
+  private callPauses(): boolean {
+    return !!this.call && !!this.call.id && !this.online && EVENTS.soloPause !== false;
+  }
+
+  /** Shows Контроль's call (texts call.<id>.*, effects events.json). */
+  private openCall(id: string, from: unknown): void {
+    this.answeredCall = from;
+    const ev = EVENTS.events.find((e) => e.id === id);
+    if (!ev) return;
+    sound.play('event_call');
+    const card = controlCall(
+      this,
+      { id, title: t(`call.${id}.title`), line: t(`call.${id}.line`), a: { label: t(`call.${id}.a`), effect: ev.a ?? {} }, b: { label: t(`call.${id}.b`), effect: ev.b ?? {} }, seconds: EVENTS.timeoutSeconds, coop: !!this.online },
+      60,
+      (c) => this.answerCall(c, false),
+    );
+    this.call = { card, id, at: performance.now() };
+  }
+
+  private answerCall(choice: 'a' | 'b', timeout: boolean): void {
+    const call = this.call;
+    if (!call || !call.id) return;
+    const id = call.id;
+    call.id = '';
+    this.world.apply({ type: 'answerCall', id, choice } as never, this.me);
+    call.card.result(timeout ? t('call.timeout') : t(`call.${id}.${choice}_result`));
+    // The card fades out and destroys itself after the result line; stop updating it from that moment.
+    call.card.container.once('destroy', () => {
+      if (this.call === call) this.call = null;
+    });
+  }
+
+  /** Second tap on the raid timer: the core starts the raid now and pays for the seconds saved. */
+  private callRaidEarly(): void {
+    const r = this.world.apply({ type: 'callRaidEarly' } as never, this.me);
+    if (r.ok) this.say(t('raid.call_early_done'), 3200);
   }
 
   // -------------------------------------------------------------------- dock
@@ -1525,6 +1637,7 @@ export class GameScene extends Phaser.Scene {
         const nameKey = `building.${b.type}.name`;
         const descKey = b.complete ? `building.${b.type}.desc` : 'building.under_construction';
         this.say(`${t(nameKey)}\n${t(descKey)}`, 3500);
+        this.selected = { id: b.id, until: this.time.now + 3500 };
         this.pressTimer = null;
       });
       return;
