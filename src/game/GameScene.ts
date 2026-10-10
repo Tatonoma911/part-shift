@@ -17,6 +17,7 @@ import { volumeHeight, volumeSliders } from './volume';
 import { BoardView } from './BoardView';
 import { Comm } from './Comm';
 import { Cameras, UI_DEPTH } from './cameras';
+import { DamageNumbers } from './DamageNumbers';
 import { EdgePointer } from './EdgePointer';
 import { SidePanel } from './SidePanel';
 import { clearSlot, loadSlot, saveSlot, touchSlot } from './saves';
@@ -185,6 +186,8 @@ export class GameScene extends Phaser.Scene {
   /** Wide screens only: shift summary in the right column (AR-06). */
   private side?: SidePanel;
   private cams!: Cameras;
+  /** Floating damage / heal numbers and reaction names over units (DamageNumbers.ts). */
+  private dmg!: DamageNumbers;
   private start: GameStart = {};
   private slot = 1;
   private guide: TutorialGuide | null = null;
@@ -349,6 +352,8 @@ export class GameScene extends Phaser.Scene {
     const home = this.online ? this.world.building(this.world.player(this.me).command) : undefined;
     if (home) this.cams.focus(bx + home.x * STEP + CELL / 2, by + home.y * STEP + CELL / 2, 1);
     this.edge = new EdgePointer(this, this.world, this.cams.board, (x, y) => this.board.center(x, y));
+    this.dmg = new DamageNumbers(this, (x, y) => this.board.center(x, y), this.cams.board);
+    this.events.once('shutdown', () => this.dmg.destroy());
     this.side = LANDSCAPE && !this.guide ? new SidePanel(this, this.world, GUIDE.y, GUIDE.h + 20) : undefined;
     this.createZoomButtons();
 
@@ -468,6 +473,7 @@ export class GameScene extends Phaser.Scene {
       showRisk: w.player(this.me).assist.mode === 'full',
     });
     this.edge.update(time);
+    this.dmg.update(time);
     this.side?.update();
     this.updateHud(deltaMs);
     this.updateDock();
@@ -560,6 +566,12 @@ export class GameScene extends Phaser.Scene {
   }
 
   private onEvent(e: GameEvent): void {
+    // Numbers show for every fight on the board, ours and the other players'.
+    if ((e.type === 'hit' || e.type === 'heal') && e.x !== undefined && e.amount) {
+      this.dmg.push({ x: e.x, y: e.y!, amount: e.amount, target: e.unit, tech: e.tech, mult: e.mult, dot: e.dot, super: e.kind === 'super', heal: e.type === 'heal', ally: e.victim === this.me });
+      return;
+    }
+    if (e.type === 'reaction' && e.x !== undefined && e.text) this.dmg.reaction(e.x, e.y!, e.text, e.tech);
     if (this.online && (e.type === 'victory' || e.type === 'defeat')) return this.endOnline();
     if (this.online && e.type === 'building_lost' && e.owner === this.me && e.text === 'command') this.centerLost();
     if (e.owner !== undefined && e.owner !== this.me && e.owner >= 0) return;
