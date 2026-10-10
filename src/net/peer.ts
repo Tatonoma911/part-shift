@@ -126,9 +126,31 @@ function buildLobby(code: string, mode: MatchMode, seats: SeatInfo[], myIdx: num
   };
 }
 
+/**
+ * Custom signalling server for e2e tests or self-hosted setups.
+ * Set via URL params: ?_ph=<host>&_pp=<port>&_ppath=<path>
+ * Defaults to PeerJS Cloud (no config needed for production).
+ *
+ * TURN note: PeerJS Cloud uses Google STUN by default. For most consumer
+ * networks (full-cone or port-restricted NAT) this is enough. Symmetric
+ * NAT — common on corporate/cellular networks — requires a TURN relay.
+ * No free reliable TURN is available; Metered.ca has a free tier but
+ * rate-limits heavily. Until a TURN server is configured, connections
+ * on symmetric NAT silently fail after the STUN timeout (~5 s). Players
+ * on the same Wi-Fi always work (loopback candidates).
+ */
+function peerServerOpts(): Record<string, unknown> {
+  if (typeof location === 'undefined') return {};
+  const p = new URLSearchParams(location.search);
+  const host = p.get('_ph');
+  if (!host) return {};
+  return { host, port: Number(p.get('_pp') ?? 9001), path: p.get('_ppath') ?? '/myapp', secure: false };
+}
+
 function openPeer(id?: string): Promise<Peer> {
   return new Promise((resolve, reject) => {
-    const peer = id ? new Peer(id, { debug: 0 }) : new Peer({ debug: 0 });
+    const opts = peerServerOpts();
+    const peer = id ? new Peer(id, opts) : new Peer(opts);
     const onOpen = () => { cleanup(); resolve(peer); };
     const onErr = (e: Error) => { cleanup(); reject(e); };
     const cleanup = () => { peer.off('open', onOpen); peer.off('error', onErr); };
