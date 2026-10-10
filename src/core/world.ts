@@ -126,7 +126,7 @@ export function effectiveConfig(rules?: RuleOverrides, difficulty = DEFAULT_DIFF
   const out = structuredClone(config);
   const d = difficulties[difficulty] ?? difficulties[DEFAULT_DIFFICULTY];
   out.threat.secondsPerLevel = d.threatSecondsPerLevel;
-  out.economy.startEnergy = d.startEnergy;
+  out.economy.startEnergy = rules?.difficulty?.startEnergy ?? d.startEnergy;
   out.boss.selfWakeSeconds = d.bossSelfWakeSeconds;
   for (const [path, value] of Object.entries(rules?.config ?? {})) {
     const keys = path.split('.');
@@ -210,7 +210,9 @@ export class World {
   }
 
   get difficulty() {
-    return difficulties[this.s.difficulty] ?? difficulties[DEFAULT_DIFFICULTY];
+    const base = difficulties[this.s.difficulty] ?? difficulties[DEFAULT_DIFFICULTY];
+    const o = this.rules.difficulty;
+    return o ? { ...base, ...o } : base;
   }
 
   /** Raid timing: the difficulty's table, or the campaign shift's own raids setting when it has one. */
