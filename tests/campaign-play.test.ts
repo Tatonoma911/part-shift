@@ -25,12 +25,12 @@ describe('shift 1 played for real', () => {
     for (let y = 0; y < o.height; y++) for (let x = 0; x < o.width; x++) w.apply({ type: 'queueDig', x, y, force: true }, p.id);
     for (let i = 0; i < 20 * 900 && w.s.outcome === 'playing'; i++) {
       if (i % 40 === 0) {
-        for (const s of w.s.sites) if (s.kind === 'nest' && !s.destroyed) w.apply({ type: 'attack', target: `s:${s.x},${s.y}` }, p.id);
+        for (const s of w.s.sites) if ((s.kind === 'nest' || s.kind === 'heavy_nest') && !s.destroyed) w.apply({ type: 'attack', target: `s:${s.x},${s.y}` }, p.id);
       }
       w.tick(0.05);
     }
-    const nestsDown = w.s.sites.filter((s) => s.kind === 'nest' && s.destroyed).length;
-    const nestsAll = w.s.sites.filter((s) => s.kind === 'nest').length;
+    const nestsDown = w.s.sites.filter((s) => (s.kind === 'nest' || s.kind === 'heavy_nest') && s.destroyed).length;
+    const nestsAll = w.s.sites.filter((s) => (s.kind === 'nest' || s.kind === 'heavy_nest')).length;
     expect(w.s.outcome).toBe('victory');
     expect(nestsDown).toBe(nestsAll);
     expect(w.s.time).toBeGreaterThan(0);
