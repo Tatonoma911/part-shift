@@ -73,13 +73,15 @@ export function boonIcon(scene: Phaser.Scene, x: number, y: number, size: number
   const key = `icon.boon_${id}`;
   const g = scene.add.graphics();
   const h = size / 2;
-  g.fillStyle(rare ? 0x2a1d06 : C.graphite, 1);
+  // The artist's comic icon has its own dark ink, so it sits on a light tile; the vector fallback glows on a dark one.
+  const drawn = scene.textures.exists(key);
+  g.fillStyle(drawn ? (rare ? 0xfff1d6 : C.paper2) : rare ? 0x2a1d06 : C.graphite, 1);
   g.fillRoundedRect(x - h, y - h, size, size, size * 0.22);
   g.lineStyle(3, rare ? C.amber : C.seam, 1);
   g.strokeRoundedRect(x - h + 5, y - h + 5, size - 10, size - 10, size * 0.18);
-  if (scene.textures.exists(key)) {
+  if (drawn) {
     const img = scene.add.image(x, y, key);
-    img.setScale((size * 0.72) / Math.max(img.width, img.height));
+    img.setScale((size * 0.84) / Math.max(img.width, img.height));
     return [g, img];
   }
   const s = size * 0.3;

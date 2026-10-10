@@ -9,7 +9,7 @@ import animJson from '../assets/art/anim/anim.json';
  *   spritesheet per animation set (resident, demon, bld_home, fx, …)
  *   with Phaser animations "<set>.<anim>".
  */
-const urls = import.meta.glob('../assets/art/**/*.png', { eager: true, query: '?url', import: 'default' }) as Record<string, string>;
+const urls = import.meta.glob('../assets/art/**/*.{png,jpg}', { eager: true, query: '?url', import: 'default' }) as Record<string, string>;
 
 interface AnimSet {
   sheet: string;
@@ -23,7 +23,7 @@ interface AnimSet {
 export const animSets = (animJson as unknown as { sets: Record<string, AnimSet> }).sets;
 
 function keyOf(path: string): string | null {
-  const m = path.match(/art\/(tiles|buildings|icons|portraits|screens|anim)\/(.+)\.png$/);
+  const m = path.match(/art\/(tiles|buildings|icons|portraits|screens|anim)\/(.+)\.(?:png|jpg)$/);
   if (!m) return null;
   const [, dir, name] = m;
   if (dir === 'anim') return name;
@@ -45,8 +45,9 @@ export function preloadArt(scene: Phaser.Scene): void {
 export function createArt(scene: Phaser.Scene): void {
   for (const path of Object.keys(urls)) {
     const key = keyOf(path);
-    // Comic screens are painted, not pixel art: they keep smooth filtering.
-    if (key && !key.startsWith('screen.') && scene.textures.exists(key)) scene.textures.get(key).setFilter(Phaser.Textures.FilterMode.NEAREST);
+    // Comic screens and comic UI icons (bonuses, menu row, Control mask) are painted, not pixel art: they keep smooth filtering.
+    const painted = !key || key.startsWith('screen.') || /^icon\.(boon|menu|control)_/.test(key);
+    if (key && !painted && scene.textures.exists(key)) scene.textures.get(key).setFilter(Phaser.Textures.FilterMode.NEAREST);
   }
   for (const [id, set] of Object.entries(animSets)) {
     for (const [name, a] of Object.entries(set.anims)) {
