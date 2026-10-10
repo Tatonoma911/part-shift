@@ -15,11 +15,13 @@ import type { GameStart } from './GameScene';
 import { C, INK, LANDSCAPE, VIEW } from './layout';
 import { menuIcon, type MenuIconId } from './menuIcons';
 import { preloadMetaArt } from './meta/art';
+import { bestStars, modeIcon, type ModeId } from './meta/Awards';
 import { loadMeta, pickAllies, rollDistrict } from './meta/store';
 import { shiftBrief } from './meta/ShiftBrief';
 import { metaPreview } from './meta/preview';
 import { clearSlot, lastSlot, loadSettings, loadSlot, saveSettings, SLOTS } from './saves';
 import { tutorialDone } from './Tutorial';
+import { getFirstUncleared } from './campaign';
 import { setBackHandler } from '../platform/native';
 import { closeOnlineScreen, openOnlineScreen, onlineScreenOpen } from '../net/lobby';
 // P2P is always available (no server required)
@@ -185,7 +187,8 @@ export class MenuScene extends Phaser.Scene {
     const bg = this.add.graphics();
     c.add(bg);
     let y = top + 40;
-    const button = (label: string, act: (() => void) | null, primary = false, sub?: string) => {
+    // `mode`: the art 173 icon on the left (Срочный вызов = flag, Общий = swords, Обучение = brain); `stars`: best rating on the right.
+    const button = (label: string, act: (() => void) | null, primary = false, sub?: string, mode?: ModeId, stars?: number) => {
       // Landscape is short: slimmer rows so settings fit without scrolling.
       const h = sub ? 110 : LANDSCAPE ? 76 : 92;
       const g = this.add.graphics();
@@ -197,9 +200,13 @@ export class MenuScene extends Phaser.Scene {
       const color = primary ? INK.white : act ? INK.graphite : INK.dim;
       const tx = this.add.text(cx, y + (sub ? 38 : h / 2), label, TXT.body(29, color, '700')).setOrigin(0.5);
       // A label never touches the button edges (ART_REVIEW AR-10): shrink it to fit, larger text sizes included.
-      const room = w - 64 - 56;
+      // With an icon or stars at the sides, the label keeps clear of both.
+      const side = mode || stars !== undefined ? 2 * (stars !== undefined ? 110 : 76) : 0;
+      const room = w - 64 - 56 - side;
       if (tx.width > room) tx.setScale(room / tx.width);
       c.add([g, tx]);
+      if (mode) c.add(modeIcon(this, x0 + 32 + 46, y + h / 2, Math.min(64, h - 24), mode).setAlpha(act ? 1 : 0.5));
+      if (stars !== undefined) bestStars(this, c, x0 + w - 32 - 20 - 3 * 28 - 4, y + h / 2, 28, stars);
       if (sub) {
         const st = this.add.text(cx, y + 78, sub, TXT.body(21, primary ? '#D9F3F8' : INK.dim, '500')).setOrigin(0.5);
         if (st.width > room) st.setScale(room / st.width);
@@ -207,6 +214,12 @@ export class MenuScene extends Phaser.Scene {
       }
       if (act) {
         const hit = this.add.zone(x0 + 32, y, w - 64, h).setOrigin(0).setInteractive({ useHandCursor: true });
+        hit.on('pointerover', () => {
+          this.tweens.add({ targets: g, alpha: primary ? 0.85 : 1, duration: 100, ease: 'Sine.Out' });
+        });
+        hit.on('pointerout', () => {
+          this.tweens.add({ targets: g, alpha: 1, duration: 120, ease: 'Sine.Out' });
+        });
         hit.on('pointerdown', (_p: Phaser.Input.Pointer, _x: number, _y: number, ev: Ev) => {
           ev.stopPropagation();
           sound.play('ui_tap');
@@ -222,19 +235,22 @@ export class MenuScene extends Phaser.Scene {
       if (last) {
         const s = loadSlot(last)!;
         button(t('menu.continue'), () => this.play({ slot: last }), true, `${t('menu.slot', { n: last })} · ${this.fmt(s.time)}`);
-      } else if (!tutorialDone()) button(t('menu.tutorial'), () => this.play({ tutorial: true }), true);
-      button(t('menu.new_run'), () => this.show('slots'), !last && tutorialDone());
-      button(t('online.menu'), onlineAvailable() ? () => this.online() : null, false, onlineAvailable() ? t('online.menu_sub') : t('menu.soon'));
+      }
+      // F-06: until the tutorial is done, «Новая смена» is the tutorial (it has its own «Пропустить»).
+      // Otherwise it is the urgent call, with its best rating over the difficulties (ACHIEVEMENTS.md §6).
+      const callStars = Math.max(0, ...Object.entries(loadMeta().records).filter(([k]) => k.startsWith('call.')).map(([, r]) => r.bestStars ?? 0));
+      if (!tutorialDone()) button(t('menu.new_run'), () => this.play({ tutorial: true }), !last, undefined, 'call');
+      else button(t('menu.new_run'), () => this.play({ slot: 0, fresh: true, shiftN: getFirstUncleared() }), !last, undefined, 'call', callStars);
+      button(t('online.menu'), onlineAvailable() ? () => this.online() : null, false, onlineAvailable() ? t('online.menu_sub') : t('menu.soon'), 'coop');
       // Meta progress: returned heroes, stats, records, rank (design/META.md §6).
       button(t('dossier.title'), () => this.scene.start('dossier'));
-      if (last || tutorialDone()) button(t('menu.tutorial'), () => this.play({ tutorial: true }));
+      if (last || tutorialDone()) button(t('menu.tutorial'), () => this.play({ tutorial: true }), false, undefined, 'tutorial');
       button(t('menu.guide'), () => openGuide());
       button(t('menu.settings'), () => this.show('settings'));
       const acc = account.view;
       const accSub = acc.status === 'disabled' ? t('menu.soon') : acc.status === 'signed' ? acc.name || acc.email : undefined;
       button(t('menu.account'), () => openAccountPanel(), false, accSub);
-      this.socialRow(c, x0 + 32, y, w - 64);
-      y += (LANDSCAPE ? 76 : 92) + 16;
+      y += this.socialRow(c, x0 + 32, y, w - 64) + 16;
     } else if (page === 'slots') {
       c.add(this.add.text(cx, y + 6, t('menu.slots').toUpperCase(), TXT.caps()).setOrigin(0.5));
       y += 44;
@@ -374,40 +390,57 @@ export class MenuScene extends Phaser.Scene {
     });
   }
 
-  /** Ranking · Invite · Feedback · Coffee (the coffee chip is gold: supporting the author is one tap away). */
-  private socialRow(c: Phaser.GameObjects.Container, x: number, y: number, w: number): void {
-    const h = LANDSCAPE ? 76 : 92;
-    // Brand icons, not system emoji (AR-21): emoji look different on every phone.
-    const items: [MenuIconId, string, () => void, boolean][] = [
-      ['leaderboard', t('social.menu.board'), () => openBoard({ playDaily: () => this.playDaily() }), false],
-      ['invite', t('social.menu.invite'), () => invite('menu'), false],
-      ['feedback', t('social.menu.feedback'), () => openFeedback('menu'), false],
-      ['coffee', t('social.menu.coffee'), () => openDonate('menu'), true],
-    ];
-    const gap = 10;
-    // The gold coffee chip is two units wide: its label is a whole phrase on two lines beside the icon.
-    const unit = (w - gap * (items.length - 1)) / (items.length + 1);
-    let bx = x;
-    items.forEach(([icon, label, act, gold]) => {
-      const bw = gold ? unit * 2 : unit;
-      const g = this.add.graphics();
-      chip(g, bx, y, bw, h, gold ? C.amber : C.graphite, gold ? 1 : 0.08, 14);
-      const size = LANDSCAPE ? 32 : 40;
-      const ic = gold ? menuIcon(this, bx + 14 + size / 2, y + h / 2, size, icon) : menuIcon(this, bx + bw / 2, y + h * 0.34, size, icon);
-      const tx = gold
-        ? this.add.text(bx + 14 + size + 8 + (bw - size - 36) / 2, y + h / 2, label, { ...TXT.body(LANDSCAPE ? 18 : 21, INK.graphite, '800'), align: 'center', lineSpacing: -2 }).setOrigin(0.5)
-        : this.add.text(bx + bw / 2, y + h * 0.74, label, TXT.body(LANDSCAPE ? 17 : 19, INK.graphite, '700')).setOrigin(0.5);
-      const room = gold ? bw - size - 36 : bw - 10;
-      if (tx.width > room || tx.height > h - 8) tx.setScale(Math.min(room / tx.width, (h - 8) / tx.height));
-      const hit = this.add.zone(bx, y, bw, h).setOrigin(0).setInteractive({ useHandCursor: true });
+  /**
+   * «Купить разработчику кофе» as one big gold button (Антон 10.10: four equal chips made its long label unreadable),
+   * then Ranking · Invite · Feedback as a slim row of quiet chips under it. Returns the height it took.
+   */
+  private socialRow(c: Phaser.GameObjects.Container, x: number, y: number, w: number): number {
+    const tap = (bx: number, by: number, bw: number, bh: number, act: () => void, gfx?: Phaser.GameObjects.Graphics) => {
+      const hit = this.add.zone(bx, by, bw, bh).setOrigin(0).setInteractive({ useHandCursor: true });
+      if (gfx) {
+        hit.on('pointerover', () => this.tweens.add({ targets: gfx, alpha: 0.82, duration: 100, ease: 'Sine.Out' }));
+        hit.on('pointerout', () => this.tweens.add({ targets: gfx, alpha: 1, duration: 120, ease: 'Sine.Out' }));
+      }
       hit.on('pointerdown', (_p: Phaser.Input.Pointer, _x: number, _y: number, ev: Ev) => {
         ev.stopPropagation();
         sound.play('ui_tap');
         act();
       });
-      c.add([g, ...ic, tx, hit]);
-      bx += bw + gap;
+      return hit;
+    };
+    // The coffee button: full width, gold, icon and the whole phrase on one line.
+    const ch = LANDSCAPE ? 80 : 96;
+    const g = this.add.graphics();
+    chip(g, x, y, w, ch, C.amber, 1, 16);
+    const size = LANDSCAPE ? 40 : 48;
+    const label = t('social.menu.coffee').replace(/\n/g, ' ');
+    const tx = this.add.text(x + w / 2 + size / 2 + 6, y + ch / 2, label, TXT.body(LANDSCAPE ? 28 : 32, INK.graphite, '800')).setOrigin(0.5);
+    const room = w - size - 64;
+    if (tx.width > room) tx.setScale(room / tx.width);
+    const ic = menuIcon(this, tx.x - (tx.width * tx.scaleX) / 2 - 14 - size / 2, y + ch / 2, size, 'coffee');
+    c.add([g, ...ic, tx, tap(x, y, w, ch, () => openDonate('menu'), g)]);
+    // The other three: quieter outline chips, icon beside a short label.
+    const items: [MenuIconId, string, () => void][] = [
+      ['leaderboard', t('social.menu.board'), () => openBoard({ playDaily: () => this.playDaily() })],
+      ['invite', t('social.menu.invite'), () => invite('menu')],
+      ['feedback', t('social.menu.feedback'), () => openFeedback('menu')],
+    ];
+    const gap = 10;
+    const sy = y + ch + 12;
+    const sh = LANDSCAPE ? 60 : 72;
+    const bw = (w - gap * (items.length - 1)) / items.length;
+    items.forEach(([icon, text, act], k) => {
+      const bx = x + k * (bw + gap);
+      const sg = this.add.graphics();
+      chip(sg, bx, sy, bw, sh, C.graphite, 0.08, 12);
+      const isz = LANDSCAPE ? 28 : 34;
+      const st = this.add.text(bx + bw / 2 + isz / 2 + 4, sy + sh / 2, text, TXT.body(LANDSCAPE ? 21 : 25, INK.graphite, '800')).setOrigin(0.5);
+      const r = bw - isz - 28;
+      if (st.width > r) st.setScale(r / st.width);
+      const sic = menuIcon(this, st.x - (st.width * st.scaleX) / 2 - 8 - isz / 2, sy + sh / 2, isz, icon);
+      c.add([sg, ...sic, st, tap(bx, sy, bw, sh, act, sg)]);
     });
+    return ch + 12 + sh;
   }
 
   /** City of the day: one map for everybody; slot 4 keeps today's run, a new day starts fresh. */

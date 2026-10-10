@@ -9,6 +9,9 @@ export type Command =
   | { type: 'queueDig'; x: number; y: number; force?: boolean }
   | { type: 'cancelDig'; x: number; y: number }
   | { type: 'toggleMark'; x: number; y: number; clear?: boolean }
+  /** Аккорд: a tapped clue whose «Опасно» marks match its number digs the other free neighbours. */
+  | { type: 'chord'; x: number; y: number }
+  | { type: 'useMedkit'; x: number; y: number }
   | { type: 'build'; building: string; x: number; y: number; hero?: string }
   | { type: 'setRecruit'; building: number; on: boolean }
   /** Upgrade a completed building to the next level (buildings.json levels[]). */
@@ -28,8 +31,11 @@ export type Command =
   | { type: 'scan' }
   /** Take one card of the open cache offer (boons.json). */
   | { type: 'pickBoon'; id: string }
-  /** Answer the boss call: engage the call target immediately. */
-  | { type: 'answerCall' }
+  /**
+   * Answer the boss call. choice 0 = refuse (free, boss risk); choice 1 = comply (costs energy, delays boss).
+   * A Контроль call from events.json (controlCall.id is an event id) takes 'a'/'b' (or 0/1) and applies that option.
+   */
+  | { type: 'answerCall'; choice?: 0 | 1 | 'a' | 'b'; id?: string }
   /** Call a raid now (spends callEarlyEnergy from GameState.raid). */
   | { type: 'callRaidEarly' };
 
@@ -40,6 +46,7 @@ export type RefuseReason =
   | 'build.cell_occupied'
   | 'build.enemies_near'
   | 'build.unreachable'
+  | 'chord.not_ready'
   | 'building.upgrade.max_level'
   | 'building.upgrade.not_complete'
   | 'building.upgrade.not_enough_energy'
@@ -55,6 +62,7 @@ export type RefuseReason =
   | 'raid.not_ready'
   | 'raid.not_enough_energy'
   | 'call.no_active'
+  | 'call.unavailable'
   | 'cell.dig_unreachable'
   | 'assist.known_danger'
   | 'assist.no_charges'

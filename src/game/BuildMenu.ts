@@ -96,6 +96,8 @@ const CELL_WEAK_TO: Record<string, string> = (configJson as unknown as { dig?: {
 const BEATS = (elementsJson as unknown as { beats: Record<string, string> }).beats;
 /** The zone a hero of `tech` digs fast (fire melts ice), or undefined for heroes without an element. */
 export const digsZone = (tech: string) => Object.keys(CELL_WEAK_TO).find((cell) => CELL_WEAK_TO[cell] === tech);
+/** The element that digs a closed block fast, or undefined for blocks without an element. */
+export const cellFastTech = (c: unknown) => CELL_WEAK_TO[cellElement(c) ?? ''];
 /** Which element a hero of `tech` is strong against in a fight (elements.json beats). */
 export const beatsTech = (tech: string) => BEATS[tech];
 /** Element of a closed cell (core field `element`, MVP_RULES §3.4). */
@@ -260,7 +262,6 @@ export function buildButton(scene: Phaser.Scene, x: number, y: number, w: number
   const hit = scene.add.zone(0, 0, w, h).setOrigin(0).setInteractive({ useHandCursor: true });
   hit.on('pointerdown', (_p: Phaser.Input.Pointer, _x: number, _y: number, ev: Phaser.Types.Input.EventData) => {
     ev.stopPropagation();
-    scene.tweens.add({ targets: c, scale: { from: 0.96, to: 1 }, duration: 120 });
     onTap();
   });
   c.add(hit);
@@ -302,7 +303,9 @@ interface Box {
 export class BuildDrawer {
   private root: Phaser.GameObjects.Container | null = null;
   private strip: Phaser.GameObjects.Container | null = null;
-  private cards: { o: BuildOption; c: Phaser.GameObjects.Container; x: number }[] = [];
+  private cols = 3;
+  private gap = 10;
+  private cards: { o: BuildOption; c: Phaser.GameObjects.Container; x: number; y: number }[] = [];
   private tabs: { group: BuildGroup; g: Phaser.GameObjects.Graphics; t: Phaser.GameObjects.Text; x: number; w: number }[] = [];
   private energyText: Phaser.GameObjects.Text | null = null;
   private scroll = 0;
@@ -319,8 +322,13 @@ export class BuildDrawer {
     private depth: number,
     private on: { pick: (o: BuildOption) => void; close: () => void },
   ) {
-    this.cardW = LANDSCAPE ? 190 : 200;
-    this.cardH = box.h - 196;
+    this.cols = LANDSCAPE ? 4 : 3;
+    this.gap = 10;
+    const sw = box.w - 52;
+    this.cardW = Math.floor((sw - this.gap * (this.cols - 1)) / this.cols);
+    // Show ~2 full rows + peek of a third so the user sees there is more to scroll.
+    const sh = box.h - 196;
+    this.cardH = Math.floor((sh - this.gap * 2) / 2.5);
   }
 
   get isOpen(): boolean {
@@ -373,7 +381,7 @@ export class BuildDrawer {
       hit.on('pointerdown', (_p: Phaser.Input.Pointer, _x: number, _y: number, ev: Phaser.Types.Input.EventData) => {
         ev.stopPropagation();
         const first = this.cards.find((c) => c.o.group === gr);
-        if (first) this.scrollTo(first.x - 4, true);
+        if (first) this.scrollTo(first.y - 4, true);
       });
       root.add([tg, label, hit]);
       this.tabs.push({ group: gr, g: tg, t: label, x: tx, w: tw });
@@ -387,54 +395,60 @@ export class BuildDrawer {
     this.strip = strip;
     root.add(strip);
     const mask = s.make.graphics({}, false);
-    mask.fillRect(sx - 2, sy - 6, sw + 4, this.cardH + 14);
+    mask.fillRect(sx - 2, sy - 6, sw + 4, (this.box.h - 196) + 14);
     strip.setMask(mask.createGeometryMask());
     this.cards = [];
-    let cx = 0;
-    let last: BuildGroup | null = null;
+    let col = 0;
+    let row = 0;
+    let lastGroup: BuildGroup | null = null;
     for (const o of options) {
-      if (last && o.group !== last) cx += 22;
-      last = o.group;
-      const c = s.add.container(cx, 0);
+      // New group always starts on a fresh row.
+      if (lastGroup !== null && o.group !== lastGroup && col > 0) { row++; col = 0; }
+      lastGroup = o.group;
+      const cx = col * (this.cardW + this.gap);
+      const cy = row * (this.cardH + this.gap);
+      const c = s.add.container(cx, cy);
       strip.add(c);
-      this.cards.push({ o, c, x: cx });
-      cx += this.cardW + 14;
+      this.cards.push({ o, c, x: cx, y: cy });
+      col++;
+      if (col >= this.cols) { col = 0; row++; }
     }
-    this.maxScroll = Math.max(0, cx - 14 - sw);
+    const totalRows = row + (col > 0 ? 1 : 0);
+    const totalH = totalRows * (this.cardH + this.gap) - this.gap;
+    this.maxScroll = Math.max(0, totalH - (this.box.h - 196));
     this.drawCards(options);
     // Swipe and tap on the row: a drag scrolls, a tap without a drag picks the card under the finger.
-    const zone = s.add.zone(sx, sy, sw, this.cardH).setOrigin(0).setInteractive({ useHandCursor: true });
-    let downX = 0;
+    const zone = s.add.zone(sx, sy, sw, this.box.h - 196).setOrigin(0).setInteractive({ useHandCursor: true });
+    let downY = 0;
     let startScroll = 0;
     let dragged = false;
     zone.on('pointerdown', (p: Phaser.Input.Pointer, _x: number, _y: number, ev: Phaser.Types.Input.EventData) => {
       ev.stopPropagation();
-      downX = p.x;
+      downY = p.y;
       startScroll = this.scroll;
       dragged = false;
     });
     zone.on('pointermove', (p: Phaser.Input.Pointer) => {
       if (!p.isDown) return;
-      if (Math.abs(p.x - downX) > 12) dragged = true;
-      if (dragged) this.scrollTo(startScroll - (p.x - downX));
+      if (Math.abs(p.y - downY) > 12) dragged = true;
+      if (dragged) this.scrollTo(startScroll - (p.y - downY));
     });
-    zone.on('pointerup', (p: Phaser.Input.Pointer, lx: number) => {
+    zone.on('pointerup', (_p: Phaser.Input.Pointer, lx: number, ly: number) => {
       if (dragged) return;
-      const at = lx + this.scroll;
-      const hit = this.cards.find((c) => at >= c.x && at <= c.x + this.cardW);
+      const atY = ly + this.scroll;
+      const hit = this.cards.find((c) => lx >= c.x && lx <= c.x + this.cardW && atY >= c.y && atY <= c.y + this.cardH);
       if (hit) this.on.pick(hit.o);
-      void p;
     });
-    zone.on('wheel', (_p: Phaser.Input.Pointer, dx: number, dy: number, _dz: number, ev: Phaser.Types.Input.EventData) => {
+    zone.on('wheel', (_p: Phaser.Input.Pointer, _dx: number, dy: number, _dz: number, ev: Phaser.Types.Input.EventData) => {
       ev.stopPropagation();
-      this.scrollTo(this.scroll + (Math.abs(dx) > Math.abs(dy) ? dx : dy));
+      this.scrollTo(this.scroll + dy);
     });
     root.add(zone);
     // Hint under the row.
     root.add(s.add.text(x + w / 2, y + h - 22, t('build.drawer.hint'), TXT.body(LANDSCAPE ? 17 : 19, INK.dim, '500')).setOrigin(0.5));
     // Open on the highlighted card (tutorial) or the selected one.
     const focus = this.cards.find((c) => highlight.includes(c.o.id)) ?? this.cards.find((c) => c.o.key === selected);
-    if (focus) this.scrollTo(focus.x - (sw - this.cardW) / 2);
+    if (focus) this.scrollTo(focus.y - ((this.box.h - 196) - this.cardH) / 2);
     this.setEnergy(energy);
     root.setY(40).setAlpha(0);
     s.tweens.add({ targets: root, y: 0, alpha: 1, duration: 180, ease: 'Cubic.easeOut' });
@@ -470,17 +484,17 @@ export class BuildDrawer {
     const to = Phaser.Math.Clamp(v, 0, this.maxScroll);
     this.scroll = to;
     if (!this.strip) return;
-    const sx = this.box.x + 26;
-    if (ease) this.scene.tweens.add({ targets: this.strip, x: sx - to, duration: 220, ease: 'Cubic.easeOut' });
-    else this.strip.x = sx - to;
+    const sy = this.box.y + 152;
+    if (ease) this.scene.tweens.add({ targets: this.strip, y: sy - to, duration: 220, ease: 'Cubic.easeOut' });
+    else this.strip.y = sy - to;
     this.drawTabs();
   }
 
   private drawTabs(): void {
-    // The active tab: the last group that starts in the left half of the visible row.
-    const at = this.scroll + (this.box.w - 52) / 2;
+    // The active tab: the last group that starts in the upper half of the visible strip.
+    const at = this.scroll + (this.box.h - 196) / 2;
     const starts = this.cards.filter((c, k) => k === 0 || this.cards[k - 1].o.group !== c.o.group);
-    const cur = [...starts].reverse().find((c) => c.x <= at)?.o.group ?? this.cards[0]?.o.group;
+    const cur = [...starts].reverse().find((c) => c.y <= at)?.o.group ?? this.cards[0]?.o.group;
     for (const tb of this.tabs) {
       const on = tb.group === cur;
       tb.g.clear();
@@ -503,106 +517,174 @@ export class BuildDrawer {
   }
 }
 
-/** One catalog card, drawn into `c` at (0, 0). */
+/**
+ * One catalog card, drawn into `c` at (0, 0).
+ *
+ * Layout (redesigned Антон 2026-10-10):
+ *   TOP ROW  (y 0–nameH)  — name (left) + element orbs (right, small)
+ *   PICTURE  (y nameH–h-42) — art/sketch, pale sky well, hero portrait corner if station
+ *   FOOT ROW (y h-42–h)   — price chip (OK/energy) or locked progress / dim reason
+ *
+ * No overlapping strips: every status goes into the dedicated foot row.
+ */
 function drawCard(s: Phaser.Scene, c: Phaser.GameObjects.Container, o: BuildOption, w: number, h: number, hl: boolean, sel: boolean): void {
-  const g = s.add.graphics();
-  c.add(g);
   const locked = o.state === 'blueprint';
   const dim = o.state === 'requires' || o.state === 'max' || o.state === 'soon';
-  const picH = Math.round(h * 0.5);
-  if (locked) drawPaper(g, 0, 0, w, h);
-  else {
-    chip(g, 0, 0, w, h, sel ? 0xd9f3f8 : C.white, 1, 14, { color: hl ? C.amber : sel ? C.seam : 0xc6d4d9, width: hl ? 5 : sel ? 4 : 2 });
-    // Picture well: pale sky behind the sprite.
-    g.fillStyle(dim ? 0xe3e8ea : 0xeaf5f8, 1);
-    g.fillRect(8, 8, w - 16, picH - 8);
+  const short = o.state === 'energy';
+  const station = !!o.hero && !locked;
+
+  // ── card plate ─────────────────────────────────────────────────────────────
+  const g = s.add.graphics();
+  c.add(g);
+  if (locked) {
+    drawPaper(g, 0, 0, w, h);
+  } else {
+    const borderCol = hl ? C.amber : sel ? C.seam : short ? C.coral : dim ? 0xb0bec5 : 0xc6d4d9;
+    const borderW = hl ? 5 : sel ? 4 : short ? 3 : 2;
+    chip(g, 0, 0, w, h, sel ? 0xd9f3f8 : C.white, 1, 14, { color: borderCol, width: borderW });
   }
-  const pic = buildingPic(s, o.id, w / 2, picH - 4, w - 40, picH - 20, o.hero);
-  if (pic) {
-    if (locked) pic.setTintFill(0xffffff).setAlpha(0.85);
-    else if (dim) pic.setTint(0x8a969c).setAlpha(0.75);
-    c.add(pic);
-  }
-  // Hero station: the hero's round comic portrait in the picture corner.
-  if (o.hero && s.textures.exists(`comm.${o.hero}`)) {
-    const r = 30;
-    const pg = s.add.graphics();
-    pg.fillStyle(C.white, 1);
-    pg.fillCircle(w - 14 - r, picH - 8 - r, r + 3);
-    c.add(pg);
-    const face = s.add.image(w - 14 - r, picH - 8 - r, `comm.${o.hero}`);
-    face.setScale((r * 2) / face.width);
-    c.add(face);
-    const ring = s.add.graphics();
-    ring.lineStyle(3, C.graphite, 1);
-    ring.strokeCircle(w - 14 - r, picH - 8 - r, r);
-    c.add(ring);
-  }
-  // Elements of the heroes it gives birth to: the same orbs as the enemies' weaknesses (Антон 10.10).
+
+  // ── TOP ROW: name + element orbs ───────────────────────────────────────────
+  const nameColor = locked ? INK.white : dim ? INK.dim : INK.graphite;
+  const nameLabel = station ? heroName(o.hero!) : optionName(o);
+  const nameFS = LANDSCAPE ? 16 : 18;
+  // Leave room on right for orbs if present
+  const orbsW = o.techs.length && !locked ? Math.min(o.techs.length, 4) * 26 + 4 : 0;
+  const nameMaxW = w - 14 - orbsW - 10;
+  const name = s.add.text(10, 10, nameLabel, {
+    ...TXT.body(nameFS, nameColor, '700'),
+    wordWrap: { width: nameMaxW },
+    lineSpacing: -2,
+  });
+  if (name.height > 46) name.setScale(46 / name.height);
+  c.add(name);
+
+  // Element orbs: small row top-right of the name band
   if (o.techs.length && !locked) {
     const og = s.add.graphics();
-    o.techs.slice(0, 5).forEach((tech, k) => drawTechOrb(og, tech, 30 + k * 36, 30, 15));
+    const orbR = 10;
+    o.techs.slice(0, 4).forEach((tech, k) => drawTechOrb(og, tech, w - orbsW + 4 + k * 26 + orbR, 22, orbR));
     c.add(og);
   }
-  // Land it frees: a small corner tag.
-  // Hidden under the «why not» strip.
+
+  // ── PICTURE WELL ───────────────────────────────────────────────────────────
+  const nameH = Math.max(46, name.displayHeight) + 16; // dynamic based on name wrap
+  const footH = 42;
+  const picTop = nameH;
+  const picBot = h - footH;
+  const picH = picBot - picTop;
+  const picMidX = w / 2;
+  const picMidY = picTop + picH / 2;
+
+  if (!locked) {
+    g.fillStyle(dim ? 0xe3e8ea : 0xeaf5f8, 1);
+    g.fillRect(8, picTop + 2, w - 16, picH - 4);
+    // Thin separator line above name (accent)
+    if (!dim) {
+      g.lineStyle(2, hl ? C.amber : sel ? C.seam : C.teal, 0.5);
+      g.lineBetween(10, picTop - 1, w - 10, picTop - 1);
+    }
+  }
+
+  const pic = buildingPic(s, o.id, picMidX, picMidY, w - 32, picH - 16, o.hero);
+  if (pic) {
+    if (locked) pic.setTintFill(0xffffff).setAlpha(0.75);
+    else if (dim) pic.setTint(0x8a969c).setAlpha(0.72);
+    c.add(pic);
+  }
+
+  // Hero station: round comic portrait in the top-right corner of the picture.
+  if (o.hero && s.textures.exists(`comm.${o.hero}`)) {
+    const r = 26;
+    const px = w - 14 - r, py = picTop + 10 + r;
+    const pg = s.add.graphics();
+    pg.fillStyle(C.white, 1);
+    pg.fillCircle(px, py, r + 2);
+    pg.lineStyle(2, C.graphite, 0.8);
+    pg.strokeCircle(px, py, r + 2);
+    c.add(pg);
+    const face = s.add.image(px, py, `comm.${o.hero}`);
+    face.setScale((r * 2) / face.width);
+    c.add(face);
+  }
+
+  // «Пригодится» badge: amber chip on the picture (station only).
+  if (station && o.useful && o.digs) {
+    const bt = s.add.text(w / 2, picBot - 6, t('build.station.useful', { zone: t(`zone.short.${o.digs}`) }), {
+      ...TXT.body(13, INK.graphite, '800'),
+      backgroundColor: '#FFC94D',
+      padding: { x: 6, y: 2 },
+    }).setOrigin(0.5, 1);
+    if (bt.width > w - 24) bt.setScale((w - 24) / bt.width);
+    c.add(bt);
+  }
+
+  // Land freed: bottom-left of picture (OK state only, below orbs).
   if (o.land > 0 && !locked && o.state === 'ok') {
-    // Bottom-left of the picture: the top row belongs to the element orbs.
-    const lt = s.add.text(14, picH - 8, t('build.card.land', { count: o.land }), { ...TXT.body(16, INK.teal, '700'), backgroundColor: '#FFFFFFCC', padding: { x: 6, y: 2 } }).setOrigin(0, 1);
+    const lt = s.add.text(10, picBot - 4, t('build.card.land', { count: o.land }), {
+      ...TXT.body(14, INK.teal, '700'),
+      backgroundColor: '#FFFFFFCC',
+      padding: { x: 5, y: 2 },
+    }).setOrigin(0, 1);
     c.add(lt);
   }
-  // A station card names only the hero (the picture says «station»), on one line: the two element lines need the room.
-  const station = !!o.hero && !locked;
-  const name = s.add.text(14, picH + 10, station ? heroName(o.hero!) : optionName(o), { ...TXT.body(LANDSCAPE ? 18 : 20, locked ? INK.white : INK.graphite, '700'), wordWrap: { width: station ? 9999 : w - 28 }, lineSpacing: 0 });
-  if (station && name.width > w - 28) name.setScale((w - 28) / name.width);
-  if (name.height > 54) name.setScale(54 / name.height);
-  c.add(name);
+
+  // Station detail rows (digs fast / strong against) below the name inside the picture area.
   if (station) {
-    // «Быстро копает: лёд» / «Силён против: Токсин», each with its element dot (MVP_RULES §3.4).
     const rows: [string, string | undefined][] = [
       [o.digs ? t('build.station.digs', { zone: t(`zone.short.${o.digs}`) }) : t('build.station.digs_none'), o.digs],
       [o.strong ? t('build.station.strong', { tech: t(`tech.${o.strong}`) }) : '', o.strong],
     ];
     const dg = s.add.graphics();
     c.add(dg);
-    let ry = picH + 10 + name.displayHeight + 4;
+    let ry = picTop + 8;
     for (const [text, tech] of rows) {
       if (!text) continue;
-      if (tech) drawTechOrb(dg, tech, 21, ry + 10, 7);
-      const tl = s.add.text(tech ? 34 : 14, ry, text, TXT.body(15, INK.graphite, '600'));
-      if (tl.width > w - (tech ? 44 : 24)) tl.setScale((w - (tech ? 44 : 24)) / tl.width);
+      const orbR2 = 7;
+      if (tech) drawTechOrb(dg, tech, 18, ry + orbR2, orbR2);
+      const tl = s.add.text(tech ? 32 : 10, ry, text, TXT.body(13, locked ? '#DCEBFF' : INK.graphite, '600'));
+      if (tl.width > w - (tech ? 42 : 20)) tl.setScale((w - (tech ? 42 : 20)) / tl.width);
       c.add(tl);
-      ry += 22;
-    }
-    // «Пригодится: лёд рядом»: an amber badge on the picture when such a zone is open near the base.
-    if (o.useful && o.digs) {
-      const bt = s.add.text(w - 12, 14, t('build.station.useful', { zone: t(`zone.short.${o.digs}`) }), { ...TXT.body(14, INK.graphite, '800'), backgroundColor: '#FFC94D', padding: { x: 6, y: 3 } }).setOrigin(1, 0);
-      if (bt.width > w - 60) bt.setScale((w - 60) / bt.width);
-      c.add(bt);
+      ry += 20;
     }
   }
-  const fy = h - 34;
+
+  // ── FOOT ROW: price / locked / dim ─────────────────────────────────────────
+  const fy = h - footH + footH / 2; // centre of foot row
+
   if (locked) {
+    // Blueprint progress bar + label.
     const fg = s.add.graphics();
-    fragmentBar(fg, 14, fy - 30, w - 28, 12, o.have ?? 0, o.need ?? 1);
+    fragmentBar(fg, 12, h - footH + 6, w - 24, 10, o.have ?? 0, o.need ?? 1);
     c.add(fg);
-    c.add(s.add.text(w / 2, fy + 2, t('build.state.blueprint', { have: o.have ?? 0, need: o.need ?? 0 }), TXT.body(18, '#DCEBFF', '700')).setOrigin(0.5));
+    c.add(
+      s.add.text(w / 2, h - footH / 2 + 8, t('build.state.blueprint', { have: o.have ?? 0, need: o.need ?? 0 }), TXT.body(16, '#DCEBFF', '700')).setOrigin(0.5),
+    );
     return;
   }
-  // Price: ⚡ 40, red when short.
-  const short = o.state === 'energy';
-  const cost = s.add.text(w / 2 + 14, fy, String(o.cost), TXT.num(24, short ? INK.coral : INK.cobalt)).setOrigin(0.5);
-  c.add(cost);
-  if (s.textures.exists('icon.energy')) c.add(s.add.image(cost.x - cost.width / 2 - 16, fy, 'icon.energy').setScale(1.1));
-  if (o.state !== 'ok') {
-    // Why it can't be built now: a strip over the picture.
-    const ng = s.add.graphics();
-    const col = short ? C.coral : C.graphite;
-    ng.fillStyle(col, 0.92);
-    ng.fillRect(8, picH - 40, w - 16, 34);
-    c.add(ng);
-    const nt = s.add.text(w / 2, picH - 23, o.note, TXT.body(16, INK.white, '700')).setOrigin(0.5);
-    if (nt.width > w - 24) nt.setScale((w - 24) / nt.width);
+
+  if (dim) {
+    // Dimmed reason: just a small label in the foot row.
+    const nt = s.add.text(w / 2, fy, o.note, TXT.body(15, INK.dim, '600')).setOrigin(0.5);
+    if (nt.width > w - 20) nt.setScale((w - 20) / nt.width);
+    c.add(nt);
+    return;
+  }
+
+  // Affordable or short: price chip.
+  const priceCol = short ? INK.coral : INK.cobalt;
+  const priceBg = short ? 0xfde8ec : 0xe8f2fd;
+  const pg2 = s.add.graphics();
+  const chipW = 104, chipH = 32, chipX = (w - chipW) / 2, chipY = h - footH + 5;
+  chip(pg2, chipX, chipY, chipW, chipH, priceBg, 1, 10, { color: short ? C.coral : C.cobalt, width: 2 });
+  c.add(pg2);
+  const costT = s.add.text(w / 2 + 10, chipY + chipH / 2, String(o.cost), TXT.num(20, priceCol)).setOrigin(0.5);
+  c.add(costT);
+  if (s.textures.exists('icon.energy')) c.add(s.add.image(w / 2 - costT.width / 2 - 4, chipY + chipH / 2, 'icon.energy').setScale(1.0).setOrigin(1, 0.5));
+  // If short: small "not enough energy" label above the chip.
+  if (short) {
+    const nt = s.add.text(w / 2, h - footH + 2, o.note, TXT.body(12, INK.coral, '600')).setOrigin(0.5, 1);
+    if (nt.width > w - 16) nt.setScale((w - 16) / nt.width);
     c.add(nt);
   }
 }

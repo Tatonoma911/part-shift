@@ -70,7 +70,9 @@ export class TutorialGuide {
     // Don't move on to a step that points at something not on the board yet
     // (step 4 "tap the number" before any threat number is open: QA-008).
     const next = this.steps[this.index + 1];
-    const nextReady = !next?.focus || this.cellsFor(next).length > 0;
+    // A next step whose goal is already met (the cache opened early by a zero cascade) is ready too,
+    // otherwise the tutorial waits forever for a cell that no longer exists.
+    const nextReady = !next?.focus || this.cellsFor(next).length > 0 || this.met(next.until);
     if (done && nextReady && elapsed >= (step.minSeconds ?? 0)) {
       this.index++;
       this.stepStartedAt = w.s.time;
@@ -103,6 +105,9 @@ export class TutorialGuide {
       case 'building_built':
         // rules v0.4 tutorial_map: step 6 builds a Microreactor instead of training defenders
         return w.s.buildings.some((b) => b.owner === 0 && b.complete && b.type === arg);
+      case 'fight_won':
+        // «Герой победил» only once the nest's adaptants are all down (FEEL_AUDIT F-05).
+        return this.flags.has('nest_opened') && !w.s.units.some((u) => u.owner === -1 && u.hp > 0);
       default:
         return this.flags.has(name);
     }
@@ -123,8 +128,13 @@ export class TutorialGuide {
       return c.revealed && c.content === 'ground' && c.building === undefined && w.clues(p.x, p.y).threat > 0;
     };
     switch (step.focus) {
-      case 'first_threat_clue':
-        return all.filter(clue).slice(0, 1);
+      case 'first_threat_clue': {
+        // Step 4 says "only one closed neighbor": prefer such a number while the field is still mostly closed.
+        const closed = (p: { x: number; y: number }) => all.filter((q) => Math.max(Math.abs(q.x - p.x), Math.abs(q.y - p.y)) === 1 && !w.cell(q.x, q.y).revealed).length;
+        const clues = all.filter(clue);
+        const one = clues.find((p) => closed(p) === 1);
+        return one ? [one] : clues.slice(0, 1);
+      }
       case 'overlapping_threat_clues':
         return all.filter(clue);
       case 'nest_cell':

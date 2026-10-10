@@ -9,6 +9,7 @@ import { DossierScene } from './game/meta/DossierScene';
 import { applyPalette } from './game/comfort';
 import { chooseLayout, LANDSCAPE, VIEW } from './game/layout';
 import { fontsReady } from './game/ui';
+import './game/Hover'; // glow feedback on every clickable object (ui/code README §30)
 import { initNative } from './platform/native';
 import { bootAnalytics } from './analytics';
 import { bootSocial } from './social';

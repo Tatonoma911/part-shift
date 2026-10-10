@@ -60,4 +60,24 @@ describe('First Shift steps', () => {
     expect(g.stepIndex).toBe(3);
     expect(g.focusCells().length).toBeGreaterThan(0);
   });
+
+  it('does not hang on the trophy step when the cache was opened early by a cascade', () => {
+    const g = new TutorialGuide();
+    const w = g.world;
+    w.apply({ type: 'placeCommand', x: 3, y: 8 });
+    (g as unknown as { index: number }).index = 7; // step 8: "the hero took the arm"
+    const cache = w.cell(6, 2);
+    expect(cache.content).toBe('cache');
+    cache.revealed = true;
+    cache.resolved = true;
+    g.onEvent({ type: 'cache_open' } as never);
+    g.onEvent({ type: 'part_attached' } as never);
+    w.s.time += 10;
+    expect(g.update()).toBe(true);
+    expect(g.stepIndex).toBe(8);
+    w.s.time += 10;
+    g.update();
+    expect(g.step).toBe(null);
+  });
 });
+

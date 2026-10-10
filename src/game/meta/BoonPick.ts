@@ -122,8 +122,6 @@ export function pickBoon(scene: Phaser.Scene, offers: BoonOffer[], onPick: (id: 
     }
     const hit = scene.add.zone(0, 0, cw, ch).setInteractive({ useHandCursor: true });
     onTap(hit, () => pick(i));
-    hit.on('pointerover', () => !done && scene.tweens.add({ targets: c, scale: 1.02, duration: 120 }));
-    hit.on('pointerout', () => !done && scene.tweens.add({ targets: c, scale: 1, duration: 120 }));
     c.add(hit);
     root.add(c);
     cards.push(c);

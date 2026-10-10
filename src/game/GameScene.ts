@@ -4,19 +4,20 @@ import { BUILDABLE, boons, buildings as buildingDefs, config } from '../core/dat
 import { cellKey } from '../core/grid';
 import { World, type GameEvent } from '../core/world';
 import { t } from '../i18n';
-import { BUILDING_ANCHOR } from './assets';
 import { sound } from './audio';
 import { SoundDirector } from './soundDirector';
 import { Voice } from './voice';
+import { MedalToasts, type Tier } from './meta/Awards';
 import { RunTally } from './meta/record';
 import { showResults } from './meta/ResultsScreen';
 import { boonPoolFor, loadMeta, pickAllies, roster } from './meta/store';
 import { pickBoon } from './meta/BoonPick';
-import { learning, openGuide, setLearningHooks } from './learn';
+import { closeCoach, learning, openGuide, setLearningHooks } from './learn';
 import { volumeHeight, volumeSliders } from './volume';
 import { BoardView } from './BoardView';
 import { Comm } from './Comm';
 import { Cameras, UI_DEPTH } from './cameras';
+import { DamageNumbers } from './DamageNumbers';
 import { EdgePointer } from './EdgePointer';
 import { SidePanel } from './SidePanel';
 import { clearSlot, loadSlot, saveSlot, touchSlot } from './saves';
@@ -32,6 +33,7 @@ import { techOf } from './Vitals';
 import { armTechs } from './BoardView';
 import eventsJson from '../data/design/events.json';
 import { setBackHandler } from '../platform/native';
+import { CAMPAIGN_TOTAL, districtText, getCampaignWorld, markShiftCleared, shiftReward } from './campaign';
 import type { PeerSession as OnlineSession } from '../net/peer';
 import { challengeUrl, closeSocial, displayName, openBoard, openDonate, profile, rankOf, recordRun, resultCard, share, shouldNudge, socialOpen, type RecordedRun } from '../social';
 
@@ -46,6 +48,8 @@ export interface GameStart {
   fresh?: boolean;
   tutorial?: boolean;
   seed?: number;
+  /** difficulty.json level id; omit for the game's default. */
+  difficulty?: string;
   /** Online match (src/net): the state comes from the server, no pause, no save slot. */
   online?: OnlineSession;
   /** City of the day (UTC day id): the run also counts on today's board. */
@@ -54,11 +58,22 @@ export interface GameStart {
   challenge?: { score: number; name: string };
   /** Heroes taken on this shift as allies; defaults to the last choice (meta allyChoice). */
   allies?: string[];
+  /** Campaign shift number (1–12). When set, board size, difficulty and nest count come from campaign.json. */
+  shiftN?: number;
 }
 type Ev = Phaser.Types.Input.EventData;
 
-/** «Строить» in the HUD, left of the threat ring: width, height, left edge from the HUD's right side. */
-const BUILD_BTN = { w: 72, h: 84, right: 176 };
+/** «Строить» button at the bottom of the dock (§7.3): full dock width, no «Копать» — tapping a closed cell digs automatically. */
+function dockButtons() {
+  const pad = 22;
+  const btnH = 76;
+  const btnW = DOCK.w - pad * 2;
+  const btnY = DOCK.y + DOCK.h - btnH - 10;
+  return { pad, btnW, btnH, btnY, buildX: DOCK.x + pad };
+}
+
+/** Medal tiers earned mid-run, waiting for the HUD (not part of the core's rules). */
+type MedalEvents = { medalEvents?: { id: string; tier: number }[] };
 
 /** Events that become a toast (writer's text keys); `bad` ones are coral. */
 const TOASTS: Record<string, { text: (e: GameEvent) => string; bad?: boolean }> = {
@@ -170,6 +185,8 @@ export class GameScene extends Phaser.Scene {
   /** Wide screens only: shift summary in the right column (AR-06). */
   private side?: SidePanel;
   private cams!: Cameras;
+  /** Floating damage / heal numbers and reaction names over units (DamageNumbers.ts). */
+  private dmg!: DamageNumbers;
   private start: GameStart = {};
   private slot = 1;
   private guide: TutorialGuide | null = null;
@@ -214,20 +231,20 @@ export class GameScene extends Phaser.Scene {
     ringBox: Phaser.GameObjects.Container;
     goal: Phaser.GameObjects.Text;
     goalBg: Phaser.GameObjects.Graphics;
-    buildBtn: Phaser.GameObjects.Container;
-    buildBtnBg: Phaser.GameObjects.Graphics;
   };
   private shownEnergy = 0;
-  /** Townsfolk who reached the command centre this shift (event `civilian_rescued`). */
-  private rescued = 0;
   private dock!: {
     /** Context line instead of mode tabs: what a tap does now, and a cancel chip while placing. */
     head: { text: Phaser.GameObjects.Text; cancel: Phaser.GameObjects.Container };
     panes: Record<Mode, Phaser.GameObjects.Container>;
+    /** Dig / Build mode buttons at the bottom of the dock (§7.3). */
+    modeBtns: { build: Phaser.GameObjects.Graphics };
     queue: Phaser.GameObjects.Text;
     cards: { id: string; g: Phaser.GameObjects.Graphics; cost: Phaser.GameObjects.Text; x: number; y: number; w: number; h: number }[];
   };
   private toasts: Phaser.GameObjects.Container[] = [];
+  /** «Землекоп: серебро» plates from the top (ACHIEVEMENTS.md §3), one after another. */
+  private medals!: MedalToasts;
   private overlay: Phaser.GameObjects.Container | null = null;
   private guideBox: { text: Phaser.GameObjects.Text; dots: Phaser.GameObjects.Graphics; g: Phaser.GameObjects.Graphics; y: number; h: number } | null = null;
 
@@ -244,6 +261,8 @@ export class GameScene extends Phaser.Scene {
   private pointTo: { x: number; y: number; until: number } | null = null;
   private rightClick: { x: number; y: number; px: number; py: number } | null = null;
   private dragMode: 'queue' | 'cancel' | null = null;
+  /** Blocks queued by the current swipe. */
+  private swipeCells: { x: number; y: number }[] = [];
   private lastDragCell = -1;
   private pressTimer: Phaser.Time.TimerEvent | null = null;
   private saveTimer = 0;
@@ -298,13 +317,16 @@ export class GameScene extends Phaser.Scene {
     const meta = loadMeta();
     const allies = (st.allies ?? meta.allyChoice).filter((id) => roster(meta).includes(id));
     const rules = { config: { 'dig.autoQueueZeroNeighbors': false }, boonPool: boonPoolFor(meta), allies };
+    const campaignOpts = st.shiftN ? getCampaignWorld(st.shiftN) : null;
     this.world = this.online?.world
       ? this.online.world
       : this.guide
         ? this.guide.world
         : saved
           ? new World({ state: saved })
-          : new World({ seed: st.seed || Math.floor(Math.random() * 1e9), assist, rules });
+          : campaignOpts
+            ? new World({ seed: st.seed || Math.floor(Math.random() * 1e9), assist, rules: { ...rules, counts: { nests: campaignOpts.nestCount, mine: campaignOpts.mineCount, bossHatch: campaignOpts.bossHatchCount, lairTotal: campaignOpts.lairTotal, bonusCapsule: campaignOpts.bonusCapsuleCount, medkit: campaignOpts.medkitCount, survivor: campaignOpts.survivorCount }, raids: campaignOpts.raids, difficulty: campaignOpts.factors, cellElements: campaignOpts.cellElements }, difficulty: campaignOpts.difficulty, width: campaignOpts.width, height: campaignOpts.height })
+            : new World({ seed: st.seed || Math.floor(Math.random() * 1e9), assist, rules, difficulty: st.difficulty });
     if (this.online) this.watchOnline(this.online);
     else if (!this.guide) {
       if (!saved) clearSlot(this.slot);
@@ -329,6 +351,8 @@ export class GameScene extends Phaser.Scene {
     const home = this.online ? this.world.building(this.world.player(this.me).command) : undefined;
     if (home) this.cams.focus(bx + home.x * STEP + CELL / 2, by + home.y * STEP + CELL / 2, 1);
     this.edge = new EdgePointer(this, this.world, this.cams.board, (x, y) => this.board.center(x, y));
+    this.dmg = new DamageNumbers(this, (x, y) => this.board.center(x, y), this.cams.board);
+    this.events.once('shutdown', () => this.dmg.destroy());
     this.side = LANDSCAPE && !this.guide ? new SidePanel(this, this.world, GUIDE.y, GUIDE.h + 20) : undefined;
     this.createZoomButtons();
 
@@ -365,13 +389,40 @@ export class GameScene extends Phaser.Scene {
     this.voice = this.guide ? null : new Voice(this, this.world, this.me, (at) => this.board.speakerAt(at), () => this.toasts.some((b) => b.active));
     this.voice?.start(!saved);
     this.tally = this.guide ? null : new RunTally(this.me);
+    // A medal tier earned mid-run: a 2 s plate from the top, the game keeps going (ACHIEVEMENTS.md §3).
+    // The tally writes into `world.s.medalEvents`; the HUD drains it into MedalToasts (Awards.ts).
+    if (this.tally) this.tally.onMedal = (a) => ((this.world.s as MedalEvents).medalEvents ??= []).push({ id: a.id, tier: a.special ? 4 : a.tier });
     this.ended = false;
     this.boonUi = null;
     this.music.start();
     this.setMode('dig');
     // The tutorial teaches by itself; coach cards and the guide come with free play.
-    setLearningHooks({ pause: () => (this.overlayPaused = true), resume: () => (this.overlayPaused = false) });
+    setLearningHooks({ pause: () => (this.overlayPaused = true), resume: () => (this.overlayPaused = false), busy: () => this.inFight() || this.ended });
     this.events.once('shutdown', () => setLearningHooks(null));
+    if (this.start.shiftN && !this.guide && !this.online) this.showShiftCard(this.start.shiftN);
+  }
+
+  /** «Новое в смене» (CAMPAIGN.md §6): one card per shift with the thing it adds. Freezes the board until OK. */
+  private showShiftCard(n: number): void {
+    this.overlayPaused = true;
+    this.overlay?.destroy();
+    this.overlay = this.sheet({
+      badge: t('campaign.new_label'),
+      title: t(`campaign.shift.${n}.title`),
+      lines: [t(`campaign.shift.${n}.new`)],
+      actions: [
+        {
+          label: t('unlock.screen.ok'),
+          primary: true,
+          act: () => {
+            this.overlayPaused = false;
+            this.overlay?.destroy();
+            this.overlay = null;
+            learning().shiftCardShown(n);
+          },
+        },
+      ],
+    });
   }
 
   update(time: number, deltaMs: number): void {
@@ -380,8 +431,11 @@ export class GameScene extends Phaser.Scene {
     // Online there is no pause (MVP_RULES §14.2): menus and hints never stop the server's clock.
     if (this.online || (!this.paused && !this.overlayPaused && !this.callPauses() && w.s.outcome === 'playing')) {
       if (!this.coachedBuild && !this.guide && w.player(this.me).energy >= 100) this.coachedBuild = learning().coach('build') || this.coachedBuild;
+      if (!this.guide) learning().tick();
       // Real elapsed time: Phaser smooths delta while the window is unfocused, which slowed the game (QA-015).
-      w.tick(Math.min(this.game.loop.rawDelta || deltaMs, 250) / 1000);
+      const dt = Math.min(this.game.loop.rawDelta || deltaMs, 250) / 1000;
+      w.tick(dt);
+      this.tally?.sample(w, dt);
       this.saveTimer += deltaMs / 1000;
       if (this.saveTimer >= config.save.autosaveSeconds) {
         this.saveTimer = 0;
@@ -418,6 +472,7 @@ export class GameScene extends Phaser.Scene {
       showRisk: w.player(this.me).assist.mode === 'full',
     });
     this.edge.update(time);
+    this.dmg.update(time);
     this.side?.update();
     this.updateHud(deltaMs);
     this.updateDock();
@@ -484,6 +539,12 @@ export class GameScene extends Phaser.Scene {
   // ------------------------------------------------------------------ events
 
   /** First-time coach cards (Learning thread): world events plus clue moments the world doesn't name. */
+  /** A raid or an enemy on the attack: coach cards wait (FEEL_AUDIT F-08). */
+  private inFight(): boolean {
+    const s = this.world.s as typeof this.world.s & PaceState;
+    return !!s.raid?.active || s.units.some((u) => u.owner === -1 && u.hp > 0 && u.target !== undefined);
+  }
+
   private coachOn(e: GameEvent): void {
     const l = learning();
     if (l.onGameEvent(e.type)) return;
@@ -504,6 +565,12 @@ export class GameScene extends Phaser.Scene {
   }
 
   private onEvent(e: GameEvent): void {
+    // Numbers show for every fight on the board, ours and the other players'.
+    if ((e.type === 'hit' || e.type === 'heal') && e.x !== undefined && e.amount) {
+      this.dmg.push({ x: e.x, y: e.y!, amount: e.amount, target: e.unit, tech: e.tech, mult: e.mult, dot: e.dot, super: e.kind === 'super', heal: e.type === 'heal', ally: e.victim === this.me });
+      return;
+    }
+    if (e.type === 'reaction' && e.x !== undefined && e.text) this.dmg.reaction(e.x, e.y!, e.text, e.tech);
     if (this.online && (e.type === 'victory' || e.type === 'defeat')) return this.endOnline();
     if (this.online && e.type === 'building_lost' && e.owner === this.me && e.text === 'command') this.centerLost();
     if (e.owner !== undefined && e.owner !== this.me && e.owner >= 0) return;
@@ -519,7 +586,9 @@ export class GameScene extends Phaser.Scene {
       const b = this.world.s.buildings.find((x) => x.x === e.x && x.y === e.y);
       if (b) this.say(t('build.done', { building: b.hero ? t('building.station.name', { hero: heroName(b.hero) }) : t(`building.${b.type}.name`) }));
     } else if (TOASTS[e.type]) {
-      this.say(TOASTS[e.type].text(e), 2800, TOASTS[e.type].bad);
+      // An empty text means the event is silent (hero_spawn with amount 1, QA-050).
+      const msg = TOASTS[e.type].text(e);
+      if (msg) this.say(msg, 2800, TOASTS[e.type].bad);
     }
     if (e.type === 'build_place') this.nextTutorialBuilding();
     // However the center went down (tap, restore), the "place the Command Center" line gives way (AR-06).
@@ -599,7 +668,6 @@ export class GameScene extends Phaser.Scene {
 
   /** A townsperson reached the centre: «+25» rises from it and the HUD counter bumps (§4.4). */
   private civilianRescued(e: GameEvent): void {
-    this.rescued += 1;
     const cmd = this.world.s.buildings.find((b) => b.owner === this.me && b.type === 'command');
     const at = e.x !== undefined ? { x: e.x, y: e.y! } : cmd ? { x: cmd.x, y: cmd.y } : null;
     if (at) {
@@ -729,25 +797,10 @@ export class GameScene extends Phaser.Scene {
       return this.add.text(x + 34, midY + 18, '', TXT.num(32, color)).setOrigin(0, 0.5).setDepth(20);
     };
     const energy = stat(px + 100, t('hud.label.energy'), 'icon.energy', INK.cobalt);
-    // The landscape HUD is narrower: tighten the columns so the «Строить» button and the threat ring stay clear.
     // v0.7: no residents. Our heroes with their limit, and townsfolk brought to the centre (§4.4).
     const residents = stat(px + (LANDSCAPE ? 214 : 262), t('hud.label.heroes'), 'icon.shield', INK.graphite);
     const squad = stat(px + (LANDSCAPE ? 362 : 418), t('hud.label.rescued'), 'icon.resident', INK.teal);
-
-    // «Строить» button: opens the building catalog (MVP_RULES, memory BUILD BUTTON).
-    const bx = HUD.x + HUD.w - BUILD_BTN.right;
-    const bw = BUILD_BTN.w;
-    const bh = BUILD_BTN.h;
-    const buildBtnBg = this.add.graphics().setDepth(20);
-    chip(buildBtnBg, bx, midY - bh / 2, bw, bh, C.graphite, 1, 12);
-    const buildIcon = this.add.image(bx + bw / 2, midY - 14, 'icon.build').setScale(1.4).setDepth(20).setTintFill(0xffffff);
-    const buildBtnTx = this.add.text(bx + bw / 2, midY + 22, t('hud.mode_build'), TXT.body(15, INK.white, '700')).setOrigin(0.5).setDepth(20);
-    const buildBtnHit = this.add.zone(bx, midY - bh / 2, bw, bh).setOrigin(0).setDepth(20).setInteractive({ useHandCursor: true });
-    buildBtnHit.on('pointerdown', stop(() => {
-      if (this.drawer.isOpen) this.closeCatalog();
-      else this.openCatalog();
-    }));
-    const buildBtn = this.add.container(0, 0, [buildBtnBg, buildIcon, buildBtnTx, buildBtnHit]).setDepth(20);
+    // «Строить» moved to the dock (§7.3).
 
     // Threat ring: empties over secondsPerLevel, then the level goes up (UI_SPEC §2.1).
     const rx = HUD.x + HUD.w - 54;
@@ -758,10 +811,11 @@ export class GameScene extends Phaser.Scene {
     // Goal row: «Темп» under Energy (MVP_RULES §17.1), the raid timer next to it (§17.4), the goal on the right.
     // Portrait: a little higher, so the label stays clear of the board camera (it starts at BOARD.y - 16) when zoomed in.
     this.tempo = new TempoMeter(this, HUD.x + 8, GOAL.y + (LANDSCAPE ? 4 : -4), LANDSCAPE ? 236 : 222, 20);
+    this.medals = new MedalToasts(this, HUD.x + HUD.w / 2, HUD.y + HUD.h + 6, UI_DEPTH + 4);
     this.raidTimer = new RaidTimer(this, HUD.x + (LANDSCAPE ? 256 : 240), GOAL.y, LANDSCAPE ? 236 : 226, 44, 21, () => this.callRaidEarly(), HUD.w - (LANDSCAPE ? 256 : 240));
     const goalBg = this.add.graphics().setDepth(20);
     const goal = this.add.text(HUD.x + HUD.w - 24, GOAL.y + 22, '', TXT.body(23, INK.white, '700')).setOrigin(1, 0.5).setDepth(20);
-    this.hud = { energy, residents, squad, threat, ring, ringBox, goal, goalBg, buildBtn, buildBtnBg };
+    this.hud = { energy, residents, squad, threat, ring, ringBox, goal, goalBg };
   }
 
   private updateHud(deltaMs: number): void {
@@ -775,7 +829,8 @@ export class GameScene extends Phaser.Scene {
     this.shownEnergy = Math.abs(diff) < 1 ? real : this.shownEnergy + diff * Math.min(1, deltaMs / 120);
     this.hud.energy.setText(String(Math.round(this.shownEnergy)));
     this.hud.residents.setText(`${allies}/${slots}`);
-    this.hud.squad.setText(String(this.rescued));
+    // «Горожане» on the balance (MVP_RULES §4.4 v0.2): rescues add, lost buildings and Контроль's calls take away.
+    this.hud.squad.setText(String(w.player(this.me).civilians ?? 0));
 
     const level = w.threatLevel;
     if (level > this.lastThreat) this.tweens.add({ targets: this.hud.ringBox, scale: 1.25, duration: 300, yoyo: true });
@@ -793,24 +848,36 @@ export class GameScene extends Phaser.Scene {
     g.strokePath();
     this.hud.threat.setText(String(level));
     this.updatePace();
+    // Medal tiers earned this frame: `world.s.medalEvents` [{id, tier}] (tier 1–3, special 4). The UI empties the list.
+    const earned = (this.world.s as MedalEvents).medalEvents;
+    if (earned?.length) for (const e of earned.splice(0)) this.medals.push(e.id, e.tier as Tier);
 
-    let goal = t('mode.call.goal', { hero: heroName(w.s.boss.hero) });
+    const nestsLeft = w.s.cells.filter((c) => (c.content === 'nest' || c.content === 'heavy_nest') && !c.resolved).length;
+    let goal = this.start.shiftN
+      ? t('hud.nests_left', { n: nestsLeft })
+      : t('mode.call.goal', { hero: heroName(w.s.boss.hero) });
     let bg = C.graphite;
     if (this.paused && !this.online) {
       goal = t('pause.plan_banner');
       bg = C.amber;
-    } else if (w.s.boss.warned && !w.s.boss.awake && !w.s.boss.dead) {
+    } else if (!this.start.shiftN && w.s.boss.warned && !w.s.boss.awake && !w.s.boss.dead) {
       goal = t('event.boss_warning');
       bg = C.violet;
+    } else if (this.start.shiftN && nestsLeft === 0) {
+      bg = C.teal;
     }
+    const showGoal = !this.guide;
     if (this.hud.goal.text !== goal) this.hud.goal.setText(goal);
+    this.hud.goal.setVisible(showGoal);
     const gb = this.hud.goalBg;
     gb.clear();
-    // The goal chip shares its row with «Темп» and the raid timer: long goals shrink.
-    const room = HUD.w - (LANDSCAPE ? 504 : 478);
-    this.hud.goal.setScale(this.hud.goal.width + 36 > room ? (room - 36) / this.hud.goal.width : 1);
-    const gw = this.hud.goal.displayWidth + 36;
-    chip(gb, HUD.x + HUD.w - 6 - gw, GOAL.y, gw, 44, bg, 1, 12);
+    if (showGoal) {
+      // The goal chip shares its row with «Темп» and the raid timer: long goals shrink.
+      const room = HUD.w - (LANDSCAPE ? 504 : 478);
+      this.hud.goal.setScale(this.hud.goal.width + 36 > room ? (room - 36) / this.hud.goal.width : 1);
+      const gw = this.hud.goal.displayWidth + 36;
+      chip(gb, HUD.x + HUD.w - 6 - gw, GOAL.y, gw, 44, bg, 1, 12);
+    }
   }
 
   /**
@@ -825,11 +892,12 @@ export class GameScene extends Phaser.Scene {
     const tp = s.tempo ?? { points: 0, level: 0, stagnant: false };
     const lo = steps[tp.level] ?? 0;
     const hi = steps[tp.level + 1] ?? lo + 6;
-    this.tempo.update(tp.level, tp.level >= 3 ? 1 : (tp.points - lo) / Math.max(1, hi - lo), !!tp.stagnant, now);
+    this.tempo.update(tp.level, tp.level >= 3 ? 1 : (tp.points - lo) / Math.max(1, hi - lo), !!tp.stagnant && !this.guide, now);
     // The raid: the core's `raid` when it has one, otherwise the countdown to `raidAt`. No raids on this map: no timer.
     const r = s.raid;
-    const nextIn = r ? r.nextIn : s.raidAt !== undefined ? s.raidAt - s.time : null;
-    this.raidTimer.setVisible(nextIn !== null && w.started);
+    const raw = r ? r.nextIn : s.raidAt !== undefined ? s.raidAt - s.time : null;
+    const nextIn = raw !== null && Number.isFinite(raw) ? raw : null;
+    this.raidTimer.setVisible(nextIn !== null && w.started && !this.guide);
     if (nextIn !== null) {
       const left = Math.max(0, nextIn);
       // Calling early needs the core's `callRaidEarly` command, announced by `raid.canCallEarly`.
@@ -837,7 +905,7 @@ export class GameScene extends Phaser.Scene {
     }
     // Контроль calls: open the card when the core starts a call; solo waits for the answer, online keeps running.
     const pending = s.controlCall ?? null;
-    if (pending && !this.call && pending !== this.answeredCall) this.openCall(pending.id, pending);
+    if (pending && !this.call && pending !== this.answeredCall && !this.guide) this.openCall(pending.id, pending);
     if (this.call?.card.container.active) {
       this.call.card.update(now);
       const left = EVENTS.timeoutSeconds - (performance.now() - this.call.at) / 1000;
@@ -888,10 +956,20 @@ export class GameScene extends Phaser.Scene {
   private createDock(): void {
     const g = this.add.graphics().setDepth(20);
     plate(g, DOCK.x, DOCK.y, DOCK.w, DOCK.h, 28);
-    // No attack mode: residents fight on their own, a tap on a foe directs them (MVP_RULES §6).
-    // No mode tabs (Антон 2026-10-09): a tap on a closed block digs, a tap on liberated land builds.
-    // The top row of the dock says what a tap does right now.
-    const pad = 22;
+    // §7.3: single «Строить» button at the bottom of the dock — «Копать» removed (Антон 2026-10-10).
+    const { pad, btnW, btnH, btnY, buildX } = dockButtons();
+    // Build button — full dock width.
+    const buildBg = this.add.graphics().setDepth(20);
+    const buildBx = buildX;
+    chip(buildBg, buildBx, btnY, btnW, btnH, C.graphite, 1, 14);
+    this.add.image(buildBx + 40, btnY + btnH / 2, 'icon.build').setScale(1.6).setDepth(20).setTintFill(0xffffff);
+    this.add.text(buildBx + 72, btnY + btnH / 2, t('hud.mode_build'), TXT.body(26, INK.white, '700')).setOrigin(0, 0.5).setDepth(20);
+    const buildHit = this.add.zone(buildBx, btnY, btnW, btnH).setOrigin(0).setDepth(20).setInteractive({ useHandCursor: true });
+    buildHit.on('pointerdown', stop(() => {
+      if (!this.drawer.isOpen) this.openCatalog();
+    }));
+
+    // Content area sits above the buttons.
     const ty = DOCK.y + 22;
     const headText = this.add
       .text(DOCK.x + pad + 8, ty + 40, '', { ...TXT.body(23, INK.graphite, '600'), wordWrap: { width: DOCK.w - pad * 2 - 190 }, lineSpacing: 2 })
@@ -908,7 +986,6 @@ export class GameScene extends Phaser.Scene {
     divider.fillRect(DOCK.x + pad, ty + 88, DOCK.w - pad * 2, 2);
 
     const top = DOCK.y + 124;
-    const inner = DOCK.w - pad * 2;
     // Dig: legend of the clue glyphs + queue chip (+ scan button).
     const dig = this.add.container(0, 0).setDepth(20);
     const lg = this.add.graphics();
@@ -920,9 +997,11 @@ export class GameScene extends Phaser.Scene {
       ['squad.target', 'demon'],
       ['cell.mark.danger', 'mark'],
     ];
+    // «Первая смена» has no call target: no violet lamp in its legend.
+    if (this.guide) legend.splice(2, 1);
     legend.forEach(([key, kind], k) => {
       const lx = DOCK.x + pad + 14 + (k % 2) * 200;
-      const ly = top + 32 + Math.floor(k / 2) * 52;
+      const ly = top + 24 + Math.floor(k / 2) * 40;
       const ig = this.add.graphics().setPosition(lx, ly);
       if (kind === 'mark') drawMark(ig.setScale(0.6), 0, 0, 'danger');
       else drawLamp(ig.setScale(2), kind, -7, -5, 14, 10);
@@ -947,41 +1026,15 @@ export class GameScene extends Phaser.Scene {
     );
     dig.add([qg, queue, qx2, qhit]);
 
-    // Build: five cards with the building sprites.
+    // The build catalog is a drawer (BuildMenu), so the dock keeps only the dig pane as a container.
     const build = this.add.container(0, 0).setDepth(20);
-    const cgap = 10;
-    const cw = (inner - cgap * (BUILDABLE.length - 1)) / BUILDABLE.length;
-    const ch = 150;
-    const cards = BUILDABLE.map((id, k) => {
-      const x = DOCK.x + pad + k * (cw + cgap);
-      const cg = this.add.graphics();
-      const a = BUILDING_ANCHOR[id] ?? [36, 78, 72, 96];
-      const img = this.add.image(x + cw / 2, top + 66, `building.${id}`).setOrigin(0.5, a[1] / a[3]);
-      img.setScale(Math.min(1, 74 / a[3]));
-      const name = this.add.text(x + cw / 2, top + 98, id === 'station' ? t('building.station.label') : t(`building.${id}.name`), { ...TXT.body(16, INK.graphite, '600'), align: 'center', wordWrap: { width: cw - 10 } }).setOrigin(0.5, 0.5);
-      const cost = this.add.text(x + cw / 2 + 10, top + 132, `${buildingDefs[id].cost}`, TXT.num(19, INK.cobalt)).setOrigin(0.5);
-      const eicon = this.add.image(x + cw / 2 - cost.width / 2 - 4, top + 132, 'icon.energy');
-      const hit = this.add.zone(x, top, cw, ch).setOrigin(0).setInteractive({ useHandCursor: true });
-      hit.on(
-        'pointerdown',
-        stop(() => {
-          this.buildType = id;
-          // Switch the ghost on the chosen block to this building.
-          if (this.ghost) this.setGhost(this.ghost);
-          this.say(t(`building.${id}.desc`), 3500);
-        }),
-      );
-      // How far this building frees land around it (buildings.json territoryRadius).
-      const r = buildingDefs[id].territoryRadius ?? 0;
-      build.add([cg, img, name, cost, eicon]);
-      if (r > 0) build.add(this.add.text(x + cw - 8, top + 10, `⬚${r}`, { ...TXT.num(15, INK.teal) }).setOrigin(1, 0));
-      build.add(hit);
-      return { id, g: cg, cost, x, y: top, w: cw, h: ch };
-    });
+    const cards: { id: string; g: Phaser.GameObjects.Graphics; cost: Phaser.GameObjects.Text; x: number; y: number; w: number; h: number }[] = [];
 
-    this.dock = { head: { text: headText, cancel }, panes: { dig, build }, queue, cards };
+    this.dock = { head: { text: headText, cancel }, panes: { dig, build }, queue, cards, modeBtns: { build: buildBg } };
 
-    this.drawer = new BuildDrawer(this, DOCK, UI_DEPTH + 10, {
+    const extraH = LANDSCAPE ? 200 : 300;
+    const catalogBox = { x: DOCK.x, y: DOCK.y - extraH, w: DOCK.w, h: DOCK.h + extraH };
+    this.drawer = new BuildDrawer(this, catalogBox, UI_DEPTH + 10, {
       pick: (o: BuildOption) => this.pickBuilding(o),
       close: () => this.closeCatalog(),
     });
@@ -999,11 +1052,15 @@ export class GameScene extends Phaser.Scene {
     this.dock.head.cancel.setVisible(mode === 'build');
     this.dock.head.text.setText(t(mode === 'build' ? 'dock.build_here' : this.tutorialWantsBuild() ? 'dock.build_tutorial' : 'dock.hint'));
     for (const [m, pane] of Object.entries(this.dock.panes)) pane.setVisible(m === mode);
-    // Build button highlights while the catalog is open.
-    if (this.hud?.buildBtnBg) {
-      this.hud.buildBtnBg.clear();
-      chip(this.hud.buildBtnBg, HUD.x + HUD.w - BUILD_BTN.right, HUD.y + HUD.h / 2 - BUILD_BTN.h / 2, BUILD_BTN.w, BUILD_BTN.h, mode === 'build' ? C.cobalt : C.graphite, 1, 12);
-    }
+    this.refreshModeBtns(mode === 'build');
+  }
+
+  /** Highlights the «Строить» button in the dock (§7.3). */
+  private refreshModeBtns(buildActive: boolean): void {
+    if (!this.dock?.modeBtns) return;
+    const { build: bb } = this.dock.modeBtns;
+    const { btnW, btnH, btnY, buildX } = dockButtons();
+    bb.clear(); chip(bb, buildX, btnY, btnW, btnH, buildActive ? C.cobalt : C.graphite, 1, 14);
   }
 
   private tutorialWantsBuild(): boolean {
@@ -1017,19 +1074,12 @@ export class GameScene extends Phaser.Scene {
     const energy = this.world.player(this.me).energy;
     const selected = this.buildType ?? null;
     this.drawer.open(opts, energy, this.guide?.step?.highlightBuild ?? [], selected);
-    // Highlight the build button while catalog is open.
-    if (this.hud?.buildBtnBg) {
-      this.hud.buildBtnBg.clear();
-      chip(this.hud.buildBtnBg, HUD.x + HUD.w - 156, HUD.y + HUD.h / 2 - 40, 78, 80, C.cobalt, 1, 12);
-    }
+    this.refreshModeBtns(true);
   }
 
   private closeCatalog(): void {
     this.drawer.close();
-    if (this.hud?.buildBtnBg) {
-      this.hud.buildBtnBg.clear();
-      chip(this.hud.buildBtnBg, HUD.x + HUD.w - 156, HUD.y + HUD.h / 2 - 40, 78, 80, C.graphite, 1, 12);
-    }
+    this.refreshModeBtns(this.mode === 'build');
   }
 
   /** Called when the player picks a building from the catalog drawer. */
@@ -1300,8 +1350,34 @@ export class GameScene extends Phaser.Scene {
   private showEnd(victory: boolean): void {
     if (this.ended) return;
     this.ended = true;
+    closeCoach();
     this.trackEnd(victory ? 'victory' : 'defeat');
     if (!this.guide) clearSlot(this.slot);
+    const shiftN = this.start.shiftN;
+    // Campaign victory: flash "СМЕНА ЗАКРЫТА" for 1.5 s, then show the results sheet.
+    if (victory && shiftN) {
+      const stars = this.tally?.stars(this.world, true, 'call', false).stars ?? 0;
+      markShiftCleared(shiftN, stars);
+      const flash = this.add.container(0, 0).setDepth(UI_DEPTH + 10);
+      flash.add(this.add.rectangle(0, 0, VIEW.width, VIEW.height, 0x060d14, 0.82).setOrigin(0));
+      flash.add(
+        this.add
+          .text(VIEW.width / 2, VIEW.height / 2, t('campaign.closed'), { ...TXT.caps('#e8f4ff'), fontSize: '36px' })
+          .setOrigin(0.5)
+          .setAlpha(0),
+      );
+      const label = flash.list[1] as Phaser.GameObjects.Text;
+      this.tweens.add({ targets: label, alpha: 1, duration: 300, ease: 'Power2' });
+      this.time.delayedCall(1500, () => {
+        flash.destroy();
+        this.showEndSheet(victory, shiftN);
+      });
+      return;
+    }
+    this.showEndSheet(victory, undefined);
+  }
+
+  private showEndSheet(victory: boolean, shiftN: number | undefined): void {
     const w = this.world;
     const me = w.player(this.me);
     const lines = [victory ? t('win.text') : t('lose.text'), t('win.time', { time: this.fmt(w.s.time) }), t('win.threat', { level: w.threatLevel }), t('win.nests', { count: me.stats.nests }), t('win.caches', { count: me.stats.caches })];
@@ -1317,7 +1393,8 @@ export class GameScene extends Phaser.Scene {
       badge = w.s.time < best ? t('win.new_record') : t('win.best_time', { time: this.fmt(best) });
     }
     // Free play scores points for the world ranking; the tutorial doesn't.
-    const rec = this.guide ? null : recordRun({ victory, seconds: w.s.time, nests: me.stats.nests, energy: me.stats.energy, heroes: me.stats.heroes.length, callTarget: w.s.boss.dead, difficulty: w.s.difficulty, threat: w.threatLevel, daily: this.start.daily });
+    const stars = this.tally?.stars(w, victory, 'call', !!this.online).stars ?? 0;
+    const rec = this.guide ? null : recordRun({ victory, seconds: w.s.time, nests: me.stats.nests, energy: me.stats.energy, heroes: me.stats.heroes.length, callTarget: w.s.boss.dead, difficulty: w.s.difficulty, threat: w.threatLevel, daily: this.start.daily, stars });
     this.lastRun = rec;
     if (rec) {
       lines.splice(1, 0, t('end.score', { score: rec.score.toLocaleString('ru-RU') }));
@@ -1326,9 +1403,16 @@ export class GameScene extends Phaser.Scene {
       if (ch) lines.splice(2, 0, t(rec.score > ch.score ? 'end.challenge_won' : 'end.challenge_lost', { name: ch.name, mine: rec.score, theirs: ch.score }));
       if (shouldNudge()) lines.push(t('donate.nudge'));
     }
+    // Campaign victory: add district debrief text.
+    if (victory && shiftN) {
+      lines.push(districtText(shiftN));
+      if (shiftN < CAMPAIGN_TOTAL) lines.push(t('campaign.next_district', { name: t(`campaign.shift.${shiftN + 1}.title`) }));
+      const reward = shiftReward(shiftN);
+      if (reward) lines.push(t('campaign.reward', { reward }));
+    }
     // Free play: "Итоги смены" with the meta progress (design/META.md §5); the tutorial keeps the plain sheet.
     if (this.tally) {
-      const { view } = this.tally.commit(w, victory ? 'win' : 'lose');
+      const { view } = this.tally.commit(w, victory ? 'win' : 'lose', 'call', { daily: this.start.daily, coop: !!this.online });
       this.tally = null;
       this.overlay?.destroy();
       this.overlay = showResults(this, view, {
@@ -1354,6 +1438,11 @@ export class GameScene extends Phaser.Scene {
           if (place && tx.active) tx.setText(t('end.board_place', { place }));
         }),
     };
+    // Campaign: primary button is "Следующая смена"; shift 12 leads back to menu.
+    const nextShiftAction =
+      victory && shiftN && shiftN < CAMPAIGN_TOTAL
+        ? () => this.scene.start('game', { slot: this.start.slot ?? 0, fresh: true, shiftN: shiftN + 1 } as typeof this.start)
+        : null;
     this.overlay?.destroy();
     this.overlay = this.sheet({
       // Comic illustration when the artist's screen is in (style per layer); until then the Command Center sprite, grey on a loss.
@@ -1364,7 +1453,9 @@ export class GameScene extends Phaser.Scene {
       title: victory ? t('win.title') : t('lose.title'),
       lines,
       actions: [
-        { label: victory ? t('win.again') : t('lose.again'), act: () => this.restart(), primary: true },
+        ...(nextShiftAction
+          ? [{ label: t('campaign.next_shift'), act: nextShiftAction, primary: true }]
+          : [{ label: victory ? t('win.again') : t('lose.again'), act: () => this.restart(), primary: true }]),
         ...(rec ? [{ label: t('end.share'), act: () => void this.shareShot(), half: true }, boardBtn] : []),
         { label: t('end.coffee'), act: () => openDonate(victory ? 'win' : 'lose'), half: true, gold: true },
         { label: t('menu.quit_to_menu'), act: () => this.toMenu(), half: true },
@@ -1699,6 +1790,11 @@ export class GameScene extends Phaser.Scene {
       return;
     }
     this.confirmCell = null;
+    // An opened medkit is used by a tap: it heals the heroes around it (hazards.json medkit).
+    if (c.revealed && c.content === 'medkit') {
+      if (w.apply({ type: 'useMedkit', x, y }, this.me).ok) this.say(t('event.medkit.open'), 1800);
+      return;
+    }
     // Swiping over auto-queued cells promotes them to the player's own queue; only own orders get cancelled.
     const own = w.player(this.me).queue.includes(k);
     const r = !c.revealed && !own ? w.apply({ type: 'queueDig', x, y }, this.me) : null;
@@ -1709,6 +1805,7 @@ export class GameScene extends Phaser.Scene {
       return;
     }
     this.dragMode = r?.ok ? 'queue' : own ? 'cancel' : 'queue';
+    this.swipeCells = r?.ok ? [{ x, y }] : [];
     this.lastDragCell = -1;
     this.applyDrag(x, y);
     const idx = y * w.s.width + x;
@@ -1745,6 +1842,9 @@ export class GameScene extends Phaser.Scene {
       if (w.isQueued(this.me, rc.x, rc.y)) w.apply({ type: 'cancelDig', x: rc.x, y: rc.y }, this.me);
       else w.apply({ type: 'toggleMark', x: rc.x, y: rc.y }, this.me);
     }
+    // A swipe over 2+ blocks is a wave (medals «Домино», «Аккордеонист»).
+    if (this.swipeCells.length >= 2) this.tally?.swipe(this.swipeCells);
+    this.swipeCells = [];
     this.dragMode = null;
     this.pressTimer?.remove();
     this.pressTimer = null;
@@ -1755,7 +1855,10 @@ export class GameScene extends Phaser.Scene {
     if (idx === this.lastDragCell) return;
     if (this.lastDragCell !== -1) this.pressTimer?.remove();
     this.lastDragCell = idx;
-    if (this.dragMode === 'queue' && this.world.apply({ type: 'queueDig', x, y }, this.me).ok) this.guide?.notify('queued');
+    if (this.dragMode === 'queue' && this.world.apply({ type: 'queueDig', x, y }, this.me).ok) {
+      this.swipeCells.push({ x, y });
+      this.guide?.notify('queued');
+    }
     else if (this.dragMode === 'cancel') this.world.apply({ type: 'cancelDig', x, y }, this.me);
   }
 }

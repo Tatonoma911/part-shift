@@ -2,7 +2,7 @@
  * Field generation for «Срочный вызов» (design/data/mapgen.json, MVP_RULES §3.2).
  * Runs after the command center(s) are placed, so the start is always safe.
  */
-import { hazards, heroList, heroRules, mapgen, sites as siteDefs, TECHS, type Tech } from './data';
+import { byDifficulty, hazards, heroList, heroRules, mapgen, sites as siteDefs, TECHS, type Tech } from './data';
 import { cellAt, cheb, inBounds, N8 } from './grid';
 import { rand, randIntOf } from './rng';
 import type { CellContent, GameState } from './state';
@@ -14,6 +14,19 @@ interface Options {
   nests?: number;
   /** Multiplayer: caches, survivors, veins and rubble × this, so each player gets the same share. */
   countScale?: number;
+  /** Mine / survivor-site count override (campaign shifts, quick mode), before countScale and the co-op factor. */
+  mines?: number;
+  survivors?: number;
+  /** 0 = never place boss_hatch (shifts without callTarget feature). Undefined = place 1. */
+  bossHatch?: number;
+  /** Cap on total hero lairs (campaign overrides heroes.json lairsPerMapByTier); undefined = use defaults. */
+  lairTotal?: number;
+  /** bonus_capsule count override; undefined = hazards.json default. */
+  bonusCapsule?: number;
+  /** medkit count override; undefined = hazards.json default. */
+  medkit?: number;
+  /** false: no elemental zones (campaign shifts without features.cellElements). */
+  cellElements?: boolean;
 }
 
 const SITE_KINDS: CellContent[] = ['nest', 'heavy_nest', 'hero_lair', 'boss_hatch', 'cache', 'survivor', 'blueprint', 'armor_crate', 'lore_record', 'mine', 'bonus_capsule', 'medkit'];
@@ -36,24 +49,29 @@ export function generateField(s: GameState, opts: Options): void {
 
   placeWater(s, commands, minCmdDist);
 
-  // Heroes: one lair per tier (heroes.json lairsPerMapByTier), never the call target itself
-  // (chosen when the match was created, so the menu can name it).
+  // Heroes: one lair per tier (heroes.json lairsPerMapByTier), never the call target itself.
+  // lairTotal caps the total count (campaign shifts that have features.lairs=false → 0).
   const boss = s.boss.hero;
   const lairHeroes: { id: string; tier: number }[] = [];
   for (const [tier, n] of Object.entries(heroRules.lairsPerMapByTier)) {
     const pool = heroList.filter((h) => h.tier === Number(tier) && h.id !== boss && !h.allyOnly);
     for (let i = 0; i < n && pool.length; i++) lairHeroes.push({ id: pool.splice(randIntOf(s, pool.length), 1)[0].id, tier: Number(tier) });
   }
+  if (opts.lairTotal !== undefined) lairHeroes.splice(opts.lairTotal);
 
   // Call target: as far as the rules ask, never next to another site.
+  // bossHatch=0 → skip placement (shifts without callTarget feature).
   let far = all.filter((p) => isFree(p) && minCmdDist(p.x, p.y) >= mapgen.bossMinDistance);
   if (far.length === 0) {
     const best = Math.max(...all.filter(isFree).map((p) => minCmdDist(p.x, p.y)));
     far = all.filter((p) => isFree(p) && minCmdDist(p.x, p.y) === best);
   }
-  const hatch = set(pick(far), 'boss_hatch')!;
-  cellAt(s, hatch.x, hatch.y).hero = boss;
-  const nearHatch = (p: { x: number; y: number }) => cheb(p.x, p.y, hatch.x, hatch.y) <= 1;
+  let hatchPos: { x: number; y: number } | null = null;
+  if ((opts.bossHatch ?? 1) > 0) {
+    hatchPos = set(pick(far), 'boss_hatch');
+    if (hatchPos) cellAt(s, hatchPos.x, hatchPos.y).hero = boss;
+  }
+  const nearHatch = (p: { x: number; y: number }) => hatchPos ? cheb(p.x, p.y, hatchPos.x, hatchPos.y) <= 1 : false;
   const free = () => all.filter((p) => isFree(p) && !nearHatch(p));
 
   for (const l of lairHeroes) {
@@ -84,7 +102,7 @@ export function generateField(s: GameState, opts: Options): void {
   }
   const k = opts.countScale ?? 1;
   const mc = mapgen.counts as unknown as Record<string, number | { chance: number; max: number }>;
-  const counts = { cache: (mc.cache as number) * k, survivor: (mc.survivor as number) * k, energy_vein: (mc.energy_vein as number) * k, rubble: (mc.rubble as number) * k };
+  const counts = { cache: (mc.cache as number) * k, survivor: (opts.survivors ?? (mc.survivor as number)) * k, energy_vein: (mc.energy_vein as number) * k, rubble: (mc.rubble as number) * k };
   for (let i = 0; i < counts.cache; i++) set(pick(free()), 'cache');
   for (let i = 0; i < counts.survivor; i++) set(pick(free()), 'survivor');
   const blueprintCount = (mc.blueprint as number | undefined) ?? 0;
@@ -94,14 +112,17 @@ export function generateField(s: GameState, opts: Options): void {
   const loreRule = mc.lore_record as { chance: number; max: number } | undefined;
   if (loreRule && rand(s) < loreRule.chance) set(pick(free()), 'lore_record');
   // Mines (hazards.json, MVP_RULES §5.2): counted on the «Опасно» channel like nests, never inside the safe radius.
-  const mines = (hazards.mine.countByDifficulty[s.difficulty] ?? hazards.mine.countByDifficulty.shift ?? 0) * (k > 1 ? hazards.mine.coopFactor : 1);
+  // v0.2: Стажёр 8, Смена 14, Аврал 20 (quick mode and campaign shifts pass `mines`).
+  const mines = (opts.mines ?? byDifficulty(hazards.mine.countByDifficulty, s.difficulty) ?? 0) * (k > 1 ? hazards.mine.coopFactor : 1);
   for (let i = 0; i < mines; i++) {
     const p = set(pick(free()), 'mine');
     // Any element until cell zones (mapgen.cellElements) exist; then the zone's element.
     if (p) cellAt(s, p.x, p.y).tech = TECHS[randIntOf(s, TECHS.length)];
   }
-  for (let i = 0; i < hazards.bonusCapsule.count * k; i++) set(pick(free()), 'bonus_capsule');
-  for (let i = 0; i < hazards.medkit.count * k; i++) set(pick(free()), 'medkit');
+  const capsuleCount = opts.bonusCapsule ?? hazards.bonusCapsule.count;
+  const medkitCount = opts.medkit ?? hazards.medkit.count;
+  for (let i = 0; i < capsuleCount * k; i++) set(pick(free()), 'bonus_capsule');
+  for (let i = 0; i < medkitCount * k; i++) set(pick(free()), 'medkit');
   for (let i = 0; i < counts.energy_vein; i++) {
     const p = set(pick(free()), 'energy_vein');
     if (p) cellAt(s, p.x, p.y).stock = mapgen.energyVein.energy;
@@ -114,7 +135,7 @@ export function generateField(s: GameState, opts: Options): void {
   }
 
   // Elemental zones: Voronoi partition of non-water cells outside the safe radius (mapgen.cellElements).
-  assignCellZones(s, commands, minCmdDist);
+  if (opts.cellElements !== false) assignCellZones(s, commands, minCmdDist);
   // Nests and mines inside a zone inherit that zone's element.
   for (let y = 0; y < s.height; y++) {
     for (let x = 0; x < s.width; x++) {

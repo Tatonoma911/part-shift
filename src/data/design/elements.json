@@ -1,23 +1,23 @@
 {
-  "version": "0.4",
+  "version": "0.6",
   "_doc": "design/ELEMENTS.md",
   "techs": [
     {
       "id": "thermo",
       "name_ru": "Огонь",
-      "color": "#FF8A3D",
+      "color": "#E53935",
       "status": "burn"
     },
     {
       "id": "cryo",
       "name_ru": "Лёд",
-      "color": "#3DD6FF",
+      "color": "#BDF3FF",
       "status": "chill"
     },
     {
       "id": "volt",
       "name_ru": "Молния",
-      "color": "#FFE14D",
+      "color": "#2F6BFF",
       "status": "shock"
     },
     {
@@ -40,23 +40,38 @@
       "_note": "unarmed hits, buildings; always ×1"
     }
   ],
-  "_cycle": "each tech beats the next one: volt > cryo > thermo > toxin > impact > volt",
+  "_cycle": "регулярный турнир: каждая стихия бьёт ровно две и уступает ровно двум; средний множитель против пула врагов 1,12–1,20 у всех пяти (проверка 2026-10-10)",
   "beats": {
-    "volt": "cryo",
-    "cryo": "thermo",
-    "thermo": "toxin",
-    "toxin": "impact",
-    "impact": "volt"
+    "thermo": [
+      "cryo",
+      "volt"
+    ],
+    "cryo": [
+      "toxin",
+      "impact"
+    ],
+    "volt": [
+      "toxin",
+      "cryo"
+    ],
+    "toxin": [
+      "impact",
+      "thermo"
+    ],
+    "impact": [
+      "volt",
+      "thermo"
+    ]
   },
   "multipliers": {
-    "strongWeak": 1.5,
-    "weak": 1.25,
-    "neutral": 1.0,
-    "resist": 0.75,
-    "strongResist": 0.5
+    "strong": 2.0,
+    "reverse": 0.75,
+    "same": 0.5,
+    "none": 1.0,
+    "_doc": "[Антон 14:48] взвешенная таблица 5×5: каждая стихия бьёт две (×2), две бьют её (по ним ×0,75), своей ×0,5, без стихии всегда ×1. Удар 20: 40 / 15 / 10 / 20"
   },
   "defaultResistForOwnTech": 0.5,
-  "defaultWeakToPredator": 1.5,
+  "defaultWeakToPredator": 2.0,
   "damageFormula": "max(minDamage, (baseDamage + partDamage) * resist[target][attackTech] - targetDefense)",
   "attackChoice": "each attack the unit uses the arm (or unarmed kinetic) with the highest expected damage vs its current target, counting reactions; ties -> alternate arms",
   "partResist": {
@@ -67,9 +82,9 @@
   "statuses": {
     "burn": {
       "dpsByTier": [
-        2,
-        3,
-        4
+        5,
+        7.5,
+        10
       ],
       "seconds": 3
     },
@@ -94,15 +109,15 @@
     },
     "poison": {
       "dpsByTier": [
-        1,
-        2,
-        3
+        2.5,
+        5,
+        7.5
       ],
       "seconds": 4,
       "defenseMinusByTier": [
-        1,
-        2,
-        2
+        2.5,
+        5,
+        5
       ]
     },
     "stagger": {
@@ -164,5 +179,22 @@
     }
   ],
   "_reactionsSource": "COMBAT_INTERACTIONS_V0 / lore bible §3 (canon reactions)",
-  "_names": "[Антон 2026-10-10 10:33] простые слова; ids не менялись; экранные имена — text/ru.json"
+  "_names": "[Антон 2026-10-10 10:33] простые слова; ids не менялись; экранные имена — text/ru.json",
+  "_oldBeats": {
+    "volt": "cryo",
+    "cryo": "thermo",
+    "thermo": "toxin",
+    "toxin": "impact",
+    "impact": "volt"
+  },
+  "_cycle_old": "each tech beats the next one: volt > cryo > thermo > toxin > impact > volt",
+  "why": {
+    "thermo": "плавит Лёд и проводку (Молния); гаснет от Удара (взрывная волна) и Токсина (химическая пена)",
+    "cryo": "замораживает Токсин, делает хрупкой броню Удара; тает от Огня, раскалывается Молнией",
+    "volt": "выжигает Токсин, раскалывает Лёд; провода обрывает Удар, проводку плавит Огонь",
+    "toxin": "разъедает броню Удара, тушит Огонь пеной; выжигается Молнией, замерзает от Льда",
+    "impact": "обрывает Молнию, сбивает пламя Огня; разъедается Токсином, хрупок на морозе (Лёд)"
+  },
+  "defaultReverse": 0.75,
+  "_colorNote": "[Антон 2026-10-10, брифик цифр урона] Огонь — красный, Молния — синяя, Лёд — бледно-голубой (отличим от синей молнии), Токсин — зелёный, Удар — бежевый, без стихии — белый"
 }

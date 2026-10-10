@@ -8,6 +8,7 @@ import configJson from '../data/design/config.json';
 import difficultyJson from '../data/design/difficulty.json';
 import elementsJson from '../data/design/elements.json';
 import enemiesJson from '../data/design/enemies.json';
+import eventsJson from '../data/design/events.json';
 import heroesJson from '../data/design/heroes.json';
 import mapgenJson from '../data/design/mapgen.json';
 import hazardsJson from '../data/design/hazards.json';
@@ -72,7 +73,14 @@ export interface BuildingDef {
     stacks?: boolean;
     healAmount?: number;
     healEverySeconds?: number;
+    /** Jammer (buildings.json): targets in range move and attack slower. */
+    moveSpeedFactor?: number;
+    attackSpeedFactor?: number;
   };
+  /** Outpost: our heroes in range gain defense. */
+  heroAura?: { radius: number; defenseAdd: number };
+  /** Repair building: our buildings in range regain HP over time. */
+  repair?: { radius: number; hpPerSecond: number };
   spawnPoint?: boolean;
   trainingLevel?: number;
   /** Hero tiers this building spawns when construction completes (MVP_RULES §4.1b). */
@@ -149,7 +157,7 @@ export interface SiteDef {
   reward?: number;
   techPool?: Tech[];
   tech?: Tech;
-  onReveal?: { energy?: number; resident?: number; permanentSlotOnCommand?: boolean; blueprintFragment?: number; armorPlates?: number; loreRecord?: number };
+  onReveal?: { energy?: number; resident?: number; permanentSlotOnCommand?: boolean; blueprintFragment?: number; armorPlates?: number; loreRecord?: number; civilians?: [number, number] };
   /** Icon shown in the blue sensor window (design/MVP_RULES §5.1). */
   findIcon?: string;
   /** Higher = more valuable for the sensor icon priority (design/MVP_RULES §5.1). */
@@ -186,12 +194,22 @@ export interface HazardRules {
   mine: {
     countByDifficulty: Record<string, number>;
     coopFactor: number;
+    /** Обеденный вызов (quick mode). */
+    quickMode?: number;
     unmarkedDig: {
       armSeconds: number;
       radius: number;
-      damage: number;
       hitsBuildings: boolean;
       status: Partial<Record<Tech, string | { stunSeconds?: number; freezeSeconds?: number; defenseMinus?: number; seconds?: number }>>;
+      /** v0.2: each of our heroes in the radius loses this share of max HP, by difficulty. */
+      heroDamageMaxHpFraction: Record<string, number>;
+      neverKillsAlone: boolean;
+      leavesMinHp: number;
+      concussion: { seconds: number; digSpeedFactor: number; attackSpeedFactor: number; moveSpeedFactor: number };
+      buildingDamageMaxHpFraction: number;
+      tearLimbChance: number;
+      threatBump?: { threatSeconds: number };
+      tempoReset?: boolean;
     };
     markedDig: { defuse: boolean; energy: number };
   };
@@ -202,6 +220,52 @@ export interface HazardRules {
   medkit: { count: number; radius: number; hpPerSecond: number; seconds: number; doctorFactor: number };
 }
 export const hazards = hazardsJson as unknown as HazardRules;
+
+/**
+ * A by-difficulty row of the design tables. hazards.json says «crunch» for Аврал, difficulty.json says «rush»:
+ * both names are accepted; unknown levels fall back to «shift».
+ */
+export function byDifficulty<T>(table: Record<string, T>, id: string): T | undefined {
+  return table[id] ?? (id === 'rush' ? table.crunch : id === 'crunch' ? table.rush : undefined) ?? table.shift;
+}
+
+/** Townsfolk «on the balance» (enemies.json civilian.balance, MVP_RULES §4.4 v0.2). */
+export interface CivilianRules {
+  onReachCommand: { score: number; energy: number; addToBalance: number };
+  balance: { energyIncomeBonusPerCivilian: number; bonusCapCivilians: number; bonusCapPerShelter: number; loseOnBuildingDestroyed: number };
+}
+/**
+ * The design numbers as of enemies.json v0.2; used until the synced enemies.json carries `civilian`
+ * (the ×2.5 data pass ships it), then the table wins.
+ */
+const CIVILIAN_DEFAULTS: CivilianRules = {
+  onReachCommand: { score: 25, energy: 5, addToBalance: 1 },
+  balance: { energyIncomeBonusPerCivilian: 0.04, bonusCapCivilians: 10, bonusCapPerShelter: 5, loseOnBuildingDestroyed: 1 },
+};
+const civilianJson = (enemiesJson as unknown as { civilian?: Partial<CivilianRules> }).civilian;
+export const civilianRules: CivilianRules = {
+  onReachCommand: { ...CIVILIAN_DEFAULTS.onReachCommand, ...civilianJson?.onReachCommand },
+  balance: { ...CIVILIAN_DEFAULTS.balance, ...civilianJson?.balance },
+};
+/** Townsfolk per opened survivor site (enemies.json sites.survivor.onReveal.civilians). */
+export const CIVILIANS_PER_SITE_DEFAULT: [number, number] = [3, 6];
+
+/** Контроль's calls (events.json, MVP_RULES §17.7). */
+export interface ControlEventDef {
+  id: string;
+  a?: Record<string, unknown>;
+  b?: Record<string, unknown>;
+  requires?: Record<string, unknown>;
+}
+export const controlEvents: Record<string, ControlEventDef> = Object.fromEntries(
+  ((eventsJson as unknown as { events: ControlEventDef[] }).events ?? []).map((e) => [e.id, e]),
+);
+/** Timing of random Контроль calls (events.json: perRun, firstAtSeconds, gapSeconds). */
+export const controlSchedule = {
+  perRun: (eventsJson as unknown as { perRun: number[] }).perRun,
+  firstAtSeconds: (eventsJson as unknown as { firstAtSeconds: number[] }).firstAtSeconds,
+  gapSeconds: (eventsJson as unknown as { gapSeconds: number[] }).gapSeconds,
+};
 export const multiplayer = multiplayerJson;
 
 export const buildings: Record<string, BuildingDef> = Object.fromEntries(

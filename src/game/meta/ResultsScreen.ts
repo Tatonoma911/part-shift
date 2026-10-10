@@ -4,7 +4,8 @@ import { sound } from '../audio';
 import { calmFx } from '../comfort';
 import { C, FONT, INK, LANDSCAPE, VIEW } from '../layout';
 import { chip, plate, TXT } from '../ui';
-import { portrait, rankBadge } from './art';
+import { portrait } from './art';
+import { rankCup, resultsMedals, resultsStars, type ShiftStars, type Tier } from './Awards';
 import { bar, button, fmtNum, fmtTime, shade } from './kit';
 import { FEMALE, rankAt, rankFraction } from './store';
 
@@ -32,6 +33,14 @@ export interface ResultsView {
   closest?: { heroId: string; text: string };
   /** Hero that returned in this run, if any. */
   unlocked?: string;
+  /** Medal tiers earned in this run (ACHIEVEMENTS.md §3), in the order they were earned. Omit to hide the block. */
+  medals?: { id: string; tier: Tier }[];
+  /** «Ближе всего»: the unfinished medal nearest to its next tier (Awards.closestMedal). */
+  medalClosest?: { id: string; cur: number; max: number };
+  /** Rank points the new medal tiers added (they move the rank bar too). */
+  medalPoints?: number;
+  /** Shift rating 1–3 stars with their conditions (ACHIEVEMENTS.md §6). Omit to hide the block. */
+  stars?: ShiftStars;
 }
 
 export interface ResultsActions {
@@ -49,6 +58,14 @@ const H = () => VIEW.height;
 
 export function showResults(scene: Phaser.Scene, v: ResultsView, act: ResultsActions, depth = 40): Phaser.GameObjects.Container {
   const root = scene.add.container(0, 0).setDepth(depth);
+  // A returned hero's card waits until the player leaves the results, so it never covers the score (QA: results text hidden).
+  let pendingHero = v.unlocked;
+  const leave = (then: () => void) => {
+    if (!pendingHero) return then();
+    const id = pendingHero;
+    pendingHero = undefined;
+    heroReturned(scene, id, act, depth + 1, then);
+  };
   let speed = calmFx() ? 4 : 1;
   const tweens: Phaser.Tweens.Tween[] = [];
   let timer: Phaser.Time.TimerEvent | undefined;
@@ -121,6 +138,13 @@ export function showResults(scene: Phaser.Scene, v: ResultsView, act: ResultsAct
   reveal(head, at);
   y += 122;
 
+  // 1½. Shift rating: three stars rise one by one, each with its condition (art 169).
+  if (v.stars) {
+    const sb = resultsStars(scene, body, pad, y, iw, v.stars, (when, fn) => steps.push({ at: when, run: fn }), at + 200);
+    at = sb.at;
+    y += sb.height + 8;
+  }
+
   // 2. Score lines run up one by one, then multipliers and the total.
   const capsScore = scene.add.text(pad, y, t('results.score.title').toUpperCase(), TXT.caps());
   body.add(capsScore);
@@ -173,18 +197,13 @@ export function showResults(scene: Phaser.Scene, v: ResultsView, act: ResultsAct
     y += note.height + 16;
   }
 
-  // 3. Rank: the bar fills by this run's score; a rank-up plate slides in.
-  let leftBottom = 0;
-  if (LANDSCAPE) {
-    leftBottom = y;
-    pad = pw / 2 + 22;
-    y = 52;
-  }
+  // 3. Rank: the bar fills by this run's score and the new medal tiers; a rank-up plate slides in.
   y += 10;
+  const gained = v.total + (v.medalPoints ?? 0);
   const before = rankAt(v.scoreBefore);
-  const after = rankAt(v.scoreBefore + v.total);
-  const rankG = scene.add.graphics();
-  rankBadge(rankG, pad + 40, y + 46, 76, after.index);
+  const after = rankAt(v.scoreBefore + gained);
+  // Rank regalia: the cup of art 172 (r1–r7).
+  const rankG = rankCup(scene, pad + 40, y + 94, 92, after.index);
   const rankCaps = scene.add.text(pad + 100, y, t('results.rank.title').toUpperCase(), TXT.caps());
   const rankName = scene.add.text(pad + 100, y + 28, t(`rank.${before.rank.id}`), TXT.num(26, INK.graphite));
   const rankBar = scene.add.graphics();
@@ -195,14 +214,14 @@ export function showResults(scene: Phaser.Scene, v: ResultsView, act: ResultsAct
   const f0 = before.index === after.index ? rankFraction(v.scoreBefore) : 0;
   bar(rankBar, barX, y + 74, barW, 12, f0, C.teal);
   const nextText = () =>
-    after.next ? t('results.rank.to_next', { rank: t(`rank.${after.next.id}`), value: fmtNum(after.next.from - v.scoreBefore - v.total) }) : t('rank.max');
+    after.next ? t('results.rank.to_next', { rank: t(`rank.${after.next.id}`), value: fmtNum(after.next.from - v.scoreBefore - gained) }) : t('rank.max');
   reveal([rankG, rankCaps, rankName, rankBar, nextLine], (at += 520));
   const rankY = y;
   steps.push({
     at: at + 120,
     run: () => {
       const o = { f: f0 };
-      const f1 = rankFraction(v.scoreBefore + v.total);
+      const f1 = rankFraction(v.scoreBefore + gained);
       tween({
         targets: o,
         f: f1,
@@ -221,6 +240,10 @@ export function showResults(scene: Phaser.Scene, v: ResultsView, act: ResultsAct
   });
   const rankUp = () => {
     rankName.setText(t(`rank.${after.rank.id}`));
+    if (!calmFx()) {
+      const s0 = rankG.scale;
+      tween({ targets: rankG, scale: s0 * 1.25, duration: 160, yoyo: true, ease: 'Quad.out' });
+    }
     const list = after.rank.unlocksBoons.map((b) => t(`boon.${b}.name`)).join(', ');
     const msg = `${t('results.rank.up', { rank: t(`rank.${after.rank.id}`) })}${list ? `. ${t('results.rank.unlocks', { list })}` : ''}`;
     const plateC = scene.add.container(pad + iw / 2, 0);
@@ -238,6 +261,27 @@ export function showResults(scene: Phaser.Scene, v: ResultsView, act: ResultsAct
   y += 140;
   // A rank-up plate slides into this reserved row (known in advance, so nothing jumps).
   if (after.index > before.index) y += 110;
+  if (v.medalPoints) {
+    // Medal tiers pay rank points too: shown on the rank's caps row.
+    const mp = scene.add.text(pad + iw, rankY, t('results.medals.points', { value: fmtNum(v.medalPoints) }), TXT.num(17, INK.amber)).setOrigin(1, 0);
+    body.add(mp);
+    reveal([mp], at + 200, 6);
+  }
+
+  // Wide screen: the right column starts here (AR-30: the left one now reaches as low as the right).
+  let leftBottom = 0;
+  if (LANDSCAPE) {
+    leftBottom = y;
+    pad = pw / 2 + 22;
+    y = 52;
+  }
+
+  // 3½. Medals of this run: each one drops in and gets the yellow star stamp (art 174).
+  if (v.medals) {
+    const mb = resultsMedals(scene, body, pad, y, iw, v.medals, v.medalClosest, (when, fn) => steps.push({ at: when, run: fn }), (at += 700));
+    at = mb.at;
+    y += mb.height + 10;
+  }
 
   // 4. Heroes: who moved closer to coming back.
   const progCaps = scene.add.text(pad, y, t('results.progress.title').toUpperCase(), TXT.caps());
@@ -277,9 +321,9 @@ export function showResults(scene: Phaser.Scene, v: ResultsView, act: ResultsAct
   reveal([ctl], (at += 260), 6);
   y += ctl.height + 34;
   const btns = [
-    ...button(scene, pad, y, iw, 100, t('results.again'), act.again, true, 31),
-    ...button(scene, pad, y + 116, iw / 2 - 8, 84, t('results.dossier'), act.dossier),
-    ...button(scene, pad + iw / 2 + 8, y + 116, iw / 2 - 8, 84, t('results.menu'), act.menu),
+    ...button(scene, pad, y, iw, 100, t('results.again'), () => leave(act.again), true, 31),
+    ...button(scene, pad, y + 116, iw / 2 - 8, 84, t('results.dossier'), () => leave(act.dossier)),
+    ...button(scene, pad + iw / 2 + 8, y + 116, iw / 2 - 8, 84, t('results.menu'), () => leave(act.menu)),
   ];
   const extra = act.extra ?? [];
   extra.forEach((b, i) => {
@@ -318,7 +362,6 @@ export function showResults(scene: Phaser.Scene, v: ResultsView, act: ResultsAct
     while (i < steps.length && steps[i].at <= last) steps[i++].run();
     if (i >= steps.length) {
       timer = undefined;
-      if (v.unlocked) scene.time.delayedCall(900 / speed, () => root.active && heroReturned(scene, v.unlocked!, act, depth + 1));
       return;
     }
     const wait = steps[i].at - last;
@@ -331,7 +374,7 @@ export function showResults(scene: Phaser.Scene, v: ResultsView, act: ResultsAct
 }
 
 /** Full-screen card when a hero comes back (META.md §5 step 5). */
-export function heroReturned(scene: Phaser.Scene, id: string, act: Pick<ResultsActions, 'takeNext'>, depth = 41): Phaser.GameObjects.Container {
+export function heroReturned(scene: Phaser.Scene, id: string, act: Pick<ResultsActions, 'takeNext'>, depth = 41, then?: () => void): Phaser.GameObjects.Container {
   const root = scene.add.container(0, 0).setDepth(depth);
   root.add(shade(scene, W(), H(), 0.8));
   const cx = W() / 2;
@@ -370,7 +413,7 @@ export function heroReturned(scene: Phaser.Scene, id: string, act: Pick<ResultsA
     : undefined;
   if (line) y += line.height + 24;
   const close = () => {
-    scene.tweens.add({ targets: root, alpha: 0, duration: 200, onComplete: () => root.destroy() });
+    scene.tweens.add({ targets: root, alpha: 0, duration: 200, onComplete: () => { root.destroy(); then?.(); } });
   };
   const btns = [
     ...button(scene, 40, y, pw - 80, 96, t('results.take_next'), () => {

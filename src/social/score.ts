@@ -1,3 +1,4 @@
+import ach from '../data/design/achievements.json';
 import meta from '../data/design/meta.json';
 
 /** What a finished run contributes to the score (design/HEROES.md §4, meta.json runScore). */
@@ -13,12 +14,21 @@ export interface RunResult {
   /** difficulty.json level id. */
   difficulty?: string;
   mode?: 'call' | 'quick' | 'coop_call';
+  /** Shift rating 1–3 (ACHIEVEMENTS.md §6): 2 and 3 stars add a bonus before the multipliers. */
+  stars?: number;
+  /** Townsfolk who reached the command center (meta.json runScore.civilianRescued each). */
+  civilians?: number;
 }
 
 const S = meta.runScore;
 
+/** Score bonus for the shift stars (achievements.json shiftStars.scoreBonus). */
+export function starBonus(stars: number): number {
+  return (ach.shiftStars.scoreBonus as Record<string, number>)[String(stars)] ?? 0;
+}
+
 export function runScore(r: RunResult): number {
-  let s = Math.floor(r.energy) * S.energyEarned + r.nests * S.nestDestroyed + (r.heroes ?? 0) * S.heroDefeated;
+  let s = Math.floor(r.energy) * S.energyEarned + r.nests * S.nestDestroyed + (r.heroes ?? 0) * S.heroDefeated + (r.civilians ?? 0) * (S.civilianRescued ?? 0);
   if (r.callTarget) s += S.callTargetDefeatedExtra;
   if (r.victory) {
     s += S.winBonus;
@@ -26,6 +36,7 @@ export function runScore(r: RunResult): number {
     const step = steps.find(([sec]) => r.seconds < sec);
     if (step) s += step[1];
   }
+  s += starBonus(r.stars ?? 0);
   const diff = (S.multiplierByDifficulty as Record<string, number>)[r.difficulty ?? 'shift'] ?? 1;
   const mode = (S.multiplierByMode as Record<string, number>)[r.mode ?? 'call'] ?? 1;
   return Math.max(0, Math.round(s * diff * mode));

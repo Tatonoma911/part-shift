@@ -31,10 +31,11 @@ describe('digging', () => {
     expect(w.cell(2, 1).revealed).toBe(true);
   });
 
-  it('with the tutorial rule on, a quiet cell auto-queues its covered neighbors', () => {
+  it('with the tutorial rule on, a quiet cell opens its covered neighbors and keeps no open block queued', () => {
     const w = handWorld(['.......', '.......', '......n'], 1, { config: { 'dig.autoQueueZeroNeighbors': true } });
     w.apply({ type: 'placeCommand', x: 0, y: 0 });
-    expect(w.player(0).autoQueue.length).toBeGreaterThan(0);
+    expect(w.cell(1, 1).revealed).toBe(true);
+    expect(w.player(0).autoQueue.every((k) => !w.cell(...(k.split(',').map(Number) as [number, number])).revealed)).toBe(true);
   });
 
   it('marked cells cannot be queued and are left by the auto queue', () => {
@@ -161,5 +162,23 @@ describe('free play digging', () => {
     const w = handWorld(['.......', '.......', '......n']);
     w.apply({ type: 'placeCommand', x: 0, y: 0 });
     expect(w.player(0).autoQueue.length).toBe(0);
+  });
+});
+
+describe('medcenter', () => {
+  it('pulses heal to a resident within 2 cells every 2 s until it is at full HP', () => {
+    const w = handWorld(['.......', '.......', '.......', '......n']);
+    for (const c of w.s.cells) c.revealed = c.content === 'ground';
+    w.apply({ type: 'placeCommand', x: 1, y: 1 });
+    w.player(0).energy = 1000;
+    w.apply({ type: 'build', building: 'medcenter', x: 2, y: 2 });
+    run(w, 12); // build it
+    const r = residents(w)[0];
+    r.hp = 1;
+    w.drainEvents();
+    run(w, 20);
+    const pulses = w.drainEvents().filter((e) => e.type === 'healed' && e.unit === r.id).length;
+    expect(pulses).toBeGreaterThanOrEqual(1);
+    expect(r.hp).toBe(w.maxHp(r));
   });
 });

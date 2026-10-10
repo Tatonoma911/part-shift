@@ -32,12 +32,23 @@ export interface LearningOptions {
   onPlayIntro?: () => void;
   /** Online matches have no pause: coach cards are skipped there. */
   online?: () => boolean;
+  /** A fight is on: cards wait for it to end (FEEL_AUDIT F-08). */
+  busy?: () => boolean;
+  /** At least this long between two coach cards; a card that comes sooner waits. Default 60 s. */
+  gapSeconds?: number;
 }
 
 export interface Learning {
   openGuide(at?: string): void;
   /** Shows a coach card unless seen before, switched off, online, or something else is open. Returns true if shown. */
   coach(topic: keyof typeof COACH, force?: boolean): boolean;
+  /** Call every frame: shows a card that waited for a quiet moment. */
+  tick(): void;
+  /**
+   * The campaign's «Новое в смене» card for shift N (campaign.shift.N.new) was shown: the coach
+   * cards it already covers are marked seen, so the same mechanic is not explained twice.
+   */
+  shiftCardShown(shift: number): void;
   /** Feed core GameEvent types; the first nest, trophy, threat level and Demon warning open a card. */
   onGameEvent(type: string): boolean;
   /** A clip anywhere (e.g. the main menu or the tutorial card). */
@@ -49,11 +60,25 @@ export interface Learning {
   ready: Promise<void>;
 }
 
+/** Coach topics each campaign shift card explains (text/ru.json campaign.shift.N.new). */
+const SHIFT_COVERS: Record<number, (keyof typeof COACH)[]> = {
+  1: ['clue'],
+  2: ['threat'],
+  3: ['hero', 'parts'],
+  4: ['elements'],
+  5: ['call'],
+};
+
 export function createLearning(opts: LearningOptions = {}): Learning {
   injectStyles();
   setLang(opts.lang ?? 'ru');
   const ready = loadArt();
   let open = false;
+  // Cards that came during a fight or too soon after the last one, oldest first.
+  const waiting: (keyof typeof COACH)[] = [];
+  let lastShown = -Infinity;
+  const gapMs = (opts.gapSeconds ?? 60) * 1000;
+  const quiet = () => !opts.busy?.() && performance.now() - lastShown >= gapMs;
 
   const opened = () => {
     open = true;
@@ -77,8 +102,20 @@ export function createLearning(opts: LearningOptions = {}): Learning {
     coach(topic, force = false) {
       if (open || !COACH[topic]) return false;
       if (!force && (progress.coachOff || progress.coachSeen(topic) || opts.online?.())) return false;
+      if (!force && !quiet()) {
+        if (!waiting.includes(topic)) waiting.push(topic);
+        return false;
+      }
+      const i = waiting.indexOf(topic);
+      if (i >= 0) waiting.splice(i, 1);
+      lastShown = performance.now();
       opened();
-      void ready.then(() =>
+      void ready.then(() => {
+        if (opts.busy?.()) {
+          closed();
+          waiting.unshift(topic);
+          return;
+        }
         showCoach(topic, {
           host: opts.host,
           onClose: closed,
@@ -86,9 +123,19 @@ export function createLearning(opts: LearningOptions = {}): Learning {
             // the coach already resumed the game; the guide pauses it again
             api.openGuide(entry);
           },
-        }),
-      );
+        });
+      });
       return true;
+    },
+    shiftCardShown(shift) {
+      for (const topic of SHIFT_COVERS[shift] ?? []) {
+        progress.markCoach(topic);
+        const i = waiting.indexOf(topic);
+        if (i >= 0) waiting.splice(i, 1);
+      }
+    },
+    tick() {
+      while (waiting.length && !open && quiet()) if (api.coach(waiting.shift()!)) break;
     },
     onGameEvent(type) {
       const topic = EVENT_TOPIC[type];

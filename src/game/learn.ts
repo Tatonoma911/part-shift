@@ -2,13 +2,15 @@ import { sound } from './audio';
 import { lang } from '../i18n';
 import { playIntro } from '../intro';
 import { createLearning, type Learning } from '../learning';
+import { closeCoach as closeCoachCard } from '../learning/coach';
 
 /**
  * One learning layer (field guide, coach cards) for the whole game, from the
  * Learning thread's src/learning. The active scene sets what "pause" means.
  */
 let inst: Learning | null = null;
-let hooks: { pause: () => void; resume: () => void } = { pause: () => {}, resume: () => {} };
+type Hooks = { pause: () => void; resume: () => void; busy?: () => boolean };
+let hooks: Hooks = { pause: () => {}, resume: () => {} };
 
 export function learning(): Learning {
   inst ??= createLearning({
@@ -20,8 +22,14 @@ export function learning(): Learning {
     },
     onPlayIntro: () => void playIntro({ skipGate: true }),
     online: () => false,
+    busy: () => hooks.busy?.() ?? false,
   });
   return inst;
+}
+
+/** Hides a coach card that is still on screen when the match ends. */
+export function closeCoach(): void {
+  closeCoachCard();
 }
 
 /** Opens the field guide with its own calm theme (crossfades back on close). Coach cards keep the game music. */
@@ -32,7 +40,7 @@ export function openGuide(at?: string): void {
   l.openGuide(at);
 }
 
-export function setLearningHooks(h: { pause: () => void; resume: () => void } | null): void {
+export function setLearningHooks(h: Hooks | null): void {
   hooks = h ?? { pause: () => {}, resume: () => {} };
 }
 

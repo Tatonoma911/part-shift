@@ -39,6 +39,11 @@ import {
   boons as boonDefs,
   armorPlateDef,
   hazards,
+  byDifficulty,
+  civilianRules,
+  CIVILIANS_PER_SITE_DEFAULT,
+  controlEvents,
+  controlSchedule,
 } from './data';
 import { cellAt, cellKey, cheb, dist, inBounds, neighbors, parseKey, walkableForEnemy, walkableForPlayer } from './grid';
 import { generateField } from './mapgen';
@@ -52,7 +57,10 @@ export const STEP = 0.05;
 /** How long a capsule peek shows the sensors (buildings.json watchtower.peek.showSeconds). */
 const CAPSULE_PEEK_SECONDS = 20;
 
-export type GameEvent = { type: string; x?: number; y?: number; amount?: number; owner?: number; text?: string; unit?: number; fork?: number };
+export type GameEvent = { type: string; x?: number; y?: number; amount?: number; owner?: number; text?: string; unit?: number; fork?: number; wave?: boolean;
+  /** Damage-numbers UI (ДИ patch ui/code/damage-numbers/): */
+  tech?: string; mult?: number; victim?: number; kind?: 'weak' | 'neutral' | 'resist' | 'super' | 'reaction' | 'mine' | 'status'; dot?: boolean;
+};
 
 export interface WorldOptions {
   seed: number;
@@ -105,6 +113,8 @@ export const HERO_ABILITY: Record<string, { every: number; range: number; amount
 };
 
 const isSiteCell = (c: Cell) => c.content === 'nest' || c.content === 'heavy_nest' || c.content === 'hero_lair' || c.content === 'boss_hatch';
+/** Nests only — hero lairs and boss hatches are optional objectives, not shift-end blockers. */
+const isNestCell = (c: Cell) => c.content === 'nest' || c.content === 'heavy_nest';
 const isEnemy = (u: Unit) => u.owner < 0;
 /** Allies are heroes at a fraction of their enemy strength; down, they return to the center after a while. */
 const ALLY = heroRules.allyRules;
@@ -117,7 +127,7 @@ export function effectiveConfig(rules?: RuleOverrides, difficulty = DEFAULT_DIFF
   const out = structuredClone(config);
   const d = difficulties[difficulty] ?? difficulties[DEFAULT_DIFFICULTY];
   out.threat.secondsPerLevel = d.threatSecondsPerLevel;
-  out.economy.startEnergy = d.startEnergy;
+  out.economy.startEnergy = rules?.difficulty?.startEnergy ?? d.startEnergy;
   out.boss.selfWakeSeconds = d.bossSelfWakeSeconds;
   for (const [path, value] of Object.entries(rules?.config ?? {})) {
     const keys = path.split('.');
@@ -188,6 +198,8 @@ export class World {
   /** Game time of the last hit anyone landed (idle-nest hint). */
   private lastCombat = 0;
   private lastIdleHint = -Infinity;
+  /** Fields the generator made before one passed the no-guess check (1 = the first one). */
+  genAttempts = 0;
 
   /** Rule tables for this match (design tables plus any overrides). */
   readonly cfg: typeof config;
@@ -199,7 +211,19 @@ export class World {
   }
 
   get difficulty() {
-    return difficulties[this.s.difficulty] ?? difficulties[DEFAULT_DIFFICULTY];
+    const base = difficulties[this.s.difficulty] ?? difficulties[DEFAULT_DIFFICULTY];
+    const o = this.rules.difficulty;
+    return o ? { ...base, ...o } : base;
+  }
+
+  /** Raid timing: the difficulty's table, or the campaign shift's own raids setting when it has one. */
+  private raidCfg() {
+    const base = difficulties[this.s.difficulty]?.raids;
+    const o = this.rules.raids;
+    if (!o) return base;
+    if (!o.enabled) return undefined;
+    const fallback = { firstAfterSeconds: 150, everySeconds: 60, size: 1, maxSize: 3, sizePerThreatLevels: 2 };
+    return { ...fallback, ...(base?.enabled ? base : {}), ...o } as NonNullable<typeof base>;
   }
 
   private get rules(): RuleOverrides {
@@ -243,14 +267,19 @@ export class World {
     return this.s.players.some((p) => p.command !== null);
   }
 
+  /** The threat clock: game time plus what mine blasts pushed it ahead (hazards.json mine.unmarkedDig.threatBump). */
+  get threatTime(): number {
+    return this.s.time + (this.s.threatShift ?? 0);
+  }
+
   get threatLevel(): number {
     if (this.rules.threatEnabled === false) return 0;
-    return Math.floor(this.s.time / this.cfg.threat.secondsPerLevel);
+    return Math.floor(this.threatTime / this.cfg.threat.secondsPerLevel);
   }
 
   /** 0..1 progress toward the next threat level (the big arc timer). */
   get threatProgress(): number {
-    return (this.s.time % this.cfg.threat.secondsPerLevel) / this.cfg.threat.secondsPerLevel;
+    return (this.threatTime % this.cfg.threat.secondsPerLevel) / this.cfg.threat.secondsPerLevel;
   }
 
   /** The call target (heroes.json). */
@@ -356,9 +385,25 @@ export class World {
     }
     out.attackSeconds /= haste;
     if (u.slow) out.speed *= 1 - u.slow.percent / 100;
+    if (u.concussed) {
+      const k = hazards.mine.unmarkedDig.concussion;
+      out.speed *= k.moveSpeedFactor;
+      out.attackSeconds /= k.attackSpeedFactor;
+    }
     if (!isEnemy(u) && this.overgrownAt(u)) out.speed *= 1 - (HERO_ABILITY.overgrowth.amount ?? 40) / 100;
     if (u.poison) out.defense = Math.max(0, out.defense - u.poison.defense);
     if (u.bare) out.defense = 0;
+    if (!isEnemy(u)) out.defense += this.heroAuraAt(u);
+    if (isEnemy(u) && this.jammedAt(u)) {
+      const j = buildingDefs.jammer.aura!;
+      out.speed *= j.moveSpeedFactor ?? 1;
+      out.attackSeconds /= j.attackSpeedFactor ?? 1;
+    }
+    if (!isEnemy(u)) {
+      const cb = this.s.callBuffs;
+      if (cb?.damage && this.s.time < cb.damage.until) out.damage *= cb.damage.factor;
+      if (cb?.speed && this.s.time < cb.speed.until) out.speed *= cb.speed.factor;
+    }
     return out;
   }
 
@@ -383,6 +428,23 @@ export class World {
     }
     const tier = Object.values(u.parts)[0]?.tier ?? 1;
     return { tech: u.attackTech ?? 'kinetic', tier };
+  }
+
+  /** Speed multiplier for digging a cell with this element (§3.4). Picks the best arm tech. */
+  private digSpeedOf(u: Unit, cellElement: Tech | undefined): number {
+    if (!cellElement) return u.kind === 'resident' ? 0.75 : 1.0;
+    const cellWeakTo = ((this.cfg.dig.cellDurability as unknown) as { cellWeakTo?: Record<string, string[]> }).cellWeakTo ?? {};
+    const weaknesses: string[] = cellWeakTo[cellElement] ?? [];
+    let best = 0.75; // bare hand
+    for (const slot of ['arm_right', 'arm_left'] as SlotId[]) {
+      const p = u.parts[slot];
+      if (!p) continue;
+      const tech = partDefs[p.id].tech as AttackTech;
+      if (!isTech(tech)) continue;
+      const mul = weaknesses.includes(tech) ? 1.6 : tech === cellElement ? 0.35 : 1.0;
+      if (mul > best) best = mul;
+    }
+    return best;
   }
 
   /** Damage multiplier for this element against this unit (resist tables, parts resist their own tech). */
@@ -461,6 +523,34 @@ export class World {
         if (!this.isQueued(playerId, cmd.x, cmd.y)) return bad();
         p.queue = p.queue.filter((q) => q !== k);
         p.autoQueue = p.autoQueue.filter((q) => q !== k);
+        return ok;
+      }
+      case 'useMedkit': {
+        const c = this.cell(cmd.x, cmd.y);
+        if (!inBounds(this.s, cmd.x, cmd.y) || !c.revealed || c.content !== 'medkit' || c.heal !== undefined || !c.stock) return bad();
+        c.stock -= 1;
+        c.heal = hazards.medkit.seconds;
+        this.rev++;
+        this.emit('medkit_use', { x: cmd.x, y: cmd.y, owner: playerId });
+        return ok;
+      }
+      case 'chord': {
+        // Аккорд (campaign alwaysOn «chord»): a revealed clue whose «Опасно» marks match its number digs the rest of its free neighbours.
+        if (!inBounds(s, cmd.x, cmd.y)) return bad('chord.not_ready');
+        const c = this.cell(cmd.x, cmd.y);
+        const threat = this.clues(cmd.x, cmd.y).threat;
+        if (!c.revealed || threat <= 0) return bad('chord.not_ready');
+        const ns = neighbors(s, cmd.x, cmd.y);
+        const marks = ns.filter((n) => this.cell(n.x, n.y).markKind === 'danger').length;
+        if (marks !== threat) return bad('chord.not_ready');
+        let queued = 0;
+        for (const n of ns) {
+          const nc = this.cell(n.x, n.y);
+          if (nc.revealed || nc.marked) continue;
+          if (this.apply({ type: 'queueDig', x: n.x, y: n.y }, playerId).ok) queued++;
+        }
+        if (!queued) return bad('chord.not_ready');
+        this.emit('chord', { x: cmd.x, y: cmd.y, owner: playerId, amount: queued });
         return ok;
       }
       case 'toggleMark': {
@@ -551,27 +641,38 @@ export class World {
       }
       case 'answerCall': {
         if (!s.controlCall) return bad('call.no_active');
-        const forkCount = (this.cfg as unknown as { tempo?: { controlCallForks?: number } }).tempo?.controlCallForks ?? 10;
-        const fork = Math.floor(rand(s) * forkCount);
-        s.controlCall = { ...s.controlCall, fork };
-        this.emit('boss_call_fork', { fork, owner: playerId });
-        // Fork effects: 0-2 = boss hesitates (skips waking this call), 3-5 = spawn enemies, 6-8 = reveal cell, 9 = energy toll
-        if (fork <= 2) {
-          // Контроль bluffs — boss doesn't wake this call
-        } else if (fork <= 5) {
-          this.emit('boss_wake', { owner: playerId });
-        } else if (fork <= 8) {
-          const hiddenIdxs = s.cells.reduce<number[]>((acc, c, i) => { if (!c.revealed && c.content !== 'water') acc.push(i); return acc; }, []);
-          if (hiddenIdxs.length) {
-            const idx = hiddenIdxs[Math.floor(rand(s) * hiddenIdxs.length)];
-            s.cells[idx].revealed = true;
-            this.emit('dig_done', { x: idx % s.width, y: Math.floor(idx / s.width), owner: playerId });
-          }
+        // A Контроль call from events.json: apply the chosen option's effects (MVP_RULES §17.7).
+        const ev = controlEvents[s.controlCall.id];
+        if (ev) {
+          const pick = (cmd as { choice?: 0 | 1 | 'a' | 'b' }).choice;
+          const effect = (pick === 'b' || pick === 1 ? ev.b : ev.a) ?? {};
+          if (!this.applyCallEffect(p, effect)) return bad('call.unavailable');
+          s.controlCall = null;
+          this.emit('call_answered', { owner: playerId, text: `${ev.id}:${pick === 'b' || pick === 1 ? 'b' : 'a'}` });
+          return ok;
+        }
+        // Ensure options are set (generated when call starts; set here as fallback).
+        if (!s.controlCall.options) {
+          s.controlCall = { ...s.controlCall, options: [
+            { cost: 0,  effect: 'refuse' },  // 0 = refuse: boss risk, free
+            { cost: 25, effect: 'comply' },  // 1 = comply: pay energy, boss delayed
+          ]};
+        }
+        const choice = (cmd as { type: 'answerCall'; choice?: 0 | 1 }).choice ?? 0;
+        const callOpts = s.controlCall.options!;
+        const opt = callOpts[choice] ?? callOpts[0];
+        if (opt.cost > 0 && p.energy < opt.cost) return bad('build.not_enough_energy');
+        if (opt.cost > 0) p.energy -= opt.cost;
+        s.controlCall = { ...s.controlCall, fork: choice };
+        this.emit('boss_call_fork', { fork: choice, owner: playerId });
+        if (opt.effect === 'comply') {
+          // Comply: Контроль backs off this call — boss doesn't wake.
+          this.emit('call_complied', { owner: playerId });
         } else {
-          const toll = 20;
-          if (p.energy >= toll) p.energy -= toll;
+          // Refuse: Контроль wakes the boss.
           this.emit('boss_wake', { owner: playerId });
         }
+        s.controlCall = null;
         return ok;
       }
       case 'callRaidEarly': {
@@ -717,8 +818,11 @@ export class World {
   placeCommands(list: { player: number; x: number; y: number }[]): void {
     const s = this.s;
     if (!s.generated) {
-      const nests = s.players.length > 1 ? 6 * s.players.length : undefined;
-      generateField(s, { commands: list, nests });
+      const nests = s.players.length > 1 ? 6 * s.players.length : this.rules.counts?.nests;
+      const rc = this.rules.counts;
+      const gen = { commands: list, nests, mines: rc?.mine, survivors: rc?.survivor, bossHatch: rc?.bossHatch, lairTotal: rc?.lairTotal, bonusCapsule: rc?.bonusCapsule, medkit: rc?.medkit, cellElements: this.rules.cellElements };
+      generateField(s, gen);
+      this.genAttempts = 1;
       // Стажёр and Смена never leave the player a 50/50 (MVP_RULES §15.2); tutorial boards are hand-laid.
       const noGuess = this.difficulty.noGuessBoard && s.players.length === 1 && !this.rules.relativeSites;
       for (let attempt = 1; noGuess && attempt < NO_GUESS_ATTEMPTS && !solvable(s, list); attempt++) {
@@ -727,7 +831,8 @@ export class World {
           c.content = 'ground';
           for (const k of ['tech', 'stock', 'hero', 'heroTier'] as const) delete c[k];
         }
-        generateField(s, { commands: list, nests });
+        generateField(s, gen);
+        this.genAttempts = attempt + 1;
       }
     }
     for (const { player, x, y } of list) {
@@ -763,6 +868,7 @@ export class World {
     this.heroClock();
     this.bossClock();
     this.raidClock();
+    this.callClock();
     this.assistTimers(dt);
     this.population(dt);
     for (const u of [...s.units]) {
@@ -780,6 +886,7 @@ export class World {
     this.orbs(dt);
     this.hotGround(dt);
     this.hazardClock(dt);
+    this.commandCivilianLosses();
     this.idleHint();
     this.cleanup();
     this.checkOutcome();
@@ -824,6 +931,7 @@ export class World {
           }
           if (c.heal <= 0) {
             c.heal = undefined;
+            if (!c.stock) c.resolved = true;
             this.rev++;
             this.emit('medkit_empty', { x, y });
           }
@@ -832,7 +940,11 @@ export class World {
     }
   }
 
-  /** One blast per mine: element damage and status to our units and buildings around it (hazards.json mine.unmarkedDig). */
+  /**
+   * One blast per mine (hazards.json mine.unmarkedDig, MVP_RULES §5.2 v0.2): each of our heroes around it loses
+   * a share of max HP but keeps at least leavesMinHp, may lose a limb and is concussed; buildings lose a share
+   * of max HP; the threat clock jumps ahead and the tempo drops to zero.
+   */
   private mineBlast(x: number, y: number, c: Cell): void {
     const s = this.s;
     const m = hazards.mine.unmarkedDig;
@@ -843,6 +955,8 @@ export class World {
     const st = m.status[tech];
     const fx = typeof st === 'object' ? st : {};
     const sts = elements.statuses;
+    const fraction = byDifficulty(m.heroDamageMaxHpFraction, s.difficulty) ?? 0;
+    const minHp = m.leavesMinHp ?? 1;
     let hits = 0;
     for (const u of s.units) {
       if (isEnemy(u) || u.hp <= 0 || cheb(Math.round(u.x), Math.round(u.y), x, y) > m.radius) continue;
@@ -853,16 +967,60 @@ export class World {
       const stun = fx.stunSeconds ?? fx.freezeSeconds;
       if (stun) u.stun = Math.max(u.stun ?? 0, stun);
       if (fx.defenseMinus) u.bare = Math.max(u.bare ?? 0, fx.seconds ?? 10);
-      this.damage(u, m.damage);
+      // A share of max HP; the blast alone never knocks anyone out (neverKillsAlone, leavesMinHp).
+      const loss = fraction * this.maxHp(u);
+      if (m.neverKillsAlone === false) {
+        this.damage(u, loss);
+        if (u.hp <= 0) continue;
+      } else {
+        u.hp = Math.min(u.hp, Math.max(minHp, u.hp - loss));
+      }
+      if (rand(s) < m.tearLimbChance) this.tearLimb(u);
+      // A torn trophy may lower max HP; never below the floor because of it.
+      u.hp = Math.max(Math.min(u.hp, minHp), Math.min(u.hp, this.maxHp(u)));
+      u.concussed = Math.max(u.concussed ?? 0, m.concussion.seconds);
     }
     if (m.hitsBuildings) {
       for (const b of s.buildings) {
-        if (b.hp <= 0 || cheb(b.x, b.y, x, y) > m.radius || (b.type === 'command' && this.rules.commandInvulnerable)) continue;
-        b.hp -= m.damage;
+        if (b.hp <= 0 || b.ruined || cheb(b.x, b.y, x, y) > m.radius || (b.type === 'command' && this.rules.commandInvulnerable)) continue;
+        b.hp -= m.buildingDamageMaxHpFraction * buildingDefs[b.type].hp;
         if (b.type === 'command') this.emit('center_hit', { x: b.x, y: b.y, owner: b.owner });
       }
     }
+    // The nests hear it: the threat clock jumps ahead, so the next level comes sooner.
+    const bump = m.threatBump?.threatSeconds ?? 0;
+    if (bump > 0) {
+      const before = this.threatLevel;
+      s.threatShift = (s.threatShift ?? 0) + bump;
+      if (this.threatLevel > before) this.emit('threat_level_up', { amount: this.threatLevel });
+    }
+    if (m.tempoReset && s.tempo) s.tempo.points = 0;
     this.emit('mine_blast', { x, y, text: tech, amount: hits });
+  }
+
+  /**
+   * A limb torn off without a knockout (MVP_RULES §4.1а): a trophy first, else (allies) one of the hero's own;
+   * an own arm is −20 % damage, a leg −25 % speed until a part fills the stump (takePart). Returns the slot lost.
+   */
+  private tearLimb(v: Unit): string | null {
+    const trophy = (Object.keys(v.parts) as SlotId[]).find((sl) => v.parts[sl]);
+    let lost: string | null = null;
+    if (trophy) {
+      v.parts = { ...v.parts };
+      delete v.parts[trophy];
+      lost = trophy;
+    } else if (v.kind === 'ally' && (v.lostLimbs?.length ?? 0) < 4) {
+      const limbs = (v.lostLimbs ??= []);
+      const slot: 'arm' | 'leg' = limbs.filter((l) => l === 'arm').length < 2 ? 'arm' : 'leg';
+      limbs.push(slot);
+      v.base =
+        slot === 'arm'
+          ? { ...v.base, damage: Math.max(1, Math.round(v.base.damage * 0.8)) }
+          : { ...v.base, speed: Math.max(0.5, Math.round(v.base.speed * 0.75 * 10) / 10) };
+      lost = slot;
+    }
+    if (lost) this.emit(v.kind === 'ally' ? 'ally_limb_lost' : 'resident_limb_lost', { x: v.x, y: v.y, owner: v.owner, unit: v.id, text: `${v.hero ?? v.kind}:${lost}` });
+    return lost;
   }
 
   /** A bonus capsule gives one random bonus, once (hazards.json bonusCapsule.pool). */
@@ -948,13 +1106,15 @@ export class World {
     c.marked = false;
     c.markKind = undefined;
     const k = cellKey(x, y);
+    // Opened by the quiet-cell cascade, not by the player's own queue: «открыто волной» (achievements.json tiles_wave).
+    const wave = !!s.players[owner]?.autoQueue.includes(k) && !s.players[owner]?.queue.includes(k);
     for (const p of s.players) {
       p.queue = p.queue.filter((q) => q !== k);
       p.autoQueue = p.autoQueue.filter((q) => q !== k);
     }
     if (pay) {
       this.spawnOrb(owner, x, y, Math.round(this.cfg.economy.energyPerDugTile * this.allyFactor(owner, 'digEnergyFactor') * this.allyFactor(owner, 'energyProductionFactor', 'value')));
-      this.emit('dig_done', { x, y, owner });
+      this.emit('dig_done', wave ? { x, y, owner, text: 'wave' } : { x, y, owner });
       this.addTempo(owner, 'dig');
     }
     const player = s.players[owner];
@@ -976,9 +1136,17 @@ export class World {
       }
       case 'survivor': {
         c.resolved = true;
-        player.capBonus++;
-        this.spawnResident(owner, x, y);
+        const onReveal = siteDefs.survivor?.onReveal;
+        // Tables before v0.7: a survivor also joins as a resident with a permanent place.
+        if (onReveal?.resident) {
+          player.capBonus++;
+          this.spawnResident(owner, x, y);
+        }
         this.emit('survivor_joined', { x, y, owner });
+        // A Контроль warehouse (MVP_RULES §4.4 v0.2): its townsfolk reach the center and go on the balance.
+        const [lo, hi] = onReveal?.civilians ?? CIVILIANS_PER_SITE_DEFAULT;
+        const n = lo + randIntOf(s, Math.max(1, hi - lo + 1));
+        for (let i = 0; i < n; i++) this.rescueCivilian(player, x, y);
         this.addTempo(owner, 'survivor');
         break;
       }
@@ -999,8 +1167,8 @@ export class World {
         this.openCapsule(player, x, y);
         break;
       case 'medkit':
-        c.resolved = true;
-        c.heal = hazards.medkit.seconds;
+        // A found medkit keeps its charges; the player taps it to heal (useMedkit).
+        c.stock = hazards.medkit.count;
         this.emit('medkit_open', { x, y, owner });
         break;
       case 'blueprint': {
@@ -1055,6 +1223,50 @@ export class World {
         for (const n of neighbors(s, x, y)) {
           const nk = cellKey(n.x, n.y);
           if (!n.cell.revealed && !n.cell.marked && !player.queue.includes(nk) && !player.autoQueue.includes(nk)) player.autoQueue.push(nk);
+        }
+      }
+    }
+    // Cascade wave (§17.2): quiet ground cell triggers BFS reveal of neighbors, depth by tempo level.
+    if (!isSiteCell(c) && c.content !== 'water') {
+      const cl = this.clues(x, y);
+      if (cl.threat + cl.demon + cl.finds === 0) {
+        const tempoLevel = s.tempo?.level ?? 0;
+        // Tempo 0→depth 1, 1→2, 2→4, 3→unlimited (9999)
+        const waveDepth = tempoLevel === 0 ? 1 : tempoLevel === 1 ? 2 : tempoLevel === 2 ? 4 : 9999;
+        this.cascadeWave(x, y, owner, waveDepth);
+      }
+    }
+  }
+
+  /** BFS cascade-reveal of quiet ground cells (§17.2). Cells opened by wave give 0.25 tempo points. */
+  private cascadeWave(cx: number, cy: number, owner: number, maxDepth: number): void {
+    const s = this.s;
+    const frontier: Array<{ x: number; y: number; depth: number }> = [{ x: cx, y: cy, depth: 0 }];
+    const visited = new Set<string>();
+    visited.add(cellKey(cx, cy));
+    while (frontier.length > 0) {
+      const { x, y, depth } = frontier.shift()!;
+      if (depth >= maxDepth) continue;
+      for (const n of neighbors(s, x, y)) {
+        const nk = cellKey(n.x, n.y);
+        if (visited.has(nk)) continue;
+        visited.add(nk);
+        const nc = n.cell;
+        // Wave only opens plain ground cells — no site cells, no water, no special content.
+        if (nc.revealed || nc.content === 'water' || isSiteCell(nc) || nc.content !== 'ground') continue;
+        nc.revealed = true;
+        nc.dig = undefined;
+        // Opened by the wave: off every dig queue, or «В очереди» counts open blocks.
+        for (const pl of s.players) {
+          pl.queue = pl.queue.filter((q) => q !== nk);
+          pl.autoQueue = pl.autoQueue.filter((q) => q !== nk);
+        }
+        this.emit('dig_done', { x: n.x, y: n.y, owner, wave: true });
+        this.addTempo(owner, 'wave');
+        // Continue cascade only if this neighbor is also quiet.
+        const ncl = this.clues(n.x, n.y);
+        if (ncl.threat + ncl.demon + ncl.finds === 0) {
+          frontier.push({ x: n.x, y: n.y, depth: depth + 1 });
         }
       }
     }
@@ -1154,7 +1366,8 @@ export class World {
         if (u.path.length > 0) return this.move(u, dt);
         if (t.progress === 0) this.emit('dig_start', { x: t.x, y: t.y, owner: u.owner });
         const c = this.cell(t.x, t.y);
-        c.dig = (c.dig ?? 0) + this.workShare(u, (o) => o.task.type === 'dig' && o.task.x === t.x && o.task.y === t.y) * dt;
+        const digMul = this.digSpeedOf(u, c.element as Tech | undefined) * (u.concussed ? hazards.mine.unmarkedDig.concussion.digSpeedFactor : 1);
+        c.dig = (c.dig ?? 0) + this.workShare(u, (o) => o.task.type === 'dig' && o.task.x === t.x && o.task.y === t.y) * dt * digMul;
         t.progress = Math.max(c.dig, 1e-6);
         if (c.dig >= this.cfg.dig.digSeconds * this.boonFactor(u.owner, 'sharp_shovels') * this.allyFactor(u.owner, 'drillDig', 'digTimeFactor')) {
           c.dig = undefined;
@@ -1452,7 +1665,7 @@ export class World {
   /** Raids (MVP_RULES §9.7): opened nests send a squad at the nearest building on a timer. */
   private raidClock(): void {
     const s = this.s;
-    const r = difficulties[s.difficulty]?.raids;
+    const r = this.raidCfg();
     if (!r?.enabled || this.rules.threatEnabled === false) return;
     s.raidAt ??= r.firstAfterSeconds;
     if (s.time < s.raidAt) return;
@@ -1521,9 +1734,11 @@ export class World {
   /** Keep raid/tempo/controlCall in sync so the UI always sees current values. */
   private syncDerivedFields(): void {
     const s = this.s;
-    const r = difficulties[s.difficulty]?.raids;
+    const r = this.raidCfg();
     const callEarlyEnergy = 50;
-    const nextIn = r?.enabled ? Math.max(0, (s.raidAt ?? r.firstAfterSeconds) - s.time) : Infinity;
+    // Same switch as raidClock: no threat (the tutorial), no raids and no timer.
+    const raids = !!r?.enabled && this.rules.threatEnabled !== false;
+    const nextIn = raids ? Math.max(0, (s.raidAt ?? r!.firstAfterSeconds) - s.time) : Infinity;
     const activeRaiders = s.units.filter((u) => isEnemy(u) && u.raid !== undefined && u.hp > 0);
     const wasActive = s.raid?.active ?? false;
     s.raid = {
@@ -1531,7 +1746,7 @@ export class World {
       active: activeRaiders.length > 0,
       techs: [...new Set(activeRaiders.map((u) => u.tech).filter((t): t is Tech => t !== undefined))],
       callEarlyEnergy,
-      canCallEarly: !!(r?.enabled) && nextIn > 0 && s.players.some((p) => p.energy >= callEarlyEnergy),
+      canCallEarly: raids && nextIn > 0 && s.players.some((p) => p.energy >= callEarlyEnergy),
     };
 
     const tempoConf = (this.cfg as unknown as { tempo?: { raidClearEnergyBonus?: number; earlyRaidClearBonusMultiplier?: number; stagnantSeconds?: number; levelThresholds?: number[] } }).tempo;
@@ -1549,7 +1764,7 @@ export class World {
     // Boss call: keep fork index if already set (from answerCall).
     if (s.boss.awake && !s.boss.dead) {
       if (!s.controlCall) s.controlCall = { id: s.boss.hero };
-    } else {
+    } else if (!s.controlCall?.scheduled) {
       s.controlCall = null;
     }
 
@@ -1569,11 +1784,13 @@ export class World {
   }
 
   /** Add tempo points for a progress event. */
-  private addTempo(_owner: number, event: 'dig' | 'cache' | 'nest' | 'survivor' | 'raidClear'): void {
+  private addTempo(_owner: number, event: 'dig' | 'cache' | 'nest' | 'survivor' | 'raidClear' | 'wave'): void {
     const s = this.s;
+    // No threat (the tutorial): «Темп» stays at 0, so the cascade wave stays 1 block deep (FEEL_AUDIT F-05).
+    if (this.rules.threatEnabled === false) return;
     if (!s.tempo) s.tempo = { points: 0, level: 0, stagnant: false, lastProgress: s.time };
     const tempoConf = (this.cfg as unknown as { tempo?: { points?: Record<string, number> } }).tempo;
-    const defaults: Record<string, number> = { dig: 1, cache: 5, nest: 10, survivor: 3, raidClear: 15 };
+    const defaults: Record<string, number> = { dig: 1, cache: 5, nest: 10, survivor: 3, raidClear: 15, wave: 0.25 };
     const pts = tempoConf?.points?.[event] ?? defaults[event] ?? 1;
     s.tempo.points += pts;
     s.tempo.lastProgress = s.time;
@@ -1693,6 +1910,34 @@ export class World {
   private hit(attacker: Unit, target: string, factor = 1, primary = true): void {
     const st = this.stats(attacker);
     this.lastCombat = this.s.time;
+    // Super strike (§17.5): fires on next attack after 10 kills, resets charge.
+    if (
+      attacker.superCharge === 100 &&
+      (attacker.kind === 'ally' || attacker.kind === 'hero') &&
+      target.startsWith('u:')
+    ) {
+      attacker.superCharge = 0;
+      const v = this.unit(Number(target.slice(2)));
+      if (v && v.hp > 0) {
+        if (v.kind === 'hero') {
+          const isBossTarget = v.hero === this.s.boss.hero;
+          const fraction = isBossTarget ? 0.15 : 0.30;
+          const superDmg = Math.ceil(this.maxHp(v) * fraction);
+          this.damage(v, superDmg, attacker);
+          // Tear off one mutation limb (§17.5 + §4.1а).
+          if (v.mutations && v.mutations.length > 0) {
+            const torn = v.mutations.splice(0, 1)[0];
+            v.base = { ...v.base, defense: Math.max(0, (v.base?.defense ?? 0) - 1) };
+            this.emit('enemy_limb_lost', { x: v.x, y: v.y, owner: attacker.owner, text: `${v.hero}:${torn.slot}` });
+          }
+        } else {
+          // Regular enemy: instant kill.
+          this.damage(v, v.hp + 999, attacker);
+        }
+        this.emit('super_strike', { x: v.x, y: v.y, owner: attacker.owner, unit: attacker.id });
+      }
+      return;
+    }
     if (target.startsWith('s:')) {
       const { x, y } = parseKey(target.slice(2));
       const site = this.site(x, y)!;
@@ -1706,7 +1951,19 @@ export class World {
       const b = this.building(Number(target.slice(2)))!;
       if (b.type === 'command' && this.rules.commandInvulnerable) return;
       const vs = attacker.kind === 'hero' ? buildingDamage.heroVsBuildingFactor : isEnemy(attacker) ? buildingDamage.enemyVsBuildingFactor : 1;
-      b.hp -= Math.max(this.cfg.combat.minDamage, st.damage * factor * vs - buildingDefs[b.type].defense);
+      const was = b.hp;
+      let rawDmg = Math.max(this.cfg.combat.minDamage, st.damage * factor * vs - buildingDefs[b.type].defense);
+      // F-03: cap hero DPS on buildings (FEEL_AUDIT §3): ≤3.3% cmd HP/s, ≤6% other HP/s.
+      if (attacker.kind === 'hero') {
+        const capFraction = b.type === 'command' ? 0.033 : 0.06;
+        const maxDmg = capFraction * buildingDefs[b.type].hp * this.stats(attacker).attackSeconds;
+        rawDmg = Math.min(rawDmg, Math.max(this.cfg.combat.minDamage, maxDmg));
+      }
+      b.hp -= rawDmg;
+      // A building destroyed by the enemy: one townsperson panics and leaves the balance (civilian.balance).
+      if (was > 0 && b.hp <= 0 && isEnemy(attacker) && b.type !== 'command') {
+        this.loseCivilians(this.s.players[b.owner], civilianRules.balance.loseOnBuildingDestroyed, 'building');
+      }
       if (b.type === 'command') this.emit('center_hit', { x: b.x, y: b.y, owner: b.owner });
       return;
     }
@@ -1719,7 +1976,8 @@ export class World {
         (status === 'burn' && !!v.burn) || (status === 'chill' && (!!v.slow || (v.chill ?? 0) > 0)) || (status === 'poison' && !!v.poison);
       reaction = elements.reactions.find((r) => r.hitTech === tech && has(r.onTargetStatus))?.id;
     }
-    let mul = this.resistOf(v, tech) * factor;
+    const baseResist = this.resistOf(v, tech);
+    let mul = baseResist * factor;
     // Досье на цель (boons.json weak_spot): residents hit the call target harder.
     if (attacker.owner >= 0 && v.kind === 'hero' && v.hero === this.s.boss.hero) mul *= this.boonFactor(attacker.owner, 'weak_spot');
     if (reaction === 'thermoshock') {
@@ -1728,11 +1986,15 @@ export class World {
     }
     const dmg = Math.max(this.cfg.combat.minDamage, st.damage * mul - this.stats(v).defense);
     this.damage(v, dmg, attacker);
-    this.emit('hit', { x: v.x, y: v.y, text: tech, unit: attacker.id, amount: Math.round(dmg) });
-    if (reaction) this.emit('reaction', { x: v.x, y: v.y, text: reaction, owner: attacker.owner });
+    const kind = reaction ? 'reaction' : baseResist >= 1.5 ? 'weak' : baseResist <= 0.8 ? 'resist' : 'neutral';
+    this.emit('hit', { x: v.x, y: v.y, tech, unit: attacker.id, victim: v.owner, amount: Math.round(dmg), mult: Math.round(baseResist * 100) / 100, kind });
+    if (reaction) this.emit('reaction', { x: v.x, y: v.y, text: reaction, tech });
     if (!primary || v.hp <= 0) return;
     const heal = Object.values(attacker.parts).reduce((n, p) => n + (p ? partTier(p.id, p.tier).healSelfOnHit ?? 0 : 0), 0);
-    if (heal) attacker.hp = Math.min(this.maxHp(attacker), attacker.hp + heal);
+    if (heal) {
+      attacker.hp = Math.min(this.maxHp(attacker), attacker.hp + heal);
+      this.emit('heal', { x: attacker.x, y: attacker.y, amount: Math.round(heal), unit: attacker.id });
+    }
     this.applyStatus(attacker, v, tech, tier, reaction);
     for (const part of Object.values(attacker.parts)) {
       if (!part) continue;
@@ -1940,6 +2202,7 @@ export class World {
   private effects(u: Unit, dt: number): void {
     if (u.stun) u.stun = Math.max(0, u.stun - dt) || undefined;
     if (u.bare) u.bare = Math.max(0, u.bare - dt) || undefined;
+    if (u.concussed) u.concussed = Math.max(0, u.concussed - dt) || undefined;
     if (u.slow) {
       u.slow.left -= dt;
       if (u.slow.left <= 0) {
@@ -1949,12 +2212,16 @@ export class World {
     }
     if (u.burn) {
       u.burn.left -= dt;
-      this.damage(u, u.burn.dps * dt, this.unit(u.burn.source));
+      const burnAmt = u.burn.dps * dt;
+      this.damage(u, burnAmt, this.unit(u.burn.source));
+      this.emit('hit', { x: u.x, y: u.y, tech: 'thermo', unit: u.burn.source, victim: u.owner, amount: Math.round(burnAmt), dot: true });
       if (u.burn && u.burn.left <= 0) u.burn = undefined;
     }
     if (u.poison && u.hp > 0) {
       u.poison.left -= dt;
-      this.damage(u, u.poison.dps * dt, this.unit(u.poison.source));
+      const poisonAmt = u.poison.dps * dt;
+      this.damage(u, poisonAmt, this.unit(u.poison.source));
+      this.emit('hit', { x: u.x, y: u.y, tech: 'toxin', unit: u.poison.source, victim: u.owner, amount: Math.round(poisonAmt), dot: true });
       if (u.poison && u.poison.left <= 0) u.poison = undefined;
     }
     const regen = Object.values(u.parts).reduce((n, p) => n + (p ? partTier(p.id, p.tier).regenPerSec ?? 0 : 0), 0);
@@ -2155,24 +2422,61 @@ export class World {
       const at = (levels[c.heroTier - 1] ?? Infinity) * per;
       const x = i % this.s.width;
       const y = Math.floor(i / this.s.width);
-      if (!c.warned && this.s.time >= at - 30) {
+      if (!c.warned && this.threatTime >= at - 30) {
         c.warned = true;
         this.emit('hero_warning', { x, y, text: c.hero });
       }
-      if (this.s.time >= at) this.openHeroSite(x, y, 'hero_lair', c.hero!);
+      if (this.threatTime >= at) this.openHeroSite(x, y, 'hero_lair', c.hero!);
     });
   }
 
-  /** The call target leaves its hatch by itself at 15:00, after a warning (config.boss). */
+  /** The call target leaves its hatch by itself at 15:00, after a warning (config.boss).
+   *  Also wakes early (with a 20 s warning) when ≤15% of non-site cells are still closed
+   *  or every nest/lair site has been destroyed (F-09, FEEL_AUDIT). */
   private bossClock(): void {
     const b = this.s.boss;
     if (b.awake || this.rules.bossEnabled === false) return;
+    const s = this.s;
+
+    // F-09: early wake when the board is nearly fully open or all nests/lairs are cleared.
+    if (!b.earlyWakeAt) {
+      const earlyWake = this.earlyWakeCondition();
+      if (earlyWake) {
+        b.earlyWakeAt = s.time + 20;
+        if (!b.warned) {
+          b.warned = true;
+          this.emit('boss_warning', { text: b.hero });
+        }
+      }
+    }
+    if (b.earlyWakeAt && s.time >= b.earlyWakeAt) {
+      this.wakeBoss();
+      return;
+    }
+
     const wake = this.cfg.boss.selfWakeSeconds;
-    if (!b.warned && this.s.time >= wake - this.cfg.boss.warningSeconds) {
+    if (!b.warned && s.time >= wake - this.cfg.boss.warningSeconds) {
       b.warned = true;
       this.emit('boss_warning', { text: b.hero });
     }
-    if (this.s.time >= wake) this.wakeBoss();
+    if (s.time >= wake) this.wakeBoss();
+  }
+
+  /** Returns true when the field is ≤15% closed (non-site cells) or all nests/lairs are gone. */
+  private earlyWakeCondition(): boolean {
+    const s = this.s;
+    // All nests and hero lairs destroyed (boss hatch excluded — that's the target itself).
+    const activeSites = s.sites.filter(
+      (st) => !st.destroyed && (st.kind === 'nest' || st.kind === 'heavy_nest' || st.kind === 'hero_lair'),
+    );
+    if (activeSites.length === 0 && s.sites.some((st) => st.kind === 'nest' || st.kind === 'heavy_nest' || st.kind === 'hero_lair')) {
+      return true;
+    }
+    // ≤15% of ground-type cells still closed.
+    const groundCells = s.cells.filter((c) => c.content === 'ground' || c.content === 'rubble' || c.content === 'energy_vein');
+    if (groundCells.length === 0) return false;
+    const closedCount = groundCells.filter((c) => !c.revealed).length;
+    return closedCount / groundCells.length <= 0.15;
   }
 
   private wakeBoss(): void {
@@ -2647,7 +2951,11 @@ export class World {
           for (const e of foes(Number(a.radius))) e.slow = { percent: Math.max(e.slow?.percent ?? 0, Number(a.slowPercent)), left: Math.max(e.slow?.left ?? 0, 0.5) };
           break;
         case 'healAura':
-          if (fire) for (const r of friends(Number(a.radius))) r.hp = Math.min(this.maxHp(r), r.hp + Number(a.healAmount));
+          if (fire) for (const r of friends(Number(a.radius))) {
+            const before = r.hp;
+            r.hp = Math.min(this.maxHp(r), r.hp + Number(a.healAmount));
+            if (r.hp > before) this.emit('heal', { x: r.x, y: r.y, amount: Math.round(r.hp - before), unit: r.id });
+          }
           break;
         case 'cleanseAura':
           if (fire) for (const r of friends(Number(a.radius))) [r.burn, r.poison, r.slow, r.chill] = [undefined, undefined, undefined, 0];
@@ -2721,11 +3029,33 @@ export class World {
     }
   }
 
+  /** Defense an outpost adds to our hero standing in its range (buildings.json heroAura); 0 if none. */
+  private heroAuraAt(u: Unit): number {
+    const a = buildingDefs.outpost.heroAura;
+    if (!a) return 0;
+    const near = this.s.buildings.some((b) => b.type === 'outpost' && b.owner === u.owner && b.complete && !b.ruined && cheb(b.x, b.y, Math.round(u.x), Math.round(u.y)) <= a.radius);
+    return near ? a.defenseAdd : 0;
+  }
+
+  /** True when a built jammer of any side reaches this enemy (buildings.json jammer.aura). */
+  private jammedAt(u: Unit): boolean {
+    const a = buildingDefs.jammer.aura;
+    if (!a) return false;
+    return this.s.buildings.some((b) => b.type === 'jammer' && b.complete && !b.ruined && cheb(b.x, b.y, Math.round(u.x), Math.round(u.y)) <= a.radius);
+  }
+
   private production(dt: number): void {
     const s = this.s;
     for (const b of s.buildings) {
       if (!b.complete) continue;
       const def = buildingDefs[b.type];
+      // Repair building: our finished buildings in range regain HP (buildings.json repair).
+      if (def.repair) {
+        for (const o of s.buildings) {
+          if (o.owner !== b.owner || !o.complete || o.ruined || o.hp <= 0) continue;
+          if (cheb(o.x, o.y, b.x, b.y) <= def.repair.radius) o.hp = Math.min(buildingDefs[o.type].hp, o.hp + def.repair.hpPerSecond * dt);
+        }
+      }
       if (def.produce) {
         // Reactors work by themselves [Антон]; a cooler next door doubles the pace.
         const cooled = s.buildings.some((o) => {
@@ -2854,21 +3184,162 @@ export class World {
     if (s.players.every((p) => !p.alive)) {
       s.outcome = 'defeat';
       this.emit('defeat');
-    } else if (s.boss.dead && !s.cells.some((c) => c.hot)) {
+    } else if (!this.rules.holdVictory && s.cells.some(isNestCell) && s.cells.every((c) => !isNestCell(c) || c.resolved)) {
       s.outcome = 'victory';
       this.emit('victory');
     }
   }
 
-  /** Energy income; stats.energy feeds the run score (meta.json runScore.energyEarned). */
+  /**
+   * Energy income; stats.energy feeds the run score (meta.json runScore.energyEarned).
+   * Every income (reactors, veins, caches, rewards) is sped up by the townsfolk on the balance;
+   * spending and refunds change p.energy directly and never come through here.
+   */
   private earn(p: Player, amount: number): void {
-    p.energy += amount;
-    p.stats.energy += amount;
+    const got = amount * this.civilianIncomeFactor(p.id);
+    p.energy += got;
+    p.stats.energy += got;
+  }
+
+  /** Bonus cap on townsfolk: base + per standing Приют горожан (civilian.balance.bonusCap*). */
+  civilianBonusCap(playerId: number): number {
+    const b = civilianRules.balance;
+    const shelters = this.s.buildings.filter((o) => o.owner === playerId && o.type === 'civ_shelter' && o.complete && o.hp > 0 && !o.ruined).length;
+    return b.bonusCapCivilians + b.bonusCapPerShelter * shelters;
+  }
+
+  /** Energy income multiplier: 1 + 0.04 × min(townsfolk on the balance, cap) (MVP_RULES §4.4 v0.2). */
+  civilianIncomeFactor(playerId: number): number {
+    const p = this.s.players[playerId];
+    const n = Math.min(p?.civilians ?? 0, this.civilianBonusCap(playerId));
+    return 1 + civilianRules.balance.energyIncomeBonusPerCivilian * n;
+  }
+
+  /** A townsperson reaches the command center: score, Energy and +1 on the balance (civilian.onReachCommand). */
+  private rescueCivilian(p: Player, x: number, y: number): void {
+    const r = civilianRules.onReachCommand;
+    this.earn(p, r.energy);
+    p.civilians = (p.civilians ?? 0) + r.addToBalance;
+    p.stats.civiliansRescued = (p.stats.civiliansRescued ?? 0) + 1;
+    this.emit('civilian_rescued', { x, y, owner: p.id, amount: r.score });
+  }
+
+  /** Townsfolk leave the balance (a lost building, a battered center, a Контроль call). Returns how many left. */
+  private loseCivilians(p: Player | undefined, n: number, why: string): number {
+    if (!p || n <= 0) return 0;
+    const lost = Math.min(p.civilians ?? 0, n);
+    if (lost <= 0) return 0;
+    p.civilians = (p.civilians ?? 0) - lost;
+    p.stats.civiliansLost = (p.stats.civiliansLost ?? 0) + lost;
+    this.emit('civilians_balance_lost', { owner: p.id, amount: lost, text: why });
+    return lost;
+  }
+
+  /** 1 townsperson per 20 % of HP the command center loses below 50 % (civilian.balance.loseOnCommandHitBelowHalf). */
+  private commandCivilianLosses(): void {
+    for (const p of this.s.players) {
+      const b = this.building(p.command);
+      if (!b || b.hp <= 0) continue;
+      const below = 0.5 - b.hp / buildingDefs[b.type].hp;
+      const steps = below > 0 ? Math.floor(below / 0.2 + 1e-9) : 0;
+      if (steps > (p.civCmdSteps ?? 0)) {
+        this.loseCivilians(p, steps - (p.civCmdSteps ?? 0), 'command');
+        p.civCmdSteps = steps;
+      }
+    }
+  }
+
+  /** A Контроль call option (events.json). False when the player can't pay it; nothing changes then. */
+  private applyCallEffect(p: Player, e: Record<string, unknown>): boolean {
+    const num = (k: string) => (typeof e[k] === 'number' ? (e[k] as number) : 0);
+    const energy = num('energy');
+    const civ = num('civiliansFromBalance') + num('civiliansLose');
+    if (energy < 0 && p.energy < -energy) return false;
+    if (civ > 0 && (p.civilians ?? 0) < civ) return false;
+    // Selling townsfolk is not income: no balance bonus on it.
+    p.energy += energy;
+    if (energy > 0) p.stats.energy += energy;
+    if (civ > 0) this.loseCivilians(p, civ, 'call');
+    const sooner = num('nextRaidSooner');
+    if (sooner > 0 && this.s.raidAt !== undefined) this.s.raidAt -= sooner;
+    const dur = num('durationSeconds');
+    if (dur > 0) {
+      const dmgF = num('heroesDamageFactor');
+      const spdF = num('heroesMoveSpeedFactor');
+      this.s.callBuffs = { ...this.s.callBuffs };
+      if (dmgF) this.s.callBuffs.damage = { factor: dmgF, until: this.s.time + dur };
+      if (spdF) this.s.callBuffs.speed = { factor: spdF, until: this.s.time + dur };
+    }
+    if (e.healAllHeroesFull === true) {
+      for (const u of this.s.units) if (u.owner === p.id && !isEnemy(u) && u.hp > 0) u.hp = this.maxHp(u);
+    }
+    const cmdMax = num('commandMaxHpFactor');
+    if (cmdMax) {
+      for (const b of this.s.buildings) if (b.owner === p.id && b.type === 'command' && b.hp > 0) b.hp = Math.round(b.hp * cmdMax);
+    }
+    const cmdPct = num('commandHpPercent');
+    if (cmdPct) {
+      for (const b of this.s.buildings) if (b.owner === p.id && b.type === 'command' && b.hp > 0) b.hp = Math.max(1, Math.round(b.hp * (1 + cmdPct / 100)));
+    }
+    const randPct = num('randomBuildingHpPercent');
+    if (randPct) {
+      const hit = this.s.buildings.filter((b) => b.owner === p.id && b.type !== 'command' && b.complete && !b.ruined && b.hp > 0);
+      if (hit.length) {
+        const b = hit[randIntOf(this.s, hit.length)];
+        b.hp = Math.max(1, Math.round(b.hp * (1 + randPct / 100)));
+      }
+    }
+    return true;
+  }
+
+  /**
+   * Контроль calls during a run (events.json, campaign features.controlCalls): `perRun` calls, the first after
+   * `firstAtSeconds`, then every `gapSeconds`. Never during a raid or the call target, and never with two players
+   * (online votes are not built yet). An event is offered only when every effect it has is implemented here.
+   */
+  private callClock(): void {
+    const s = this.s;
+    if (!this.rules.controlCalls || s.players.length !== 1 || s.controlCall || (s.boss.awake && !s.boss.dead)) return;
+    if (s.raid?.active) return;
+    const between = (range: number[]) => range[0] + Math.floor(rand(s) * (range[1] - range[0] + 1));
+    const cfg = controlSchedule;
+    s.callPlan ??= { nextAt: s.time + between(cfg.firstAtSeconds), left: between(cfg.perRun), used: [] };
+    const plan = s.callPlan;
+    if (plan.left <= 0 || s.time < plan.nextAt) return;
+    const offer = Object.keys(controlEvents).filter((id) => !plan.used.includes(id) && callEffectsSupported(controlEvents[id]) && this.callAvailable(id, 0));
+    if (!offer.length) {
+      plan.nextAt = s.time + 30;
+      return;
+    }
+    const id = offer[randIntOf(s, offer.length)];
+    plan.used.push(id);
+    plan.left--;
+    plan.nextAt = s.time + between(cfg.gapSeconds);
+    s.controlCall = { id, scheduled: true };
+    this.emit('call_incoming', { owner: 0, text: id });
+  }
+
+  /** Whether a Контроль call may be offered to this player (events.json requires; unmet → the event is skipped). */
+  callAvailable(eventId: string, playerId = 0): boolean {
+    const ev = controlEvents[eventId];
+    if (!ev) return false;
+    const req = ev.requires ?? {};
+    const p = this.s.players[playerId];
+    const need = Number(req.civiliansOnBalance ?? req.civiliansRescued ?? 0);
+    return (p?.civilians ?? 0) >= need;
   }
 
   private emit(type: string, data: Omit<GameEvent, 'type'> = {}): void {
     this.events.push({ type, ...data });
   }
+}
+
+/** Effects applyCallEffect and the campaign can carry out today; events with others stay out of the draw. */
+const CALL_EFFECTS = new Set(['energy', 'civiliansFromBalance', 'civiliansLose', 'nextRaidSooner', 'commandHpPercent', 'commandMaxHpFactor', 'randomBuildingHpPercent', 'heroesDamageFactor', 'heroesMoveSpeedFactor', 'durationSeconds', 'healAllHeroesFull']);
+const CALL_REQUIRES = new Set(['civiliansOnBalance']);
+function callEffectsSupported(ev: { a?: Record<string, unknown>; b?: Record<string, unknown>; requires?: Record<string, unknown> }): boolean {
+  const keysOk = (o?: Record<string, unknown>) => Object.keys(o ?? {}).every((k) => CALL_EFFECTS.has(k));
+  return keysOk(ev.a) && keysOk(ev.b) && Object.keys(ev.requires ?? {}).every((k) => CALL_REQUIRES.has(k));
 }
 
 function isTech(t: string): t is Tech {

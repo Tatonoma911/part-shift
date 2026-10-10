@@ -132,6 +132,8 @@ export interface Unit {
   stun?: number;
   /** Shell break: defense counts as 0. */
   bare?: number;
+  /** Mine concussion (hazards.json mine.unmarkedDig.concussion): seconds left of slower digging, hitting and walking. */
+  concussed?: number;
   /** Enemies: the nest or lair that released them. */
   nest?: string;
   /** Heroes: heroes.json id. Adaptants: the nest tech (sprite and resists). */
@@ -224,6 +226,10 @@ export interface Player {
   boons?: Record<string, number>;
   /** An opened cache waiting for the player's pick: three boon ids, and when it was offered. */
   boonOffer?: { ids: string[]; at: number };
+  /** Townsfolk «on the balance» (MVP_RULES §4.4 v0.2): each speeds up Energy income; Контроль's calls spend them. */
+  civilians?: number;
+  /** Command center: 20 % steps below half HP already charged in lost townsfolk (civilian.balance.loseOnCommandHitBelowHalf). */
+  civCmdSteps?: number;
   /** Allies down, waiting to come back at the center: hero id → game time it returns. */
   allyBack?: Record<string, number>;
   /** Bonus capsule «damage_resist»: our heroes take less damage until this game time. */
@@ -232,7 +238,7 @@ export interface Player {
   allyScars?: Record<string, { parts: Unit['parts']; lostLimbs: ('arm' | 'leg')[]; armorPlates: number }>;
   /** Ally passive timers (heroes.json ally.everySeconds): hero id → seconds left. */
   allyTimers?: Record<string, number>;
-  stats: { nests: number; caches: number; heroes: string[]; energy: number; lost: number; parts: number; blueprints: number; loreRecords: number };
+  stats: { nests: number; caches: number; heroes: string[]; energy: number; lost: number; parts: number; blueprints: number; loreRecords: number; civiliansRescued?: number; civiliansLost?: number };
   /** Scanner helper (design/ONBOARDING.md §1.3). */
   assist: AssistState;
 }
@@ -270,6 +276,8 @@ export interface RuleOverrides {
   threatEnabled?: boolean;
   bossEnabled?: boolean;
   commandInvulnerable?: boolean;
+  /** The tutorial: a cleared nest does not end the match; the guide's own last card does (FEEL_AUDIT F-15). */
+  holdVictory?: boolean;
   /** The command center may only go here (tutorial). */
   commandFixed?: { x: number; y: number };
   /** Sites laid out around wherever the command center lands (tutorial, design commandPlacement). */
@@ -282,6 +290,16 @@ export interface RuleOverrides {
   allies?: string[];
   nest?: { initialSpawn?: number; maxAlive?: number; spawnSeconds?: number; totalBudget?: number };
   adaptant?: { partDropChance?: number; partSlot?: 'arm' | 'leg' };
+  /** Site counts for the generator (campaign shifts, Обеденный вызов: hazards.mine.quickMode, modes.json mapgen.counts.survivor). */
+  counts?: { mine?: number; survivor?: number; nests?: number; bossHatch?: number; lairTotal?: number; bonusCapsule?: number; medkit?: number };
+  /** Campaign shift difficulty factors (campaign.json overrides), over the difficulty level. */
+  difficulty?: { enemyHpFactor?: number; enemyDamageFactor?: number; startEnergy?: number };
+  /** Elemental zones on the board (campaign features.cellElements); undefined = on. */
+  cellElements?: boolean;
+  /** Random Контроль calls (campaign features.controlCalls). */
+  controlCalls?: boolean;
+  /** Raid timing for this shift (campaign.json features.raids): overrides the difficulty table. */
+  raids?: { enabled: boolean; firstAfterSeconds?: number; everySeconds?: number; size?: number; maxSize?: number };
 }
 
 export interface GameState {
@@ -300,7 +318,9 @@ export interface GameState {
   orbs: Orb[];
   nextId: number;
   /** The call target: the strongest hero of the district (boss_hatch). */
-  boss: { hero: string; awake: boolean; warned: boolean; dead: boolean; hpScale: number };
+  boss: { hero: string; awake: boolean; warned: boolean; dead: boolean; hpScale: number;
+    /** Set when the early-wake condition fires (≤15% closed or all nests destroyed); boss exits at earlyWakeAt. */
+    earlyWakeAt?: number };
   outcome: Outcome;
   /** difficulty.json level id. */
   difficulty: string;
@@ -323,10 +343,16 @@ export interface GameState {
    * lastProgress = game time of the last progress event.
    */
   tempo?: { points: number; level: number; stagnant: boolean; lastProgress?: number };
+  /** Seconds the threat clock runs ahead of `time` (a mine blast: hazards.json mine.unmarkedDig.threatBump). */
+  threatShift?: number;
   /** True while the current raid wave was called early (callRaidEarly command); cleared when the wave ends. */
   raidCalledEarly?: boolean;
-  /** Active boss call, or null if none. id = heroes.json id of the call target; fork = random 0–9 choice index. */
-  controlCall?: { id: string; fork?: number } | null;
+  /** Active boss call, or null if none. options[0]=refuse, options[1]=comply. fork set after player chooses. */
+  controlCall?: { id: string; options?: { cost: number; effect: 'refuse' | 'comply' }[]; fork?: number; scheduled?: boolean } | null;
+  /** Timed Контроль buffs on our units (events.json heroesDamageFactor / heroesMoveSpeedFactor + durationSeconds). */
+  callBuffs?: { damage?: { factor: number; until: number }; speed?: { factor: number; until: number } };
+  /** Random Контроль calls of this run (events.json perRun / firstAtSeconds / gapSeconds). */
+  callPlan?: { nextAt: number; left: number; used: string[] };
   rules?: RuleOverrides;
   /** Present only in online matches. */
   match?: MatchInfo;

@@ -4,9 +4,9 @@ import type { GameEvent } from '../core/world';
 import { lang, t } from '../i18n';
 import { sound } from './audio';
 import { UI_DEPTH } from './cameras';
-import { BOARD, INK } from './layout';
+import { BOARD, DOCK, INK, LANDSCAPE } from './layout';
 import { TECH_HEX, techOrb } from './techIcon';
-import { TXT } from './ui';
+import { plate, TXT } from './ui';
 import heroesJson from '../data/design/heroes.json';
 
 /**
@@ -156,8 +156,10 @@ export class Comm {
     const text = this.pickLine(p)[lang];
     const tech = TECH_HEX[h.tech] ?? 0xffffff;
 
-    const cx = BOARD.x + 16 + R;
-    const cy = BOARD.y + 16 + R;
+    // F-11: on a wide screen the call sits in the right panel (over the dock), never over the field.
+    const area = LANDSCAPE ? DOCK : BOARD;
+    const cx = area.x + 16 + R;
+    const cy = area.y + 16 + R;
     const box = s.add.container(cx, cy).setDepth(DEPTH);
 
     // Portrait: ink ring, element ring, round artbook face.
@@ -170,7 +172,7 @@ export class Comm {
     const head = s.add.container(0, 0, face ? [ring, face, name] : [ring, name]);
 
     // Speech bubble: white, thick ink outline, tail pointing at the face.
-    const maxW = Math.min(480, BOARD.x + BOARD.w - (cx + R + 30) - 16);
+    const maxW = Math.min(480, area.x + area.w - (cx + R + 30) - 16);
     const body = s.add.text(0, 0, text, { ...TXT.body(24, INK.graphite, '700'), lineSpacing: 3, wordWrap: { width: maxW - 40, useAdvancedWrap: true } });
     // Footer: the hero's element and what beats it, so the player knows whom to send.
     // Same orbs as over enemies on the board (UI_SPEC §3.5).
@@ -215,6 +217,12 @@ export class Comm {
     body.setPosition(bx + 20, by + 15).setText('');
     const talk = s.add.container(0, 0, [bubble, body, orbs, ...foot.map((f) => f.obj)]).setAlpha(0).setScale(0.6);
 
+    // On the dock the call gets its own plate, so the dock's hint text doesn't show through.
+    if (LANDSCAPE) {
+      const back = s.add.graphics();
+      plate(back, DOCK.x - cx, DOCK.y - cy, DOCK.w, DOCK.h, 28);
+      box.add(back);
+    }
     box.add([talk, head]);
     head.setScale(0.2).setAngle(-12);
     s.tweens.add({ targets: head, scale: 1, angle: 0, duration: 280, ease: 'Back.easeOut' });

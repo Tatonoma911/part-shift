@@ -131,7 +131,7 @@ export class Cameras {
     // Plain mouse wheel zooms the board (no Ctrl needed).
     sc.input.on('wheel', (p: Phaser.Input.Pointer, _o: unknown, _dx: number, dy: number) => {
       if (!this.inBoardView(p)) return;
-      this.zoomBy(dy < 0 ? 1.15 : 1 / 1.15, p);
+      this.zoomBy(dy < 0 ? 1.07 : 1 / 1.07, p);
     });
     sc.input.on('pointerdown', (p: Phaser.Input.Pointer) => {
       if (p.rightButtonDown() || p.middleButtonDown()) this.pan = { x: p.x, y: p.y };
@@ -144,7 +144,7 @@ export class Cameras {
         const mid = { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 };
         if (!this.pinch) this.pinch = { dist, zoom: this.zoom, mid };
         else {
-          this.zoomBy((this.pinch.zoom * dist) / this.pinch.dist / this.zoom, mid);
+          this.zoomBy(this.pinch.zoom * Math.pow(dist / this.pinch.dist, 0.65) / this.zoom, mid);
           this.panBy(mid.x - this.pinch.mid.x, mid.y - this.pinch.mid.y);
           this.pinch.mid = mid;
         }
