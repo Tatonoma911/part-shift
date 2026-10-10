@@ -1799,6 +1799,7 @@ export class GameScene extends Phaser.Scene {
     const own = w.player(this.me).queue.includes(k);
     const r = !c.revealed && !own ? w.apply({ type: 'queueDig', x, y }, this.me) : null;
     if (r?.ok) this.guide?.notify('queued');
+    if (r && !r.ok && r.reason === 'dig.unreachable') this.say(t('dig.unreachable'), 3000, true);
     if (r && !r.ok && r.reason === 'assist.known_danger') {
       this.confirmCell = k;
       this.say(t(w.visibleKnowledge(this.me).get(k) === 'demon' ? 'cell.confirm_demon.hint' : 'cell.confirm_nest.hint'), 4000, true);
