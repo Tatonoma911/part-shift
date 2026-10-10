@@ -202,7 +202,11 @@ const CELL_WEAK_TO: Record<string, string> = (configJson as unknown as { dig?: {
   impact: 'toxin',
 };
 /** Element of a closed cell: core keeps it as `tech` (older drafts called it `element`, MVP_RULES §3.4). */
-export const cellElement = (c: unknown) => (c as { tech?: string; element?: string }).tech ?? (c as { element?: string }).element;
+/**
+ * The zone element of a block (mapgen.cellElements). Only `element`: a site's own `tech` (a lair's hero, a nest
+ * outside the zones) can differ from its zone, and showing it would point at the site.
+ */
+export const cellElement = (c: unknown) => (c as { element?: string }).element;
 /** The element that digs a closed block fast, or undefined for blocks without an element. */
 export const cellFastTech = (c: unknown): string | undefined => CELL_WEAK_TO[cellElement(c) ?? ''];
 
