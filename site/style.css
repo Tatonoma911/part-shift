@@ -525,3 +525,8 @@ footer .wrap { display: flex; gap: 18px; justify-content: space-between; flex-wr
 .record h3 { margin: 0; font: 800 20px/1.2 var(--display); }
 .record p { margin: 0; font: 500 16px/1.5 var(--body); }
 .record .stamp { position: absolute; right: -6px; bottom: 10px; transform: rotate(-8deg); border: 2px solid var(--coral); color: var(--coral); padding: 2px 8px; font-size: 11px; opacity: .35; pointer-events: none; }
+.tech h3 small { font: 500 13px/1 var(--body); opacity: .6; }
+.tech p { margin: 0; font-size: 14px; line-height: 1.4; }
+.split > * { min-width: 0; }
+.tech { align-content: start; }
+.stack > * { min-width: 0; }

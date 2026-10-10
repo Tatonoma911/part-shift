@@ -13,15 +13,15 @@ const jobs = [
   // objects_gpt: GPT-drawn tile objects — replace matching tile keys (nest, cache, etc.)
   { from: join(root, 'art/export/x2/objects_gpt'), to: 'src/assets/art/tiles', pick: (f) => f.endsWith('.png') && f !== 'objects_gpt.json' },
   { from: join(root, 'art/export/x2/buildings'), to: 'src/assets/art/buildings', pick: (f) => BUILDINGS.includes(f.replace('.png', '')) },
-  // buildings_gpt normal state: replace the old single-state building sprites
+  // buildings_gpt_big normal state (larger than a cell, Антон 2026-10-10): replace the old single-state building sprites
   {
-    from: join(root, 'art/export/x2/buildings_gpt'),
+    from: join(root, 'art/export/x2/buildings_gpt_big'),
     to: 'src/assets/art/buildings',
     pick: (f) => f.endsWith('_normal.png'),
     rename: (f) => f.replace('_normal.png', '.png'),
   },
   // buildings_gpt all states + json: for future state-aware rendering
-  { from: join(root, 'art/export/x2/buildings_gpt'), to: 'src/assets/art/buildings_gpt', pick: (f) => f.endsWith('.png') || f === 'buildings_gpt.json' },
+  { from: join(root, 'art/export/x2/buildings_gpt_big'), to: 'src/assets/art/buildings_gpt', pick: (f) => f.endsWith('.png') || f === 'buildings_gpt.json' },
   // nests_gpt: element-specific revealed nest sprites
   { from: join(root, 'art/export/x2/nests_gpt'), to: 'src/assets/art/nests_gpt', pick: (f) => f.endsWith('.png') || f === 'nests_gpt.json' },
   // villains_mixed: heroes with spliced limbs

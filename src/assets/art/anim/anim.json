@@ -11391,6 +11391,73 @@
     }
    },
    "note": "Из генератора: 140, 141. Накладка живого портала поверх любого логова: idle_<стихия> цикл, release_<стихия> выпуск злодея (разово), destroy_<стихия> уничтожение (разово). Стихии: thermo, cryo, volt, toxin, impact, demon."
+  },
+  "fx_energy": {
+   "sheet": "fx_energy.png",
+   "frameSize": [
+    80,
+    80
+   ],
+   "cols": 8,
+   "anchor": [
+    0,
+    0
+   ],
+   "anims": {
+    "spawn": {
+     "frames": [
+      0,
+      1,
+      2,
+      3,
+      4
+     ],
+     "fps": 16,
+     "loop": false
+    },
+    "fly": {
+     "frames": [
+      9,
+      10,
+      12,
+      10
+     ],
+     "fps": 12,
+     "loop": true
+    },
+    "trail": {
+     "frames": [
+      16,
+      17
+     ],
+     "fps": 10,
+     "loop": false
+    },
+    "arrive_ring": {
+     "frames": [
+      24,
+      25,
+      26,
+      27,
+      28,
+      29
+     ],
+     "fps": 14,
+     "loop": false
+    },
+    "arrive_burst": {
+     "frames": [
+      33,
+      34,
+      35,
+      36,
+      37
+     ],
+     "fps": 16,
+     "loop": false
+    }
+   },
+   "note": "Сбор энергии, покадрово из листов 071 и 075: spawn — вспышка на месте, fly — шарик в полёте (цикл), trail — искра шлейфа (разово, ставить по пути), arrive_ring + arrive_burst — поглощение у штаба."
   }
  }
 }

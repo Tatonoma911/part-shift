@@ -110,7 +110,7 @@ export const HEROES: Hero[] = [
     before: { ru: 'Огромный и добрый. Извиняется перед дверью, прежде чем её снять, и оценивает каждый стул по «уверенности конструкции». Мечтает превратить заброшенный кинотеатр в мастерскую для района.', en: 'Huge and kind. Apologises to doors before removing them and rates every chair by “structural confidence.” Dreams of turning an abandoned cinema into a neighbourhood workshop.' },
     after: { ru: 'Протокол спасения стал буквальным: Килн изолирует всё подряд и выносит людей «в безопасность», даже если они не просили.', en: 'His rescue protocol turned literal: Kiln isolates everything and carries people “to safety” whether they asked or not.' },
     module: { ru: 'Тяжёлая керамическая рука: таран, броня, бронелом. Не огонь.', en: 'Heavy ceramic arm: ram, armour, armour-breaker. Not fire.' },
-    tech: { ru: 'Минерал / удар', en: 'Mineral / impact' },
+    tech: { ru: 'Удар (минерал)', en: 'Impact (mineral)' },
     look: { ru: 'Охра и янтарь поверх белой керамики, таранная перчатка', en: 'Ochre and amber over white ceramic, a ram gauntlet' },
     quote: { ru: '«Вес на мне. Ты бери человека.»', en: '“I have the weight. You take the person.”' },
     fact: { ru: '«Этот стул настроен оптимистично.»', en: '“This chair is optimistic.”' },
@@ -128,7 +128,7 @@ export const HEROES: Hero[] = [
     before: { ru: 'Живёт в Glassline, окна смотрят на монорельс. Комментирует каждый узел, как кулинарное шоу. Мечтает о пешеходной тропе по крышам, чтобы семьи видели город сверху.', en: 'Lives in Glassline, windows facing the monorail. Narrates every knot like a cooking show. Dreams of a rooftop path so families can see the city from above.' },
     after: { ru: 'Сломанный протокол: хватает людей петлёй и тащит «в безопасность».', en: 'Broken protocol: lassoes people and drags them “to safety.”' },
     module: { ru: 'Кабельный захват: цепляет, удерживает, работает как резиновое лассо. Это не электрорука.', en: 'Cable grapple: hooks, holds, works like a rubber lasso. Not an electric arm.' },
-    tech: { ru: 'Ток (отдельная оголённая рука)', en: 'Current (a separate bare arm)' },
+    tech: { ru: 'Молния (ток), отдельная оголённая рука', en: 'Lightning (current), a separate bare arm' },
     look: { ru: 'Кобальт и белая куртка, оранжевый кабель на предплечье', en: 'Cobalt and white jacket, orange cable on the forearm' },
     quote: { ru: '«Не смотри вниз. Смотри на меня и сделай один шаг.»', en: '“Do not look down. Look at me, then take one step.”' },
     fact: { ru: '«Кабель в порядке. Это здание пересматривает свои решения.»', en: '“The cable is fine. The building is reconsidering its choices.”' },
@@ -147,11 +147,11 @@ export const HEROES: Hero[] = [
     before: { ru: 'Подписывает остатки еды точным временем охлаждения. Мечтает о районном классе, где семьи учатся спасать без страха. Боится одного: быстро решить проблему и создать новую, похуже.', en: 'Labels leftovers with the exact cooling time. Dreams of a neighbourhood class where families learn rescue without fear. Fears one thing: solving the visible problem and causing a worse one.' },
     after: { ru: 'Сломанный протокол: «охлаждает» всё вокруг, даже то, что не горит.', en: 'Broken protocol: “cools” everything around her, even what isn’t burning.' },
     module: { ru: 'Криогелевая нога (никогда не рука): замедляет и готовит проводимость.', en: 'Cryogel leg (never an arm): slows targets and primes them for conduction.' },
-    tech: { ru: 'Криогель', en: 'Cryogel' },
+    tech: { ru: 'Лёд (криогель)', en: 'Ice (cryogel)' },
     look: { ru: 'Чистый циан, пучок, два прозрачных бачка на спине', en: 'Pure cyan, a hair bun, two clear tanks on her back' },
     quote: { ru: '«Охлаждай маршрут, а не всю комнату.»', en: '“Cool the route, not the whole room.”' },
     fact: { ru: '«Я не подумала. Думаю сейчас.»', en: '“I did not think that through. I am thinking now.”' },
-    inGame: { ru: 'Криоадаптанты на поле отдают ледяную руку. Криогель плюс ток дают проводящую цепь.', en: 'Cryo adaptants drop an ice arm. Cryogel plus current makes a conductive chain.' },
+    inGame: { ru: 'Ледяные адаптанты на поле отдают ледяную руку. Лёд плюс Молния дают реакцию «Цепная молния».', en: 'Ice adaptants drop an ice arm. Ice plus Lightning sets off Chain Lightning.' },
   },
   {
     id: 'seraph',
@@ -182,7 +182,7 @@ export const HEROES: Hero[] = [
     before: { ru: 'Стучит по каждой трубе дважды и говорит ей «Не сегодня». Растит помидоры под списанными лампами. Мечтает сделать из старого тоннеля подземный сад и музей.', en: 'Taps every pipe twice and tells it “Not today.” Grows tomatoes under retired inspection lamps. Dreams of turning an old tunnel into an underground garden and museum.' },
     after: { ru: 'Протокол подземного спасения сломался: Демон уверен, что наверху опасно, и уводит людей вниз, в Undersun Works. Обратно никого не выпускает.', en: 'His subsurface rescue protocol broke: Demon is sure the surface is dangerous and leads people down into Undersun Works. He lets no one back up.' },
     module: { ru: 'Буровой хвост с геотермальным инжектором', en: 'Drill tail with a geothermal injector' },
-    tech: { ru: 'Термо + удар', en: 'Thermo + impact' },
+    tech: { ru: 'Огонь (термо) + удар', en: 'Fire (thermo) + impact' },
     look: { ru: 'Чёрно-красная техноброня, четыре руки, бур', en: 'Black-and-red tech armour, four arms, a drill' },
     quote: { ru: '«Земля честная. Изыскания бывают оптимистичны.»', en: '“Ground is honest. Surveys are sometimes optimistic.”' },
     inGame: { ru: 'Первый герой на вызове в «Срочном вызове». Не главный, просто сделан первым. Спит под люком Undersun, фиолетовые числа ⬡ показывают, где. Победишь — заберёшь буровой хвост.', en: 'The first hero on call in “Urgent Call.” Not the main villain, just the first one built. Sleeps under an Undersun hatch; purple ⬡ numbers show where. Beat him and take the drill tail.' },
@@ -222,7 +222,7 @@ const MAD: Record<string, [string, string, string, string, string, string, strin
   // id: mania ru/en, line ru/en, trophy ru/en, lair ru/en
   kiln: ['Всё ещё выносит людей из огня: хватает жителей и уносит прочь, проламывая стены. Огня при этом нет.', 'Still carries people out of fires: grabs residents and hauls them away through walls. There is no fire.', 'Вынесу. Всех. Отовсюду.', 'I’ll carry you out. Everyone. From everywhere.', 'Рука Килна (Таран)', 'Kiln’s arm (Ram)', 'Пожарная часть', 'The fire station'],
   lineman: ['Всё ещё страхует: привязывает людей кабелем к опорам, «чтобы не упали».', 'Still on belay duty: ties people to pylons with cable “so they don’t fall.”', 'Не двигайтесь. Я вас закреплю. Навсегда.', 'Hold still. I’ll secure you. For good.', 'Кабельный захват (Захват)', 'Cable grapple (Grab)', 'Вышка ЛЭП', 'A power-line tower'],
-  frostline: ['Всё ещё тушит: заливает криогелем всё подряд, даже микрореакторы.', 'Still putting out fires: floods everything with cryogel, microreactors included.', 'Всё горячее — потенциальный пожар. Вы горячий.', 'Anything hot is a potential fire. You are hot.', 'Криогелевая нога (Криоудар)', 'Cryogel leg (Cryo strike)', 'Станция криогеля', 'The cryogel station'],
+  frostline: ['Всё ещё тушит: заливает криогелем всё подряд, даже микрореакторы.', 'Still putting out fires: floods everything with cryogel, microreactors included.', 'Всё горячее — потенциальный пожар. Вы горячий.', 'Anything hot is a potential fire. You are hot.', 'Ледяная нога (Ледяной пинок)', 'Ice leg (Ice Kick)', 'Станция криогеля', 'The cryogel station'],
   seraph: ['Всё ещё лечит: её нимб-дрон чинит врагов вокруг, а жителей она уносит по воздуху «в больницу».', 'Still healing: her halo-drone patches up enemies, and she flies residents off “to the hospital.”', 'Вы ещё не ранены? Это ненадолго. Я помогу.', 'Not hurt yet? That won’t last. I’ll help.', 'Крылья (Полёт)', 'Wings (Flight)', 'Вертолётная площадка', 'The helipad'],
   demon: ['Всё ещё спасает под землёй: уводит людей вниз, в Undersun Works, «в безопасность». Обратно никого не выпускает.', 'Still rescuing underground: leads people down into Undersun Works “to safety.” Lets no one back up.', 'Не бойтесь. Внизу никто не горит. Внизу просто жарко.', 'Don’t be afraid. Nobody burns down here. It’s just hot.', 'Буровой хвост (Тепловой выброс)', 'Drill tail (Heat burst)', 'Люк Undersun', 'An Undersun hatch'],
   current: ['«Спасает утопающих»: смывает людей водомётом в залив, чтобы было кого спасать.', '“Saves the drowning”: hoses people into the bay so there’s someone to save.', 'Человек за бортом! Сейчас будет.', 'Man overboard! Any second now.', 'Водомётная рука', 'Water-cannon arm', 'Спасательная станция на пляже', 'The beach rescue station'],
@@ -260,7 +260,7 @@ const ALLY: Record<string, [string, string, string, string]> = {
   patch: ['Хороший мальчик снова дома: сгустки Энергии летят к центру вдвое быстрее, а копка даёт на 10 % больше.', 'The good boy is home again: Energy orbs fly to the centre twice as fast and digging gives 10% more.', 'Открыть 30 тайников за все смены', 'Open 30 caches across all shifts'],
   canopy: ['Снова сажает то, что нужно: Микрореакторы и копка дают на 25 % больше Энергии.', 'Plants the right things again: Microreactors and digging give 25% more Energy.', 'Заработать 1000 Энергии за одну смену', 'Earn 1000 Energy in one shift'],
   current: ['Течение снова на нашем берегу: смывает с жителей ожоги, яд и холод и ходит по воде.', 'Current is on our shore again: washes burns, toxin and frost off residents and walks on water.', 'Победить Течение 15 раз', 'Beat Current 15 times'],
-  lineman: ['Страхует теперь врагов, и очень крепко: подтягивает их к жителям, а удары рядом с ним бьют током.', 'Now he secures enemies, very firmly: pulls them to residents, and hits near him shock.', 'Вызвать реакцию «Проводящая цепь» 50 раз', 'Trigger Conductive Chain 50 times'],
+  lineman: ['Страхует теперь врагов, и очень крепко: подтягивает их к жителям, а удары рядом с ним бьют током.', 'Now he secures enemies, very firmly: pulls them to residents, and hits near him shock.', 'Вызвать реакцию «Цепная молния» 50 раз', 'Trigger Chain Lightning 50 times'],
   frostline: ['Тушит теперь только врагов: все враги рядом с ней замедлены.', 'Now she only puts out enemies: every enemy near her is slowed.', 'Заморозить 200 врагов', 'Freeze 200 enemies'],
   mason: ['Укрепляет то, что надо: здания на 50 % прочнее, завалы разбираются вдвое быстрее.', 'Reinforces the right things: buildings are 50% sturdier, rubble clears twice as fast.', 'Построить 100 зданий за все смены', 'Build 100 buildings across all shifts'],
   sweep: ['Чистит теперь по делу: жители рядом не страдают от раскалённой земли и яда, а лишние части перерабатываются вдвое выгоднее.', 'Cleans for a reason now: nearby residents ignore hot ground and toxin, and spare parts recycle for double.', 'Переработать 50 лишних частей', 'Recycle 50 spare parts'],
@@ -474,19 +474,19 @@ export const DISTRICTS = [
 ];
 
 export const TECH = [
-  { id: 'thermo', color: '#FF7A3D', ru: 'Термо', en: 'Thermo' },
-  { id: 'cryo', color: '#7FD8FF', ru: 'Криогель', en: 'Cryogel' },
-  { id: 'volt', color: '#FFD23F', ru: 'Ток', en: 'Current' },
-  { id: 'toxin', color: '#8CE05A', ru: 'Токсин', en: 'Toxin' },
-  { id: 'impact', color: '#C9A27A', ru: 'Минерал / удар', en: 'Mineral / impact' },
+  { id: 'thermo', color: '#FF7A3D', ru: 'Огонь', en: 'Fire', old: { ru: 'термо', en: 'thermo' }, desc: { ru: 'Пламя, жар и пар. Поджигает.', en: 'Flame, heat and steam. Sets things on fire.' } },
+  { id: 'cryo', color: '#7FD8FF', ru: 'Лёд', en: 'Ice', old: { ru: 'криогель', en: 'cryogel' }, desc: { ru: 'Лёд и холод. Замедляет и замораживает.', en: 'Ice and cold. Slows and freezes.' } },
+  { id: 'volt', color: '#FFD23F', ru: 'Молния', en: 'Lightning', old: { ru: 'ток', en: 'current' }, desc: { ru: 'Электричество. Разряд перескакивает на соседей.', en: 'Electricity. The charge jumps to nearby enemies.' } },
+  { id: 'toxin', color: '#8CE05A', ru: 'Токсин', en: 'Toxin', old: undefined, desc: { ru: 'Яд и химия. Травит и снижает защиту.', en: 'Poison and chemicals. Poisons and lowers defense.' } },
+  { id: 'impact', color: '#C9A27A', ru: 'Удар', en: 'Impact', old: { ru: 'минерал', en: 'mineral' }, desc: { ru: 'Тараны и поршни. Оглушает и отбрасывает.', en: 'Rams and pistons. Stuns and knocks back.' } },
 ];
 
 export const REACTIONS: { a: string; b: string; ru: string; en: string }[] = [
-  { a: 'cryo', b: 'thermo', ru: 'Термошок', en: 'Thermal shock' },
-  { a: 'cryo', b: 'volt', ru: 'Проводящая цепь', en: 'Conductive chain' },
-  { a: 'thermo', b: 'impact', ru: 'Срыв оболочки', en: 'Shell rupture' },
-  { a: 'toxin', b: 'thermo', ru: 'Выжигание', en: 'Burn-out' },
-  { a: 'toxin', b: 'volt', ru: 'Нейросбой', en: 'Neural crash' },
+  { a: 'thermo', b: 'cryo', ru: 'Паровой взрыв', en: 'Steam Blast' },
+  { a: 'cryo', b: 'volt', ru: 'Цепная молния', en: 'Chain Lightning' },
+  { a: 'thermo', b: 'impact', ru: 'Пробитая броня', en: 'Armor Break' },
+  { a: 'toxin', b: 'thermo', ru: 'Выжигание', en: 'Burnout' },
+  { a: 'toxin', b: 'volt', ru: 'Замыкание', en: 'Short Circuit' },
 ];
 
 /** Short UI strings. */

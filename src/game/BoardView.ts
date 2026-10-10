@@ -111,6 +111,7 @@ export class BoardView {
   private readonly buildingViews = new Map<number, { spr: Phaser.GameObjects.Sprite; state: string; type: string; x: number; y: number }>();
   private readonly units = new Map<number, UnitView>();
   private readonly orbs: Phaser.GameObjects.Sprite[] = [];
+  private readonly orbViews = new Map<string, { spr: Phaser.GameObjects.Sprite; trail: number }>();
   private readonly overlay: Phaser.GameObjects.Graphics;
   private readonly clueG: Phaser.GameObjects.Graphics;
   private readonly arcG: Phaser.GameObjects.Graphics;
@@ -317,9 +318,19 @@ export class BoardView {
       case 'resident_born':
         at('fx.resident_born');
         break;
-      case 'energy_orb_arrive':
-        at('fx.energy_arrive');
+      case 'energy_orb_arrive': {
+        if (!animSets.fx_energy) {
+          at('fx.energy_arrive');
+          break;
+        }
+        // Absorbed by the command centre: a burst on the roof and a ring at its foot.
+        const p = this.center(e.x, e.y);
+        const burst = sc.add.sprite(p.x, p.y - 30, 'fx_energy').setScale(0.7).setDepth(D.top - 0.4);
+        burst.play('fx_energy.arrive_burst').once('animationcomplete', () => burst.destroy());
+        const ring = sc.add.sprite(p.x, p.y + 6, 'fx_energy').setScale(0.7).setDepth(D.building + 0.5);
+        ring.play('fx_energy.arrive_ring').once('animationcomplete', () => ring.destroy());
         break;
+      }
       case 'center_hit':
         this.shake(100, 0.002);
         buzz(30);
@@ -1240,15 +1251,63 @@ export class BoardView {
     g.lineBetween(from.x, from.y, to.x, to.y);
   }
 
+  /**
+   * Energy orbs: drawn frames only (fx_energy, sheets 071/075). A flash where the orb is born, the orb flies to the
+   * command centre on an arc and leaves sparks behind; the ring and burst on arrival play in onEvent.
+   * Orbs are matched by where they were born (online snapshots may replace the objects).
+   */
   private updateOrbs(): void {
     const orbs = this.world.s.orbs;
-    while (this.orbs.length < orbs.length) this.orbs.push(this.scene.add.sprite(0, 0, 'fx').setDepth(D.unit + 1).play('fx.energy_orb'));
-    this.orbs.forEach((spr, k) => {
-      const o = orbs[k];
-      if (!o) return void spr.setVisible(false);
+    if (!animSets.fx_energy) {
+      while (this.orbs.length < orbs.length) this.orbs.push(this.scene.add.sprite(0, 0, 'fx').setDepth(D.unit + 1).play('fx.energy_orb'));
+      this.orbs.forEach((spr, k) => {
+        const o = orbs[k];
+        if (!o) return void spr.setVisible(false);
+        const p = this.center(o.x, o.y);
+        spr.setVisible(true).setPosition(p.x, p.y - 8).setScale(0.8 + Math.min(0.6, o.amount / 60));
+      });
+      return;
+    }
+    const now = this.scene.time.now;
+    const seen = new Set<string>();
+    const dup = new Map<string, number>();
+    for (const o of orbs) {
+      const x0 = o.x0 ?? o.x;
+      const y0 = o.y0 ?? o.y;
+      const base = `${o.owner}:${x0.toFixed(2)}:${y0.toFixed(2)}:${o.amount}`;
+      const n = dup.get(base) ?? 0;
+      dup.set(base, n + 1);
+      const key = `${base}#${n}`;
+      seen.add(key);
+      let v = this.orbViews.get(key);
+      if (!v) {
+        v = { spr: this.scene.add.sprite(0, 0, 'fx_energy').setDepth(D.top - 0.4).play('fx_energy.fly'), trail: now };
+        this.orbViews.set(key, v);
+        const b = this.center(x0, y0);
+        const f = this.scene.add.sprite(b.x, b.y - 10, 'fx_energy').setScale(0.55).setDepth(D.top - 0.4);
+        f.play('fx_energy.spawn').once('animationcomplete', () => f.destroy());
+      }
+      const cmd = this.world.building(this.world.s.players[o.owner]?.command);
+      const total = cmd ? Math.hypot(cmd.x - x0, cmd.y - y0) : 0;
+      const left = cmd ? Math.hypot(cmd.x - o.x, cmd.y - o.y) : 0;
+      const t = total > 0 ? Phaser.Math.Clamp(1 - left / total, 0, 1) : 1;
+      const lift = Math.min(CELL * 2.2, total * STEP * 0.35) * Math.sin(Math.PI * t);
       const p = this.center(o.x, o.y);
-      spr.setVisible(true).setPosition(p.x, p.y - 8).setScale(0.8 + Math.min(0.6, o.amount / 60));
-    });
+      const size = 0.8 + Math.min(0.6, o.amount / 60);
+      const x = p.x;
+      const y = p.y - 10 - lift;
+      if (now - v.trail > 70) {
+        v.trail = now;
+        const s = this.scene.add.sprite(x, y, 'fx_energy').setScale(0.22 * size).setDepth(D.top - 0.45);
+        s.play('fx_energy.trail').once('animationcomplete', () => s.destroy());
+      }
+      v.spr.setPosition(x, y).setScale(0.38 * size);
+    }
+    for (const [key, v] of this.orbViews) {
+      if (seen.has(key)) continue;
+      v.spr.destroy();
+      this.orbViews.delete(key);
+    }
   }
 
   /** Big work arc almost the size of the cell, running down clockwise (UI_SPEC §3). */
