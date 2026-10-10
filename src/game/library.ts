@@ -17,13 +17,17 @@ const CSS = `
 .psl{position:fixed;inset:0;z-index:60;background:#eaf3f5;color:#10171c;font:500 16px/1.45 "Golos Text",system-ui,sans-serif;display:flex;flex-direction:column;padding-top:env(safe-area-inset-top,0px)}
 .psl *{box-sizing:border-box}
 .psl-bar{display:flex;align-items:center;gap:14px;padding:12px 16px;background:#10171c;color:#fff}
-.psl-bar button{all:unset;cursor:pointer;width:44px;height:44px;display:grid;place-items:center;font:900 24px/1 Unbounded,system-ui,sans-serif;background:#ffffff1a}
+.psl-bar button{all:unset;cursor:pointer;width:44px;height:44px;display:grid;place-items:center;font:900 24px/1 Unbounded,system-ui,sans-serif;background:#ffffff1a;transition:background .15s,transform .12s}
+.psl-bar button:hover{background:#ffffff35;transform:scale(1.12)}
+.psl-bar button:active{transform:scale(.94)}
 .psl-bar h2{margin:0;font:900 clamp(18px,4.6vw,26px)/1.1 Unbounded,"Golos Text",system-ui,sans-serif;letter-spacing:-.01em;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .psl-bar .k{font:800 11px/1 "Golos Text",system-ui,sans-serif;letter-spacing:.14em;color:#9ff4ff;display:block;margin-bottom:4px}
 .psl-body{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:18px 16px calc(28px + env(safe-area-inset-bottom,0px))}
 .psl-in{max-width:1080px;margin:0 auto;display:grid;gap:22px}
 .psl-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,240px),1fr));gap:16px}
-.psl-card{all:unset;cursor:pointer;display:grid;background:#fff;border:3px solid #10171c;box-shadow:6px 6px 0 #10171c33}
+.psl-card{all:unset;cursor:pointer;display:grid;background:#fff;border:3px solid #10171c;box-shadow:6px 6px 0 #10171c33;transition:transform .18s,box-shadow .18s}
+.psl-card:hover{transform:translate(-2px,-3px);box-shadow:8px 9px 0 #10171c55}
+.psl-card:active{transform:translate(2px,2px);box-shadow:2px 2px 0 #10171c33}
 .psl-card img{width:100%;aspect-ratio:3/4;object-fit:cover;object-position:top;display:block;border-bottom:3px solid #10171c}
 .psl-card div{padding:12px 14px 14px;display:grid;gap:4px}
 .psl-card b{font:900 18px/1.15 Unbounded,"Golos Text",system-ui,sans-serif}
@@ -32,16 +36,21 @@ const CSS = `
 .psl-page{display:block;width:100%;max-width:900px;margin:0 auto;border:3px solid #10171c;background:#fff}
 .psl-note{margin:0;color:#3b4a52;max-width:66ch}
 .psl-pager{display:flex;gap:12px;flex-wrap:wrap;justify-content:space-between;max-width:900px;width:100%;margin:0 auto}
-.psl-btn{all:unset;cursor:pointer;padding:12px 18px;background:#10171c;color:#fff;font:800 15px/1 "Golos Text",system-ui,sans-serif}
+.psl-btn{all:unset;cursor:pointer;padding:12px 18px;background:#10171c;color:#fff;font:800 15px/1 "Golos Text",system-ui,sans-serif;transition:background .15s,transform .12s}
+.psl-btn:hover{background:#1f2d35;transform:translateY(-2px)}
+.psl-btn:active{transform:translateY(1px)}
 .psl-btn.alt{background:#fff;color:#10171c;border:3px solid #10171c;padding:9px 15px}
+.psl-btn.alt:hover{background:#eaf3f5}
 .psl-sec h3{margin:0 0 6px;font:900 22px/1.15 Unbounded,"Golos Text",system-ui,sans-serif}
 .psl-shots{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,220px),1fr));gap:14px;margin-top:12px}
-.psl-shot{all:unset;cursor:zoom-in;display:grid;gap:6px}
+.psl-shot{all:unset;cursor:zoom-in;display:grid;gap:6px;transition:transform .15s}
+.psl-shot:hover{transform:scale(1.03)}
+.psl-shot:active{transform:scale(.97)}
 .psl-shot img{width:100%;aspect-ratio:4/3;object-fit:cover;border:3px solid #10171c;background:#fff;display:block}
 .psl-shot img.px{object-fit:contain;image-rendering:pixelated;background:#dfeef3}
 .psl-shot span{font-size:13px;color:#3b4a52}
 .psl-zoom{position:fixed;inset:0;z-index:61;background:#0b1117f2;display:grid;place-items:center;padding:16px;cursor:zoom-out}
-.psl-zoom img{max-width:100%;max-height:calc(100% - 60px);object-fit:contain}
+.psl-zoom img{max-width:100%;max-height:calc(100% - 60px);object-fit:contain;transition:transform .2s}
 .psl-zoom img.px{image-rendering:pixelated;min-width:min(90vw,520px)}
 .psl-zoom p{margin:10px 0 0;color:#eaf3f5;text-align:center}
 .psl-ru{font-size:12px;color:#7a5b00;background:#ffe14d;padding:2px 8px;justify-self:start}

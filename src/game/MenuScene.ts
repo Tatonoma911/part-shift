@@ -207,8 +207,15 @@ export class MenuScene extends Phaser.Scene {
       }
       if (act) {
         const hit = this.add.zone(x0 + 32, y, w - 64, h).setOrigin(0).setInteractive({ useHandCursor: true });
+        hit.on('pointerover', () => {
+          this.tweens.add({ targets: g, alpha: primary ? 0.85 : 1, scaleX: 1.012, scaleY: 1.012, duration: 100, ease: 'Sine.Out' });
+        });
+        hit.on('pointerout', () => {
+          this.tweens.add({ targets: g, alpha: 1, scaleX: 1, scaleY: 1, duration: 120, ease: 'Sine.Out' });
+        });
         hit.on('pointerdown', (_p: Phaser.Input.Pointer, _x: number, _y: number, ev: Ev) => {
           ev.stopPropagation();
+          this.tweens.add({ targets: g, scaleX: 0.97, scaleY: 0.97, duration: 60, yoyo: true, ease: 'Sine.InOut' });
           sound.play('ui_tap');
           act();
         });
@@ -378,10 +385,15 @@ export class MenuScene extends Phaser.Scene {
    * then Ranking · Invite · Feedback as a slim row of quiet chips under it. Returns the height it took.
    */
   private socialRow(c: Phaser.GameObjects.Container, x: number, y: number, w: number): number {
-    const tap = (bx: number, by: number, bw: number, bh: number, act: () => void) => {
+    const tap = (bx: number, by: number, bw: number, bh: number, act: () => void, gfx?: Phaser.GameObjects.Graphics) => {
       const hit = this.add.zone(bx, by, bw, bh).setOrigin(0).setInteractive({ useHandCursor: true });
+      if (gfx) {
+        hit.on('pointerover', () => this.tweens.add({ targets: gfx, alpha: 0.82, scaleX: 1.02, scaleY: 1.02, duration: 100, ease: 'Sine.Out' }));
+        hit.on('pointerout', () => this.tweens.add({ targets: gfx, alpha: 1, scaleX: 1, scaleY: 1, duration: 120, ease: 'Sine.Out' }));
+      }
       hit.on('pointerdown', (_p: Phaser.Input.Pointer, _x: number, _y: number, ev: Ev) => {
         ev.stopPropagation();
+        if (gfx) this.tweens.add({ targets: gfx, scaleX: 0.96, scaleY: 0.96, duration: 60, yoyo: true, ease: 'Sine.InOut' });
         sound.play('ui_tap');
         act();
       });
@@ -397,7 +409,7 @@ export class MenuScene extends Phaser.Scene {
     const room = w - size - 64;
     if (tx.width > room) tx.setScale(room / tx.width);
     const ic = menuIcon(this, tx.x - (tx.width * tx.scaleX) / 2 - 14 - size / 2, y + ch / 2, size, 'coffee');
-    c.add([g, ...ic, tx, tap(x, y, w, ch, () => openDonate('menu'))]);
+    c.add([g, ...ic, tx, tap(x, y, w, ch, () => openDonate('menu'), g)]);
     // The other three: quieter outline chips, icon beside a short label.
     const items: [MenuIconId, string, () => void][] = [
       ['leaderboard', t('social.menu.board'), () => openBoard({ playDaily: () => this.playDaily() })],
@@ -417,7 +429,7 @@ export class MenuScene extends Phaser.Scene {
       const r = bw - isz - 28;
       if (st.width > r) st.setScale(r / st.width);
       const sic = menuIcon(this, st.x - (st.width * st.scaleX) / 2 - 8 - isz / 2, sy + sh / 2, isz, icon);
-      c.add([sg, ...sic, st, tap(bx, sy, bw, sh, act)]);
+      c.add([sg, ...sic, st, tap(bx, sy, bw, sh, act, sg)]);
     });
     return ch + 12 + sh;
   }
