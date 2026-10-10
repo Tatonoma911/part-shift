@@ -26,6 +26,8 @@ export type Visual =
 export interface Entry {
   id: string;
   name: string;
+  /** An old name shown small next to the name (the guide only, not the game). */
+  aka?: string;
   /** Short line under the name in lists, and the first paragraph of the entry. */
   desc: string;
   /** Further paragraphs ("how it works"). */
@@ -279,7 +281,7 @@ export const SECTIONS: Section[] = [
     icon: 'icon.attack',
     entries: [
       { id: 'elem.cycle', name: 'elem.cycle.name', desc: 'tech.cycle', visual: { kind: 'cycle' }, clip: 'elements', tip: 'lesson.elements.tip' },
-      ...CYCLE.map((t) => ({ id: `elem.${t}`, name: `tech.${t}`, desc: `tech.${t}.desc`, visual: { kind: 'cycle', focus: t } as Visual, related: ['elem.cycle', `part.${t}_arm`] })),
+      ...CYCLE.map((t) => ({ id: `elem.${t}`, name: `tech.${t}`, aka: `elem.${t}.aka`, desc: `tech.${t}.desc`, visual: { kind: 'cycle', focus: t } as Visual, related: ['elem.cycle', `part.${t}_arm`] })),
       { id: 'elem.choose', name: 'elem.choose.name', desc: 'elem.choose.text', clip: 'elements', visual: { kind: 'anim', set: 'defender', anim: 'attack', scale: 3 } },
       { id: 'elem.mult', name: 'elem.mult.name', desc: 'elem.mult.text', visual: { kind: 'cycle' } },
       { id: 'elem.resist', name: 'elem.resist.name', desc: 'elem.resist.text', visual: { kind: 'anim', set: 'adaptant_thermo', anim: 'hit', scale: 3 } },

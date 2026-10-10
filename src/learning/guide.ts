@@ -190,7 +190,7 @@ export class Guide {
           'button.psl-row',
           { onclick: () => this.go({ kind: 'entry', id: e.id }) },
           thumb,
-          h('div', { style: 'min-width:0' }, h('div.psl-row-name', {}, tr(e.name)), h('div.psl-row-desc', {}, tr(e.desc))),
+          h('div', { style: 'min-width:0' }, h('div.psl-row-name', {}, tr(e.name), e.aka && tr(e.aka) ? h('span.psl-aka', {}, ` (${tr(e.aka)})`) : null), h('div.psl-row-desc', {}, tr(e.desc))),
           h('div.psl-row-meta', {}, e.clip ? h('div.psl-play', { html: ICON.play, title: tr('ui.watch') }) : null, progress.viewed(e.id) ? null : h('i.psl-dot', { title: 'new' })),
         ),
       );
@@ -208,6 +208,7 @@ export class Guide {
     progress.markViewed(id);
     const s = sectionOf(id);
     this.header(s ? tr(`sec.${s.id}`).toUpperCase() : '', tr(e.name));
+    if (e.aka && tr(e.aka)) this.head.querySelector('.psl-title')?.append(h('span.psl-aka', {}, ` (${tr(e.aka)})`));
     const visual = h('div.psl-entry-visual');
     this.body.append(visual, h('p.psl-p', {}, tr(e.desc)));
     if (e.clip) this.clip(visual, e.clip);
