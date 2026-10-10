@@ -213,6 +213,16 @@ export class World {
     return difficulties[this.s.difficulty] ?? difficulties[DEFAULT_DIFFICULTY];
   }
 
+  /** Raid timing: the difficulty's table, or the campaign shift's own raids setting when it has one. */
+  private raidCfg() {
+    const base = difficulties[this.s.difficulty]?.raids;
+    const o = this.rules.raids;
+    if (!o) return base;
+    if (!o.enabled) return undefined;
+    const fallback = { firstAfterSeconds: 150, everySeconds: 60, size: 1, maxSize: 3, sizePerThreatLevels: 2 };
+    return { ...fallback, ...(base?.enabled ? base : {}), ...o } as NonNullable<typeof base>;
+  }
+
   private get rules(): RuleOverrides {
     return this.s.rules ?? {};
   }
@@ -1611,7 +1621,7 @@ export class World {
   /** Raids (MVP_RULES §9.7): opened nests send a squad at the nearest building on a timer. */
   private raidClock(): void {
     const s = this.s;
-    const r = difficulties[s.difficulty]?.raids;
+    const r = this.raidCfg();
     if (!r?.enabled || this.rules.threatEnabled === false) return;
     s.raidAt ??= r.firstAfterSeconds;
     if (s.time < s.raidAt) return;
@@ -1680,7 +1690,7 @@ export class World {
   /** Keep raid/tempo/controlCall in sync so the UI always sees current values. */
   private syncDerivedFields(): void {
     const s = this.s;
-    const r = difficulties[s.difficulty]?.raids;
+    const r = this.raidCfg();
     const callEarlyEnergy = 50;
     // Same switch as raidClock: no threat (the tutorial), no raids and no timer.
     const raids = !!r?.enabled && this.rules.threatEnabled !== false;

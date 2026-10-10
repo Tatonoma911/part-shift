@@ -290,6 +290,8 @@ export interface RuleOverrides {
   adaptant?: { partDropChance?: number; partSlot?: 'arm' | 'leg' };
   /** Site counts for the generator (campaign shifts, Обеденный вызов: hazards.mine.quickMode, modes.json mapgen.counts.survivor). */
   counts?: { mine?: number; survivor?: number; nests?: number; bossHatch?: number; lairTotal?: number; bonusCapsule?: number; medkit?: number };
+  /** Raid timing for this shift (campaign.json features.raids): overrides the difficulty table. */
+  raids?: { enabled: boolean; firstAfterSeconds?: number; everySeconds?: number; size?: number; maxSize?: number };
 }
 
 export interface GameState {
