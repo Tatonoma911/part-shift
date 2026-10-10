@@ -35,3 +35,9 @@ export function yoomoneyUrl(sum: number, comment: string): string {
 }
 
 export const donateReady = (): boolean => YOOMONEY_WALLET !== '' || EXTRA_LINKS.length > 0 || CRYPTO.length > 0;
+
+/** «Следите за сменой» in the universe section (UniverseScene): empty url = the button is hidden. */
+export const FOLLOW: { id: 'youtube' | 'instagram'; url: string }[] = [
+  { id: 'youtube', url: '' },
+  { id: 'instagram', url: '' },
+];
