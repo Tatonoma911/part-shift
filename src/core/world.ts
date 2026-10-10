@@ -333,9 +333,9 @@ export class World {
     return out;
   }
 
-  /** The element a unit hits this target with (residents pick their best arm, ELEMENTS.md §2). */
+  /** The element a unit hits this target with (residents and allies pick their best arm, ELEMENTS.md §2). */
   attackOf(u: Unit, target?: Unit): { tech: AttackTech; tier: number } {
-    if (u.kind === 'resident') {
+    if (u.kind === 'resident' || u.kind === 'ally') {
       let best: { tech: AttackTech; tier: number } = { tech: 'kinetic', tier: 0 };
       let bestMul = target ? this.resistOf(target, 'kinetic') : 1;
       for (const slot of ['arm_right', 'arm_left'] as SlotId[]) {
@@ -389,7 +389,6 @@ export class World {
       this.placeRelativeSites(cmd.x, cmd.y);
       this.placeCommands([{ player: playerId, x: cmd.x, y: cmd.y }]);
       this.emit('command_placed', { x: cmd.x, y: cmd.y, owner: playerId });
-      for (const id of this.rules.allies ?? []) this.spawnAlly(p, id);
       this.allyStart(p);
       return ok;
     }
@@ -558,7 +557,7 @@ export class World {
       s.players[player].command = b.id;
       for (const n of [{ x, y }, ...neighbors(s, x, y)]) this.reveal(n.x, n.y, player, false);
       const first = this.cfg.population.firstResidentImmediate ? this.cfg.population.initialResidents : 0;
-      for (let i = 0; i < first; i++) this.spawnResident(player, x, y);
+      for (let i = 0; i < first; i++) this.spawnAllyFromPool(s.players[player], x, y);
     }
   }
 
@@ -592,8 +591,7 @@ export class World {
       if (u.hp <= 0) continue;
       this.effects(u, dt);
       if (u.hp <= 0 || (u.stun ?? 0) > 0) continue;
-      if (u.kind === 'resident') this.residentAi(u, dt);
-      else if (u.kind === 'ally') this.allyAi(u, dt);
+      if (u.kind === 'resident' || u.kind === 'ally') this.residentAi(u, dt);
       else this.enemyAi(u, dt);
     }
     this.nests(dt);
@@ -727,7 +725,7 @@ export class World {
   private population(dt: number): void {
     for (const p of this.s.players) {
       if (!p.alive || p.command === null) continue;
-      const count = this.s.units.filter((u) => u.owner === p.id && u.kind === 'resident').length;
+      const count = this.s.units.filter((u) => u.owner === p.id && (u.kind === 'resident' || u.kind === 'ally')).length;
       if (count >= this.residentCap(p.id)) {
         p.spawnTimer = Math.max(p.spawnTimer, 0);
         continue;
@@ -736,7 +734,7 @@ export class World {
       if (p.spawnTimer > 0) continue;
       p.spawnTimer = this.cfg.population.spawnSeconds * this.boonFactor(p.id, 'hotline') * this.allyFactor(p.id, 'spawnIntervalFactor', 'value');
       const at = this.spawnPoint(p);
-      if (at) this.spawnResident(p.id, at.x, at.y);
+      if (at) this.spawnAllyFromPool(p, at.x, at.y);
     }
   }
 
@@ -854,7 +852,7 @@ export class World {
       const cmd = this.building(p.command);
       if (!cmd) continue;
       const members = s.units
-        .filter((u) => u.owner === p.id && u.kind === 'resident' && u.hp > 0 && !u.retreat && (everyone || dist(u.x, u.y, x, y) <= r.radius))
+        .filter((u) => u.owner === p.id && (u.kind === 'resident' || u.kind === 'ally') && u.hp > 0 && !u.retreat && (everyone || dist(u.x, u.y, x, y) <= r.radius))
         .map((u) => u.id);
       if (members.length < 2) continue;
       // The gather point: 2 steps from the threat toward the center, on opened walkable ground.
@@ -937,7 +935,7 @@ export class World {
     // A new school level: every resident's max HP grows, so does their current HP.
     if (this.trainingLevel(b.owner) > before) {
       const add = this.cfg.school.perLevel.hp * (this.trainingLevel(b.owner) - before);
-      for (const r of this.s.units) if (r.owner === b.owner && r.kind === 'resident') r.hp += add;
+      for (const r of this.s.units) if (r.owner === b.owner && (r.kind === 'resident' || r.kind === 'ally')) r.hp += add;
       this.emit('training_up', { x: b.x, y: b.y, owner: b.owner, amount: this.trainingLevel(b.owner) });
     }
     this.emit('build_done', { x: b.x, y: b.y, owner: b.owner, text: b.type });
@@ -1400,7 +1398,7 @@ export class World {
       this.setTask(v, { type: 'idle' });
       this.emit('resident_die', { x: v.x, y: v.y, owner: v.owner, unit: v.id });
       // PvP: the killer takes the strongest part (multiplayer.json pvpPartSteal).
-      if (by?.kind === 'resident') {
+      if (by && !isEnemy(by)) {
         const best = Object.values(v.parts).sort((a, b) => (b?.tier ?? 0) - (a?.tier ?? 0))[0];
         if (best) this.takePart(by, best);
       }
@@ -1414,7 +1412,7 @@ export class World {
     if (v.kind === 'hero') return this.heroDown(v, killer, site);
     const def = this.enemyDef(v.kind);
     const part = Object.values(v.parts)[0];
-    if (killer?.kind === 'resident' && part && rand(s) < def.partDropChance) this.takePart(killer, part);
+    if (killer && !isEnemy(killer) && part && rand(s) < def.partDropChance) this.takePart(killer, part);
     if (def.reward && killer) this.earn(s.players[killer.owner], def.reward);
     this.emit('enemy_die', { x: v.x, y: v.y, owner: killer?.owner, text: v.kind === 'adaptant' ? `adaptant_${v.tech ?? 'thermo'}` : v.kind });
   }
@@ -1968,7 +1966,7 @@ export class World {
     p.boons ??= {};
     p.boons[id] = (p.boons[id] ?? 0) + 1;
     const e = b.effect;
-    const mine = () => this.s.units.filter((u) => u.owner === p.id && u.kind === 'resident' && u.hp > 0);
+    const mine = () => this.s.units.filter((u) => u.owner === p.id && (u.kind === 'resident' || u.kind === 'ally') && u.hp > 0);
     const cmd = this.building(p.command);
     switch (e.type) {
       case 'energy_now':
@@ -1976,7 +1974,7 @@ export class World {
         break;
       case 'residents_now_and_cap':
         p.capBonus += Number(e.cap);
-        if (cmd) for (let i = 0; i < Number(e.residents); i++) this.spawnResident(p.id, cmd.x, cmd.y);
+        if (cmd) for (let i = 0; i < Number(e.residents); i++) this.spawnAllyFromPool(p, cmd.x, cmd.y);
         break;
       case 'scan_now_and_charges':
         p.assist.scanLeft = Math.max(p.assist.scanLeft, Number(e.markDurationSeconds));
@@ -2064,43 +2062,42 @@ export class World {
     return u;
   }
 
+  /** Spawns the next available hero from the pool (rules.allies, or all heroes as fallback) at (x,y).
+   *  Skips heroes already alive or waiting to respawn so each hero type appears at most once. */
+  private spawnAllyFromPool(p: Player, x: number, y: number): Unit | null {
+    const pool = this.rules.allies?.length ? this.rules.allies : Object.keys(heroDefs);
+    const alive = new Set(this.s.units.filter((u) => u.owner === p.id && u.kind === 'ally' && u.hp > 0).map((u) => u.hero));
+    const waiting = new Set(Object.keys(p.allyBack ?? {}));
+    const id = pool.find((hid) => !alive.has(hid) && !waiting.has(hid));
+    if (!id) return null;
+    const h = heroDefs[id];
+    if (!h) return null;
+    const e = h.enemy;
+    const u = this.newUnit('ally', p.id, x, y, {
+      hp: Math.round(e.hp * ALLY.hpFactor),
+      damage: Math.round(e.damage * ALLY.damageFactor),
+      defense: e.defense,
+      attackSeconds: e.attackSeconds,
+      range: ALLY.range,
+      speed: Math.max(e.speed, residentStats.speed),
+    });
+    u.hero = id;
+    u.attackTech = e.attackTech;
+    this.emit('ally_join', { x, y, owner: p.id, unit: u.id, text: id });
+    return u;
+  }
+
   /** One-off ally effects when the shift starts (Маяк's scanner charges). */
   private allyStart(p: Player): void {
     const beacon = this.allyPassive(p.id, 'scannerBonus');
     if (beacon && p.assist.mode !== 'off') p.assist.charges += Number(beacon.extraCharges ?? 0);
   }
 
-  /** Fights like a resident (orders included), otherwise stays by the command center. */
-  private allyAi(u: Unit, dt: number): void {
-    const s = this.s;
-    const home = this.building(s.players[u.owner].command);
-    // Allies keep close to the center (allyRules.leashRadiusFromCommand), orders included.
-    let target = this.combatTarget(u);
-    if (target && home) {
-      const at = this.targetPos(target) as { x: number; y: number } | undefined;
-      if (!at || dist(at.x, at.y, home.x, home.y) > ALLY.leashRadiusFromCommand) target = null;
-    }
-    if (target) {
-      if (u.target !== target) u.path = [];
-      u.target = target;
-      return this.fight(u, target, dt, (x, y) => walkableForPlayer(s, x, y));
-    }
-    u.target = undefined;
-    const cmd = this.building(s.players[u.owner].command);
-    if (!cmd || cheb(Math.round(u.x), Math.round(u.y), cmd.x, cmd.y) <= 1) return;
-    if (u.path.length === 0 || u.repathTimer <= 0) {
-      u.repathTimer = 1;
-      const path = this.playerPath(u, (x, y) => cheb(x, y, cmd.x, cmd.y) <= 1 && !(x === cmd.x && y === cmd.y));
-      u.path = path ? path.slice(1) : [];
-    }
-    u.repathTimer -= dt;
-    this.move(u, dt);
-  }
-
   /** Ally passives on timers and auras; knocked-out allies come back. */
   private allyClock(dt: number): void {
     const s = this.s;
-    if (!this.rules.allies?.length) return;
+    // allies now always exist (spawned from buildings); skip only if nobody is on allyBack or alive as ally
+
     for (const p of s.players) {
       for (const [id, at] of Object.entries(p.allyBack ?? {})) {
         if (s.time < at) continue;
@@ -2122,7 +2119,7 @@ export class World {
           fire = true;
         }
       }
-      const friends = (r: number) => s.units.filter((o) => o.owner === u.owner && o.kind === 'resident' && o.hp > 0 && dist(o.x, o.y, u.x, u.y) <= r);
+      const friends = (r: number) => s.units.filter((o) => o.owner === u.owner && (o.kind === 'resident' || o.kind === 'ally') && o.hp > 0 && dist(o.x, o.y, u.x, u.y) <= r);
       const foes = (r: number) => s.units.filter((o) => isEnemy(o) && o.hp > 0 && dist(o.x, o.y, u.x, u.y) <= r);
       switch (a.passive) {
         case 'slowAura':
@@ -2158,10 +2155,10 @@ export class World {
           break;
         case 'fieldSurgery': {
           // Brings back one resident lost since the last surgery (the resident cap still applies).
-          const count = s.units.filter((o) => o.owner === p.id && o.kind === 'resident').length;
+          const count = s.units.filter((o) => o.owner === p.id && (o.kind === 'resident' || o.kind === 'ally')).length;
           if (fire && p.stats.lost > Number(timers.doctorLost ?? 0) && count < this.residentCap(p.id)) {
             timers.doctorLost = p.stats.lost;
-            this.spawnResident(p.id, Math.round(u.x), Math.round(u.y));
+            this.spawnAllyFromPool(p, Math.round(u.x), Math.round(u.y));
           }
           break;
         }
@@ -2171,7 +2168,7 @@ export class World {
         const e = foes(4).find((o) => o.kind === 'adaptant');
         if (e) {
           this.kill(e);
-          this.spawnResident(p.id, Math.round(e.x), Math.round(e.y));
+          this.spawnAllyFromPool(p, Math.round(e.x), Math.round(e.y));
         }
       }
     }
@@ -2226,7 +2223,7 @@ export class World {
         if (b.healTimer >= (aura.healEverySeconds ?? 2)) {
           b.healTimer = 0;
           for (const u of s.units) {
-            if (u.owner !== b.owner || u.kind !== 'resident' || u.hp <= 0) continue;
+            if (u.owner !== b.owner || (u.kind !== 'resident' && u.kind !== 'ally') || u.hp <= 0) continue;
             if (cheb(Math.round(u.x), Math.round(u.y), b.x, b.y) <= aura.radius && u.hp < this.maxHp(u)) {
               u.hp = Math.min(this.maxHp(u), u.hp + aura.healAmount);
               this.emit('healed', { x: u.x, y: u.y, owner: u.owner, unit: u.id });
@@ -2283,7 +2280,7 @@ export class World {
 
   /** Residents get the school training bonus on top of their table stats (config.school). */
   private baseStats(u: Unit): UnitStats {
-    if (u.kind !== 'resident') return u.base;
+    if (u.kind !== 'resident' && u.kind !== 'ally') return u.base;
     const lv = this.trainingLevel(u.owner);
     // Бронежилеты (boons.json armor_plates): flat defense per stack.
     const armor = (this.s.players[u.owner]?.boons?.armor_plates ?? 0) * Number(boonDefs.armor_plates?.effect.value ?? 0);
