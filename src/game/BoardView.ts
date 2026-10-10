@@ -655,17 +655,26 @@ export class BoardView {
           // A capsule peek shows the closed cell's own sensor for a while (MVP_RULES §5.2).
           this.setClues(i, x, y, c.peekUntil !== undefined && s.time < c.peekUntil ? w.clues(x, y) : null);
           this.drawClosed(og, x, y, px, py, known.get(cellKey(x, y)), risk?.get(i), me.queue.includes(cellKey(x, y)), me.autoQueue.includes(cellKey(x, y)), c.marked ? (c.markKind ?? 'danger') : null, now);
-          // One orb in the corner: the element that digs this block fast; it glows when the squad has it (MVP_RULES §3.4).
+          // Element zone: colour wash + indicator dot on every closed cell so players see which zones open faster.
           if (zoned) {
-            // The zone shows from afar: a light wash of its colour over the block (MVP_RULES §3.4).
+            // Visible wash of the zone element over the block.
             const el = cellElement(c);
             if (el) {
-              og.fillStyle(TECH_HEX[el] ?? 0xffffff, ZONE_WASH[el] ?? 0.14);
+              og.fillStyle(TECH_HEX[el] ?? 0xffffff, 0.28);
               og.fillRect(px, py, CELL, CELL);
             }
-            // F-07: the orb only on the frontier, where the next dig is chosen; the rest of the field stays calm.
+            // Full orb on the frontier (glows when squad has the fast tech); small dot deeper in the field.
             const fast = cellFastTech(c);
-            if (fast && this.nearOpen(x, y, 1)) drawCellOrb(cg, px + CELL - 9, py + 9, fast, this.squadTechs.has(fast), now);
+            if (fast) {
+              if (this.nearOpen(x, y, 1)) {
+                drawCellOrb(cg, px + CELL - 9, py + 9, fast, this.squadTechs.has(fast), now);
+              } else {
+                cg.fillStyle(0x050c12, 0.5);
+                cg.fillCircle(px + CELL - 8, py + 8, 5);
+                cg.fillStyle(TECH_HEX[fast] ?? 0xffffff, 0.6);
+                cg.fillCircle(px + CELL - 8, py + 8, 3.5);
+              }
+            }
           }
           continue;
         }
@@ -1348,9 +1357,10 @@ export class BoardView {
       const masked = this.updateTrophies(u, v);
       Object.entries(u.parts).forEach(([slot, part], k) => {
         if (!part || masked.has(slot)) return;
+        const pt = partDefs[part.id]?.tech ?? (u.hero ? heroDefs[u.hero]?.tech : undefined);
         g.fillStyle(0x0b1117, 1);
         g.fillCircle(fx - 14 + k * 9, top + 2, 5);
-        g.fillStyle(TECH_COLOR[partDefs[part.id]?.tech] ?? 0xffffff, 1);
+        g.fillStyle(TECH_COLOR[pt] ?? 0xc0c8d0, 1);
         g.fillCircle(fx - 14 + k * 9, top + 2, 3.5);
       });
       // Stumps (MVP_RULES §4.1а): a grey cap with Splice gel, after the trophy pips.
@@ -1435,8 +1445,8 @@ export class BoardView {
     for (const [slot, part] of Object.entries(u.parts)) {
       const mask = part && ls.slots[SLOT_SHORT[slot]];
       if (!mask) continue;
-      const tech = partDefs[part!.id]?.tech;
-      draw.push({ slot, mask, tint: TECH_COLOR[tech] ?? 0xffffff, tech });
+      const tech = partDefs[part!.id]?.tech ?? (u.hero ? heroDefs[u.hero]?.tech : undefined);
+      draw.push({ slot, mask, tint: TECH_COLOR[tech] ?? 0xc0c8d0, tech });
     }
     for (const { slot, mask, tint, tech } of draw) {
       done.add(slot);
