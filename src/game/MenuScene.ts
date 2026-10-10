@@ -22,7 +22,8 @@ import { clearSlot, lastSlot, loadSettings, loadSlot, saveSettings, SLOTS } from
 import { tutorialDone } from './Tutorial';
 import { setBackHandler } from '../platform/native';
 import { closeOnlineScreen, openOnlineScreen, onlineScreenOpen } from '../net/lobby';
-import { onlineAvailable } from '../net/online';
+// P2P is always available (no server required)
+const onlineAvailable = () => true;
 import { chip, plate, TXT } from './ui';
 import { drawMenuBackdrop, drawMenuHeroes } from './MenuBackdrop';
 import { resetDialog } from './ResetProgress';

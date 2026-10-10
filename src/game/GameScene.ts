@@ -32,7 +32,7 @@ import { techOf } from './Vitals';
 import { armTechs } from './BoardView';
 import eventsJson from '../data/design/events.json';
 import { setBackHandler } from '../platform/native';
-import type { OnlineSession } from '../net/online';
+import type { PeerSession as OnlineSession } from '../net/peer';
 import { challengeUrl, closeSocial, displayName, openBoard, openDonate, profile, rankOf, recordRun, resultCard, share, shouldNudge, socialOpen, type RecordedRun } from '../social';
 
 const BEST_KEY = 'partshift.best.v1';
