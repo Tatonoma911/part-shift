@@ -8,6 +8,7 @@ import { BUILDING_ANCHOR } from './assets';
 import { sound } from './audio';
 import { SoundDirector } from './soundDirector';
 import { Voice } from './voice';
+import { MedalToasts, type Tier } from './meta/Awards';
 import { RunTally } from './meta/record';
 import { showResults } from './meta/ResultsScreen';
 import { boonPoolFor, loadMeta, pickAllies, roster } from './meta/store';
@@ -61,6 +62,9 @@ type Ev = Phaser.Types.Input.EventData;
 
 /** «Строить» in the HUD, left of the threat ring: width, height, left edge from the HUD's right side. */
 const BUILD_BTN = { w: 72, h: 84, right: 176 };
+
+/** Medal tiers earned mid-run, waiting for the HUD (not part of the core's rules). */
+type MedalEvents = { medalEvents?: { id: string; tier: number }[] };
 
 /** Events that become a toast (writer's text keys); `bad` ones are coral. */
 const TOASTS: Record<string, { text: (e: GameEvent) => string; bad?: boolean }> = {
@@ -230,6 +234,8 @@ export class GameScene extends Phaser.Scene {
     cards: { id: string; g: Phaser.GameObjects.Graphics; cost: Phaser.GameObjects.Text; x: number; y: number; w: number; h: number }[];
   };
   private toasts: Phaser.GameObjects.Container[] = [];
+  /** «Землекоп: серебро» plates from the top (ACHIEVEMENTS.md §3), one after another. */
+  private medals!: MedalToasts;
   private overlay: Phaser.GameObjects.Container | null = null;
   private guideBox: { text: Phaser.GameObjects.Text; dots: Phaser.GameObjects.Graphics; g: Phaser.GameObjects.Graphics; y: number; h: number } | null = null;
 
@@ -246,6 +252,8 @@ export class GameScene extends Phaser.Scene {
   private pointTo: { x: number; y: number; until: number } | null = null;
   private rightClick: { x: number; y: number; px: number; py: number } | null = null;
   private dragMode: 'queue' | 'cancel' | null = null;
+  /** Blocks queued by the current swipe. */
+  private swipeCells: { x: number; y: number }[] = [];
   private lastDragCell = -1;
   private pressTimer: Phaser.Time.TimerEvent | null = null;
   private saveTimer = 0;
@@ -367,6 +375,9 @@ export class GameScene extends Phaser.Scene {
     this.voice = this.guide ? null : new Voice(this, this.world, this.me, (at) => this.board.speakerAt(at), () => this.toasts.some((b) => b.active));
     this.voice?.start(!saved);
     this.tally = this.guide ? null : new RunTally(this.me);
+    // A medal tier earned mid-run: a 2 s plate from the top, the game keeps going (ACHIEVEMENTS.md §3).
+    // The tally writes into `world.s.medalEvents`; the HUD drains it into MedalToasts (Awards.ts).
+    if (this.tally) this.tally.onMedal = (a) => ((this.world.s as MedalEvents).medalEvents ??= []).push({ id: a.id, tier: a.special ? 4 : a.tier });
     this.ended = false;
     this.boonUi = null;
     this.music.start();
@@ -383,7 +394,9 @@ export class GameScene extends Phaser.Scene {
     if (this.online || (!this.paused && !this.overlayPaused && !this.callPauses() && w.s.outcome === 'playing')) {
       if (!this.coachedBuild && !this.guide && w.player(this.me).energy >= 100) this.coachedBuild = learning().coach('build') || this.coachedBuild;
       // Real elapsed time: Phaser smooths delta while the window is unfocused, which slowed the game (QA-015).
-      w.tick(Math.min(this.game.loop.rawDelta || deltaMs, 250) / 1000);
+      const dt = Math.min(this.game.loop.rawDelta || deltaMs, 250) / 1000;
+      w.tick(dt);
+      this.tally?.sample(w, dt);
       this.saveTimer += deltaMs / 1000;
       if (this.saveTimer >= config.save.autosaveSeconds) {
         this.saveTimer = 0;
@@ -760,6 +773,7 @@ export class GameScene extends Phaser.Scene {
     // Goal row: «Темп» under Energy (MVP_RULES §17.1), the raid timer next to it (§17.4), the goal on the right.
     // Portrait: a little higher, so the label stays clear of the board camera (it starts at BOARD.y - 16) when zoomed in.
     this.tempo = new TempoMeter(this, HUD.x + 8, GOAL.y + (LANDSCAPE ? 4 : -4), LANDSCAPE ? 236 : 222, 20);
+    this.medals = new MedalToasts(this, HUD.x + HUD.w / 2, HUD.y + HUD.h + 6, UI_DEPTH + 4);
     this.raidTimer = new RaidTimer(this, HUD.x + (LANDSCAPE ? 256 : 240), GOAL.y, LANDSCAPE ? 236 : 226, 44, 21, () => this.callRaidEarly(), HUD.w - (LANDSCAPE ? 256 : 240));
     const goalBg = this.add.graphics().setDepth(20);
     const goal = this.add.text(HUD.x + HUD.w - 24, GOAL.y + 22, '', TXT.body(23, INK.white, '700')).setOrigin(1, 0.5).setDepth(20);
@@ -795,6 +809,9 @@ export class GameScene extends Phaser.Scene {
     g.strokePath();
     this.hud.threat.setText(String(level));
     this.updatePace();
+    // Medal tiers earned this frame: `world.s.medalEvents` [{id, tier}] (tier 1–3, special 4). The UI empties the list.
+    const earned = (this.world.s as MedalEvents).medalEvents;
+    if (earned?.length) for (const e of earned.splice(0)) this.medals.push(e.id, e.tier as Tier);
 
     let goal = t('mode.call.goal', { hero: heroName(w.s.boss.hero) });
     let bg = C.graphite;
@@ -1323,7 +1340,8 @@ export class GameScene extends Phaser.Scene {
       badge = w.s.time < best ? t('win.new_record') : t('win.best_time', { time: this.fmt(best) });
     }
     // Free play scores points for the world ranking; the tutorial doesn't.
-    const rec = this.guide ? null : recordRun({ victory, seconds: w.s.time, nests: me.stats.nests, energy: me.stats.energy, heroes: me.stats.heroes.length, callTarget: w.s.boss.dead, difficulty: w.s.difficulty, threat: w.threatLevel, daily: this.start.daily });
+    const stars = this.tally?.stars(w, victory, 'call', !!this.online).stars ?? 0;
+    const rec = this.guide ? null : recordRun({ victory, seconds: w.s.time, nests: me.stats.nests, energy: me.stats.energy, heroes: me.stats.heroes.length, callTarget: w.s.boss.dead, difficulty: w.s.difficulty, threat: w.threatLevel, daily: this.start.daily, stars });
     this.lastRun = rec;
     if (rec) {
       lines.splice(1, 0, t('end.score', { score: rec.score.toLocaleString('ru-RU') }));
@@ -1334,7 +1352,7 @@ export class GameScene extends Phaser.Scene {
     }
     // Free play: "Итоги смены" with the meta progress (design/META.md §5); the tutorial keeps the plain sheet.
     if (this.tally) {
-      const { view } = this.tally.commit(w, victory ? 'win' : 'lose');
+      const { view } = this.tally.commit(w, victory ? 'win' : 'lose', 'call', { daily: this.start.daily, coop: !!this.online });
       this.tally = null;
       this.overlay?.destroy();
       this.overlay = showResults(this, view, {
@@ -1715,6 +1733,7 @@ export class GameScene extends Phaser.Scene {
       return;
     }
     this.dragMode = r?.ok ? 'queue' : own ? 'cancel' : 'queue';
+    this.swipeCells = r?.ok ? [{ x, y }] : [];
     this.lastDragCell = -1;
     this.applyDrag(x, y);
     const idx = y * w.s.width + x;
@@ -1751,6 +1770,9 @@ export class GameScene extends Phaser.Scene {
       if (w.isQueued(this.me, rc.x, rc.y)) w.apply({ type: 'cancelDig', x: rc.x, y: rc.y }, this.me);
       else w.apply({ type: 'toggleMark', x: rc.x, y: rc.y }, this.me);
     }
+    // A swipe over 2+ blocks is a wave (medals «Домино», «Аккордеонист»).
+    if (this.swipeCells.length >= 2) this.tally?.swipe(this.swipeCells);
+    this.swipeCells = [];
     this.dragMode = null;
     this.pressTimer?.remove();
     this.pressTimer = null;
@@ -1761,7 +1783,10 @@ export class GameScene extends Phaser.Scene {
     if (idx === this.lastDragCell) return;
     if (this.lastDragCell !== -1) this.pressTimer?.remove();
     this.lastDragCell = idx;
-    if (this.dragMode === 'queue' && this.world.apply({ type: 'queueDig', x, y }, this.me).ok) this.guide?.notify('queued');
+    if (this.dragMode === 'queue' && this.world.apply({ type: 'queueDig', x, y }, this.me).ok) {
+      this.swipeCells.push({ x, y });
+      this.guide?.notify('queued');
+    }
     else if (this.dragMode === 'cancel') this.world.apply({ type: 'cancelDig', x, y }, this.me);
   }
 }

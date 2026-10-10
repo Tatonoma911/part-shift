@@ -970,13 +970,15 @@ export class World {
     c.marked = false;
     c.markKind = undefined;
     const k = cellKey(x, y);
+    // Opened by the quiet-cell cascade, not by the player's own queue: «открыто волной» (achievements.json tiles_wave).
+    const wave = !!s.players[owner]?.autoQueue.includes(k) && !s.players[owner]?.queue.includes(k);
     for (const p of s.players) {
       p.queue = p.queue.filter((q) => q !== k);
       p.autoQueue = p.autoQueue.filter((q) => q !== k);
     }
     if (pay) {
       this.spawnOrb(owner, x, y, Math.round(this.cfg.economy.energyPerDugTile * this.allyFactor(owner, 'digEnergyFactor') * this.allyFactor(owner, 'energyProductionFactor', 'value')));
-      this.emit('dig_done', { x, y, owner });
+      this.emit('dig_done', wave ? { x, y, owner, text: 'wave' } : { x, y, owner });
       this.addTempo(owner, 'dig');
     }
     const player = s.players[owner];

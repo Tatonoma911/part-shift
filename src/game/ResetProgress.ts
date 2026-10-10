@@ -97,7 +97,7 @@ export function resetDialog(scene: Phaser.Scene, depth: number, done: () => void
     if (step === 1) {
       b.add(scene.add.text(48, y, t('settings.wipe.step1.lead'), TXT.body(22, INK.coral, '800')));
       y += 38;
-      for (const k of ['heroes', 'rank', 'blueprints', 'dossier', 'records', 'daily', 'tutorial']) {
+      for (const k of ['heroes', 'rank', 'medals', 'blueprints', 'dossier', 'records', 'daily', 'tutorial']) {
         const dot = scene.add.graphics();
         dot.fillStyle(C.coral, 1);
         dot.fillRect(52, y + 10, 10, 10);
