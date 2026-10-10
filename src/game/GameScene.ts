@@ -29,7 +29,6 @@ import { BuildDrawer, buildOptions, type BuildOption } from './BuildMenu';
 import { buzz } from './comfort';
 import { drawLamp, drawMark, type Channel } from './Sensor';
 import { controlCall, RaidTimer, TempoMeter, type CallCard } from './Pulse';
-import { buildingCard, buildingInfo, DEMOLISH_CONFIRM_MS, type CardActionId } from './BuildingCard';
 import { techOf } from './Vitals';
 import { armTechs } from './BoardView';
 import eventsJson from '../data/design/events.json';
@@ -266,10 +265,6 @@ export class GameScene extends Phaser.Scene {
   private swipeCells: { x: number; y: number }[] = [];
   private lastDragCell = -1;
   private pressTimer: Phaser.Time.TimerEvent | null = null;
-  /** Own building under the finger: a short tap opens its card (BuildingCard.ts), a long press shows its name. */
-  private pressBuilding: number | null = null;
-  /** The open building card; `sig` is what it last showed, so it is redrawn only when something changed. */
-  private buildingPanel: { id: number; card: Phaser.GameObjects.Container; armed: CardActionId | null; armedAt: number; sig: string } | null = null;
   private saveTimer = 0;
   private lastCenterHit = -99;
   private lastThreat = 0;
@@ -330,7 +325,7 @@ export class GameScene extends Phaser.Scene {
         : saved
           ? new World({ state: saved })
           : campaignOpts
-            ? new World({ seed: st.seed || Math.floor(Math.random() * 1e9), assist, rules: { ...rules, counts: { nests: campaignOpts.nestCount, mine: campaignOpts.mineCount, bossHatch: campaignOpts.bossHatchCount, lairTotal: campaignOpts.lairTotal, bonusCapsule: campaignOpts.bonusCapsuleCount, medkit: campaignOpts.medkitCount, survivor: campaignOpts.survivorCount }, raids: campaignOpts.raids, difficulty: campaignOpts.factors, cellElements: campaignOpts.cellElements, controlCalls: campaignOpts.controlCalls }, difficulty: campaignOpts.difficulty, width: campaignOpts.width, height: campaignOpts.height })
+            ? new World({ seed: st.seed || Math.floor(Math.random() * 1e9), assist, rules: { ...rules, counts: { nests: campaignOpts.nestCount, mine: campaignOpts.mineCount, bossHatch: campaignOpts.bossHatchCount, lairTotal: campaignOpts.lairTotal, bonusCapsule: campaignOpts.bonusCapsuleCount, medkit: campaignOpts.medkitCount, survivor: campaignOpts.survivorCount }, raids: campaignOpts.raids, difficulty: campaignOpts.factors, cellElements: campaignOpts.cellElements }, difficulty: campaignOpts.difficulty, width: campaignOpts.width, height: campaignOpts.height })
             : new World({ seed: st.seed || Math.floor(Math.random() * 1e9), assist, rules, difficulty: st.difficulty });
     if (this.online) this.watchOnline(this.online);
     else if (!this.guide) {
@@ -970,13 +965,8 @@ export class GameScene extends Phaser.Scene {
     this.add.image(buildBx + 40, btnY + btnH / 2, 'icon.build').setScale(1.6).setDepth(20).setTintFill(0xffffff);
     this.add.text(buildBx + 72, btnY + btnH / 2, t('hud.mode_build'), TXT.body(26, INK.white, '700')).setOrigin(0, 0.5).setDepth(20);
     const buildHit = this.add.zone(buildBx, btnY, btnW, btnH).setOrigin(0).setDepth(20).setInteractive({ useHandCursor: true });
-    // One tap toggles once: a second pointerdown within the window (a double fire from the same press) is ignored.
-    let lastCatalogTap = -1000;
     buildHit.on('pointerdown', stop(() => {
-      if (this.time.now - lastCatalogTap < 350) return;
-      lastCatalogTap = this.time.now;
-      if (this.drawer.isOpen) this.closeCatalog();
-      else this.openCatalog();
+      if (!this.drawer.isOpen) this.openCatalog();
     }));
 
     // Content area sits above the buttons.
@@ -1042,7 +1032,9 @@ export class GameScene extends Phaser.Scene {
 
     this.dock = { head: { text: headText, cancel }, panes: { dig, build }, queue, cards, modeBtns: { build: buildBg } };
 
-    this.drawer = new BuildDrawer(this, DOCK, UI_DEPTH + 10, {
+    const extraH = LANDSCAPE ? 200 : 300;
+    const catalogBox = { x: DOCK.x, y: DOCK.y - extraH, w: DOCK.w, h: DOCK.h + extraH };
+    this.drawer = new BuildDrawer(this, catalogBox, UI_DEPTH + 10, {
       pick: (o: BuildOption) => this.pickBuilding(o),
       close: () => this.closeCatalog(),
     });
@@ -1076,7 +1068,6 @@ export class GameScene extends Phaser.Scene {
   }
 
   private openCatalog(): void {
-    this.closeBuildingCard();
     const meta = loadMeta();
     const allies = this.start.allies ?? meta.allyChoice;
     const opts = buildOptions(this.world, meta, this.me, allies);
@@ -1089,53 +1080,6 @@ export class GameScene extends Phaser.Scene {
   private closeCatalog(): void {
     this.drawer.close();
     this.refreshModeBtns(this.mode === 'build');
-  }
-
-  /** Shows the card of one of our buildings (upgrade, boost, demolish, rebuild, cancel). */
-  private openBuildingCard(id: number, armed: CardActionId | null = null, armedAt = 0): void {
-    const w = this.world;
-    const b = w.s.buildings.find((x) => x.id === id && x.owner === this.me);
-    if (!b) return this.closeBuildingCard();
-    if (this.drawer?.isOpen) this.closeCatalog();
-    this.buildingPanel?.card.destroy();
-    const info = buildingInfo(w, b, this.me);
-    const card = buildingCard(this, DOCK, info, UI_DEPTH + 10, armed, (a) => this.buildingAct(id, a), () => this.closeBuildingCard(), 900);
-    this.buildingPanel = { id, card, armed, armedAt, sig: JSON.stringify(info) };
-  }
-
-  private closeBuildingCard(): void {
-    this.buildingPanel?.card.destroy();
-    this.buildingPanel = null;
-  }
-
-  /** A card button: demolish takes a second tap within DEMOLISH_CONFIRM_MS, the rest apply at once. */
-  private buildingAct(id: number, a: CardActionId): void {
-    if (a === 'demolish') {
-      if (this.buildingPanel?.armed !== 'demolish') {
-        const stamp = this.time.now;
-        this.openBuildingCard(id, 'demolish', stamp);
-        this.time.delayedCall(DEMOLISH_CONFIRM_MS, () => {
-          if (this.buildingPanel?.id === id && this.buildingPanel.armedAt === stamp) this.openBuildingCard(id);
-        });
-        return;
-      }
-    }
-    const cmd =
-      a === 'upgrade' ? { type: 'upgradeBuilding', building: id }
-      : a === 'demolish' ? { type: 'demolish', building: id }
-      : a === 'rebuild' ? { type: 'rebuild', building: id }
-      : a === 'cancel' ? { type: 'cancelBuild', building: id }
-      : a.startsWith('boost:') ? { type: 'heroBoost', building: id }
-      : null;
-    if (!cmd) return;
-    const r = this.world.apply(cmd as never, this.me);
-    if (!r.ok) {
-      this.say(t(r.reason), 2800, true);
-      this.openBuildingCard(id);
-      return;
-    }
-    if (a === 'demolish') this.closeBuildingCard();
-    else this.openBuildingCard(id);
   }
 
   /** Called when the player picks a building from the catalog drawer. */
@@ -1181,15 +1125,6 @@ export class GameScene extends Phaser.Scene {
   private updateDock(): void {
     const w = this.world;
     const p = w.player(this.me);
-    // The open building card follows its building: progress, prices and affordability.
-    if (this.buildingPanel) {
-      const b = w.s.buildings.find((x) => x.id === this.buildingPanel!.id && x.owner === this.me);
-      if (!b) this.closeBuildingCard();
-      else if (!this.buildingPanel.armed) {
-        const sig = JSON.stringify(buildingInfo(w, b, this.me));
-        if (sig !== this.buildingPanel.sig) this.openBuildingCard(b.id);
-      }
-    }
     // Live-refresh the catalog drawer energy and states while it's open.
     if (this.drawer?.isOpen) {
       const meta = loadMeta();
@@ -1744,7 +1679,6 @@ export class GameScene extends Phaser.Scene {
 
   private onDown(p: Phaser.Input.Pointer): void {
     if (this.overlay || this.overlayPaused || !this.cams.inBoardView(p) || this.cams.busy) return;
-    this.pressBuilding = null;
     const wp = this.cams.worldAt(p);
     const at = this.board.cellAt(wp.x, wp.y);
     if (!at) return;
@@ -1795,7 +1729,6 @@ export class GameScene extends Phaser.Scene {
     // Long press on an existing building: show name + desc (QA-009, UI_SPEC §4.4).
     if (c.revealed && c.building !== undefined) {
       const bid = c.building;
-      if (!this.guide && w.s.buildings.some((b) => b.id === bid && b.owner === this.me)) this.pressBuilding = bid;
       this.pressTimer = this.time.delayedCall(LONG_PRESS_MS, () => {
         const b = this.world.s.buildings.find((bld) => bld.id === bid);
         if (!b) return;
@@ -1807,8 +1740,6 @@ export class GameScene extends Phaser.Scene {
       });
       return;
     }
-    // Аккорд: a number whose «Опасно» marks match it digs the free cells around it (campaign alwaysOn «chord»).
-    if (c.revealed && !this.guide && w.apply({ type: 'chord', x, y }, this.me).ok) return;
     // Open land: liberated → build here; not liberated → say why and light the land that is.
     if (c.revealed && c.content === 'ground' && c.building === undefined && w.inTerritory(this.me, x, y) && !(this.guide && !this.tutorialWantsBuild())) {
       // A number first shows the eight cells it counts; the second tap on it builds (config.input.tapNumberCell).
@@ -1904,9 +1835,6 @@ export class GameScene extends Phaser.Scene {
   }
 
   private onUp(p: Phaser.Input.Pointer): void {
-    // Still pending = a short tap (the long press would have fired and cleared it): open the building card.
-    if (this.pressTimer && this.pressBuilding !== null && Math.hypot(p.x - p.downX, p.y - p.downY) < 10) this.openBuildingCard(this.pressBuilding);
-    this.pressBuilding = null;
     const rc = this.rightClick;
     this.rightClick = null;
     if (rc && Math.hypot(p.x - rc.px, p.y - rc.py) < 10) {

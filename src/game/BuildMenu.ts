@@ -303,7 +303,9 @@ interface Box {
 export class BuildDrawer {
   private root: Phaser.GameObjects.Container | null = null;
   private strip: Phaser.GameObjects.Container | null = null;
-  private cards: { o: BuildOption; c: Phaser.GameObjects.Container; x: number }[] = [];
+  private cols = 3;
+  private gap = 10;
+  private cards: { o: BuildOption; c: Phaser.GameObjects.Container; x: number; y: number }[] = [];
   private tabs: { group: BuildGroup; g: Phaser.GameObjects.Graphics; t: Phaser.GameObjects.Text; x: number; w: number }[] = [];
   private energyText: Phaser.GameObjects.Text | null = null;
   private scroll = 0;
@@ -320,8 +322,13 @@ export class BuildDrawer {
     private depth: number,
     private on: { pick: (o: BuildOption) => void; close: () => void },
   ) {
-    this.cardW = LANDSCAPE ? 190 : 200;
-    this.cardH = box.h - 196;
+    this.cols = LANDSCAPE ? 4 : 3;
+    this.gap = 10;
+    const sw = box.w - 52;
+    this.cardW = Math.floor((sw - this.gap * (this.cols - 1)) / this.cols);
+    // Show ~2 full rows + peek of a third so the user sees there is more to scroll.
+    const sh = box.h - 196;
+    this.cardH = Math.floor((sh - this.gap * 2) / 2.5);
   }
 
   get isOpen(): boolean {
@@ -374,7 +381,7 @@ export class BuildDrawer {
       hit.on('pointerdown', (_p: Phaser.Input.Pointer, _x: number, _y: number, ev: Phaser.Types.Input.EventData) => {
         ev.stopPropagation();
         const first = this.cards.find((c) => c.o.group === gr);
-        if (first) this.scrollTo(first.x - 4, true);
+        if (first) this.scrollTo(first.y - 4, true);
       });
       root.add([tg, label, hit]);
       this.tabs.push({ group: gr, g: tg, t: label, x: tx, w: tw });
@@ -388,54 +395,60 @@ export class BuildDrawer {
     this.strip = strip;
     root.add(strip);
     const mask = s.make.graphics({}, false);
-    mask.fillRect(sx - 2, sy - 6, sw + 4, this.cardH + 14);
+    mask.fillRect(sx - 2, sy - 6, sw + 4, (this.box.h - 196) + 14);
     strip.setMask(mask.createGeometryMask());
     this.cards = [];
-    let cx = 0;
-    let last: BuildGroup | null = null;
+    let col = 0;
+    let row = 0;
+    let lastGroup: BuildGroup | null = null;
     for (const o of options) {
-      if (last && o.group !== last) cx += 22;
-      last = o.group;
-      const c = s.add.container(cx, 0);
+      // New group always starts on a fresh row.
+      if (lastGroup !== null && o.group !== lastGroup && col > 0) { row++; col = 0; }
+      lastGroup = o.group;
+      const cx = col * (this.cardW + this.gap);
+      const cy = row * (this.cardH + this.gap);
+      const c = s.add.container(cx, cy);
       strip.add(c);
-      this.cards.push({ o, c, x: cx });
-      cx += this.cardW + 14;
+      this.cards.push({ o, c, x: cx, y: cy });
+      col++;
+      if (col >= this.cols) { col = 0; row++; }
     }
-    this.maxScroll = Math.max(0, cx - 14 - sw);
+    const totalRows = row + (col > 0 ? 1 : 0);
+    const totalH = totalRows * (this.cardH + this.gap) - this.gap;
+    this.maxScroll = Math.max(0, totalH - (this.box.h - 196));
     this.drawCards(options);
     // Swipe and tap on the row: a drag scrolls, a tap without a drag picks the card under the finger.
-    const zone = s.add.zone(sx, sy, sw, this.cardH).setOrigin(0).setInteractive({ useHandCursor: true });
-    let downX = 0;
+    const zone = s.add.zone(sx, sy, sw, this.box.h - 196).setOrigin(0).setInteractive({ useHandCursor: true });
+    let downY = 0;
     let startScroll = 0;
     let dragged = false;
     zone.on('pointerdown', (p: Phaser.Input.Pointer, _x: number, _y: number, ev: Phaser.Types.Input.EventData) => {
       ev.stopPropagation();
-      downX = p.x;
+      downY = p.y;
       startScroll = this.scroll;
       dragged = false;
     });
     zone.on('pointermove', (p: Phaser.Input.Pointer) => {
       if (!p.isDown) return;
-      if (Math.abs(p.x - downX) > 12) dragged = true;
-      if (dragged) this.scrollTo(startScroll - (p.x - downX));
+      if (Math.abs(p.y - downY) > 12) dragged = true;
+      if (dragged) this.scrollTo(startScroll - (p.y - downY));
     });
-    zone.on('pointerup', (p: Phaser.Input.Pointer, lx: number) => {
+    zone.on('pointerup', (_p: Phaser.Input.Pointer, lx: number, ly: number) => {
       if (dragged) return;
-      const at = lx + this.scroll;
-      const hit = this.cards.find((c) => at >= c.x && at <= c.x + this.cardW);
+      const atY = ly + this.scroll;
+      const hit = this.cards.find((c) => lx >= c.x && lx <= c.x + this.cardW && atY >= c.y && atY <= c.y + this.cardH);
       if (hit) this.on.pick(hit.o);
-      void p;
     });
-    zone.on('wheel', (_p: Phaser.Input.Pointer, dx: number, dy: number, _dz: number, ev: Phaser.Types.Input.EventData) => {
+    zone.on('wheel', (_p: Phaser.Input.Pointer, _dx: number, dy: number, _dz: number, ev: Phaser.Types.Input.EventData) => {
       ev.stopPropagation();
-      this.scrollTo(this.scroll + (Math.abs(dx) > Math.abs(dy) ? dx : dy));
+      this.scrollTo(this.scroll + dy);
     });
     root.add(zone);
     // Hint under the row.
     root.add(s.add.text(x + w / 2, y + h - 22, t('build.drawer.hint'), TXT.body(LANDSCAPE ? 17 : 19, INK.dim, '500')).setOrigin(0.5));
     // Open on the highlighted card (tutorial) or the selected one.
     const focus = this.cards.find((c) => highlight.includes(c.o.id)) ?? this.cards.find((c) => c.o.key === selected);
-    if (focus) this.scrollTo(focus.x - (sw - this.cardW) / 2);
+    if (focus) this.scrollTo(focus.y - ((this.box.h - 196) - this.cardH) / 2);
     this.setEnergy(energy);
     root.setY(40).setAlpha(0);
     s.tweens.add({ targets: root, y: 0, alpha: 1, duration: 180, ease: 'Cubic.easeOut' });
@@ -471,17 +484,17 @@ export class BuildDrawer {
     const to = Phaser.Math.Clamp(v, 0, this.maxScroll);
     this.scroll = to;
     if (!this.strip) return;
-    const sx = this.box.x + 26;
-    if (ease) this.scene.tweens.add({ targets: this.strip, x: sx - to, duration: 220, ease: 'Cubic.easeOut' });
-    else this.strip.x = sx - to;
+    const sy = this.box.y + 152;
+    if (ease) this.scene.tweens.add({ targets: this.strip, y: sy - to, duration: 220, ease: 'Cubic.easeOut' });
+    else this.strip.y = sy - to;
     this.drawTabs();
   }
 
   private drawTabs(): void {
-    // The active tab: the last group that starts in the left half of the visible row.
-    const at = this.scroll + (this.box.w - 52) / 2;
+    // The active tab: the last group that starts in the upper half of the visible strip.
+    const at = this.scroll + (this.box.h - 196) / 2;
     const starts = this.cards.filter((c, k) => k === 0 || this.cards[k - 1].o.group !== c.o.group);
-    const cur = [...starts].reverse().find((c) => c.x <= at)?.o.group ?? this.cards[0]?.o.group;
+    const cur = [...starts].reverse().find((c) => c.y <= at)?.o.group ?? this.cards[0]?.o.group;
     for (const tb of this.tabs) {
       const on = tb.group === cur;
       tb.g.clear();
