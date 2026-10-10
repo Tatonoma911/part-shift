@@ -31,10 +31,11 @@ describe('digging', () => {
     expect(w.cell(2, 1).revealed).toBe(true);
   });
 
-  it('with the tutorial rule on, a quiet cell auto-queues its covered neighbors', () => {
+  it('with the tutorial rule on, a quiet cell opens its covered neighbors and keeps no open block queued', () => {
     const w = handWorld(['.......', '.......', '......n'], 1, { config: { 'dig.autoQueueZeroNeighbors': true } });
     w.apply({ type: 'placeCommand', x: 0, y: 0 });
-    expect(w.player(0).autoQueue.length).toBeGreaterThan(0);
+    expect(w.cell(1, 1).revealed).toBe(true);
+    expect(w.player(0).autoQueue.every((k) => !w.cell(...(k.split(',').map(Number) as [number, number])).revealed)).toBe(true);
   });
 
   it('marked cells cannot be queued and are left by the auto queue', () => {

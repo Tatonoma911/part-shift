@@ -370,7 +370,7 @@ export class GameScene extends Phaser.Scene {
     this.music.start();
     this.setMode('dig');
     // The tutorial teaches by itself; coach cards and the guide come with free play.
-    setLearningHooks({ pause: () => (this.overlayPaused = true), resume: () => (this.overlayPaused = false) });
+    setLearningHooks({ pause: () => (this.overlayPaused = true), resume: () => (this.overlayPaused = false), busy: () => this.inFight() });
     this.events.once('shutdown', () => setLearningHooks(null));
   }
 
@@ -380,6 +380,7 @@ export class GameScene extends Phaser.Scene {
     // Online there is no pause (MVP_RULES §14.2): menus and hints never stop the server's clock.
     if (this.online || (!this.paused && !this.overlayPaused && !this.callPauses() && w.s.outcome === 'playing')) {
       if (!this.coachedBuild && !this.guide && w.player(this.me).energy >= 100) this.coachedBuild = learning().coach('build') || this.coachedBuild;
+      if (!this.guide) learning().tick();
       // Real elapsed time: Phaser smooths delta while the window is unfocused, which slowed the game (QA-015).
       w.tick(Math.min(this.game.loop.rawDelta || deltaMs, 250) / 1000);
       this.saveTimer += deltaMs / 1000;
@@ -484,6 +485,12 @@ export class GameScene extends Phaser.Scene {
   // ------------------------------------------------------------------ events
 
   /** First-time coach cards (Learning thread): world events plus clue moments the world doesn't name. */
+  /** A raid or an enemy on the attack: coach cards wait (FEEL_AUDIT F-08). */
+  private inFight(): boolean {
+    const s = this.world.s as typeof this.world.s & PaceState;
+    return !!s.raid?.active || s.units.some((u) => u.owner === -1 && u.hp > 0 && u.target !== undefined);
+  }
+
   private coachOn(e: GameEvent): void {
     const l = learning();
     if (l.onGameEvent(e.type)) return;
@@ -806,6 +813,10 @@ export class GameScene extends Phaser.Scene {
     if (this.hud.goal.text !== goal) this.hud.goal.setText(goal);
     const gb = this.hud.goalBg;
     gb.clear();
+    // «Первая смена» has no call target (boss off in tutorial_map): the chip only carries the pause banner.
+    const showGoal = !this.guide || bg === C.amber;
+    this.hud.goal.setVisible(showGoal);
+    if (!showGoal) return;
     // The goal chip shares its row with «Темп» and the raid timer: long goals shrink.
     const room = HUD.w - (LANDSCAPE ? 504 : 478);
     this.hud.goal.setScale(this.hud.goal.width + 36 > room ? (room - 36) / this.hud.goal.width : 1);
@@ -825,10 +836,11 @@ export class GameScene extends Phaser.Scene {
     const tp = s.tempo ?? { points: 0, level: 0, stagnant: false };
     const lo = steps[tp.level] ?? 0;
     const hi = steps[tp.level + 1] ?? lo + 6;
-    this.tempo.update(tp.level, tp.level >= 3 ? 1 : (tp.points - lo) / Math.max(1, hi - lo), !!tp.stagnant, now);
+    this.tempo.update(tp.level, tp.level >= 3 ? 1 : (tp.points - lo) / Math.max(1, hi - lo), !!tp.stagnant && !this.guide, now);
     // The raid: the core's `raid` when it has one, otherwise the countdown to `raidAt`. No raids on this map: no timer.
     const r = s.raid;
-    const nextIn = r ? r.nextIn : s.raidAt !== undefined ? s.raidAt - s.time : null;
+    const raw = r ? r.nextIn : s.raidAt !== undefined ? s.raidAt - s.time : null;
+    const nextIn = raw !== null && Number.isFinite(raw) ? raw : null;
     this.raidTimer.setVisible(nextIn !== null && w.started);
     if (nextIn !== null) {
       const left = Math.max(0, nextIn);
@@ -920,6 +932,8 @@ export class GameScene extends Phaser.Scene {
       ['squad.target', 'demon'],
       ['cell.mark.danger', 'mark'],
     ];
+    // «Первая смена» has no call target: no violet lamp in its legend.
+    if (this.guide) legend.splice(2, 1);
     legend.forEach(([key, kind], k) => {
       const lx = DOCK.x + pad + 14 + (k % 2) * 200;
       const ly = top + 32 + Math.floor(k / 2) * 52;

@@ -1110,6 +1110,11 @@ export class World {
         if (nc.revealed || nc.content === 'water' || isSiteCell(nc) || nc.content !== 'ground') continue;
         nc.revealed = true;
         nc.dig = undefined;
+        // Opened by the wave: off every dig queue, or «В очереди» counts open blocks.
+        for (const pl of s.players) {
+          pl.queue = pl.queue.filter((q) => q !== nk);
+          pl.autoQueue = pl.autoQueue.filter((q) => q !== nk);
+        }
         this.emit('dig_done', { x: n.x, y: n.y, owner, wave: true });
         this.addTempo(owner, 'wave');
         // Continue cascade only if this neighbor is also quiet.
@@ -1585,7 +1590,9 @@ export class World {
     const s = this.s;
     const r = difficulties[s.difficulty]?.raids;
     const callEarlyEnergy = 50;
-    const nextIn = r?.enabled ? Math.max(0, (s.raidAt ?? r.firstAfterSeconds) - s.time) : Infinity;
+    // Same switch as raidClock: no threat (the tutorial), no raids and no timer.
+    const raids = !!r?.enabled && this.rules.threatEnabled !== false;
+    const nextIn = raids ? Math.max(0, (s.raidAt ?? r!.firstAfterSeconds) - s.time) : Infinity;
     const activeRaiders = s.units.filter((u) => isEnemy(u) && u.raid !== undefined && u.hp > 0);
     const wasActive = s.raid?.active ?? false;
     s.raid = {
@@ -1593,7 +1600,7 @@ export class World {
       active: activeRaiders.length > 0,
       techs: [...new Set(activeRaiders.map((u) => u.tech).filter((t): t is Tech => t !== undefined))],
       callEarlyEnergy,
-      canCallEarly: !!(r?.enabled) && nextIn > 0 && s.players.some((p) => p.energy >= callEarlyEnergy),
+      canCallEarly: raids && nextIn > 0 && s.players.some((p) => p.energy >= callEarlyEnergy),
     };
 
     const tempoConf = (this.cfg as unknown as { tempo?: { raidClearEnergyBonus?: number; earlyRaidClearBonusMultiplier?: number; stagnantSeconds?: number; levelThresholds?: number[] } }).tempo;
@@ -1633,6 +1640,8 @@ export class World {
   /** Add tempo points for a progress event. */
   private addTempo(_owner: number, event: 'dig' | 'cache' | 'nest' | 'survivor' | 'raidClear' | 'wave'): void {
     const s = this.s;
+    // No threat (the tutorial): «Темп» stays at 0, so the cascade wave stays 1 block deep (FEEL_AUDIT F-05).
+    if (this.rules.threatEnabled === false) return;
     if (!s.tempo) s.tempo = { points: 0, level: 0, stagnant: false, lastProgress: s.time };
     const tempoConf = (this.cfg as unknown as { tempo?: { points?: Record<string, number> } }).tempo;
     const defaults: Record<string, number> = { dig: 1, cache: 5, nest: 10, survivor: 3, raidClear: 15, wave: 0.25 };

@@ -8,7 +8,8 @@ import { createLearning, type Learning } from '../learning';
  * Learning thread's src/learning. The active scene sets what "pause" means.
  */
 let inst: Learning | null = null;
-let hooks: { pause: () => void; resume: () => void } = { pause: () => {}, resume: () => {} };
+type Hooks = { pause: () => void; resume: () => void; busy?: () => boolean };
+let hooks: Hooks = { pause: () => {}, resume: () => {} };
 
 export function learning(): Learning {
   inst ??= createLearning({
@@ -20,6 +21,7 @@ export function learning(): Learning {
     },
     onPlayIntro: () => void playIntro({ skipGate: true }),
     online: () => false,
+    busy: () => hooks.busy?.() ?? false,
   });
   return inst;
 }
@@ -32,7 +34,7 @@ export function openGuide(at?: string): void {
   l.openGuide(at);
 }
 
-export function setLearningHooks(h: { pause: () => void; resume: () => void } | null): void {
+export function setLearningHooks(h: Hooks | null): void {
   hooks = h ?? { pause: () => {}, resume: () => {} };
 }
 
