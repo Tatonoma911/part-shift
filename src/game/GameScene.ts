@@ -1,4 +1,3 @@
-import Phaser from 'phaser';
 import { openAccountPanel } from '../account/panel';
 import { BUILDABLE, boons, buildings as buildingDefs, config } from '../core/data';
 import { cellKey } from '../core/grid';
@@ -249,6 +248,7 @@ export class GameScene extends Phaser.Scene {
   /** «Землекоп: серебро» plates from the top (ACHIEVEMENTS.md §3), one after another. */
   private medals!: MedalToasts;
   private overlay: Phaser.GameObjects.Container | null = null;
+  private buildingPanel: { id: number; card: Phaser.GameObjects.Container; armed: CardActionId | null; armedAt: number; sig: string } | null = null;
   private guideBox: { text: Phaser.GameObjects.Text; dots: Phaser.GameObjects.Graphics; g: Phaser.GameObjects.Graphics; y: number; h: number } | null = null;
 
   private paused = false;
@@ -268,10 +268,6 @@ export class GameScene extends Phaser.Scene {
   private swipeCells: { x: number; y: number }[] = [];
   private lastDragCell = -1;
   private pressTimer: Phaser.Time.TimerEvent | null = null;
-  /** Own building under the finger: a short tap opens its card (BuildingCard.ts), a long press shows its name. */
-  private pressBuilding: number | null = null;
-  /** The open building card; `sig` is what it last showed, so it is redrawn only when something changed. */
-  private buildingPanel: { id: number; card: Phaser.GameObjects.Container; armed: CardActionId | null; armedAt: number; sig: string } | null = null;
   private saveTimer = 0;
   private lastCenterHit = -99;
   private lastThreat = 0;
@@ -1076,7 +1072,6 @@ export class GameScene extends Phaser.Scene {
   }
 
   private openCatalog(): void {
-    this.closeBuildingCard();
     const meta = loadMeta();
     const allies = this.start.allies ?? meta.allyChoice;
     const opts = buildOptions(this.world, meta, this.me, allies);
@@ -1146,6 +1141,7 @@ export class GameScene extends Phaser.Scene {
     else this.openBuildingCard(id);
   }
 
+
   /** Called when the player picks a building from the catalog drawer. */
   private pickBuilding(o: BuildOption): void {
     this.buildType = o.id;
@@ -1189,15 +1185,6 @@ export class GameScene extends Phaser.Scene {
   private updateDock(): void {
     const w = this.world;
     const p = w.player(this.me);
-    // The open building card follows its building: progress, prices and affordability.
-    if (this.buildingPanel) {
-      const b = w.s.buildings.find((x) => x.id === this.buildingPanel!.id && x.owner === this.me);
-      if (!b) this.closeBuildingCard();
-      else if (!this.buildingPanel.armed) {
-        const sig = JSON.stringify(buildingInfo(w, b, this.me));
-        if (sig !== this.buildingPanel.sig) this.openBuildingCard(b.id);
-      }
-    }
     // Live-refresh the catalog drawer energy and states while it's open.
     if (this.drawer?.isOpen) {
       const meta = loadMeta();
@@ -1763,7 +1750,6 @@ export class GameScene extends Phaser.Scene {
 
   private onDown(p: Phaser.Input.Pointer): void {
     if (this.overlay || this.overlayPaused || !this.cams.inBoardView(p) || this.cams.busy) return;
-    this.pressBuilding = null;
     const wp = this.cams.worldAt(p);
     const at = this.board.cellAt(wp.x, wp.y);
     if (!at) return;
@@ -1814,7 +1800,6 @@ export class GameScene extends Phaser.Scene {
     // Long press on an existing building: show name + desc (QA-009, UI_SPEC §4.4).
     if (c.revealed && c.building !== undefined) {
       const bid = c.building;
-      if (!this.guide && w.s.buildings.some((b) => b.id === bid && b.owner === this.me)) this.pressBuilding = bid;
       this.pressTimer = this.time.delayedCall(LONG_PRESS_MS, () => {
         const b = this.world.s.buildings.find((bld) => bld.id === bid);
         if (!b) return;
@@ -1826,8 +1811,6 @@ export class GameScene extends Phaser.Scene {
       });
       return;
     }
-    // Аккорд: a number whose «Опасно» marks match it digs the free cells around it (campaign alwaysOn «chord»).
-    if (c.revealed && !this.guide && w.apply({ type: 'chord', x, y }, this.me).ok) return;
     // Open land: liberated → build here; not liberated → say why and light the land that is.
     if (c.revealed && c.content === 'ground' && c.building === undefined && w.inTerritory(this.me, x, y) && !(this.guide && !this.tutorialWantsBuild())) {
       // A number first shows the eight cells it counts; the second tap on it builds (config.input.tapNumberCell).
@@ -1924,9 +1907,6 @@ export class GameScene extends Phaser.Scene {
   }
 
   private onUp(p: Phaser.Input.Pointer): void {
-    // Still pending = a short tap (the long press would have fired and cleared it): open the building card.
-    if (this.pressTimer && this.pressBuilding !== null && Math.hypot(p.x - p.downX, p.y - p.downY) < 10) this.openBuildingCard(this.pressBuilding);
-    this.pressBuilding = null;
     const rc = this.rightClick;
     this.rightClick = null;
     if (rc && Math.hypot(p.x - rc.px, p.y - rc.py) < 10) {

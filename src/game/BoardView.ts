@@ -1,4 +1,3 @@
-import Phaser from 'phaser';
 import { buildings as buildingDefs, config, heroes as heroDefs, mapgen, parts as partDefs } from '../core/data';
 import { cellKey } from '../core/grid';
 import type { Building, Cell, Unit } from '../core/state';
@@ -90,8 +89,6 @@ const ZONE_DECOR: Record<string, { anim: string; tint?: number; alpha?: number }
   thermo: { anim: 'fx.heat_haze', tint: 0xff7a3a, alpha: 0.95 },
   toxin: { anim: 'fx.heat_haze', tint: 0x7dff5a, alpha: 0.8 },
 };
-/** Strength of the zone colour wash on closed blocks (bright colours need less). */
-const ZONE_WASH: Record<string, number> = { cryo: 0.16, volt: 0.12, impact: 0.14, thermo: 0.16, toxin: 0.16 };
 const CIVILIANS = ['civilian_office', 'civilian_courier', 'civilian_granny'];
 /** Game slot ids → the short names the limb-mask sets use in `slots`. */
 /** Find contents → drawn icon (blueprint fragment, armor plates, Control record). */
@@ -662,12 +659,21 @@ export class BoardView {
             // The zone shows from afar: a light wash of its colour over the block (MVP_RULES §3.4).
             const el = cellElement(c);
             if (el) {
-              og.fillStyle(TECH_HEX[el] ?? 0xffffff, ZONE_WASH[el] ?? 0.14);
+              og.fillStyle(TECH_HEX[el] ?? 0xffffff, 0.28);
               og.fillRect(px, py, CELL, CELL);
             }
-            // F-07: the orb only on the frontier, where the next dig is chosen; the rest of the field stays calm.
+            // Full orb on the frontier (glows when squad has the fast tech); small dot deeper in the field.
             const fast = cellFastTech(c);
-            if (fast && this.nearOpen(x, y, 1)) drawCellOrb(cg, px + CELL - 9, py + 9, fast, this.squadTechs.has(fast), now);
+            if (fast) {
+              if (this.nearOpen(x, y, 1)) {
+                drawCellOrb(cg, px + CELL - 9, py + 9, fast, this.squadTechs.has(fast), now);
+              } else {
+                cg.fillStyle(0x050c12, 0.5);
+                cg.fillCircle(px + CELL - 8, py + 8, 5);
+                cg.fillStyle(TECH_HEX[fast] ?? 0xffffff, 0.6);
+                cg.fillCircle(px + CELL - 8, py + 8, 3.5);
+              }
+            }
           }
           continue;
         }
@@ -1352,9 +1358,10 @@ export class BoardView {
       const masked = this.updateTrophies(u, v);
       Object.entries(u.parts).forEach(([slot, part], k) => {
         if (!part || masked.has(slot)) return;
+        const pt = partDefs[part.id]?.tech ?? (u.hero ? heroDefs[u.hero]?.tech : undefined);
         g.fillStyle(0x0b1117, 1);
         g.fillCircle(fx - 14 + k * 9, top + 2, 5);
-        g.fillStyle(TECH_COLOR[partDefs[part.id]?.tech] ?? 0xffffff, 1);
+        g.fillStyle(TECH_COLOR[pt] ?? 0xc0c8d0, 1);
         g.fillCircle(fx - 14 + k * 9, top + 2, 3.5);
       });
       // Stumps (MVP_RULES §4.1а): a grey cap with Splice gel, after the trophy pips.
@@ -1439,8 +1446,8 @@ export class BoardView {
     for (const [slot, part] of Object.entries(u.parts)) {
       const mask = part && ls.slots[SLOT_SHORT[slot]];
       if (!mask) continue;
-      const tech = partDefs[part!.id]?.tech;
-      draw.push({ slot, mask, tint: TECH_COLOR[tech] ?? 0xffffff, tech });
+      const tech = partDefs[part!.id]?.tech ?? (u.hero ? heroDefs[u.hero]?.tech : undefined);
+      draw.push({ slot, mask, tint: TECH_COLOR[tech] ?? 0xc0c8d0, tech });
     }
     for (const { slot, mask, tint, tech } of draw) {
       done.add(slot);
