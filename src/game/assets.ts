@@ -23,12 +23,15 @@ interface AnimSet {
 export const animSets = (animJson as unknown as { sets: Record<string, AnimSet> }).sets;
 
 function keyOf(path: string): string | null {
-  const m = path.match(/art\/(tiles|buildings|icons|portraits|screens|anim)\/(.+)\.(?:png|jpg)$/);
+  const m = path.match(/art\/(tiles|buildings|icons|portraits|screens|anim|buildings_gpt|nests_gpt|villains_mixed)\/(.+)\.(?:png|jpg)$/);
   if (!m) return null;
   const [, dir, name] = m;
   if (dir === 'anim') return name;
-  const singular = { tiles: 'tile', buildings: 'building', icons: 'icon', portraits: 'portrait', screens: 'screen' }[dir];
-  return `${singular}.${name.replace('@2x', '')}`;
+  const singular: Record<string, string> = {
+    tiles: 'tile', buildings: 'building', icons: 'icon', portraits: 'portrait', screens: 'screen',
+    buildings_gpt: 'bldg', nests_gpt: 'nest_gpt', villains_mixed: 'villain',
+  };
+  return `${singular[dir]}.${name.replace('@2x', '')}`;
 }
 
 export function preloadArt(scene: Phaser.Scene): void {
@@ -67,12 +70,29 @@ export function originOf(set: string): [number, number] {
   return [a.anchor[0] / a.frameSize[0], a.anchor[1] / a.frameSize[1]];
 }
 
-/** Anchor of the static building sprites (art/export/x2/sprites.json). */
+/** Anchor of the static building sprites — [anchorX, anchorY, width, height] in px (buildings_gpt.json @x2). */
 export const BUILDING_ANCHOR: Record<string, [number, number, number, number]> = {
-  command: [44, 90, 88, 112],
-  home: [36, 78, 72, 96],
-  reactor: [36, 78, 72, 96],
-  cooler: [36, 78, 72, 96],
-  school: [36, 78, 72, 96],
-  medcenter: [36, 78, 72, 96],
+  command: [26, 75, 52, 88],
+  home: [26, 67, 52, 80],
+  reactor: [26, 67, 52, 80],
+  cooler: [26, 67, 52, 80],
+  school: [26, 67, 52, 80],
+  medcenter: [26, 67, 52, 80],
+  apartments: [26, 67, 52, 80],
+  backup_archive: [26, 67, 52, 80],
+  checkpoint: [26, 67, 52, 80],
+  comms_tower: [26, 67, 52, 80],
+  element_forge: [52, 66, 104, 92],
+  greenhouse: [26, 67, 52, 80],
+  hero_station: [26, 67, 52, 80],
+  limb_rotation_center: [52, 94, 104, 120],
+  monorail: [26, 67, 52, 80],
+  monitoring_tower: [26, 67, 52, 80],
+  radar_tower: [26, 67, 52, 80],
+  repair_crew: [26, 67, 52, 80],
+  residents_shelter: [26, 67, 52, 80],
+  shield_spire: [26, 67, 52, 80],
+  skyscraper: [26, 67, 52, 80],
+  splice_jammer: [26, 67, 52, 80],
+  workshop: [26, 67, 52, 80],
 };

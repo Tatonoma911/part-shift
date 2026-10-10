@@ -1,6 +1,6 @@
 {
  "_doc": "text/VOICE.md. Какие строки ru.json показывать на какие события игры. Пул = список ключей, берётся случайный, не повторяя последний показанный из этого пула.",
- "version": "0.4",
+ "version": "0.9",
  "channels": {
   "control": {
    "view": "radio",
@@ -706,6 +706,106 @@
    "pool": [
     "control.bark.ruins.1",
     "control.bark.ruins.2"
+   ]
+  },
+  {
+   "event": "warehouse_opened",
+   "channel": "control",
+   "priority": true,
+   "pool": [
+    "control.bark.warehouse_escape.1",
+    "control.bark.warehouse_escape.2",
+    "control.bark.warehouse_escape.3"
+   ]
+  },
+  {
+   "event": "civilian_rescued",
+   "channel": "control",
+   "chance": 0.2,
+   "pool": [
+    "control.bark.civilian_rescued"
+   ]
+  },
+  {
+   "event": "civilian_rescued",
+   "channel": "hero",
+   "chance": 0.4,
+   "pool": [
+    "survivor.line.1",
+    "survivor.line.2",
+    "survivor.line.3",
+    "survivor.line.4",
+    "survivor.line.6",
+    "survivor.line.7",
+    "survivor.line.8",
+    "survivor.line.9"
+   ],
+   "_note": "bubble over the civilian"
+  },
+  {
+   "event": "civilian_lost",
+   "channel": "control",
+   "chance": 0.5,
+   "pool": [
+    "control.bark.civilian_lost"
+   ]
+  },
+  {
+   "event": "rotation_done",
+   "channel": "control",
+   "chance": 0.5,
+   "pool": [
+    "control.bark.rotation.1",
+    "control.bark.rotation.2"
+   ]
+  },
+  {
+   "event": "build_done:jammer",
+   "channel": "control",
+   "first": true,
+   "pool": [
+    "control.bark.jammer"
+   ]
+  },
+  {
+   "event": "run_start",
+   "channel": "control",
+   "delaySeconds": 12,
+   "pool": [
+    "control.bark.roster"
+   ],
+   "_note": "{list} = our services this shift, comma-separated"
+  },
+  {
+   "event": "squad_confirmed",
+   "channel": "control",
+   "pool": [
+    "control.bark.squad"
+   ]
+  },
+  {
+   "event": "hero_spawn",
+   "channel": "control",
+   "chance": 0.25,
+   "pool": [
+    "control.bark.mutation"
+   ],
+   "_note": "only if the hero has a mutation"
+  },
+  {
+   "event": "recolor_done",
+   "channel": "control",
+   "chance": 0.5,
+   "pool": [
+    "control.bark.forge"
+   ]
+  },
+  {
+   "event": "build_done:civ_shelter",
+   "channel": "control",
+   "first": true,
+   "pool": [
+    "control.bark.shelter"
    ]
   }
  ]

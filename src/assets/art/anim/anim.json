@@ -4831,6 +4831,976 @@
    },
    "faces": "right",
    "note": "Из генератора: 044_anim_ally_demon.png"
+  },
+  "fx_explosions": {
+   "sheet": "fx_explosions.png",
+   "frameSize": [
+    52,
+    52
+   ],
+   "cols": 6,
+   "anchor": [
+    0,
+    0
+   ],
+   "anims": {
+    "small_explosion_flash": {
+     "frames": [
+      0,
+      1,
+      2,
+      3,
+      4
+     ],
+     "fps": 10,
+     "loop": false
+    },
+    "fire_hit_tongue": {
+     "frames": [
+      6,
+      7,
+      8,
+      9,
+      10,
+      11
+     ],
+     "fps": 10,
+     "loop": false
+    },
+    "fire_jet_streaming": {
+     "frames": [
+      12,
+      13,
+      14,
+      15,
+      16
+     ],
+     "fps": 10,
+     "loop": false
+    },
+    "burning_ground_loop": {
+     "frames": [
+      18,
+      19,
+      20,
+      21,
+      22,
+      23
+     ],
+     "fps": 10,
+     "loop": true
+    }
+   },
+   "note": "Из генератора: 068_fx_explosions.png"
+  },
+  "fx_explosion_big": {
+   "sheet": "fx_explosion_big.png",
+   "frameSize": [
+    104,
+    104
+   ],
+   "cols": 5,
+   "anchor": [
+    0,
+    0
+   ],
+   "anims": {
+    "big_explosion_ground": {
+     "frames": [
+      0,
+      1,
+      2,
+      3,
+      4
+     ],
+     "fps": 10,
+     "loop": false
+    }
+   },
+   "note": "Из генератора: 069_fx_explosion_big.png"
+  },
+  "fx_ice": {
+   "sheet": "fx_ice.png",
+   "frameSize": [
+    52,
+    52
+   ],
+   "cols": 6,
+   "anchor": [
+    0,
+    0
+   ],
+   "anims": {
+    "ice_spikes_bursting": {
+     "frames": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5
+     ],
+     "fps": 10,
+     "loop": false
+    },
+    "big_ice_block": {
+     "frames": [
+      6,
+      7,
+      8,
+      9,
+      10,
+      11
+     ],
+     "fps": 10,
+     "loop": false
+    },
+    "ice_block_cracking": {
+     "frames": [
+      12,
+      13,
+      14,
+      15,
+      16,
+      17
+     ],
+     "fps": 10,
+     "loop": false
+    },
+    "frost_spreading_ground": {
+     "frames": [
+      18,
+      19,
+      20,
+      21,
+      22
+     ],
+     "fps": 10,
+     "loop": false
+    }
+   },
+   "note": "Из генератора: 070_fx_ice.png"
+  },
+  "fx_electric": {
+   "sheet": "fx_electric.png",
+   "frameSize": [
+    52,
+    52
+   ],
+   "cols": 7,
+   "anchor": [
+    0,
+    0
+   ],
+   "anims": {
+    "jagged_electric_discharges": {
+     "frames": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6
+     ],
+     "fps": 10,
+     "loop": false
+    },
+    "electric_cable_whip": {
+     "frames": [
+      7,
+      8,
+      9,
+      10,
+      11,
+      12
+     ],
+     "fps": 10,
+     "loop": false
+    },
+    "chain_lightning_jumping": {
+     "frames": [
+      14,
+      15,
+      16,
+      17,
+      18,
+      19
+     ],
+     "fps": 10,
+     "loop": false
+    },
+    "white_star_hit": {
+     "frames": [
+      21,
+      22,
+      23
+     ],
+     "fps": 10,
+     "loop": false
+    }
+   },
+   "note": "Из генератора: 071_fx_electric.png"
+  },
+  "fx_elements": {
+   "sheet": "fx_elements.png",
+   "frameSize": [
+    52,
+    52
+   ],
+   "cols": 7,
+   "anchor": [
+    0,
+    0
+   ],
+   "anims": {
+    "water_splash": {
+     "frames": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5
+     ],
+     "fps": 10,
+     "loop": false
+    },
+    "green_toxin_cloud": {
+     "frames": [
+      7,
+      8,
+      9,
+      10,
+      11,
+      12
+     ],
+     "fps": 10,
+     "loop": false
+    },
+    "vine_growing_out": {
+     "frames": [
+      14,
+      15,
+      16,
+      17,
+      18,
+      19,
+      20
+     ],
+     "fps": 10,
+     "loop": false
+    },
+    "stone_wall_rising": {
+     "frames": [
+      21,
+      22,
+      23,
+      24,
+      25,
+      26,
+      27
+     ],
+     "fps": 10,
+     "loop": false
+    }
+   },
+   "note": "Из генератора: 072_fx_elements.png"
+  },
+  "fx_impact_support": {
+   "sheet": "fx_impact_support.png",
+   "frameSize": [
+    52,
+    52
+   ],
+   "cols": 6,
+   "anchor": [
+    0,
+    0
+   ],
+   "anims": {
+    "ram_shockwave_ceramic": {
+     "frames": [
+      0,
+      1,
+      2,
+      3
+     ],
+     "fps": 10,
+     "loop": false
+    },
+    "small_drone_swarm": {
+     "frames": [
+      6,
+      7,
+      8,
+      9,
+      10,
+      11
+     ],
+     "fps": 10,
+     "loop": false
+    },
+    "vertical_cyan_halo": {
+     "frames": [
+      12,
+      13
+     ],
+     "fps": 10,
+     "loop": false
+    },
+    "cyan_healing_sparkles": {
+     "frames": [
+      18,
+      19,
+      20
+     ],
+     "fps": 10,
+     "loop": false
+    }
+   },
+   "note": "Из генератора: 073_fx_impact_support.png"
+  },
+  "fx_signals": {
+   "sheet": "fx_signals.png",
+   "frameSize": [
+    52,
+    52
+   ],
+   "cols": 6,
+   "anchor": [
+    0,
+    0
+   ],
+   "anims": {
+    "violet_neuro_ring": {
+     "frames": [
+      0,
+      1,
+      2,
+      3
+     ],
+     "fps": 10,
+     "loop": false
+    },
+    "amber_signal_flare": {
+     "frames": [
+      6,
+      7,
+      8
+     ],
+     "fps": 10,
+     "loop": false
+    },
+    "body_part_tearing": {
+     "frames": [
+      12,
+      13,
+      14,
+      15,
+      16,
+      17
+     ],
+     "fps": 10,
+     "loop": false
+    },
+    "body_part_attaching": {
+     "frames": [
+      18,
+      19,
+      20,
+      21,
+      22
+     ],
+     "fps": 10,
+     "loop": false
+    }
+   },
+   "note": "Из генератора: 074_fx_signals.png"
+  },
+  "fx_energy_field": {
+   "sheet": "fx_energy_field.png",
+   "frameSize": [
+    52,
+    52
+   ],
+   "cols": 8,
+   "anchor": [
+    0,
+    0
+   ],
+   "anims": {
+    "cobalt_energy_orb": {
+     "frames": [
+      0,
+      1,
+      2,
+      3
+     ],
+     "fps": 10,
+     "loop": false
+    },
+    "ring_when_energy": {
+     "frames": [
+      8,
+      9,
+      10
+     ],
+     "fps": 10,
+     "loop": false
+    },
+    "digging_dust_pebbles": {
+     "frames": [
+      16,
+      17,
+      18,
+      19
+     ],
+     "fps": 10,
+     "loop": false
+    },
+    "white_cyan_heroout": {
+     "frames": [
+      24,
+      25,
+      26,
+      27,
+      28,
+      29,
+      30,
+      31
+     ],
+     "fps": 10,
+     "loop": false
+    }
+   },
+   "note": "Из генератора: 075_fx_energy_field.png"
+  },
+  "fx_city_crisis": {
+   "sheet": "fx_city_crisis.png",
+   "frameSize": [
+    52,
+    52
+   ],
+   "cols": 8,
+   "anchor": [
+    0,
+    0
+   ],
+   "anims": {
+    "resident_stepping_out": {
+     "frames": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5
+     ],
+     "fps": 10,
+     "loop": false
+    },
+    "red_roof_beacon": {
+     "frames": [
+      8,
+      9,
+      10,
+      11
+     ],
+     "fps": 10,
+     "loop": false
+    },
+    "smoke_over_city": {
+     "frames": [
+      16,
+      17,
+      18,
+      19,
+      20,
+      21,
+      22,
+      23
+     ],
+     "fps": 10,
+     "loop": false
+    },
+    "fire_rooftop_loop": {
+     "frames": [
+      24,
+      25,
+      26,
+      27,
+      28,
+      29
+     ],
+     "fps": 10,
+     "loop": true
+    }
+   },
+   "note": "Из генератора: 076_fx_city_crisis.png"
+  },
+  "fx_nests_hatch": {
+   "sheet": "fx_nests_hatch.png",
+   "frameSize": [
+    52,
+    52
+   ],
+   "cols": 7,
+   "anchor": [
+    0,
+    0
+   ],
+   "anims": {
+    "red_beacon_yellow": {
+     "frames": [
+      0,
+      1,
+      2,
+      3
+     ],
+     "fps": 10,
+     "loop": false
+    },
+    "adaptant_nest_breathing": {
+     "frames": [
+      7,
+      8,
+      9,
+      10,
+      11,
+      12
+     ],
+     "fps": 10,
+     "loop": false
+    },
+    "enemy_coming_out": {
+     "frames": [
+      14,
+      15,
+      16,
+      17,
+      18,
+      19
+     ],
+     "fps": 10,
+     "loop": false
+    },
+    "nest_being_destroyed": {
+     "frames": [
+      21,
+      22,
+      23,
+      24,
+      25,
+      26,
+      27
+     ],
+     "fps": 10,
+     "loop": false
+    }
+   },
+   "note": "Из генератора: 077_fx_nests_hatch.png"
+  },
+  "fx_hatch": {
+   "sheet": "fx_hatch.png",
+   "frameSize": [
+    52,
+    52
+   ],
+   "cols": 8,
+   "anchor": [
+    0,
+    0
+   ],
+   "anims": {
+    "red_steam_rising": {
+     "frames": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5
+     ],
+     "fps": 10,
+     "loop": false
+    },
+    "manhole_opening_red": {
+     "frames": [
+      8,
+      9,
+      10,
+      11,
+      12,
+      13,
+      14,
+      15
+     ],
+     "fps": 10,
+     "loop": false
+    }
+   },
+   "note": "Из генератора: 078_fx_hatch.png"
+  },
+  "gpt_bld_command": {
+   "sheet": "gpt_bld_command.png",
+   "frameSize": [
+    52,
+    88
+   ],
+   "cols": 10,
+   "anchor": [
+    26,
+    76
+   ],
+   "anims": {
+    "construct": {
+     "frames": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7
+     ],
+     "fps": 8,
+     "loop": false
+    },
+    "damaged": {
+     "frames": [
+      10,
+      11,
+      12,
+      13,
+      14,
+      15
+     ],
+     "fps": 6,
+     "loop": true
+    },
+    "collapse": {
+     "frames": [
+      20,
+      21,
+      22,
+      23,
+      24,
+      25,
+      26,
+      27,
+      28,
+      29
+     ],
+     "fps": 10,
+     "loop": false
+    }
+   },
+   "faces": "right",
+   "note": "Из генератора: 101_anim_building_command.png. Пока не в игре: не совпадает со статичным зданием."
+  },
+  "gpt_bld_home": {
+   "sheet": "gpt_bld_home.png",
+   "frameSize": [
+    52,
+    80
+   ],
+   "cols": 10,
+   "anchor": [
+    26,
+    68
+   ],
+   "anims": {
+    "construct": {
+     "frames": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7
+     ],
+     "fps": 8,
+     "loop": false
+    },
+    "damaged": {
+     "frames": [
+      10,
+      11,
+      12,
+      13,
+      14,
+      15
+     ],
+     "fps": 6,
+     "loop": true
+    },
+    "collapse": {
+     "frames": [
+      20,
+      21,
+      22,
+      23,
+      24,
+      25,
+      26,
+      27,
+      28,
+      29
+     ],
+     "fps": 10,
+     "loop": false
+    }
+   },
+   "faces": "right",
+   "note": "Из генератора: 102_anim_building_home.png. Пока не в игре: не совпадает со статичным зданием."
+  },
+  "gpt_bld_reactor": {
+   "sheet": "gpt_bld_reactor.png",
+   "frameSize": [
+    52,
+    80
+   ],
+   "cols": 10,
+   "anchor": [
+    26,
+    68
+   ],
+   "anims": {
+    "construct": {
+     "frames": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7
+     ],
+     "fps": 8,
+     "loop": false
+    },
+    "damaged": {
+     "frames": [
+      10,
+      11,
+      12,
+      13,
+      14,
+      15
+     ],
+     "fps": 6,
+     "loop": true
+    },
+    "collapse": {
+     "frames": [
+      20,
+      21,
+      22,
+      23,
+      24,
+      25,
+      26,
+      27,
+      28,
+      29
+     ],
+     "fps": 10,
+     "loop": false
+    },
+    "working": {
+     "frames": [
+      30,
+      31,
+      32,
+      33,
+      34,
+      35
+     ],
+     "fps": 6,
+     "loop": true
+    }
+   },
+   "faces": "right",
+   "note": "Из генератора: 103_anim_building_reactor.png. Пока не в игре: не совпадает со статичным зданием."
+  },
+  "gpt_bld_cooler": {
+   "sheet": "gpt_bld_cooler.png",
+   "frameSize": [
+    52,
+    80
+   ],
+   "cols": 10,
+   "anchor": [
+    26,
+    68
+   ],
+   "anims": {
+    "construct": {
+     "frames": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7
+     ],
+     "fps": 8,
+     "loop": false
+    },
+    "damaged": {
+     "frames": [
+      10,
+      11,
+      12,
+      13,
+      14,
+      15
+     ],
+     "fps": 6,
+     "loop": true
+    },
+    "collapse": {
+     "frames": [
+      20,
+      21,
+      22,
+      23,
+      24,
+      25,
+      26,
+      27,
+      28,
+      29
+     ],
+     "fps": 10,
+     "loop": false
+    }
+   },
+   "faces": "right",
+   "note": "Из генератора: 104_anim_building_cooler.png. Пока не в игре: не совпадает со статичным зданием."
+  },
+  "gpt_bld_school": {
+   "sheet": "gpt_bld_school.png",
+   "frameSize": [
+    52,
+    80
+   ],
+   "cols": 10,
+   "anchor": [
+    26,
+    68
+   ],
+   "anims": {
+    "construct": {
+     "frames": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7
+     ],
+     "fps": 8,
+     "loop": false
+    },
+    "damaged": {
+     "frames": [
+      10,
+      11,
+      12,
+      13,
+      14,
+      15
+     ],
+     "fps": 6,
+     "loop": true
+    },
+    "collapse": {
+     "frames": [
+      20,
+      21,
+      22,
+      23,
+      24,
+      25,
+      26,
+      27,
+      28,
+      29
+     ],
+     "fps": 10,
+     "loop": false
+    }
+   },
+   "faces": "right",
+   "note": "Из генератора: 105_anim_building_school.png. Пока не в игре: не совпадает со статичным зданием."
+  },
+  "gpt_bld_medcenter": {
+   "sheet": "gpt_bld_medcenter.png",
+   "frameSize": [
+    52,
+    80
+   ],
+   "cols": 10,
+   "anchor": [
+    26,
+    68
+   ],
+   "anims": {
+    "construct": {
+     "frames": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7
+     ],
+     "fps": 8,
+     "loop": false
+    },
+    "damaged": {
+     "frames": [
+      10,
+      11,
+      12,
+      13,
+      14,
+      15
+     ],
+     "fps": 6,
+     "loop": true
+    },
+    "collapse": {
+     "frames": [
+      20,
+      21,
+      22,
+      23,
+      24,
+      25,
+      26,
+      27,
+      28,
+      29
+     ],
+     "fps": 10,
+     "loop": false
+    }
+   },
+   "faces": "right",
+   "note": "Из генератора: 106_anim_building_medcenter.png. Пока не в игре: не совпадает со статичным зданием."
   }
  }
 }

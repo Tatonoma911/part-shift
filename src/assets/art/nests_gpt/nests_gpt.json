@@ -1,0 +1,347 @@
+{
+ "scale": 2,
+ "cell": 52,
+ "note": "Раскрытые гнёзда по стихиям (GPT 131, 150). Объект на одной клетке; anchor = (cw/2, ch − cw/4) — центр ромба плиты, как objects_gpt.",
+ "nests": {
+  "nest_thermo_0": {
+   "id": "nest_thermo_0",
+   "element": "thermo",
+   "variant": 0,
+   "cleared": false,
+   "desc": "горящее здание, гель и щупальца, дым",
+   "file": "nests_gpt/nest_thermo_0.png",
+   "size": [
+    52,
+    55
+   ],
+   "anchor": [
+    26,
+    42
+   ],
+   "source": "source/incoming/gpt/131_board_revealed_hazards.png"
+  },
+  "nest_cryo_0": {
+   "id": "nest_cryo_0",
+   "element": "cryo",
+   "variant": 0,
+   "cleared": false,
+   "desc": "обледеневшее здание, кристаллы льда",
+   "file": "nests_gpt/nest_cryo_0.png",
+   "size": [
+    52,
+    52
+   ],
+   "anchor": [
+    26,
+    39
+   ],
+   "source": "source/incoming/gpt/131_board_revealed_hazards.png"
+  },
+  "nest_volt_0": {
+   "id": "nest_volt_0",
+   "element": "volt",
+   "variant": 0,
+   "cleared": false,
+   "desc": "здание с кабелями и искрами",
+   "file": "nests_gpt/nest_volt_0.png",
+   "size": [
+    52,
+    55
+   ],
+   "anchor": [
+    26,
+    42
+   ],
+   "source": "source/incoming/gpt/131_board_revealed_hazards.png"
+  },
+  "nest_toxin_0": {
+   "id": "nest_toxin_0",
+   "element": "toxin",
+   "variant": 0,
+   "cleared": false,
+   "desc": "баки и трубы, зелёный газ",
+   "file": "nests_gpt/nest_toxin_0.png",
+   "size": [
+    52,
+    56
+   ],
+   "anchor": [
+    26,
+    43
+   ],
+   "source": "source/incoming/gpt/131_board_revealed_hazards.png"
+  },
+  "nest_impact_0": {
+   "id": "nest_impact_0",
+   "element": "impact",
+   "variant": 0,
+   "cleared": false,
+   "desc": "провал-портал в земле среди обломков",
+   "file": "nests_gpt/nest_impact_0.png",
+   "size": [
+    52,
+    46
+   ],
+   "anchor": [
+    26,
+    33
+   ],
+   "source": "source/incoming/gpt/131_board_revealed_hazards.png"
+  },
+  "nest_thermo_0_cleared": {
+   "id": "nest_thermo_0_cleared",
+   "element": "thermo",
+   "variant": 0,
+   "cleared": true,
+   "desc": "расчищено: горящее здание, гель и щупальца, дым",
+   "file": "nests_gpt/nest_thermo_0_cleared.png",
+   "size": [
+    52,
+    49
+   ],
+   "anchor": [
+    26,
+    36
+   ],
+   "source": "source/incoming/gpt/131_board_revealed_hazards.png"
+  },
+  "nest_cryo_0_cleared": {
+   "id": "nest_cryo_0_cleared",
+   "element": "cryo",
+   "variant": 0,
+   "cleared": true,
+   "desc": "расчищено: обледеневшее здание, кристаллы льда",
+   "file": "nests_gpt/nest_cryo_0_cleared.png",
+   "size": [
+    52,
+    50
+   ],
+   "anchor": [
+    26,
+    37
+   ],
+   "source": "source/incoming/gpt/131_board_revealed_hazards.png"
+  },
+  "nest_volt_0_cleared": {
+   "id": "nest_volt_0_cleared",
+   "element": "volt",
+   "variant": 0,
+   "cleared": true,
+   "desc": "расчищено: здание с кабелями и искрами",
+   "file": "nests_gpt/nest_volt_0_cleared.png",
+   "size": [
+    52,
+    54
+   ],
+   "anchor": [
+    26,
+    41
+   ],
+   "source": "source/incoming/gpt/131_board_revealed_hazards.png"
+  },
+  "nest_toxin_0_cleared": {
+   "id": "nest_toxin_0_cleared",
+   "element": "toxin",
+   "variant": 0,
+   "cleared": true,
+   "desc": "расчищено: баки и трубы, зелёный газ",
+   "file": "nests_gpt/nest_toxin_0_cleared.png",
+   "size": [
+    52,
+    48
+   ],
+   "anchor": [
+    26,
+    35
+   ],
+   "source": "source/incoming/gpt/131_board_revealed_hazards.png"
+  },
+  "nest_impact_0_cleared": {
+   "id": "nest_impact_0_cleared",
+   "element": "impact",
+   "variant": 0,
+   "cleared": true,
+   "desc": "расчищено: провал-портал в земле среди обломков",
+   "file": "nests_gpt/nest_impact_0_cleared.png",
+   "size": [
+    52,
+    47
+   ],
+   "anchor": [
+    26,
+    34
+   ],
+   "source": "source/incoming/gpt/131_board_revealed_hazards.png"
+  },
+  "nest_thermo_1": {
+   "id": "nest_thermo_1",
+   "element": "thermo",
+   "variant": 1,
+   "cleared": false,
+   "desc": "горящая заправка",
+   "file": "nests_gpt/nest_thermo_1.png",
+   "size": [
+    52,
+    57
+   ],
+   "anchor": [
+    26,
+    44
+   ],
+   "source": "source/incoming/gpt/150_board_revealed_hazards_variants.png"
+  },
+  "nest_cryo_1": {
+   "id": "nest_cryo_1",
+   "element": "cryo",
+   "variant": 1,
+   "cleared": false,
+   "desc": "обледеневший офис с витриной",
+   "file": "nests_gpt/nest_cryo_1.png",
+   "size": [
+    52,
+    50
+   ],
+   "anchor": [
+    26,
+    37
+   ],
+   "source": "source/incoming/gpt/150_board_revealed_hazards_variants.png"
+  },
+  "nest_volt_1": {
+   "id": "nest_volt_1",
+   "element": "volt",
+   "variant": 1,
+   "cleared": false,
+   "desc": "подстанция с трансформаторами и разрядами",
+   "file": "nests_gpt/nest_volt_1.png",
+   "size": [
+    52,
+    52
+   ],
+   "anchor": [
+    26,
+    39
+   ],
+   "source": "source/incoming/gpt/150_board_revealed_hazards_variants.png"
+  },
+  "nest_toxin_1": {
+   "id": "nest_toxin_1",
+   "element": "toxin",
+   "variant": 1,
+   "cleared": false,
+   "desc": "прачечная, ядовитый газ",
+   "file": "nests_gpt/nest_toxin_1.png",
+   "size": [
+    52,
+    57
+   ],
+   "anchor": [
+    26,
+    44
+   ],
+   "source": "source/incoming/gpt/150_board_revealed_hazards_variants.png"
+  },
+  "nest_impact_1": {
+   "id": "nest_impact_1",
+   "element": "impact",
+   "variant": 1,
+   "cleared": false,
+   "desc": "провал на парковке с машинами",
+   "file": "nests_gpt/nest_impact_1.png",
+   "size": [
+    52,
+    44
+   ],
+   "anchor": [
+    26,
+    31
+   ],
+   "source": "source/incoming/gpt/150_board_revealed_hazards_variants.png"
+  },
+  "nest_thermo_2": {
+   "id": "nest_thermo_2",
+   "element": "thermo",
+   "variant": 2,
+   "cleared": false,
+   "desc": "горящий жилой дом",
+   "file": "nests_gpt/nest_thermo_2.png",
+   "size": [
+    52,
+    56
+   ],
+   "anchor": [
+    26,
+    43
+   ],
+   "source": "source/incoming/gpt/150_board_revealed_hazards_variants.png"
+  },
+  "nest_cryo_2": {
+   "id": "nest_cryo_2",
+   "element": "cryo",
+   "variant": 2,
+   "cleared": false,
+   "desc": "замёрзший фонтан",
+   "file": "nests_gpt/nest_cryo_2.png",
+   "size": [
+    52,
+    50
+   ],
+   "anchor": [
+    26,
+    37
+   ],
+   "source": "source/incoming/gpt/150_board_revealed_hazards_variants.png"
+  },
+  "nest_volt_2": {
+   "id": "nest_volt_2",
+   "element": "volt",
+   "variant": 2,
+   "cleared": false,
+   "desc": "трамвайная остановка с искрящими проводами",
+   "file": "nests_gpt/nest_volt_2.png",
+   "size": [
+    52,
+    53
+   ],
+   "anchor": [
+    26,
+    40
+   ],
+   "source": "source/incoming/gpt/150_board_revealed_hazards_variants.png"
+  },
+  "nest_toxin_2": {
+   "id": "nest_toxin_2",
+   "element": "toxin",
+   "variant": 2,
+   "cleared": false,
+   "desc": "открытый люк канализации, газ",
+   "file": "nests_gpt/nest_toxin_2.png",
+   "size": [
+    52,
+    53
+   ],
+   "anchor": [
+    26,
+    40
+   ],
+   "source": "source/incoming/gpt/150_board_revealed_hazards_variants.png"
+  },
+  "nest_impact_2": {
+   "id": "nest_impact_2",
+   "element": "impact",
+   "variant": 2,
+   "cleared": false,
+   "desc": "провал под обрушенной эстакадой",
+   "file": "nests_gpt/nest_impact_2.png",
+   "size": [
+    52,
+    52
+   ],
+   "anchor": [
+    26,
+    39
+   ],
+   "source": "source/incoming/gpt/150_board_revealed_hazards_variants.png"
+  }
+ }
+}
