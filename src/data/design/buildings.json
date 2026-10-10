@@ -112,6 +112,19 @@
         "healEverySeconds": 2
       },
       "territoryRadius": 2
+    },
+    {
+      "id": "station",
+      "name_ru": "Станция героя",
+      "sheet": null,
+      "buildable": true,
+      "cost": 60,
+      "buildSeconds": 8,
+      "hp": 60,
+      "defense": 0,
+      "territoryRadius": 1,
+      "heroBirthTiers": [],
+      "_note": "hero-specific: spawns the single hero whose id is stored in building.hero (set by the build command). Texture: building.station_<tech>. UI sends {type:'build', building:'station', x, y, hero}."
     }
   ],
   "territory": {
@@ -123,7 +136,8 @@
       "reactor": 1,
       "cooler": 1,
       "school": 2,
-      "medcenter": 2
+      "medcenter": 2,
+      "station": 1
     },
     "underConstructionCounts": false,
     "ruinsCount": false,
