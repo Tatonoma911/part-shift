@@ -23,6 +23,12 @@ const STYLE = `
  */
 export function askConsent(a: Analytics): void {
   if (!a.shouldAsk || document.querySelector('.ps-consent')) return;
+  closeCard = () => {
+    closeCard = null;
+    box.remove();
+    shade.remove();
+    style.remove();
+  };
   const style = document.createElement('style');
   style.textContent = STYLE;
   const box = document.createElement('div');
@@ -52,6 +58,7 @@ export function askConsent(a: Analytics): void {
   const answer = (granted: boolean) => (e: Event) => {
     e.stopPropagation();
     a.setConsent(granted);
+    closeCard = null;
     box.classList.remove('on');
     shade.classList.remove('on');
     setTimeout(() => {
@@ -64,4 +71,11 @@ export function askConsent(a: Analytics): void {
   box.addEventListener('pointerdown', (e) => e.stopPropagation());
   no.addEventListener('click', answer(false));
   yes.addEventListener('click', answer(true));
+}
+
+let closeCard: (() => void) | null = null;
+
+/** Takes an unanswered card away (the player left the menu); it is asked again in a later calm menu. */
+export function closeConsent(): void {
+  closeCard?.();
 }

@@ -23,6 +23,8 @@ export function allySelect(scene: Phaser.Scene, meta: MetaSave, onGo: (ids: stri
   const { slots } = allySlots(meta);
   const unlocked = HEROES.filter((h) => meta.unlocked.includes(h.id));
   let chosen = meta.allyChoice.filter((id) => meta.unlocked.includes(id)).slice(0, slots);
+  // Free slots start filled, so «На смену» never silently leaves one empty (QA-044); a tap still takes a hero off.
+  for (const h of unlocked) if (chosen.length < slots && !chosen.includes(h.id)) chosen.push(h.id);
 
   const draw = () => {
     panel.removeAll(true);

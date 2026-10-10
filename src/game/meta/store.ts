@@ -38,6 +38,7 @@ export interface HeroInfo {
   tier: number;
   unlock: Unlock;
   enemy?: { resist?: Record<string, number>; ability?: { id: string } };
+  drops?: { slot: string; id: string; damage?: number; hp?: number; speed?: number; defense?: number }[];
 }
 
 const KEY = 'partshift.meta.v1';

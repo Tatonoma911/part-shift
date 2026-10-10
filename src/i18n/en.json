@@ -338,5 +338,10 @@
   "side.caches": "Caches",
   "side.survivors": "Survivors",
   "side.threat_next": "Threat {level} in {time}",
-  "dossier.title": "Dossier"
+  "dossier.title": "Dossier",
+  "dossier.trophy.title": "What residents take",
+  "dossier.trophy.damage": "{value} damage",
+  "dossier.trophy.hp": "{value} health",
+  "dossier.trophy.defense": "{value} defense",
+  "dossier.trophy.speed": "{value} speed"
 }
