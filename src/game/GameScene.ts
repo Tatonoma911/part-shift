@@ -491,8 +491,10 @@ export class GameScene extends Phaser.Scene {
     const g = this.add.graphics();
     chip(g, -width / 2, -h / 2, width, h, bad ? C.coralInk : C.paper, 0.97, 14, bad ? undefined : { color: C.seam, width: 2 });
     // Toasts and Контроль share the strip above the dock, never the board (QA-038): the toast wins it.
+    // In portrait the gap between board and dock is 100 px; clamp so a tall toast never overlaps the board.
     this.voice?.yieldToToast();
-    const y = DOCK.y - 8 - h / 2;
+    const yIdeal = DOCK.y - 8 - h / 2;
+    const y = LANDSCAPE ? yIdeal : Math.max(yIdeal, BOARD.y + BOARD.h + 4 + h / 2);
     const box = this.add.container(DOCK.x + DOCK.w / 2, y + 16, [g, tx]).setDepth(21).setAlpha(0);
     for (const old of this.toasts) this.tweens.add({ targets: old, alpha: 0, duration: 120, onComplete: () => old.destroy() });
     this.toasts = [box];

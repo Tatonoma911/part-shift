@@ -2,14 +2,15 @@ import ruWriter from '../data/text/ru.json';
 import enUi from './en.json';
 import enVoice from '../data/text/en_voice.json';
 import enMeta from '../data/text/en_meta.json';
+import enObjects from '../learning/text/en-objects.json';
 import ruExtra from './ru-extra.json';
 
 export type Lang = 'ru' | 'en';
 
 /** Russian comes from the writer (text/ru.json); ru-extra holds a few UI-only lines. */
 const ru: Record<string, string> = { ...ruWriter, ...ruExtra };
-/** English: the writer's voice and meta lines (text/en_voice.json, en_meta.json) under our UI strings. */
-const en: Record<string, string> = { ...enVoice, ...enMeta, ...enUi };
+/** English: game-object descriptions (en-objects.json), voice/meta writer lines, then UI strings (highest priority). */
+const en: Record<string, string> = { ...enObjects, ...enVoice, ...enMeta, ...enUi };
 const tables: Record<Lang, Record<string, string>> = { ru, en };
 
 /** ?lang=en|ru wins, then the language picked in settings, then the browser language. */
