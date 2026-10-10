@@ -26,6 +26,8 @@ const jobs = [
   { from: join(root, 'art/export/x2/buildings_gpt_big'), to: 'src/assets/art/buildings_gpt', pick: (f) => f.endsWith('.png') || f === 'buildings_gpt.json' },
   // nests_gpt: element-specific revealed nest sprites
   { from: join(root, 'art/export/x2/nests_gpt'), to: 'src/assets/art/nests_gpt', pick: (f) => f.endsWith('.png') || f === 'nests_gpt.json' },
+  // objects_b4: mines, bonus capsules, medkits, caches, finds, build overlays (batch 04)
+  { from: join(root, 'art/export/x2/objects_gpt_b4'), to: 'src/assets/art/objects_b4', pick: (f) => f.endsWith('.png') || f === 'objects_gpt_b4.json' },
   // villains_mixed: heroes with spliced limbs
   { from: join(root, 'art/export/x2/units/villains_mixed'), to: 'src/assets/art/villains_mixed', pick: (f) => f.endsWith('.png') || f === 'villains_mixed.json' },
   { from: join(root, 'art/anim/x2'), to: 'src/assets/art/anim', pick: (f) => f.endsWith('.png') || f === 'anim.json' },

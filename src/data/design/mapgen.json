@@ -1,5 +1,5 @@
 {
-  "version": "0.4",
+  "version": "0.5",
   "mode": "call",
   "seedable": true,
   "generateAfterCommandCenterPlaced": true,
@@ -12,15 +12,21 @@
   "counts": {
     "nest": 6,
     "heavyNestChance": 0.15,
-    "cache": 4,
+    "cache": 3,
     "energy_vein": 3,
     "rubble": 18,
-    "survivor": 2,
+    "survivor": 3,
     "hero_lair": 3,
     "boss_hatch": 1,
     "blueprint": 2,
     "armor_crate": 2,
-    "lore_record": { "chance": 0.3, "max": 1 }
+    "lore_record": {
+      "chance": 0.3,
+      "max": 1
+    },
+    "mine": "hazards.json mine.countByDifficulty",
+    "bonus_capsule": 2,
+    "medkit": 2
   },
   "energyVein": {
     "energy": 120,
@@ -44,5 +50,38 @@
     "no other site adjacent to boss_hatch"
   ],
   "heroLairMinDistance": 5,
-  "bossMinDistance": 9
+  "bossMinDistance": 9,
+  "_survivor": "survivor = Склад Контроля with 3–5 civilians",
+  "findsNote": "blue channel counts all finds; the sensor's blue window also shows the icon of the most valuable find among neighbours (findValue). Finds never affect the danger logic.",
+  "cellElements": {
+    "_doc": "зоны клеток по стихиям. MVP_RULES §3.4",
+    "safeRadiusNeutral": true,
+    "zones": {
+      "count": [
+        7,
+        9
+      ],
+      "sizeCells": [
+        15,
+        40
+      ],
+      "method": "seeded Voronoi on non-water cells outside the safe radius, then 1 smoothing pass (a cell switches to the majority of its 8 neighbours if ≥5)"
+    },
+    "elements": [
+      "thermo",
+      "cryo",
+      "volt",
+      "toxin",
+      "impact"
+    ],
+    "maxSameElementZones": 3,
+    "nestsTakeZoneElement": true,
+    "lairsLeanToZone": "hero lair: hero's mutation element = zone element with 60% chance; adaptants of nests in the zone always take the zone element",
+    "squadRule": [
+      "at least 1 zone touching the safe radius is WEAK (config dig.cellDurability.cellWeakTo) to an element present in the squad",
+      "at least 1 zone touching the safe radius RESISTS the squad's most common element",
+      "the boss_hatch zone resists the squad's most common element (no straight line to the boss)"
+    ],
+    "dangerUnaffected": "cell elements never change mines/sensor logic and never hint where nests are, only what element a nest inside would have"
+  }
 }

@@ -10,6 +10,7 @@ import elementsJson from '../data/design/elements.json';
 import enemiesJson from '../data/design/enemies.json';
 import heroesJson from '../data/design/heroes.json';
 import mapgenJson from '../data/design/mapgen.json';
+import hazardsJson from '../data/design/hazards.json';
 import multiplayerJson from '../data/design/multiplayer.json';
 import partsJson from '../data/design/parts.json';
 import unitsJson from '../data/design/units.json';
@@ -169,6 +170,28 @@ for (const [name, table] of Object.entries({
 /** boss.selfWakeSeconds comes from the difficulty level (World.effectiveConfig fills it in). */
 export const config = configJson as unknown as Omit<typeof configJson, 'boss'> & { boss: { selfWakeSeconds: number; warningSeconds: number } };
 export const mapgen = mapgenJson;
+
+/** Mines, bonus capsules, medkits (hazards.json, MVP_RULES §5.2). */
+export interface HazardRules {
+  mine: {
+    countByDifficulty: Record<string, number>;
+    coopFactor: number;
+    unmarkedDig: {
+      armSeconds: number;
+      radius: number;
+      damage: number;
+      hitsBuildings: boolean;
+      status: Partial<Record<Tech, string | { stunSeconds?: number; freezeSeconds?: number; defenseMinus?: number; seconds?: number }>>;
+    };
+    markedDig: { defuse: boolean; energy: number };
+  };
+  bonusCapsule: {
+    count: number;
+    pool: Record<string, { energy?: number; armorPlateNearestHero?: number; buildingsHealPercent?: number; peekCharges?: number; heroesDamageTakenFactor?: number; seconds?: number }>;
+  };
+  medkit: { count: number; radius: number; hpPerSecond: number; seconds: number; doctorFactor: number };
+}
+export const hazards = hazardsJson as unknown as HazardRules;
 export const multiplayer = multiplayerJson;
 
 export const buildings: Record<string, BuildingDef> = Object.fromEntries(

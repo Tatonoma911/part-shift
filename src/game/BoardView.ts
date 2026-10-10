@@ -1,7 +1,7 @@
 import Phaser from 'phaser';
 import { buildings as buildingDefs, config, heroes as heroDefs, mapgen, parts as partDefs } from '../core/data';
 import { cellKey } from '../core/grid';
-import type { Building, Unit } from '../core/state';
+import type { Building, Cell, Unit } from '../core/state';
 import type { GameEvent, World } from '../core/world';
 import { animSets, BUILDING_ANCHOR, originOf } from './assets';
 import nestsJson from '../assets/art/nests_gpt/nests_gpt.json';
@@ -71,7 +71,11 @@ const DECOR_EL = ['cryo', 'volt', 'impact'];
 const CIVILIANS = ['civilian_office', 'civilian_courier', 'civilian_granny'];
 /** Game slot ids → the short names the limb-mask sets use in `slots`. */
 /** Find contents → drawn icon (blueprint fragment, armor plates, Control record). */
-const FIND_ICON: Partial<Record<string, string>> = { blueprint: 'icon.build', armor_crate: 'icon.boon_armor_plates', lore_record: 'icon.control_mask' };
+const FIND_ICON: Partial<Record<string, string>> = { blueprint: 'obj4.find_blueprint', armor_crate: 'obj4.find_armor', lore_record: 'obj4.find_record' };
+/** Mine art names its element differently from the rules (objects_gpt_b4.json). */
+const MINE_EL: Record<string, string> = { thermo: 'fire', cryo: 'ice', volt: 'volt', toxin: 'toxin', impact: 'force' };
+/** Hit flash of each element for the mine blast (fx.hit_*). */
+const MINE_HIT: Record<string, string> = { thermo: 'hit_thermo', cryo: 'hit_cryo', volt: 'hit_volt', toxin: 'hit_impact', impact: 'hit_impact' };
 const SLOT_SHORT: Record<string, string> = { arm_left: 'arm_l', arm_right: 'arm_r', leg_left: 'leg_l', leg_right: 'leg_r', tail: 'tail', wings: 'wings' };
 
 function elementOf(tech: string | undefined, pool = BLOCK_EL): string {
@@ -100,6 +104,10 @@ export class BoardView {
   private readonly sparks = new Map<number, Phaser.GameObjects.Sprite>();
   /** Pulsing glow over nests that are still alive (nest_live, AR-05). */
   private readonly nestGlow = new Map<number, Phaser.GameObjects.Sprite>();
+  /** Mines, bonus capsules and medkits standing on open cells (batch 04 art). */
+  private readonly objects = new Map<number, Phaser.GameObjects.Image>();
+  /** When a capsule was seen opening, to play closed → opening → glow → empty. */
+  private readonly opened = new Map<number, number>();
   private readonly sites = new Map<string, Phaser.GameObjects.Sprite>();
   /** The nest's own building in its element (nests_gpt), standing on the open cell. */
   private readonly nestArt = new Map<number, Phaser.GameObjects.Image>();
@@ -413,6 +421,17 @@ export class BoardView {
       case 'armor_crate_open':
         this.popFind('armor_crate', e.x, e.y);
         break;
+      case 'mine_blast': {
+        const p = this.center(e.x, e.y);
+        this.fx('explosion', p.x, p.y - 10, 2.2);
+        this.fx(MINE_HIT[e.text ?? 'impact'] ?? 'hit_impact', p.x, p.y - 20, 2.4);
+        this.shake(260, 0.008);
+        break;
+      }
+      case 'bonus_opened':
+      case 'medkit_open':
+        this.fxAtCell('cache_open', e.x, e.y, 1.4);
+        break;
       case 'survivor_joined':
         this.rescueRun(e.x, e.y, e.owner ?? this.me);
         break;
@@ -597,6 +616,7 @@ export class BoardView {
         this.updateDecor(i, c.revealed, px, py, h);
         this.updateNestArt(i, x, y);
         this.updateLair(x, y);
+        this.updateObject(i, c, px, py, now);
 
         if (!c.revealed) {
           this.setClues(i, x, y, null);
@@ -618,7 +638,9 @@ export class BoardView {
           og.lineStyle(3, C.seam, 0.9);
           og.strokeRect(px + 2, py + 2, CELL - 4, CELL - 4);
         }
-        const clueCell = c.content === 'ground' || c.content === 'rubble' || c.content === 'energy_vein' || c.resolved;
+        // A ticking mine, a healing medkit or a capsule still glowing keeps its cell; the sensor sign comes after.
+        const busy = c.fuse !== undefined || c.heal !== undefined || (c.content === 'bonus_capsule' && now - (this.opened.get(i) ?? -1e9) < 2200);
+        const clueCell = !busy && (c.content === 'ground' || c.content === 'rubble' || c.content === 'energy_vein' || c.resolved);
         this.setClues(i, x, y, clueCell && c.building === undefined ? w.clues(x, y) : null);
       }
     }
@@ -866,6 +888,50 @@ export class BoardView {
     img.setScale(k * 0.5);
     this.scene.tweens.add({ targets: img, y: p.y - 58, scale: k, duration: 650, ease: 'Back.easeOut' });
     this.scene.tweens.add({ targets: img, alpha: 0, delay: 1300, duration: 400, onComplete: () => img.destroy() });
+  }
+
+  /** Batch-04 objects on open cells: a mine ticks then lies spent, a capsule opens and empties, a medkit glows while it heals. */
+  private updateObject(i: number, c: Cell, px: number, py: number, now: number): void {
+    let name: string | null = null;
+    if (c.revealed && !(c.ruin && c.building === undefined)) {
+      switch (c.content) {
+        case 'mine': {
+          const el = MINE_EL[c.tech ?? 'impact'] ?? 'force';
+          const blink = c.fuse !== undefined && Math.floor(now / (c.fuse < 0.5 ? 70 : 160)) % 2 === 0;
+          name = c.resolved ? `mine_${el}_spent` : `mine_${el}_${blink ? 'triggered' : 'armed'}`;
+          break;
+        }
+        case 'bonus_capsule': {
+          if (!c.resolved) {
+            name = 'bonus_capsule_closed';
+            break;
+          }
+          const t0 = this.opened.get(i) ?? now;
+          this.opened.set(i, t0);
+          const t = now - t0;
+          name = t < 350 ? 'bonus_capsule_opening' : t < 2200 ? 'bonus_capsule_open_glow' : 'bonus_capsule_empty';
+          break;
+        }
+        case 'medkit':
+          name = c.heal !== undefined ? (Math.floor(now / 400) % 2 ? 'medkit_use_glow' : 'medkit_open') : c.resolved ? 'medkit_spent' : 'medkit_closed';
+          break;
+      }
+    }
+    const key = name ? `obj4.${name}` : null;
+    let img = this.objects.get(i);
+    if (!key || !this.scene.textures.exists(key)) {
+      img?.setVisible(false);
+      return;
+    }
+    if (!img) {
+      img = this.scene.add.image(0, 0, key).setDepth(D.site + 0.45);
+      this.objects.set(i, img);
+    }
+    if (img.texture.key !== key) img.setTexture(key);
+    // Objects stand on the cell, anchor 13 px above its bottom (objects_gpt_b4.json).
+    const fr = img.frame;
+    img.setOrigin(0.5, (fr.height - 13) / fr.height);
+    img.setPosition(px + CELL / 2, py + CELL - 13).setVisible(true);
   }
 
   /** Every seventh-ish closed block carries a live hazard: ice, arcing wires or smoke (block_fx loop_*). */

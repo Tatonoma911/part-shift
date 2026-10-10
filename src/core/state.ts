@@ -14,6 +14,9 @@ export type CellContent =
   | 'blueprint'
   | 'armor_crate'
   | 'lore_record'
+  | 'mine'
+  | 'bonus_capsule'
+  | 'medkit'
   | 'nest'
   | 'heavy_nest'
   | 'hero_lair'
@@ -36,6 +39,14 @@ export interface Cell {
   stock?: number;
   /** Seconds of rubble clearing done. */
   work?: number;
+  /** Mine: seconds until an opened (armed) mine blows; undefined when hidden or spent. */
+  fuse?: number;
+  /** Dug on purpose under an «Опасно» mark: a mine here is defused, not blown (MVP_RULES §5.2). */
+  defuse?: boolean;
+  /** Bonus capsule: the bonus it gave (hazards.json bonusCapsule.types). */
+  bonus?: string;
+  /** Medkit: seconds of healing left after it was opened. */
+  heal?: number;
   /** Shared dig progress of everyone digging this cell (config.dig.workers). */
   dig?: number;
   /** Building standing on this cell. */
@@ -197,6 +208,8 @@ export interface Player {
   boonOffer?: { ids: string[]; at: number };
   /** Allies down, waiting to come back at the center: hero id → game time it returns. */
   allyBack?: Record<string, number>;
+  /** Bonus capsule «damage_resist»: our heroes take less damage until this game time. */
+  resistUntil?: number;
   /** What a knocked-out ally comes back with (MVP_RULES §4.1а): kept trophies, stumps, armor plates. */
   allyScars?: Record<string, { parts: Unit['parts']; lostLimbs: ('arm' | 'leg')[]; armorPlates: number }>;
   /** Ally passive timers (heroes.json ally.everySeconds): hero id → seconds left. */
