@@ -81,7 +81,14 @@ const TOASTS: Record<string, { text: (e: GameEvent) => string; bad?: boolean }> 
   threat_level_up: { text: (e) => t('event.threat_rising', { level: e.amount ?? 0 }), bad: true },
   cache_open: { text: (e) => t('event.cache_reward', { energy: e.amount ?? 0 }) },
   nest_destroyed: { text: (e) => t('event.nest_destroyed', { energy: e.amount ?? 0 }) },
-  building_lost: { text: (e) => t('event.building_lost', { building: t(`building.${e.text}.name`) }), bad: true },
+  building_lost: {
+    // Hero stations come as `station.<hero>` (world.ts building_lost).
+    text: (e) => {
+      const [type, hero] = (e.text ?? '').split('.');
+      return t('event.building_lost', { building: hero ? t('building.station.name', { hero: heroName(hero) }) : t(`building.${type}.name`) });
+    },
+    bad: true,
+  },
   part_attached: { text: (e) => t('trophy.module_acquired', { part: t(`part.${e.text}.label`) }) },
   blueprint_found: { text: () => t('event.find.blueprint') },
   lore_found: { text: () => t('event.find.lore') },
