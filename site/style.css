@@ -530,3 +530,14 @@ footer .wrap { display: flex; gap: 18px; justify-content: space-between; flex-wr
 .split > * { min-width: 0; }
 .tech { align-content: start; }
 .stack > * { min-width: 0; }
+
+/* gpt_batch_04 art */
+.banner { margin: 0 0 clamp(24px, 4vw, 40px); padding: 0; overflow: hidden; display: grid; }
+.banner img { width: 100%; height: auto; display: block; }
+.banner figcaption { padding: 10px 16px; }
+.villain .art.shot { padding: 0; min-height: 0; overflow: hidden; position: relative; margin: 0; }
+.villain .art.shot img { width: 100%; height: auto; display: block; }
+.floor-no { position: absolute; left: 16px; bottom: 8px; font: 900 clamp(56px, 9vw, 110px)/1 var(--display); color: #fff; letter-spacing: -0.04em; text-shadow: 0 4px 24px rgba(0, 0, 0, .55); }
+.support-card .jar { width: 100%; max-width: 320px; aspect-ratio: 1; object-fit: cover; justify-self: center; }
+.moods { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+@media (max-width: 480px) { .moods { grid-template-columns: repeat(3, minmax(0, 1fr)); } }

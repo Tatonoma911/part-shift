@@ -1,5 +1,5 @@
 import { DONATE_DEFAULT, DONATE_MAX, DONATE_MIN, DONATE_PRESETS, yoomoneyUrl } from '../src/social/config';
-import type { Lang } from './content';
+import { img, type Lang } from './content';
 
 /**
  * Download and donation blocks shared by the site and the /play frame.
@@ -23,6 +23,7 @@ export function supportBlock(lang: Lang): string {
       <p class="dim">${R('Пока это тестовая сборка. iPhone позже, через App Store: Apple не разрешает ставить игры в обход магазина.', 'This is a test build for now. iPhone comes later through the App Store: Apple doesn’t allow installs outside its store.')}</p>
     </div>
     <div class="slab support-card">
+      <img class="jar" src="${img('support-jar.webp')}" alt="${R('Серафим и Патч с банкой «На смену»', 'Seraph and Patch with an “On shift” tip jar')}" loading="lazy">
       <span class="caps">${R('АВТОРУ // НА КОФЕ', 'TO THE AUTHOR // COFFEE')}</span>
       <h3>${R('Отправить автору донат', 'Send the author a tip')}</h3>
       <p>${R('Игра бесплатная и без платного контента. Если нравится, поддержи автора любой суммой.', 'The game is free with no paid content. If you like it, support the author with any amount.')}</p>
