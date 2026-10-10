@@ -1,0 +1,43 @@
+rules_version = '2';
+// Paste into Firebase console → Firestore Database → Rules → Publish.
+// Each player reads and writes only their own document: users/{uid}.
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // World ranking: boards/{boardId}/scores/{uid}. Everyone reads; a player writes only their own row,
+    // and a rewrite may only raise the score (or just change the nickname).
+    match /boards/{board}/scores/{uid} {
+      allow read: if true;
+      allow create: if request.auth != null && request.auth.uid == uid && validScore();
+      allow update: if request.auth != null && request.auth.uid == uid && validScore()
+        && (request.resource.data.score > resource.data.score
+            || request.resource.data.diff(resource.data).affectedKeys().hasOnly(['name']));
+      allow delete: if false;
+    }
+    // Feedback from the game: anyone signed in (anonymously) may send; only the console reads it.
+    match /feedback/{id} {
+      allow create: if request.auth != null
+        && request.resource.data.keys().hasOnly(['kind', 'text', 'contact', 'lang', 'build', 'uid', 'at', 'ua'])
+        && request.resource.data.text is string && request.resource.data.text.size() <= 1500
+        && request.resource.data.contact is string && request.resource.data.contact.size() <= 120
+        && request.resource.data.uid == request.auth.uid;
+      allow read, update, delete: if false;
+    }
+    function validScore() {
+      let d = request.resource.data;
+      return d.keys().hasOnly(['name', 'score', 'seconds', 'victory', 'rank', 'at'])
+        && d.name is string && d.name.size() >= 2 && d.name.size() <= 24
+        && d.score is int && d.score >= 0 && d.score <= 200000
+        && d.seconds is int && d.seconds >= 0
+        && d.victory is bool && d.rank is int && d.rank >= 0 && d.rank <= 6
+        && d.at is int;
+    }
+    match /users/{uid} {
+      allow read: if request.auth != null && request.auth.uid == uid;
+      allow write: if request.auth != null && request.auth.uid == uid
+        && request.resource.data.keys().hasOnly(['v', 'blob', 'changedAt', 'name', 'updatedAt'])
+        && request.resource.data.blob is string
+        && request.resource.data.blob.size() < 900000
+        && request.resource.data.changedAt is number;
+    }
+  }
+}

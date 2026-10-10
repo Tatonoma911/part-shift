@@ -1,5 +1,5 @@
 {
-  "version": "0.1",
+  "version": "0.4",
   "sites": [
     {
       "id": "nest",
@@ -15,8 +15,37 @@
       "techPool": [
         "thermo",
         "cryo",
-        "volt"
-      ]
+        "volt",
+        "toxin"
+      ],
+      "spawnByThreat": [
+        {
+          "fromLevel": 0,
+          "spawnSeconds": 7,
+          "maxAlive": 4
+        },
+        {
+          "fromLevel": 2,
+          "spawnSeconds": 5,
+          "maxAlive": 6
+        },
+        {
+          "fromLevel": 4,
+          "spawnSeconds": 4,
+          "maxAlive": 8
+        }
+      ],
+      "initialSpawnByThreat": [
+        {
+          "fromLevel": 0,
+          "count": 2
+        },
+        {
+          "fromLevel": 2,
+          "count": 3
+        }
+      ],
+      "_b2": "early nests weaker; spawnByThreat overrides spawnSeconds/maxAlive"
     },
     {
       "id": "heavy_nest",
@@ -32,15 +61,26 @@
       "tech": "impact"
     },
     {
-      "id": "demon_hatch",
-      "name_ru": "Люк Undersun",
-      "clueChannel": "demon",
+      "id": "boss_hatch",
+      "name_ru": "Убежище сильнейшего героя района",
+      "clueChannel": "boss",
       "hp": 260,
       "defense": 4,
-      "spawns": "demon",
+      "spawns": "hero:fromBossPool",
       "initialSpawn": 1,
       "maxAlive": 1,
       "reward": 0
+    },
+    {
+      "id": "hero_lair",
+      "name_ru": "Убежище обезумевшего героя",
+      "clueChannel": "threat",
+      "spawns": "<hero>",
+      "maxAlive": 1,
+      "selfOpenTarget": "nearest_command",
+      "_note": "one random hero per map; at threat level 4 an unopened lair opens by itself and the hero roams to the nearest command [Антон: heroes went mad and roam the city]",
+      "heroFrom": "heroes.json by tier (lairsPerMapByTier)",
+      "selfOpenThreatLevels": "heroes.json lairSelfOpenThreatLevels (tier1→2, tier2→4, tier3→6)"
     },
     {
       "id": "cache",
@@ -64,8 +104,8 @@
     {
       "id": "adaptant",
       "name_ru": "Адаптант",
-      "hp": 40,
-      "damage": 10,
+      "hp": 36,
+      "damage": 8,
       "defense": 1,
       "attackSeconds": 1,
       "range": 1,
@@ -81,7 +121,39 @@
         "tierOffset": 0
       },
       "partDropChance": 0.4,
-      "reward": 0
+      "reward": 0,
+      "attackTech": "fromNest",
+      "resistByTech": {
+        "thermo": {
+          "thermo": 0.5,
+          "cryo": 1.5,
+          "volt": 1.0,
+          "toxin": 1.0,
+          "impact": 1.0
+        },
+        "cryo": {
+          "thermo": 1.0,
+          "cryo": 0.5,
+          "volt": 1.5,
+          "toxin": 1.0,
+          "impact": 1.0
+        },
+        "volt": {
+          "thermo": 1.0,
+          "cryo": 1.0,
+          "volt": 0.5,
+          "toxin": 1.0,
+          "impact": 1.5
+        },
+        "toxin": {
+          "thermo": 1.5,
+          "cryo": 1.0,
+          "volt": 1.0,
+          "toxin": 0.5,
+          "impact": 1.0
+        }
+      },
+      "_b2": "QA B-2: was 40/10; 1v1 with an untrained resident now ~even (6.1 s vs 5.7 s)"
     },
     {
       "id": "heavy_adaptant",
@@ -102,31 +174,14 @@
         "tierOffset": 1
       },
       "partDropChance": 1.0,
-      "reward": 0
-    },
-    {
-      "id": "demon",
-      "name_ru": "Демон",
-      "boss": true,
-      "hp": 440,
-      "damage": 14,
-      "defense": 4,
-      "attackSeconds": 2.2,
-      "range": 1,
-      "speed": 1.5,
-      "part": {
-        "fixed": "drill_tail"
-      },
-      "partDropChance": 1.0,
-      "reward": 120,
-      "special": {
-        "id": "steam_blast",
-        "windupSeconds": 0.9,
-        "range": 3.25,
-        "blastSeconds": 0.65,
-        "cooldownSeconds": 6,
-        "hotGroundSeconds": 3.2,
-        "hotGroundDps": 4
+      "reward": 0,
+      "attackTech": "impact",
+      "resist": {
+        "thermo": 1.0,
+        "cryo": 1.0,
+        "volt": 1.0,
+        "toxin": 1.5,
+        "impact": 0.5
       }
     }
   ]

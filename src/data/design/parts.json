@@ -1,6 +1,6 @@
 {
-  "version": "0.1",
-  "_rules": "Enemy wears its part (bonuses apply to the enemy). Killing blow by a defender transfers it: free slot -> attach; else replace weakest same-type part if strictly higher tier; else recycle into energy = recycleEnergyPerTier * tier.",
+  "version": "0.4",
+  "_rules": "Enemy wears its part (bonuses apply to the enemy). Killing blow by a defender transfers it: free slot -> attach; else replace weakest same-type part if strictly higher tier; else recycle into energy = recycleEnergyPerTier * tier. Every part also gives its holder resistance to its tech (elements.json partResist). Hero parts (arm + leg/wings/tail per hero) live in heroes.json drops.",
   "techs": [
     "thermo",
     "cryo",
@@ -12,6 +12,7 @@
     "thermo",
     "cryo",
     "volt",
+    "toxin",
     "impact"
   ],
   "parts": [
@@ -138,13 +139,12 @@
           "armorShred": 2,
           "shredSeconds": 4
         }
-      ],
-      "mvp": false
+      ]
     },
     {
       "id": "runner_leg",
       "slot": "leg",
-      "tech": "any_light",
+      "tech": "kinetic",
       "tiers": [
         {
           "tier": 1,
@@ -189,20 +189,6 @@
         }
       ],
       "_note": "dropped by heavy adaptants"
-    },
-    {
-      "id": "drill_tail",
-      "slot": "tail",
-      "tech": "demon",
-      "tiers": [
-        {
-          "tier": 3,
-          "damage": 10,
-          "splashRadius": 1,
-          "splashFactor": 0.5,
-          "hp": 60
-        }
-      ]
     }
   ]
 }

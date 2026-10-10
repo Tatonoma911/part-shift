@@ -2,8 +2,16 @@ import { ClipPlayer } from './clip';
 import { CLIPS } from './clips';
 import { ENTRY, LESSONS, SECTIONS, sectionOf, type Entry } from './content';
 import { progress } from './progress';
-import { tr } from './text';
+import { has, tr } from './text';
 import { h, ICON, visualView } from './views';
+
+/** "key|value" from content.ts: a text key with {v}, a list of elements or parts, or a raw value. */
+function statValue(value: string): string {
+  const [key, v] = value.split('|');
+  if (key === 'stat.techs') return v.split(',').map((t) => tr(`tech.${t}`)).join(', ');
+  if (key === 'stat.parts') return v.split(',').map((p) => (has(`part.${p}.label`) ? tr(`part.${p}.label`) : tr(`part.${p}`))).join(' + ');
+  return key ? tr(key, { v }) : v;
+}
 
 type View = { kind: 'home' } | { kind: 'section'; id: string } | { kind: 'lessons'; index: number } | { kind: 'entry'; id: string };
 
@@ -215,10 +223,19 @@ export class Guide {
     if (stats?.length) {
       const box = h('div.psl-stats');
       for (const [label, value] of stats) {
-        const [key, v] = value.split('|');
-        box.append(h('div.psl-stat', {}, h('div.psl-stat-k', {}, tr(label)), h('div.psl-stat-v', {}, key ? tr(key, { v }) : v)));
+        const text = statValue(value);
+        box.append(h(`div.psl-stat${text.length > 11 ? '.wide' : ''}`, {}, h('div.psl-stat-k', {}, tr(label)), h('div.psl-stat-v', {}, text)));
       }
       this.body.append(h('div.psl-sub', {}, tr('ui.stats')), box);
+    }
+    if (e.items?.length) {
+      const list = h('div.psl-items');
+      for (const [name, text] of e.items) list.append(h('div.psl-item', {}, h('b', {}, tr(name)), h('span', {}, tr(text))));
+      this.body.append(list);
+    }
+    if (e.alt) {
+      const v = visualView(e.alt.visual, 'big');
+      if (v) this.body.append(h('div.psl-sub', {}, tr(e.alt.label)), h('div.psl-sprite.alt', {}, v));
     }
     if (e.tip) this.body.append(h('div.psl-tip', {}, h('b', {}, tr('ui.tip')), h('span', {}, tr(e.tip))));
     if (e.clip && e.visual) {

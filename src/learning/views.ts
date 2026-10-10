@@ -1,6 +1,7 @@
 import { animSets, drawFrame, frameAt, urlOf } from './art';
 import { render, Stage, Timeline } from './clip';
-import type { Visual } from './content';
+import { CYCLE, TECH_COLOR, type Tech, type Visual } from './content';
+import { tr } from './text';
 
 /** Small DOM helper: h('div.class', {attrs}, children). */
 export function h<T extends HTMLElement = HTMLElement>(tag: string, attrs: Record<string, unknown> = {}, ...kids: (Node | string | null | undefined | false)[]): T {
@@ -65,7 +66,7 @@ export function glyphView(channel: Extract<Visual, { kind: 'glyph' }>['channel']
     case 'finds':
       Object.assign(c, { open: true, tile: 'ground_grass_1', clue: { finds: 2 } });
       break;
-    case 'demon':
+    case 'boss':
       Object.assign(c, { open: true, tile: 'ground_1', clue: { demon: 1 } });
       break;
     case 'many':
@@ -101,6 +102,67 @@ export function glyphView(channel: Extract<Visual, { kind: 'glyph' }>['channel']
   return canvas;
 }
 
+/**
+ * The element cycle as a pentagon: each element points at the one it beats.
+ * With `focus`, its prey arrow turns green and its predator arrow red.
+ */
+export function cycleView(focus: Tech | undefined, size: 'thumb' | 'big'): HTMLElement {
+  const W = 384;
+  const R = 74;
+  const c = W / 2;
+  const pos = CYCLE.map((_, i) => {
+    const a = -Math.PI / 2 + (i * 2 * Math.PI) / CYCLE.length;
+    return [c + R * Math.cos(a), c + 8 + R * Math.sin(a)];
+  });
+  const node = 26;
+  let svg = `<svg class="psl-cycle" viewBox="0 ${c + 8 - R - 46} ${W} ${2 * R + 96}" xmlns="http://www.w3.org/2000/svg"><defs>`;
+  for (const [id, col] of [['n', '#10171C'], ['g', '#14A06B'], ['r', '#D7263D']]) svg += `<marker id="psl-a${id}" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto"><path d="M0 0L10 5L0 10z" fill="${col}"/></marker>`;
+  svg += '</defs>';
+  CYCLE.forEach((t, i) => {
+    const j = (i + 1) % CYCLE.length;
+    const [x1, y1] = pos[i];
+    const [x2, y2] = pos[j];
+    const d = Math.hypot(x2 - x1, y2 - y1);
+    const ux = (x2 - x1) / d;
+    const uy = (y2 - y1) / d;
+    const kind = !focus ? 'n' : t === focus ? 'g' : CYCLE[j] === focus ? 'r' : 'n';
+    const col = { n: '#10171C', g: '#14A06B', r: '#D7263D' }[kind];
+    const dim = focus && kind === 'n' ? 0.18 : 0.85;
+    svg += `<line x1="${x1 + ux * (node + 4)}" y1="${y1 + uy * (node + 4)}" x2="${x2 - ux * (node + 6)}" y2="${y2 - uy * (node + 6)}" stroke="${col}" stroke-opacity="${dim}" stroke-width="${kind === 'n' ? 3 : 4.5}" marker-end="url(#psl-a${kind})"/>`;
+  });
+  CYCLE.forEach((t, i) => {
+    const [x, y] = pos[i];
+    const off = focus && t !== focus && CYCLE[(CYCLE.indexOf(focus) + 1) % 5] !== t && CYCLE[(CYCLE.indexOf(focus) + 4) % 5] !== t;
+    svg += `<g opacity="${off ? 0.35 : 1}"><polygon points="${hexPoints(x, y, t === focus ? node + 4 : node)}" fill="${TECH_COLOR[t]}" stroke="#10171C" stroke-width="${t === focus ? 4 : 2.5}"/>`;
+    if (size === 'big') {
+      const top = Math.abs(x - c) < 5;
+      const low = y > c + 30;
+      const anchor = top || low ? 'middle' : x > c ? 'start' : 'end';
+      const lx = top || low ? x : x + (x > c ? node + 6 : -node - 6);
+      const ly = top ? y - node - 8 : low ? y + node + 16 : y + 4;
+      svg += `<text x="${lx.toFixed(1)}" y="${ly.toFixed(1)}" text-anchor="${anchor}" font-family="Unbounded,sans-serif" font-weight="800" font-size="12" fill="#10171C">${escapeXml(tr(`tech.${t}`).toUpperCase())}</text>`;
+    }
+    svg += '</g>';
+  });
+  svg += '</svg>';
+  const el = h('div', { html: svg });
+  el.style.width = size === 'thumb' ? '52px' : '100%';
+  el.style.display = 'grid';
+  el.style.placeItems = 'center';
+  return el;
+}
+
+function hexPoints(x: number, y: number, r: number): string {
+  return Array.from({ length: 6 }, (_, k) => {
+    const a = Math.PI / 6 + (k * Math.PI) / 3;
+    return `${(x + r * Math.cos(a)).toFixed(1)},${(y + r * Math.sin(a)).toFixed(1)}`;
+  }).join(' ');
+}
+
+function escapeXml(t: string): string {
+  return t.replace(/[<>&"]/g, (c) => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;', '"': '&quot;' })[c]!);
+}
+
 /** The picture for a guide entry: animated sprite, pixel image or a drawn cell. */
 export function visualView(v: Visual | undefined, size: 'thumb' | 'big'): HTMLElement | null {
   if (!v) return null;
@@ -121,5 +183,6 @@ export function visualView(v: Visual | undefined, size: 'thumb' | 'big'): HTMLEl
     if (size === 'big' && img.complete) img.style.width = `${Math.min(img.naturalWidth * s, 300)}px`;
     return img;
   }
+  if (v.kind === 'cycle') return cycleView(v.focus, size);
   return glyphView(v.channel, size === 'thumb' ? 0.9 : 2.6);
 }

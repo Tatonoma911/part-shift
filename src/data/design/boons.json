@@ -1,0 +1,167 @@
+{
+  "version": "0.5",
+  "_doc": "design/META.md §8 (тайник: выбор 1 из 3)",
+  "rules": {
+    "offerCount": 3,
+    "rarityWeights": {
+      "common": 70,
+      "rare": 30
+    },
+    "noDuplicateInOffer": true,
+    "fallbackBoon": "energy_cache",
+    "alwaysIncludeFallbackIfOfferShort": true,
+    "solo": "game pauses while the choice is open",
+    "online": "no pause; the player who opened it picks within 10 s, otherwise the first card; effects with scope team apply to everyone",
+    "poolFromRanks": "meta.json ranks[].unlocksBoons (cumulative)",
+    "replacesCacheEnergy": true,
+    "cacheEnergyStillGranted": 20,
+    "_note": "stackable:false boons leave the pool once taken in this run"
+  },
+  "boons": [
+    {
+      "id": "energy_cache",
+      "name_ru": "Заначка",
+      "rarity": "common",
+      "stackable": true,
+      "effect": {
+        "type": "energy_now",
+        "amount": 120
+      }
+    },
+    {
+      "id": "reactor_overclock",
+      "name_ru": "Разгон реакторов",
+      "rarity": "common",
+      "stackable": true,
+      "maxStacks": 2,
+      "effect": {
+        "type": "energyProductionFactor",
+        "target": "reactor",
+        "value": 1.3
+      }
+    },
+    {
+      "id": "sharp_shovels",
+      "name_ru": "Заточенные лопаты",
+      "rarity": "common",
+      "stackable": false,
+      "effect": {
+        "type": "digTimeFactor",
+        "value": 0.75
+      }
+    },
+    {
+      "id": "reinforcements",
+      "name_ru": "Подкрепление",
+      "rarity": "common",
+      "stackable": true,
+      "maxStacks": 2,
+      "effect": {
+        "type": "residents_now_and_cap",
+        "residents": 2,
+        "cap": 2
+      }
+    },
+    {
+      "id": "field_training",
+      "name_ru": "Курсы на месте",
+      "rarity": "common",
+      "stackable": true,
+      "effect": {
+        "type": "trainingLevel",
+        "add": 1,
+        "maxTotal": 3,
+        "_note": "same as a school level, does not need a building"
+      },
+      "availableIf": "training level < 3"
+    },
+    {
+      "id": "armor_plates",
+      "name_ru": "Бронежилеты",
+      "rarity": "common",
+      "stackable": true,
+      "maxStacks": 2,
+      "effect": {
+        "type": "residentDefenseAdd",
+        "value": 2
+      }
+    },
+    {
+      "id": "drone_scan",
+      "name_ru": "Дрон-разведчик",
+      "rarity": "common",
+      "stackable": true,
+      "effect": {
+        "type": "scan_now_and_charges",
+        "markDurationSeconds": 30,
+        "scannerChargesAdd": 2
+      },
+      "_note": "in assist mode off: only marks for 30 s, no charges"
+    },
+    {
+      "id": "first_aid",
+      "name_ru": "Аптечки",
+      "rarity": "rare",
+      "stackable": false,
+      "effect": {
+        "type": "residentRegen",
+        "hpPerSecond": 1,
+        "onlyOutOfCombatSeconds": 3
+      }
+    },
+    {
+      "id": "nest_tracker",
+      "name_ru": "Наводка",
+      "rarity": "common",
+      "stackable": true,
+      "effect": {
+        "type": "mark_hidden_site",
+        "site": [
+          "nest",
+          "heavy_nest",
+          "hero_lair"
+        ],
+        "count": 1,
+        "choose": "nearest to command center"
+      },
+      "availableIf": "a hidden one exists"
+    },
+    {
+      "id": "spare_part",
+      "name_ru": "Запчасть со склада",
+      "rarity": "rare",
+      "stackable": true,
+      "effect": {
+        "type": "give_part",
+        "tier": 2,
+        "to": "resident with the most empty slots",
+        "slotPriority": [
+          "arm",
+          "leg"
+        ]
+      }
+    },
+    {
+      "id": "weak_spot",
+      "name_ru": "Досье на цель",
+      "rarity": "rare",
+      "stackable": false,
+      "effect": {
+        "type": "damageVsCallTargetFactor",
+        "value": 1.25,
+        "alsoRevealWeakness": true
+      }
+    },
+    {
+      "id": "hotline",
+      "name_ru": "Горячая линия",
+      "rarity": "rare",
+      "stackable": true,
+      "maxStacks": 2,
+      "effect": {
+        "type": "spawnIntervalFactor",
+        "value": 0.8
+      }
+    }
+  ]
+}

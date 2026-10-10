@@ -1,11 +1,16 @@
 import ruWriter from '../data/text/ru.json';
-import en from './en.json';
+import enUi from './en.json';
+import enVoice from '../data/text/en_voice.json';
+import enMeta from '../data/text/en_meta.json';
+import enObjects from '../learning/text/en-objects.json';
 import ruExtra from './ru-extra.json';
 
 export type Lang = 'ru' | 'en';
 
 /** Russian comes from the writer (text/ru.json); ru-extra holds a few UI-only lines. */
 const ru: Record<string, string> = { ...ruWriter, ...ruExtra };
+/** English: game-object descriptions (en-objects.json), voice/meta writer lines, then UI strings (highest priority). */
+const en: Record<string, string> = { ...enObjects, ...enVoice, ...enMeta, ...enUi };
 const tables: Record<Lang, Record<string, string>> = { ru, en };
 
 /** ?lang=en|ru wins, then the language picked in settings, then the browser language. */
@@ -36,4 +41,9 @@ export function t(key: string, params: Record<string, string | number> = {}): st
 
 export function hasText(key: string): boolean {
   return key in ru;
+}
+
+/** The line exists in this language (no fallback to Russian). */
+export function hasLangText(l: Lang, key: string): boolean {
+  return key in tables[l];
 }

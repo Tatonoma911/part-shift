@@ -1,0 +1,189 @@
+{
+  "version": "0.5",
+  "_doc": "design/META.md",
+  "storage": {
+    "key": "partshift.meta.v1",
+    "where": "localStorage now; account cloud sync later (merge = max per counter, union of unlocks)",
+    "saveWhen": [
+      "run_end",
+      "hero_unlocked",
+      "tutorial_complete"
+    ],
+    "migrateFrom": [
+      "partshift.bestTime"
+    ]
+  },
+  "runScore": {
+    "energyEarned": 1,
+    "nestDestroyed": 50,
+    "heroDefeated": 200,
+    "callTargetDefeatedExtra": 300,
+    "winBonus": 300,
+    "timeBonusByMode": {
+      "call": {
+        "underSeconds": [
+          [
+            600,
+            200
+          ],
+          [
+            900,
+            100
+          ]
+        ]
+      },
+      "quick": {
+        "underSeconds": [
+          [
+            240,
+            100
+          ],
+          [
+            330,
+            50
+          ]
+        ]
+      }
+    },
+    "multiplierByDifficulty": {
+      "intern": 0.75,
+      "shift": 1.0,
+      "rush": 1.5
+    },
+    "multiplierByMode": {
+      "call": 1.0,
+      "quick": 0.6,
+      "coop_call": 1.0
+    },
+    "lossKeepsScore": true,
+    "_note": "score counts in lost and abandoned runs too (no win/time bonus): progress always moves. demonDefeated removed: Демон is an ordinary hero [Антон]"
+  },
+  "ranks": {
+    "_doc": "design/META.md §3",
+    "statForRank": "total_score",
+    "list": [
+      {
+        "id": "r1",
+        "name_ru": "Внештатный спасатель",
+        "from": 0,
+        "unlocksBoons": [
+          "energy_cache",
+          "reactor_overclock",
+          "sharp_shovels",
+          "reinforcements",
+          "field_training",
+          "armor_plates"
+        ]
+      },
+      {
+        "id": "r2",
+        "name_ru": "Дежурный по кварталу",
+        "from": 2000,
+        "unlocksBoons": [
+          "drone_scan"
+        ]
+      },
+      {
+        "id": "r3",
+        "name_ru": "Спасатель",
+        "from": 6000,
+        "unlocksBoons": [
+          "first_aid"
+        ]
+      },
+      {
+        "id": "r4",
+        "name_ru": "Старший спасатель",
+        "from": 15000,
+        "unlocksBoons": [
+          "nest_tracker",
+          "spare_part"
+        ]
+      },
+      {
+        "id": "r5",
+        "name_ru": "Командир смены",
+        "from": 30000,
+        "unlocksBoons": [
+          "weak_spot"
+        ]
+      },
+      {
+        "id": "r6",
+        "name_ru": "Начальник района",
+        "from": 60000,
+        "unlocksBoons": [
+          "hotline"
+        ]
+      },
+      {
+        "id": "r7",
+        "name_ru": "Легенда HeroOut",
+        "from": 120000,
+        "unlocksBoons": []
+      }
+    ]
+  },
+  "lifetimeStats": {
+    "_note": "all counters are integers, incremented live during the run and committed at run end (also for losses and quits)",
+    "runs_played": "run ended in any way (win, loss, quit after first dig)",
+    "runs_won": "call target defeated",
+    "runs_won.<difficulty>": "wins per difficulty id",
+    "runs_won.quick": "wins in quick mode",
+    "play_seconds": "game time, all runs",
+    "total_score": "sum of runScore",
+    "energy_earned": "all Energy gained",
+    "best_run_energy": "max energy_earned in one run (shown for Садовница)",
+    "tiles_dug": "cells dug",
+    "caches_opened": "cache sites opened",
+    "nests_destroyed": "nest + heavy_nest",
+    "enemies_defeated": "any enemy unit killed",
+    "enemies_frozen": "freeze status applied",
+    "reaction_conductive_chain": "reaction fired",
+    "reactions_total": "any reaction fired",
+    "buildings_built": "construction finished",
+    "parts_taken": "part attached to a resident",
+    "parts_recycled": "spare part turned into Energy",
+    "residents_lost": "resident died",
+    "accidental_opens": "nest/heavy_nest revealed by digging WITHOUT the explicit confirm «Да, вскрыть» (tap on a scanner-marked or player-flagged cell + confirm = deliberate). Lairs/hatches self-opening by timer and raid tunnels do not count",
+    "heroes_defeated": "any hero killed",
+    "hero_seen.<heroId>": "1 once the hero was met as an enemy (lair opened or hero woke)",
+    "hero_defeats.<heroId>": "times that hero was defeated",
+    "daily_streak": "consecutive UTC days with a finished Вызов дня",
+    "daily_last_date": "YYYY-MM-DD",
+    "challenge.<challengeId>": "times the run challenge was completed (win_without_accidental_open, win_no_resident_lost, resident_full_slots); > 0 means done"
+  },
+  "runChallenges": {
+    "energy_earned": "value = energy earned this run; best kept in best_run_energy",
+    "win_without_accidental_open": "win and accidental_opens == 0 this run",
+    "win_no_resident_lost": "win and residents_lost == 0 this run",
+    "resident_full_slots": "any resident had all 6 slots filled at once (does not need a win)"
+  },
+  "progressDisplay": {
+    "_doc": "design/META.md §4; strings text/ru.json dossier.progress.*",
+    "defeat_hero": "{name}: {have}/{need}",
+    "lifetime_stat": "{label}: {have}/{need}",
+    "run_stat": "Рекорд за смену: {best}/{need}",
+    "run_challenge": "Испытание: {desc} — не выполнено",
+    "tutorial_complete": "Пройти обучение",
+    "unlock_all": "Открыто героев: {have}/{need}",
+    "_strings": "text/ru.json dossier.progress.*, rank.*, boon.*, results.*, daily.*"
+  },
+  "coop": {
+    "heroDefeatsCountFor": "every player present at the kill",
+    "runChallengesFor": "team",
+    "scoreFor": "each player gets the team score",
+    "savedWhere": "each player's own device/account"
+  },
+  "unlockFlow": "on unlock show the hero card with ally bonus; hero becomes selectable as ally before a run; enemy version still appears in runs",
+  "allySelection": "pre-run screen: slots from heroes.json allySlots; last choice remembered",
+  "daily": {
+    "_doc": "design/META.md §6",
+    "priority": 2,
+    "seed": "UTC date YYYYMMDD",
+    "mode": "call",
+    "difficulty": "shift",
+    "countsOnce": "first finished attempt per day goes to the daily record; replays allowed but not scored for daily",
+    "streakBreaksAfterDays": 1
+  }
+}

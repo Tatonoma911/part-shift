@@ -5,6 +5,8 @@ export function playIntroComic(opts?: {
   assetBase?: string;
   assets?: Record<string, string>;
   music?: boolean;
+  musicVolume?: number;
+  sfxVolume?: number;
   skipGate?: boolean;
   parent?: HTMLElement;
   onDone?: (r: { skipped: boolean }) => void;

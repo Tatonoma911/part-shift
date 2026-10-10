@@ -31,7 +31,7 @@ describe('online match setup (MVP_RULES §14)', () => {
         }
       }
       // The Demon sleeps away from every center.
-      const hatch = w.s.cells.findIndex((c) => c.content === 'demon_hatch');
+      const hatch = w.s.cells.findIndex((c) => c.content === 'boss_hatch');
       const hx = hatch % w.s.width;
       const hy = Math.floor(hatch / w.s.width);
       for (const p of spots) expect(cheb(p.x, p.y, hx, hy)).toBeGreaterThan(4);
@@ -39,8 +39,8 @@ describe('online match setup (MVP_RULES §14)', () => {
   }
 
   it('coop: the Demon has extra HP per extra player; FFA does not', () => {
-    expect(createMatch({ seed: 1, mode: 'coop', names: names(3) }).s.demon.hpScale).toBeCloseTo(2.2);
-    expect(createMatch({ seed: 1, mode: 'ffa', names: names(3) }).s.demon.hpScale).toBe(1);
+    expect(createMatch({ seed: 1, mode: 'coop', names: names(3) }).s.boss.hpScale).toBeCloseTo(3.3);
+    expect(createMatch({ seed: 1, mode: 'ffa', names: names(3) }).s.boss.hpScale).toBe(1);
   });
 
   it('coop: one forfeit leaves the others playing; all gone is a defeat', () => {

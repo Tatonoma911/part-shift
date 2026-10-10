@@ -1,0 +1,139 @@
+{
+  "version": "0.6",
+  "_doc": "design/MVP_RULES.md §15",
+  "default": "shift",
+  "defaultFirstRunAfterTutorial": "shift",
+  "levels": [
+    {
+      "id": "intern",
+      "name_ru": "Стажёр",
+      "threatSecondsPerLevel": 180,
+      "enemyHpFactor": 0.8,
+      "enemyDamageFactor": 0.85,
+      "startEnergy": 120,
+      "assistMode": "full",
+      "noGuessBoard": true,
+      "bossSelfWakeSeconds": 900,
+      "callTargetHpFactor": 1.2,
+      "lairSelfOpenThreatLevels": [
+        2,
+        4,
+        5
+      ],
+      "bossPoolExtra": [],
+      "raids": {
+        "enabled": false
+      }
+    },
+    {
+      "id": "shift",
+      "name_ru": "Смена",
+      "threatSecondsPerLevel": 100,
+      "enemyHpFactor": 1.05,
+      "enemyDamageFactor": 1.15,
+      "startEnergy": 70,
+      "assistMode": "scanner",
+      "noGuessBoard": true,
+      "bossSelfWakeSeconds": 660,
+      "callTargetHpFactor": 1.5,
+      "lairSelfOpenThreatLevels": [
+        2,
+        4,
+        5
+      ],
+      "bossPoolExtra": [],
+      "raids": {
+        "enabled": true,
+        "firstAfterSeconds": 150,
+        "everySeconds": 60,
+        "size": 2,
+        "sizePerThreatLevels": 2,
+        "maxSize": 6
+      }
+    },
+    {
+      "id": "rush",
+      "name_ru": "Аврал",
+      "threatSecondsPerLevel": 80,
+      "enemyHpFactor": 1.2,
+      "enemyDamageFactor": 1.25,
+      "startEnergy": 60,
+      "assistMode": "off",
+      "noGuessBoard": false,
+      "bossSelfWakeSeconds": 540,
+      "callTargetHpFactor": 1.7,
+      "lairSelfOpenThreatLevels": [
+        2,
+        4,
+        5
+      ],
+      "bossPoolExtra": [
+        "n73_if_unlocked_all"
+      ],
+      "raids": {
+        "enabled": true,
+        "firstAfterSeconds": 90,
+        "everySeconds": 45,
+        "size": 3,
+        "sizePerThreatLevels": 2,
+        "maxSize": 8
+      }
+    }
+  ],
+  "_timeline_shift": "[Антон 21:26: соло выше среднего по сложности, злодеи регулярно ломают здания] threat every 100 s; first raid 2:30 then every 60 s; heroes self-open at 3:20 / 6:40 / 8:20, call target 11:00; novice target win 13–17 min with some losses, experienced 9–12 min",
+  "unlocks": {
+    "rush": "first win on shift",
+    "intern": "always"
+  },
+  "records": "best time is kept per difficulty",
+  "noGuess": {
+    "_doc": "design/MVP_RULES.md §15.2",
+    "maxAttempts": 200,
+    "solverMoves": [
+      "dig_provably_safe",
+      "open_provably_dangerous"
+    ],
+    "dangerChannels": [
+      "threat",
+      "boss"
+    ],
+    "startKnown": "command cell + safeRadius area",
+    "fallback": "move one site from the stuck ambiguous frontier to a random cell that keeps the board solvable; if still stuck after 200 attempts accept board and log"
+  },
+  "gameSpeed": {
+    "options": [
+      1,
+      2
+    ],
+    "soloOnly": true,
+    "onlineFixed": 1,
+    "tutorialAllowedFromStep": 6,
+    "hotkey": "F",
+    "recordsUseGameTime": true
+  },
+  "raidRules": {
+    "_doc": "design/MVP_RULES.md §9.7",
+    "source": "every opened (revealed, not destroyed) nest or heavy_nest; if none opened, a hidden nest nearest to the player's buildings opens a tunnel and sends the raid from there (its cell is shown as threat ping)",
+    "target": "player building nearest to the source, command center last unless it is the only one",
+    "warningSeconds": 10,
+    "warningUi": "red arrow at screen edge + sound raid_incoming",
+    "raidersPreferBuildings": true,
+    "switchToResidentsIfAttackedWithin": 1,
+    "_note": "raids are what makes villains regularly smash buildings",
+    "minSecondsSirenToFirstHit": 10,
+    "spawnMinDistanceFromBuildings": 6,
+    "tunnelExit": "if the source nest is closer than 6 cells to any player building, raiders surface at a revealed or closed cell 6 cells away along the line from the target; they wait there until the siren has run 10 s",
+    "_b3": "QA B-3: reactor fell 4 s after the toast, home in the same second"
+  },
+  "buildingDamage": {
+    "enemyVsBuildingFactor": 1.5,
+    "heroVsBuildingFactor": 2.5,
+    "ruins": {
+      "leavesRuins": true,
+      "rebuildCostFactor": 0.5,
+      "rebuildSecondsFactor": 0.5
+    },
+    "hitShake": true,
+    "_note": "разрушенное здание оставляет руины, отстроить можно за полцены"
+  }
+}

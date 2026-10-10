@@ -1,5 +1,5 @@
 {
-  "version": "0.1",
+  "version": "0.4",
   "_units": "distances in tiles, speeds in tiles/s, time in seconds of unpaused game time",
   "board": {
     "width": 14,
@@ -10,34 +10,41 @@
     "startEnergy": 80,
     "energyPerDugTile": 5,
     "orbSpeed": 6,
-    "cacheEnergy": 60,
-    "partRecycleEnergyPerTier": 5
+    "cacheEnergy": 20,
+    "partRecycleEnergyPerTier": 5,
+    "_cacheNote": "cache now gives 20 Energy + a 1-of-3 boon choice (boons.json)"
   },
   "dig": {
     "digSeconds": 9,
     "requireAdjacentRevealed": true,
     "autoQueueZeroNeighbors": false,
-    "autoQueuePriority": "low"
+    "autoQueuePriority": "low",
+    "workers": {
+      "_doc": "[Антон 21:48] несколько жителей на одной клетке копают быстрее; MVP_RULES §4.2",
+      "maxPerCell": 3,
+      "speedBonusPerExtraWorker": 0.75,
+      "formula": "seconds = digSeconds / (1 + 0.75 × (workers − 1))  → 1: 9 s, 2: 5.1 s, 3: 3.6 s",
+      "idleJoin": "an idle resident with nothing in the queue joins the nearest cell being dug (up to maxPerCell)",
+      "progressBar": "one shared progress ring on the cell, workers stand on different free sides of it",
+      "appliesAlsoTo": [
+        "rubble",
+        "energy_vein (already maxWorkers 2)",
+        "building construction",
+        "ruins rebuild"
+      ]
+    }
   },
   "territory": {
     "commandCenterRadius": 3,
     "schoolRadius": 2
   },
   "population": {
-    "spawnSeconds": 20,
+    "_note": "[Антон 2026-10-09] residents appear on a timer at the command center (or nearest Жилой блок), not per house",
+    "spawnSeconds": 12,
+    "initialResidents": 2,
+    "cap": 10,
+    "capNote": "cap is fixed; Standard ally and meta can raise it",
     "firstResidentImmediate": true
-  },
-  "defenders": {
-    "baseCapacityWithSchool": 3,
-    "capacityPerSchool": 2,
-    "trainCost": 10,
-    "trainSeconds": 8,
-    "trainingFreesDwellingSlot": true,
-    "guardRadius": 3,
-    "autoAttack": true,
-    "autoAttackNestsInGuardRadius": true,
-    "tapEnemyDirects": true,
-    "attackModeButton": false
   },
   "combat": {
     "damageFormula": "max(minDamage, attackerDamage - targetDefense)",
@@ -47,7 +54,7 @@
   "threat": {
     "secondsPerLevel": 120,
     "hpPerLevel": 0.1,
-    "damagePerLevel": 0.1,
+    "damagePerLevel": 0.08,
     "spawnIntervalFactorPerLevel": 0.93,
     "minSpawnInterval": 2,
     "partTierByLevel": [
@@ -63,15 +70,24 @@
         "fromLevel": 6,
         "tier": 3
       }
-    ]
-  },
-  "demon": {
-    "selfWakeSeconds": 900,
-    "warningSeconds": 60
+    ],
+    "warnings": {
+      "toastOnLevelUpFirstN": 3,
+      "toastKey": "event.threat_rising",
+      "showEnemyPowerInHud": true,
+      "idleNestHint": {
+        "afterSecondsWithoutCombat": 180,
+        "ifKnownNests": 1,
+        "text": "hint.nest_grows_stronger"
+      },
+      "_note": "QA B-1: player must see that waiting makes nests stronger"
+    }
   },
   "victory": {
-    "type": "kill_demon",
-    "requireHotGroundCleared": true
+    "type": "target_hero_defeated",
+    "target": "boss_hatch hero (the hero named in the call)",
+    "requireHotGroundCleared": true,
+    "_note": "Mode «Срочный вызов: {hero}» (writer's name): each shift is a call against one maddened hero, chosen from heroes.json bossPool. The 3 other hero lairs are optional threats (they self-open on threat levels 2/4/6) and give parts for the target fight. [Антон] Demon is just one possible target."
   },
   "defeat": {
     "type": "command_destroyed"
@@ -106,12 +122,7 @@
       "scanner",
       "off"
     ],
-    "defaultByDifficulty": {
-      "tutorial": "full",
-      "easy": "full",
-      "normal": "scanner",
-      "hard": "off"
-    },
+    "defaultByDifficulty": "difficulty.json levels[].assistMode (tutorial: full)",
     "safeMeansNoChannels": [
       "threat",
       "demon"
@@ -130,5 +141,99 @@
       "coop": "hostChoice",
       "last_command": "scanner"
     }
+  },
+  "residents": {
+    "allFight": true,
+    "engageRadius": 3,
+    "guardRadiusAroundBuildings": 3,
+    "dropWorkToFight": true,
+    "tapEnemyDirects": true,
+    "attackModeButton": false,
+    "returnToWorkAfterSeconds": 3,
+    "heroKillDrops": "arm to killing blow, second part to next-highest damage dealer",
+    "rally": {
+      "_doc": "QA B-2: residents must not trickle in one by one. MVP_RULES §4.3",
+      "trigger": [
+        "nest or lair opened",
+        "raid warning",
+        "player taps an enemy"
+      ],
+      "radius": 6,
+      "gatherPoint": "cell 2 steps from the threat toward the command center",
+      "engageWhen": "gathered >= min(4, residents in radius) or 4 s passed or an enemy reaches the gather point",
+      "diggersFinishCurrentCellFirst": false
+    },
+    "retreat": {
+      "atHpFraction": 0.25,
+      "to": "nearest home shelter or command center",
+      "returnAtHpFraction": 0.8,
+      "_note": "command heals 2 HP/s at radius 1, home shelter protects"
+    }
+  },
+  "school": {
+    "trainingLevelsMax": 3,
+    "perLevel": {
+      "hp": 10,
+      "damage": 2,
+      "defense": 0.5
+    }
+  },
+  "boss": {
+    "selfWakeSeconds": "difficulty.json bossSelfWakeSeconds",
+    "warningSeconds": 60
+  },
+  "clueChannels": [
+    "threat",
+    "boss",
+    "finds"
+  ],
+  "_difficulty": "threat.secondsPerLevel, economy.startEnergy, assist default, boss wake and lair timings are overridden by data/difficulty.json",
+  "readability": {
+    "_doc": "[Антон 21:26] полоски здоровья у всех + шарики стихий над злодеями",
+    "healthBars": {
+      "show": [
+        "resident",
+        "ally_hero",
+        "enemy",
+        "enemy_hero",
+        "building",
+        "command",
+        "nest"
+      ],
+      "when": "always for heroes, buildings, command; others when damaged or in combat",
+      "colors": {
+        "own": "#4CD964",
+        "enemy": "#FF3B30",
+        "hero": "#B05CFF"
+      },
+      "heroBarLarge": true,
+      "showNumbersOnHeroes": true
+    },
+    "weaknessOrbs": {
+      "show": [
+        "enemy",
+        "enemy_hero",
+        "nest"
+      ],
+      "what": "elements this enemy is weak to (resist > 1), one small orb per element in elements.json techs[].color; own tech shown as a small ring/frame of the bar",
+      "maxOrbs": 3,
+      "highlightIfResidentHasMatchingArm": true,
+      "_note": "понятно, чем его лучше бить"
+    }
+  },
+  "combat_stacking": {
+    "_note": "damage of several residents on one target already adds up (each resident hits); sites (nests, lairs) and enemies have no cap on attackers except physical space: up to 8 around a cell",
+    "maxAttackersPerCell": 8
+  },
+  "input": {
+    "_doc": "[Антон 21:49] без переключателя Копать/Строить: действие по тому, куда тапнули. MVP_RULES §7.1",
+    "modeSwitch": false,
+    "tapClosedCell": "add to dig queue (swipe adds several); cell highlights at once",
+    "tapOpenCellInTerritory": "open build menu for this cell",
+    "tapOpenCellOutsideTerritory": "toast build.refuse.not_liberated + flash territory border + arrow to the nearest liberated cell",
+    "tapEnemy": "direct nearby residents to attack",
+    "tapBuilding": "building info (HP, effect, upgrade later)",
+    "longPressClosedCell": "toggle flag «осторожно»",
+    "tapNumberCell": "highlight 8 neighbours (ONBOARDING 1.2); a second tap on the same cell opens build menu if liberated"
   }
 }

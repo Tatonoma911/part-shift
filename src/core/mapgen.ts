@@ -1,8 +1,8 @@
 /**
- * Field generation for "Demon Hunt" (design/data/mapgen.json, MVP_RULES §3.2).
+ * Field generation for «Срочный вызов» (design/data/mapgen.json, MVP_RULES §3.2).
  * Runs after the command center(s) are placed, so the start is always safe.
  */
-import { mapgen, sites as siteDefs, type Tech } from './data';
+import { heroList, heroRules, mapgen, sites as siteDefs, type Tech } from './data';
 import { cellAt, cheb, inBounds, N8 } from './grid';
 import { rand, randIntOf } from './rng';
 import type { CellContent, GameState } from './state';
@@ -16,7 +16,7 @@ interface Options {
   countScale?: number;
 }
 
-const SITE_KINDS: CellContent[] = ['nest', 'heavy_nest', 'demon_hatch', 'cache', 'survivor'];
+const SITE_KINDS: CellContent[] = ['nest', 'heavy_nest', 'hero_lair', 'boss_hatch', 'cache', 'survivor'];
 
 export function generateField(s: GameState, opts: Options): void {
   const { commands } = opts;
@@ -36,15 +36,32 @@ export function generateField(s: GameState, opts: Options): void {
 
   placeWater(s, commands, minCmdDist);
 
-  // Demon: as far as the rules ask, never next to another site.
-  let far = all.filter((p) => isFree(p) && minCmdDist(p.x, p.y) >= mapgen.demonMinDistance);
+  // Heroes: one lair per tier (heroes.json lairsPerMapByTier), never the call target itself
+  // (chosen when the match was created, so the menu can name it).
+  const boss = s.boss.hero;
+  const lairHeroes: { id: string; tier: number }[] = [];
+  for (const [tier, n] of Object.entries(heroRules.lairsPerMapByTier)) {
+    const pool = heroList.filter((h) => h.tier === Number(tier) && h.id !== boss);
+    for (let i = 0; i < n && pool.length; i++) lairHeroes.push({ id: pool.splice(randIntOf(s, pool.length), 1)[0].id, tier: Number(tier) });
+  }
+
+  // Call target: as far as the rules ask, never next to another site.
+  let far = all.filter((p) => isFree(p) && minCmdDist(p.x, p.y) >= mapgen.bossMinDistance);
   if (far.length === 0) {
     const best = Math.max(...all.filter(isFree).map((p) => minCmdDist(p.x, p.y)));
     far = all.filter((p) => isFree(p) && minCmdDist(p.x, p.y) === best);
   }
-  const hatch = set(pick(far), 'demon_hatch')!;
+  const hatch = set(pick(far), 'boss_hatch')!;
+  cellAt(s, hatch.x, hatch.y).hero = boss;
   const nearHatch = (p: { x: number; y: number }) => cheb(p.x, p.y, hatch.x, hatch.y) <= 1;
   const free = () => all.filter((p) => isFree(p) && !nearHatch(p));
+
+  for (const l of lairHeroes) {
+    let pool = free().filter((p) => minCmdDist(p.x, p.y) >= mapgen.heroLairMinDistance);
+    if (pool.length === 0) pool = free();
+    const p = set(pick(pool), 'hero_lair');
+    if (p) Object.assign(cellAt(s, p.x, p.y), { hero: l.id, heroTier: l.tier });
+  }
 
   // One starter nest 3–4 cells from each command center.
   const { minDistance, maxDistance } = mapgen.starterNest;

@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { comfort } from './comfort';
 import { C, FONT, FONT_NUM, INK } from './layout';
 
 type G = Phaser.GameObjects.Graphics;
@@ -44,7 +45,7 @@ export function brackets(g: G, x: number, y: number, w: number, h: number, len =
 export const TXT = {
   caps: (color = INK.deep): Phaser.Types.GameObjects.Text.TextStyle => ({ fontFamily: FONT_NUM, fontStyle: '700', fontSize: '17px', color, letterSpacing: 2.4 } as Phaser.Types.GameObjects.Text.TextStyle),
   num: (size: number, color = INK.graphite): Phaser.Types.GameObjects.Text.TextStyle => ({ fontFamily: FONT_NUM, fontStyle: '800', fontSize: `${size}px`, color }),
-  body: (size: number, color = INK.graphite, weight = '500'): Phaser.Types.GameObjects.Text.TextStyle => ({ fontFamily: FONT, fontStyle: weight, fontSize: `${size}px`, color }),
+  body: (size: number, color = INK.graphite, weight = '500'): Phaser.Types.GameObjects.Text.TextStyle => ({ fontFamily: FONT, fontStyle: weight, fontSize: `${Math.round(size * comfort().textScale)}px`, color }),
 };
 
 /** Small channel glyphs that repeat the clue color (UI_SPEC §3.2): ▲ nests, ◆ finds, hexagon Demon. */

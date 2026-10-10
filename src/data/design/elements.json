@@ -1,0 +1,167 @@
+{
+  "version": "0.4",
+  "_doc": "design/ELEMENTS.md",
+  "techs": [
+    {
+      "id": "thermo",
+      "name_ru": "Термо",
+      "color": "#FF8A3D",
+      "status": "burn"
+    },
+    {
+      "id": "cryo",
+      "name_ru": "Криогель",
+      "color": "#3DD6FF",
+      "status": "chill"
+    },
+    {
+      "id": "volt",
+      "name_ru": "Ток",
+      "color": "#FFE14D",
+      "status": "shock"
+    },
+    {
+      "id": "toxin",
+      "name_ru": "Токсин",
+      "color": "#8CE04A",
+      "status": "poison"
+    },
+    {
+      "id": "impact",
+      "name_ru": "Удар",
+      "color": "#C9B8A3",
+      "status": "stagger"
+    },
+    {
+      "id": "kinetic",
+      "name_ru": "Без стихии",
+      "color": "#FFFFFF",
+      "status": null,
+      "_note": "unarmed hits, buildings; always ×1"
+    }
+  ],
+  "_cycle": "each tech beats the next one: volt > cryo > thermo > toxin > impact > volt",
+  "beats": {
+    "volt": "cryo",
+    "cryo": "thermo",
+    "thermo": "toxin",
+    "toxin": "impact",
+    "impact": "volt"
+  },
+  "multipliers": {
+    "strongWeak": 1.5,
+    "weak": 1.25,
+    "neutral": 1.0,
+    "resist": 0.75,
+    "strongResist": 0.5
+  },
+  "defaultResistForOwnTech": 0.5,
+  "defaultWeakToPredator": 1.5,
+  "damageFormula": "max(minDamage, (baseDamage + partDamage) * resist[target][attackTech] - targetDefense)",
+  "attackChoice": "each attack the unit uses the arm (or unarmed kinetic) with the highest expected damage vs its current target, counting reactions; ties -> alternate arms",
+  "partResist": {
+    "perTier": 0.12,
+    "floor": 0.5,
+    "_note": "each part of tech X multiplies holder's resist to X by (1 - perTier*tier); result never below floor; kinetic never resisted"
+  },
+  "statuses": {
+    "burn": {
+      "dpsByTier": [
+        2,
+        3,
+        4
+      ],
+      "seconds": 3
+    },
+    "chill": {
+      "slowPercentByTier": [
+        30,
+        40,
+        50
+      ],
+      "seconds": 2.5,
+      "freezeAtStacks": 3,
+      "freezeSeconds": 1.5
+    },
+    "shock": {
+      "chainTargetsByTier": [
+        1,
+        1,
+        2
+      ],
+      "chainFactor": 0.5,
+      "chainRange": 1.5
+    },
+    "poison": {
+      "dpsByTier": [
+        1,
+        2,
+        3
+      ],
+      "seconds": 4,
+      "defenseMinusByTier": [
+        1,
+        2,
+        2
+      ]
+    },
+    "stagger": {
+      "interruptChanceByTier": [
+        0.15,
+        0.25,
+        0.35
+      ],
+      "knockbackTiles": 0.5
+    }
+  },
+  "reactions": [
+    {
+      "id": "thermoshock",
+      "name_ru": "Термошок",
+      "onTargetStatus": "burn",
+      "hitTech": "cryo",
+      "effect": {
+        "bonusDamageFactor": 1.0,
+        "consumeStatus": true
+      }
+    },
+    {
+      "id": "conductive_chain",
+      "name_ru": "Проводящая цепь",
+      "onTargetStatus": "chill",
+      "hitTech": "volt",
+      "effect": {
+        "extraChainTargets": 2
+      }
+    },
+    {
+      "id": "shell_break",
+      "name_ru": "Срыв оболочки",
+      "onTargetStatus": "burn",
+      "hitTech": "impact",
+      "effect": {
+        "defenseZeroSeconds": 3
+      }
+    },
+    {
+      "id": "burnout",
+      "name_ru": "Выжигание",
+      "onTargetStatus": "poison",
+      "hitTech": "thermo",
+      "effect": {
+        "burnDpsFactor": 2,
+        "consumeStatus": true
+      }
+    },
+    {
+      "id": "neuro_fail",
+      "name_ru": "Нейросбой",
+      "onTargetStatus": "poison",
+      "hitTech": "volt",
+      "effect": {
+        "stunSeconds": 1.0
+      }
+    }
+  ],
+  "_reactionsSource": "COMBAT_INTERACTIONS_V0 / lore bible §3 (canon reactions)"
+}

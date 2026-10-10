@@ -43,6 +43,7 @@ describe('scanner deduction', () => {
     expect(k.has('1,0')).toBe(false); // nest-free for sure, but it may be the hatch
   });
 
+  // 30 full 2-minute simulations: slow on shared CI runners.
   it('is never wrong on real generated fields', () => {
     for (let seed = 0; seed < 30; seed++) {
       const w = new World({ seed });
@@ -57,7 +58,7 @@ describe('scanner deduction', () => {
         if (v === 'demon') expect(c.content).toBe('demon_hatch');
       }
     }
-  });
+  }, 30_000);
 });
 
 describe('assist modes', () => {

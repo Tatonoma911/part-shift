@@ -1,20 +1,33 @@
 import Phaser from 'phaser';
-import { BUILDABLE, buildings as buildingDefs, config } from '../core/data';
+import { openAccountPanel } from '../account/panel';
+import { BUILDABLE, boons, buildings as buildingDefs, config } from '../core/data';
 import { cellKey } from '../core/grid';
 import type { AssistMode } from '../core/state';
 import { World, type GameEvent } from '../core/world';
 import { t } from '../i18n';
 import { BUILDING_ANCHOR } from './assets';
 import { sound } from './audio';
+import { SoundDirector } from './soundDirector';
+import { Voice } from './voice';
+import { RunTally } from './meta/record';
+import { showResults } from './meta/ResultsScreen';
+import { boonPoolFor, loadMeta, pickAllies } from './meta/store';
+import { pickBoon } from './meta/BoonPick';
 import { learning, setLearningHooks } from './learn';
+import { volumeHeight, volumeSliders } from './volume';
 import { BoardView } from './BoardView';
+import { Comm } from './Comm';
 import { Cameras, UI_DEPTH } from './cameras';
+import { EdgePointer } from './EdgePointer';
+import { SidePanel } from './SidePanel';
 import { clearSlot, loadSettings, loadSlot, saveSlot, touchSlot } from './saves';
 import { BOARD, C, CELL, DOCK, GOAL, GUIDE, HUD, INK, LANDSCAPE, STEP, VIEW } from './layout';
 import { markTutorialDone, TutorialGuide } from './Tutorial';
+import { analytics } from '../analytics';
 import { brackets, chip, glyph, plate, TXT } from './ui';
 import { setBackHandler } from '../platform/native';
 import type { OnlineSession } from '../net/online';
+import { challengeUrl, closeSocial, displayName, openBoard, openDonate, profile, rankOf, recordRun, resultCard, share, shouldNudge, socialOpen, type RecordedRun } from '../social';
 
 const BEST_KEY = 'partshift.best.v1';
 const LONG_PRESS_MS = 480;
@@ -29,6 +42,12 @@ export interface GameStart {
   seed?: number;
   /** Online match (src/net): the state comes from the server, no pause, no save slot. */
   online?: OnlineSession;
+  /** City of the day (UTC day id): the run also counts on today's board. */
+  daily?: string;
+  /** Opened from a friend's "beat my score" link. */
+  challenge?: { score: number; name: string };
+  /** Heroes taken on this shift as allies; defaults to the last choice (meta allyChoice). */
+  allies?: string[];
 }
 type Ev = Phaser.Types.Input.EventData;
 
@@ -36,19 +55,53 @@ type Ev = Phaser.Types.Input.EventData;
 const TOASTS: Record<string, { text: (e: GameEvent) => string; bad?: boolean }> = {
   nest_open: { text: () => t('event.nest_opened'), bad: true },
   heavy_nest_open: { text: () => t('event.heavy_nest_opened'), bad: true },
-  demon_awake: { text: () => t('event.demon_awake'), bad: true },
-  demon_warning: { text: () => t('event.demon_warning'), bad: true },
+  boss_awake: { text: (e) => heroLine('event.boss_awake', e.text), bad: true },
+  boss_warning: { text: () => t('event.boss_warning'), bad: true },
+  hero_warning: { text: () => t('event.hero_warning'), bad: true },
+  hero_spawn: { text: (e) => (e.amount === 1 ? '' : heroLine('event.hero_appears', e.text)), bad: true },
+  hero_defeated: { text: (e) => t('event.hero_defeated', { hero: heroName(e.text) }) },
+  hero_part_taken: { text: (e) => t('trophy.module_acquired', { part: t(`part.${e.text}.label`) }) },
   demon_windup: { text: () => t('enemy.demon.windup'), bad: true },
-  demon_die: { text: () => t('event.demon_dead') },
+  boss_dead: { text: () => t('event.boss_dead') },
+  // The card's own joke line under its name: the pick reads as a story beat, not a stat change.
+  boon_taken: { text: (e) => `${t(`boon.${e.text}.name`)}. ${t(`boon.${e.text}.line`)}` },
+  site_marked: { text: () => t('boon.nest_tracker.desc') },
+  raid_incoming: { text: (e) => t(`event.raid_incoming.${plural(e.amount ?? 0)}`, { count: e.amount ?? 0 }), bad: true },
+  survivor_joined: { text: () => t('event.survivor_slot') },
+  hint: { text: (e) => t(e.text ?? '') },
   threat_level_up: { text: (e) => t('event.threat_rising', { level: e.amount ?? 0 }), bad: true },
   cache_open: { text: (e) => t('event.cache_reward', { energy: e.amount ?? 0 }) },
   nest_destroyed: { text: (e) => t('event.nest_destroyed', { energy: e.amount ?? 0 }) },
   building_lost: { text: (e) => t('event.building_lost', { building: t(`building.${e.text}.name`) }), bad: true },
   part_attached: { text: (e) => t('trophy.module_acquired', { part: t(`part.${e.text}.label`) }) },
   part_recycled: { text: (e) => t('part.recycled', { energy: e.amount ?? 0 }) },
-  defender_trained: { text: () => t('unit.trained') },
   build_refused: { text: (e) => t(e.text ?? 'build.invalid_cell'), bad: true },
 };
+
+/** Screen name of a hero (writer's text), e.g. «Килн». */
+const FEMALE_HEROES = new Set(['seraph', 'frostline', 'canopy', 'beacon']);
+/** «Течение» is grammatically neuter in Russian: «Течение вышло» (QA-034). */
+const NEUTER_HEROES = new Set(['current']);
+
+/** Russian plural form key: 1 → one, 2–4 → few, else many (English keys use the same names). */
+function plural(n: number): 'one' | 'few' | 'many' {
+  const m10 = n % 10;
+  const m100 = n % 100;
+  if (m10 === 1 && m100 !== 11) return 'one';
+  if (m10 >= 2 && m10 <= 4 && (m100 < 12 || m100 > 14)) return 'few';
+  return 'many';
+}
+
+function heroName(id: string | undefined): string {
+  return id ? t(`enemy.${id}.name`) : '';
+}
+
+/** Writer's line with {hero} in the hero's grammatical gender (`_female` / `_neuter` variants when they exist). */
+function heroLine(key: string, id: string | undefined): string {
+  const form = id && FEMALE_HEROES.has(id) ? '_female' : id && NEUTER_HEROES.has(id) ? '_neuter' : '';
+  const line = form && t(`${key}${form}`, { hero: heroName(id) });
+  return line && !line.startsWith(key) ? line : t(key, { hero: heroName(id) });
+}
 
 function stop(fn: () => void) {
   return (_p: Phaser.Input.Pointer, _x: number, _y: number, ev: Ev) => {
@@ -66,6 +119,9 @@ function stop(fn: () => void) {
 export class GameScene extends Phaser.Scene {
   private world!: World;
   private board!: BoardView;
+  private edge!: EdgePointer;
+  /** Wide screens only: shift summary in the right column (AR-06). */
+  private side?: SidePanel;
   private cams!: Cameras;
   private start: GameStart = {};
   private slot = 1;
@@ -75,6 +131,15 @@ export class GameScene extends Phaser.Scene {
   private online: OnlineSession | null = null;
   /** Online: our center fell, we watch the rest of the match. */
   private watching = false;
+  /** Hero pop-up in the board's top-left corner (free play only). */
+  private comm: Comm | null = null;
+  private voice: Voice | null = null;
+  /** This run's counters for the meta progress (Досье); not in the tutorial. */
+  private tally: RunTally | null = null;
+  /** The cache's pick-1-of-3 sheet while it is open (the run waits). */
+  private boonUi: Phaser.GameObjects.Container | null = null;
+  /** The end screen is up: a second victory/defeat call must not stack another one. */
+  private ended = false;
 
   private mode: Mode = 'dig';
   private buildType: string = BUILDABLE[0];
@@ -93,10 +158,12 @@ export class GameScene extends Phaser.Scene {
     ringBox: Phaser.GameObjects.Container;
     goal: Phaser.GameObjects.Text;
     goalBg: Phaser.GameObjects.Graphics;
+    shiftLabel: Phaser.GameObjects.Text;
   };
   private shownEnergy = 0;
   private dock!: {
-    tabs: { mode: Mode; g: Phaser.GameObjects.Graphics; label: Phaser.GameObjects.Text; icon: Phaser.GameObjects.Image; x: number; w: number }[];
+    /** Context line instead of mode tabs: what a tap does now, and a cancel chip while placing. */
+    head: { text: Phaser.GameObjects.Text; cancel: Phaser.GameObjects.Container };
     panes: Record<Mode, Phaser.GameObjects.Container>;
     queue: Phaser.GameObjects.Text;
     scan: Phaser.GameObjects.Text | null;
@@ -107,9 +174,16 @@ export class GameScene extends Phaser.Scene {
   private guideBox: { text: Phaser.GameObjects.Text; dots: Phaser.GameObjects.Graphics; g: Phaser.GameObjects.Graphics; y: number; h: number } | null = null;
 
   private paused = false;
+  private lastOrderSaid = -1e9;
+  private lastSaid = { text: '', bad: false, at: -1e9, until: -1e9 };
+  private music!: SoundDirector;
   /** The field guide or a coach card is open: the world waits, no pause sheet. */
   private overlayPaused = false;
   private coachedBuild = false;
+  /** Until when the liberated land is lit after a tap outside it (Антон: say why you can't build there). */
+  private territoryFlash = 0;
+  /** Arrow to the nearest free liberated cell after a tap outside the territory (MVP_RULES §7.1). */
+  private pointTo: { x: number; y: number; until: number } | null = null;
   private rightClick: { x: number; y: number; px: number; py: number } | null = null;
   private dragMode: 'queue' | 'cancel' | null = null;
   private lastDragCell = -1;
@@ -117,6 +191,10 @@ export class GameScene extends Phaser.Scene {
   private saveTimer = 0;
   private lastCenterHit = -99;
   private lastThreat = 0;
+  /** Last tutorial step reported to analytics. */
+  private trackedStep = -1;
+  /** Score of the run that just ended (for the share card). */
+  private lastRun: RecordedRun | null = null;
 
   constructor() {
     super('game');
@@ -143,6 +221,8 @@ export class GameScene extends Phaser.Scene {
     this.coachedBuild = false;
     this.dragMode = null;
     this.saveTimer = 0;
+    this.trackedStep = -1;
+    this.lastRun = null;
   }
 
   create(): void {
@@ -153,7 +233,10 @@ export class GameScene extends Phaser.Scene {
     const saved = st.tutorial || st.fresh ? null : loadSlot(this.slot);
     if (st.tutorial) this.guide = new TutorialGuide();
     // Free play: residents dig only where the player sends them, nothing is queued for them at the start.
-    const rules = { config: { 'dig.autoQueueZeroNeighbors': false } };
+    // Caches offer 1 of 3 bonuses from the pool the player's HeroOut rank has opened (META.md §3, §8).
+    const meta = loadMeta();
+    const allies = (st.allies ?? meta.allyChoice).filter((id) => meta.unlocked.includes(id));
+    const rules = { config: { 'dig.autoQueueZeroNeighbors': false }, boonPool: boonPoolFor(meta), allies };
     this.world = this.online?.world
       ? this.online.world
       : this.guide
@@ -184,11 +267,17 @@ export class GameScene extends Phaser.Scene {
     // Online fields are bigger than the screen: start at the normal cell size over our own center.
     const home = this.online ? this.world.building(this.world.player(this.me).command) : undefined;
     if (home) this.cams.focus(bx + home.x * STEP + CELL / 2, by + home.y * STEP + CELL / 2, 1);
+    this.edge = new EdgePointer(this, this.world, this.cams.board, (x, y) => this.board.center(x, y));
+    this.side = LANDSCAPE && !this.guide ? new SidePanel(this, this.world, GUIDE.y, GUIDE.h + 20) : undefined;
     this.createZoomButtons();
 
     this.createHud();
     this.createDock();
+    this.comm = this.guide ? null : new Comm(this);
+    this.events.once('shutdown', () => this.comm?.destroy());
+    this.trackStart(!!saved);
     if (this.guide) this.createGuide(by - 24);
+    else if (st.challenge && !saved) this.say(`${t('challenge.banner', { name: st.challenge.name, score: st.challenge.score })}\n${t('place.command')}`, 7000);
     else if (!this.world.started) this.say(t('place.command'), 6000);
 
     this.input.mouse?.disableContextMenu();
@@ -201,8 +290,6 @@ export class GameScene extends Phaser.Scene {
       if (this.ghost) this.setGhost(null);
       else this.world.apply({ type: 'cancelOrder' }, this.me);
     });
-    this.input.keyboard?.on('keydown-ONE', () => this.setMode('dig'));
-    this.input.keyboard?.on('keydown-TWO', () => this.setMode('build'));
     const onHide = () => {
       if (!document.hidden) return;
       // Leaving the tab or the app (home button, a call) pauses the run, which also saves it. Online time runs on.
@@ -212,7 +299,14 @@ export class GameScene extends Phaser.Scene {
     document.addEventListener('visibilitychange', onHide);
     this.events.once('shutdown', () => document.removeEventListener('visibilitychange', onHide));
     setBackHandler(() => this.onBack());
-    if (this.world.s.outcome === 'playing') sound.playMusic('theme_lumen');
+    this.music = new SoundDirector(this.world, this.me);
+    // The city's voice: Контроль, ads, hero bubbles (not in the tutorial, it has its own coach).
+    this.voice = this.guide ? null : new Voice(this, this.world, this.me, (at) => this.board.speakerAt(at), () => this.toasts.some((b) => b.active));
+    this.voice?.start(!saved);
+    this.tally = this.guide ? null : new RunTally(this.me);
+    this.ended = false;
+    this.boonUi = null;
+    this.music.start();
     this.setMode('dig');
     // The tutorial teaches by itself; coach cards and the guide come with free play.
     setLearningHooks({ pause: () => (this.overlayPaused = true), resume: () => (this.overlayPaused = false) });
@@ -221,10 +315,12 @@ export class GameScene extends Phaser.Scene {
 
   update(time: number, deltaMs: number): void {
     const w = this.world;
+    this.boonCheck();
     // Online there is no pause (MVP_RULES §14.2): menus and hints never stop the server's clock.
     if (this.online || (!this.paused && !this.overlayPaused && w.s.outcome === 'playing')) {
       if (!this.coachedBuild && !this.guide && w.player(this.me).energy >= 100) this.coachedBuild = learning().coach('build') || this.coachedBuild;
-      w.tick(Math.min(deltaMs, 250) / 1000);
+      // Real elapsed time: Phaser smooths delta while the window is unfocused, which slowed the game (QA-015).
+      w.tick(Math.min(this.game.loop.rawDelta || deltaMs, 250) / 1000);
       this.saveTimer += deltaMs / 1000;
       if (this.saveTimer >= config.save.autosaveSeconds) {
         this.saveTimer = 0;
@@ -236,15 +332,23 @@ export class GameScene extends Phaser.Scene {
       this.board.onEvent(e);
       this.onEvent(e);
     }
+    this.music.tick();
+    this.voice?.update();
     if (this.guide?.update()) this.showGuideStep();
     if (this.spotlight && time > this.spotlight.until) this.spotlight = null;
+    if (this.pointTo && time > this.pointTo.until) this.pointTo = null;
     this.board.update(time, {
-      buildType: this.mode === 'build' && w.started ? this.buildType : null,
+      // Liberated free land pulses while placing and when the tutorial asks for a building.
+      buildType: (this.mode === 'build' || this.tutorialWantsBuild()) && w.started ? this.buildType : null,
       ghost: this.mode === 'build' ? this.ghost : null,
+      showTerritory: time < this.territoryFlash,
+      pointTo: this.pointTo,
       spotlight: this.spotlight,
       focus: this.guide?.focusCells() ?? [],
       showRisk: w.player(this.me).assist.mode === 'full',
     });
+    this.edge.update(time);
+    this.side?.update();
     this.updateHud(deltaMs);
     this.updateDock();
     this.cams.route();
@@ -260,12 +364,16 @@ export class GameScene extends Phaser.Scene {
   }
 
   private restart(): void {
+    if (this.world.s.outcome === 'playing') this.trackEnd('restart');
     if (!this.guide) clearSlot(this.slot);
     sound.stopMusic(0.2);
-    this.scene.restart({ slot: this.slot, fresh: true, tutorial: this.start.tutorial });
+    // The city of the day and a friend's challenge replay the same map; free play gets a new one.
+    const st = this.start;
+    this.scene.restart({ slot: this.slot, fresh: true, tutorial: st.tutorial, seed: st.daily || st.challenge ? this.world.s.seed : undefined, daily: st.daily, challenge: st.challenge });
   }
 
   private toMenu(): void {
+    if (this.world.s.outcome === 'playing') analytics.track(this.guide ? 'tutorial_leave' : 'match_leave', this.matchParams());
     this.save();
     this.online?.leave();
     sound.stopMusic(0.3);
@@ -281,13 +389,23 @@ export class GameScene extends Phaser.Scene {
       // Field guide (Learning thread).
       ['?', () => learning().openGuide()],
     ];
+    // QA-019: in portrait the board fills the full width, so vertical buttons on the
+    // right would cover board cells. Instead place them horizontally in the gap between
+    // the board bottom and the dock.
+    const btnW = LANDSCAPE ? 56 : 52;
+    const btnH = LANDSCAPE ? 56 : 48;
+    const totalW = items.length * (btnW + 4) - 4;
     items.forEach(([label, act], k) => {
-      const x = (LANDSCAPE ? BOARD.x + BOARD.w : VIEW.width) - 24 - 56;
-      const y = BOARD.y + 8 + k * 64;
+      const x = LANDSCAPE
+        ? BOARD.x + BOARD.w - 24 - btnW
+        : Math.round(VIEW.width / 2 - totalW / 2) + k * (btnW + 4);
+      const y = LANDSCAPE
+        ? BOARD.y + 8 + k * 64
+        : BOARD.y + BOARD.h + Math.round((DOCK.y - BOARD.y - BOARD.h - btnH) / 2);
       const g = this.add.graphics().setDepth(UI_DEPTH + 1).setAlpha(0.92);
-      chip(g, x, y, 56, 56, C.graphite, 0.85, 10);
-      const tx = this.add.text(x + 28, y + 28, label, TXT.num(28, INK.white)).setOrigin(0.5).setDepth(UI_DEPTH + 1);
-      const hit = this.add.zone(x, y, 56, 56).setOrigin(0).setDepth(UI_DEPTH + 1).setInteractive({ useHandCursor: true });
+      chip(g, x, y, btnW, btnH, C.graphite, 0.85, 10);
+      const tx = this.add.text(x + btnW / 2, y + btnH / 2, label, TXT.num(26, INK.white)).setOrigin(0.5).setDepth(UI_DEPTH + 1);
+      const hit = this.add.zone(x, y, btnW, btnH).setOrigin(0).setDepth(UI_DEPTH + 1).setInteractive({ useHandCursor: true });
       hit.on('pointerdown', stop(act));
       if (this.guide) [g, tx, hit].forEach((o) => o.setVisible(false));
     });
@@ -307,13 +425,23 @@ export class GameScene extends Phaser.Scene {
     }
   }
 
+  /** Confirms an attack order, at most every 2 s so repeated taps don't spam. */
+  private orderSaid(): void {
+    sound.play('ui_tap');
+    if (this.time.now - this.lastOrderSaid < 2000) return;
+    this.lastOrderSaid = this.time.now;
+    this.say(t('order.attack'), 1800);
+  }
+
   private onEvent(e: GameEvent): void {
     if (this.online && (e.type === 'victory' || e.type === 'defeat')) return this.endOnline();
     if (this.online && e.type === 'building_lost' && e.owner === this.me && e.text === 'command') this.centerLost();
     if (e.owner !== undefined && e.owner !== this.me && e.owner >= 0) return;
-    if (e.type === 'victory' || e.type === 'defeat') sound.stopMusic();
-    sound.play(e.type);
+    this.music.onEvent(e);
+    this.voice?.onEvent(e);
+    this.tally?.onEvent(e);
     if (!this.guide) this.coachOn(e);
+    this.comm?.onEvent(e);
     if (e.type === 'center_hit') {
       if (this.time.now - this.lastCenterHit > 6000) this.say(t('event.command_under_attack'), 3000, true);
       this.lastCenterHit = this.time.now;
@@ -324,9 +452,13 @@ export class GameScene extends Phaser.Scene {
       this.say(TOASTS[e.type].text(e), 2800, TOASTS[e.type].bad);
     }
     if (e.type === 'build_place') this.nextTutorialBuilding();
+    // However the center went down (tap, restore), the "place the Command Center" line gives way (AR-06).
+    if (e.type === 'command_placed' && e.owner === this.me && !this.guide) this.say(t('tutorial.dig'), 5000);
     if (e.type === 'cache_open' && e.x !== undefined) this.float(e.x, e.y!, `+${e.amount}`);
     if ((e.type === 'nest_open' || e.type === 'heavy_nest_open') && e.x !== undefined) this.explainNest(e.x, e.y!);
     if (e.type === 'victory' || e.type === 'defeat') this.showEnd(e.type === 'victory');
+    // Наводка: point at the cell it marked.
+    if (e.type === 'site_marked' && e.owner === this.me && e.x !== undefined) this.pointTo = { x: e.x, y: e.y!, until: this.time.now + 5000 };
   }
 
   /** Points at an opened clue that warned about the nest (design/ONBOARDING.md §1.4). */
@@ -348,14 +480,41 @@ export class GameScene extends Phaser.Scene {
     }
   }
 
+  /** An opened cache waits for the pick: solo runs pause under the cards (boons.json rules.solo). */
+  private boonCheck(): void {
+    const offer = this.world.player(this.me).boonOffer;
+    if (!offer || this.boonUi || this.world.s.outcome !== 'playing') return;
+    const p = this.world.player(this.me);
+    this.overlayPaused = true;
+    this.boonUi = pickBoon(
+      this,
+      offer.ids.map((id) => ({ id, rare: boons[id]?.rarity === 'rare', stacks: p.boons?.[id] ?? 0 })),
+      (id) => {
+        this.world.apply({ type: 'pickBoon', id }, this.me);
+        this.boonUi = null;
+        this.overlayPaused = false;
+      },
+    );
+  }
+
   /** Toast plate in the strip between the board and the dock; a new one replaces the old (UI_SPEC §2). */
   private say(text: string, ms = 2800, bad = false): void {
+    // The same line again while it is up, or routine news over a fresh alarm, waits its turn (QA-035).
+    const now = this.time.now;
+    if (text === this.lastSaid.text && now < this.lastSaid.until) return;
+    if (!bad && this.lastSaid.bad && now < this.lastSaid.at + 1500) return;
+    this.lastSaid = { text, bad, at: now, until: now + ms };
+    this.side?.note(text);
     const width = DOCK.w - 16;
     const tx = this.add.text(0, 0, text, { ...TXT.body(22, bad ? INK.white : INK.graphite, '600'), align: 'center', lineSpacing: 2, wordWrap: { width: width - 36 } }).setOrigin(0.5);
     const h = Math.max(58, tx.height + 20);
     const g = this.add.graphics();
     chip(g, -width / 2, -h / 2, width, h, bad ? C.coralInk : C.paper, 0.97, 14, bad ? undefined : { color: C.seam, width: 2 });
-    const y = DOCK.y - 8 - h / 2;
+    // Toasts and Контроль share the strip above the dock, never the board (QA-038): the toast wins it.
+    // In portrait the gap between board and dock is 100 px; clamp so a tall toast never overlaps the board.
+    this.voice?.yieldToToast();
+    const yIdeal = DOCK.y - 8 - h / 2;
+    const y = LANDSCAPE ? yIdeal : Math.max(yIdeal, BOARD.y + BOARD.h + 4 + h / 2);
     const box = this.add.container(DOCK.x + DOCK.w / 2, y + 16, [g, tx]).setDepth(21).setAlpha(0);
     for (const old of this.toasts) this.tweens.add({ targets: old, alpha: 0, duration: 120, onComplete: () => old.destroy() });
     this.toasts = [box];
@@ -387,6 +546,7 @@ export class GameScene extends Phaser.Scene {
     skip.on(
       'pointerdown',
       stop(() => {
+        analytics.track('tutorial_skip', this.matchParams());
         markTutorialDone();
         this.toMenu();
       }),
@@ -399,6 +559,12 @@ export class GameScene extends Phaser.Scene {
   private showGuideStep(): void {
     const g = this.guide!;
     const box = this.guideBox!;
+    // stepIndex reaches stepCount when the tutorial is finished.
+    if (g.stepIndex !== this.trackedStep) {
+      this.trackedStep = g.stepIndex;
+      if (g.finished) analytics.track('tutorial_complete', { seconds: this.world.s.time });
+      else analytics.track('tutorial_step', { step: g.stepIndex, step_id: g.step!.id, seconds: this.world.s.time });
+    }
     if (g.finished) {
       box.text.setVisible(false);
       box.g.clear();
@@ -428,10 +594,8 @@ export class GameScene extends Phaser.Scene {
       d.fillStyle(k <= g.stepIndex ? C.teal : 0xc6d4d9, 1);
       d.fillCircle(GUIDE.x + 50 + k * 22, box.y + 30, k === g.stepIndex ? 7 : 5);
     }
-    if ((g.step!.highlightBuild ?? []).length) {
-      this.nextTutorialBuilding();
-      this.setMode('build');
-    }
+    if ((g.step!.highlightBuild ?? []).length) this.nextTutorialBuilding();
+    this.setMode(this.ghost ? 'build' : 'dig');
   }
 
   /** In a tutorial step that asks for buildings, preselect the first one not built yet. */
@@ -488,55 +652,62 @@ export class GameScene extends Phaser.Scene {
     const ringBox = this.add.container(rx, midY, [ring, threat]).setDepth(20);
 
     // Goal line under the HUD.
-    this.add.text(HUD.x + 8, GOAL.y + 22, t('hud.shift_label').toUpperCase(), TXT.caps()).setOrigin(0, 0.5).setDepth(20);
+    const shiftLabel = this.add.text(HUD.x + 8, GOAL.y + 22, t('hud.shift_label').toUpperCase(), TXT.caps()).setOrigin(0, 0.5).setDepth(20);
     const goalBg = this.add.graphics().setDepth(20);
     const goal = this.add.text(HUD.x + HUD.w - 24, GOAL.y + 22, '', TXT.body(23, INK.white, '700')).setOrigin(1, 0.5).setDepth(20);
-    this.hud = { energy, residents, squad, threat, ring, ringBox, goal, goalBg };
+    this.hud = { energy, residents, squad, threat, ring, ringBox, goal, goalBg, shiftLabel };
   }
 
   private updateHud(deltaMs: number): void {
     const w = this.world;
     const mine = w.s.units.filter((u) => u.owner === this.me);
-    const slots = w.s.buildings.filter((b) => b.owner === this.me && b.complete).reduce((n, b) => n + b.slots.length, 0);
     const residents = mine.filter((u) => u.kind === 'resident').length;
-    const defenders = mine.filter((u) => u.kind === 'defender').length;
     // The counter rolls toward the real value so energy visibly "arrives".
     const real = Math.floor(w.player(this.me).energy);
     const diff = real - this.shownEnergy;
     this.shownEnergy = Math.abs(diff) < 1 ? real : this.shownEnergy + diff * Math.min(1, deltaMs / 120);
     this.hud.energy.setText(String(Math.round(this.shownEnergy)));
-    this.hud.residents.setText(`${residents}/${slots}`);
-    this.hud.squad.setText(`${defenders}/${w.defenderCapacity(this.me)}`);
+    const resText = `${residents}/${w.residentCap(this.me)}`;
+    if (this.hud.residents.text !== resText) {
+      // Two-digit counts shrink to stay clear of the school column (QA-033).
+      const room = this.hud.squad.x - this.hud.residents.x - 44;
+      this.hud.residents.setText(resText).setFontSize(36);
+      if (this.hud.residents.width > room) this.hud.residents.setFontSize(Math.max(22, Math.floor((36 * room) / this.hud.residents.width)));
+    }
+    // Shield = school training level of every resident (config.school).
+    this.hud.squad.setText(`${w.trainingLevel(this.me)}/${w.cfg.school.trainingLevelsMax}`);
 
     const level = w.threatLevel;
     if (level > this.lastThreat) this.tweens.add({ targets: this.hud.ringBox, scale: 1.25, duration: 300, yoyo: true });
     this.lastThreat = level;
     const g = this.hud.ring;
     g.clear();
-    const col = w.s.demon.awake ? C.violet : C.coral;
+    const col = w.s.boss.awake ? C.violet : C.coral;
     g.fillStyle(col, 1);
     g.fillCircle(0, 0, 30);
     g.lineStyle(9, 0xdbe6ea, 1);
     g.strokeCircle(0, 0, 42);
-    g.lineStyle(9, w.s.demon.awake ? C.violet : C.amber, 1);
+    g.lineStyle(9, w.s.boss.awake ? C.violet : C.amber, 1);
     g.beginPath();
     g.arc(0, 0, 42, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * Math.max(0.001, 1 - w.threatProgress), false);
     g.strokePath();
     this.hud.threat.setText(String(level));
 
-    let goal = t('mode.demon_hunt.goal');
+    let goal = t('mode.call.goal', { hero: heroName(w.s.boss.hero) });
     let bg = C.graphite;
     if (this.paused && !this.online) {
       goal = t('pause.plan_banner');
       bg = C.amber;
-    } else if (w.s.demon.warned && !w.s.demon.awake && !w.s.demon.dead) {
-      goal = t('event.demon_warning');
+    } else if (w.s.boss.warned && !w.s.boss.awake && !w.s.boss.dead) {
+      goal = t('event.boss_warning');
       bg = C.violet;
     }
     if (this.hud.goal.text !== goal) this.hud.goal.setText(goal);
     const gb = this.hud.goalBg;
     gb.clear();
     const gw = this.hud.goal.width + 36;
+    // A long banner wins over the shift name rather than covering it (QA-011).
+    this.hud.shiftLabel.setVisible(this.hud.shiftLabel.width + gw + 24 < HUD.w);
     chip(gb, HUD.x + HUD.w - 6 - gw, GOAL.y, gw, 44, bg, 1, 12);
   }
 
@@ -545,22 +716,24 @@ export class GameScene extends Phaser.Scene {
   private createDock(): void {
     const g = this.add.graphics().setDepth(20);
     plate(g, DOCK.x, DOCK.y, DOCK.w, DOCK.h, 28);
-    // No attack mode: defenders fight on their own, a tap on a foe directs them (MVP_RULES §6).
-    const modes: Mode[] = ['dig', 'build'];
-    const icons = { dig: 'icon.dig', build: 'icon.build' };
+    // No attack mode: residents fight on their own, a tap on a foe directs them (MVP_RULES §6).
+    // No mode tabs (Антон 2026-10-09): a tap on a closed block digs, a tap on liberated land builds.
+    // The top row of the dock says what a tap does right now.
     const pad = 22;
-    const gap = 10;
-    const tw = (DOCK.w - pad * 2 - gap * (modes.length - 1)) / modes.length;
     const ty = DOCK.y + 22;
-    const tabs = modes.map((mode, k) => {
-      const x = DOCK.x + pad + k * (tw + gap);
-      const tg = this.add.graphics().setDepth(20);
-      const icon = this.add.image(x + 46, ty + 40, icons[mode]).setScale(1.25).setDepth(20);
-      const label = this.add.text(x + 70, ty + 40, t(`hud.mode_${mode}`), TXT.body(26, INK.graphite, '700')).setOrigin(0, 0.5).setDepth(20);
-      const hit = this.add.zone(x, ty, tw, 80).setOrigin(0).setDepth(20).setInteractive({ useHandCursor: true });
-      hit.on('pointerdown', stop(() => this.setMode(mode)));
-      return { mode, g: tg, label, icon, x, w: tw };
-    });
+    const headText = this.add
+      .text(DOCK.x + pad + 8, ty + 40, '', { ...TXT.body(23, INK.graphite, '600'), wordWrap: { width: DOCK.w - pad * 2 - 190 }, lineSpacing: 2 })
+      .setOrigin(0, 0.5)
+      .setDepth(20);
+    const cg0 = this.add.graphics();
+    chip(cg0, 0, 0, 170, 70, C.graphite, 1, 14);
+    const ctx = this.add.text(85, 35, `✕ ${t('dock.cancel')}`, TXT.body(23, INK.white, '700')).setOrigin(0.5);
+    const chit = this.add.zone(0, 0, 170, 70).setOrigin(0).setInteractive({ useHandCursor: true });
+    chit.on('pointerdown', stop(() => this.setGhost(null)));
+    const cancel = this.add.container(DOCK.x + DOCK.w - pad - 170, ty + 5, [cg0, ctx, chit]).setDepth(20);
+    const divider = this.add.graphics().setDepth(20);
+    divider.fillStyle(C.graphite, 0.08);
+    divider.fillRect(DOCK.x + pad, ty + 88, DOCK.w - pad * 2, 2);
 
     const top = DOCK.y + 124;
     const inner = DOCK.w - pad * 2;
@@ -638,31 +811,69 @@ export class GameScene extends Phaser.Scene {
         'pointerdown',
         stop(() => {
           this.buildType = id;
-          this.setGhost(null);
+          // Switch the ghost on the chosen block to this building.
+          if (this.ghost) this.setGhost(this.ghost);
           this.say(t(`building.${id}.desc`), 3500);
         }),
       );
-      build.add([cg, img, name, cost, eicon, hit]);
+      // How far this building frees land around it (buildings.json territoryRadius).
+      const r = buildingDefs[id].territoryRadius ?? 0;
+      build.add([cg, img, name, cost, eicon]);
+      if (r > 0) build.add(this.add.text(x + cw - 8, top + 10, `⬚${r}`, { ...TXT.num(15, INK.teal) }).setOrigin(1, 0));
+      build.add(hit);
       return { id, g: cg, cost, x, y: top, w: cw, h: ch };
     });
 
-    this.dock = { tabs, panes: { dig, build }, queue, scan, cards };
+    this.dock = { head: { text: headText, cancel }, panes: { dig, build }, queue, scan, cards };
   }
 
+  /** 'build' while a liberated block is chosen (ghost shown), otherwise 'dig'. */
   private setMode(mode: Mode): void {
+    if (mode === 'dig' && this.ghost) {
+      this.ghost = null;
+      this.ghostButtons?.destroy();
+      this.ghostButtons = null;
+    }
     this.mode = mode;
     if (mode === 'build' && !this.guide && !this.coachedBuild) this.coachedBuild = learning().coach('build');
-    if (mode !== 'build') this.setGhost(null);
-    for (const tab of this.dock.tabs) {
-      const on = tab.mode === mode;
-      tab.g.clear();
-      if (on) chip(tab.g, tab.x, DOCK.y + 22, tab.w, 80, C.graphite, 1, 14);
-      else chip(tab.g, tab.x, DOCK.y + 22, tab.w, 80, C.graphite, 0.06, 14);
-      tab.label.setColor(on ? INK.white : INK.graphite);
-      if (on) tab.icon.setTintFill(0xffffff);
-      else tab.icon.clearTint();
-    }
+    this.dock.head.cancel.setVisible(mode === 'build');
+    this.dock.head.text.setText(t(mode === 'build' ? 'dock.build_here' : this.tutorialWantsBuild() ? 'dock.build_tutorial' : 'dock.hint'));
     for (const [m, pane] of Object.entries(this.dock.panes)) pane.setVisible(m === mode);
+  }
+
+  private tutorialWantsBuild(): boolean {
+    return (this.guide?.step?.highlightBuild ?? []).length > 0;
+  }
+
+  /** Tap on liberated land: show the ghost of the selected building there and the building cards. */
+  private openBuild(x: number, y: number): void {
+    const why = this.world.canBuild(this.me, this.buildType, x, y);
+    // Not enough Energy still opens the cards (another building may fit the budget); other refusals explain themselves.
+    if (why !== null && why !== 'build.not_enough_energy') {
+      this.setGhost(null);
+      this.say(t(why === 'invalid' ? 'build.invalid_cell' : why), 2800, true);
+      return;
+    }
+    this.setGhost({ x, y });
+  }
+
+  /** Closest open, empty cell of our own land (for the arrow after a refused tap). */
+  private nearestFreeLand(fx: number, fy: number): { x: number; y: number } | null {
+    const w = this.world;
+    let best: { x: number; y: number } | null = null;
+    let bestD = Infinity;
+    for (let y = 0; y < w.s.height; y++) {
+      for (let x = 0; x < w.s.width; x++) {
+        const c = w.cell(x, y);
+        if (!c.revealed || c.content !== 'ground' || c.building !== undefined || !w.inTerritory(this.me, x, y)) continue;
+        const d = (x - fx) ** 2 + (y - fy) ** 2;
+        if (d < bestD) {
+          bestD = d;
+          best = { x, y };
+        }
+      }
+    }
+    return best;
   }
 
   private updateDock(): void {
@@ -688,13 +899,9 @@ export class GameScene extends Phaser.Scene {
         c.cost.setColor(afford ? INK.cobalt : INK.coral);
       }
     }
-    // Tutorial: the Build tab blinks when the step asks for a building.
-    const hl = (this.guide?.step?.highlightBuild ?? []).length > 0;
-    const tab = this.dock.tabs[1];
-    if (hl && this.mode !== 'build') {
-      tab.g.clear();
-      chip(tab.g, tab.x, DOCK.y + 22, tab.w, 80, C.amber, 0.4 + 0.4 * Math.sin(this.time.now / 180), 14);
-    }
+    // Tutorial: the context line blinks amber when the step asks for a building.
+    if (this.mode === 'dig' && this.tutorialWantsBuild()) this.dock.head.text.setColor(Math.sin(this.time.now / 180) > 0 ? INK.amber : INK.graphite);
+    else this.dock.head.text.setColor(INK.graphite);
   }
 
   // ------------------------------------------------------------ build ghost
@@ -703,6 +910,7 @@ export class GameScene extends Phaser.Scene {
     this.ghost = at;
     this.ghostButtons?.destroy();
     this.ghostButtons = null;
+    this.setMode(at ? 'build' : 'dig');
     if (!at) return;
     const p = this.board.center(at.x, at.y);
     const y = Math.max(BOARD.y + 30, p.y - 110);
@@ -733,6 +941,10 @@ export class GameScene extends Phaser.Scene {
   private onBack(): boolean {
     // The field guide and coach cards are DOM overlays without a close hook yet: back waits for their own button.
     if (learning().isOpen) return true;
+    if (socialOpen()) {
+      closeSocial();
+      return true;
+    }
     if (this.ghost) {
       this.setGhost(null);
     } else if (this.overlay || this.paused || this.world.s.outcome !== 'playing') {
@@ -748,37 +960,29 @@ export class GameScene extends Phaser.Scene {
     if (this.online) return this.onlineMenu(on);
     if (on !== this.paused) sound.play(on ? 'pause' : 'resume');
     this.paused = on;
+    sound.duck(on);
+    if (on) this.voice?.onPause();
     this.overlay?.destroy();
     this.overlay = null;
     if (!on) return;
     this.save();
-    const onOff = (v: boolean) => t(v ? 'settings.on' : 'settings.off');
     this.overlay = this.sheet({
       title: t('pause.title'),
       lines: [t('pause.hint')],
       actions: [
         { label: t('pause.resume'), act: () => this.setPaused(false), primary: true },
+        { label: t('pause.screenshot'), act: () => void this.shareShot(), half: true },
+        { label: t('pause.coffee'), act: () => openDonate('pause'), half: true, gold: true },
+        { label: t('settings.volume'), act: () => this.showVolume(), half: true },
         {
-          label: `${t('settings.sfx')}: ${onOff(sound.prefs.sfx)}`,
-          act: () => {
-            sound.setPrefs({ sfx: !sound.prefs.sfx });
-            this.setPaused(true);
-          },
-        },
-        {
-          label: `${t('settings.music')}: ${onOff(sound.prefs.music)}`,
-          act: () => {
-            sound.setPrefs({ music: !sound.prefs.music });
-            this.setPaused(true);
-          },
-        },
-        {
+          half: true,
           label: t('menu.guide'),
           act: () => {
             this.setPaused(false);
             learning().openGuide();
           },
         },
+        { label: t('pause.account'), act: () => openAccountPanel() },
         { label: t('pause.restart'), act: () => this.restart() },
         { label: t('menu.quit_to_menu'), act: () => this.toMenu() },
       ],
@@ -828,16 +1032,16 @@ export class GameScene extends Phaser.Scene {
       actions: [
         { label: t('pause.resume'), act: () => this.setPaused(false), primary: true },
         {
-          label: `${t('settings.sfx')}: ${onOff(sound.prefs.sfx)}`,
+          label: `${t('settings.sfx')}: ${onOff(sound.prefs.effects > 0)}`,
           act: () => {
-            sound.setPrefs({ sfx: !sound.prefs.sfx });
+            sound.setPrefs({ effects: sound.prefs.effects > 0 ? 0 : 0.8 });
             this.setPaused(true);
           },
         },
         {
-          label: `${t('settings.music')}: ${onOff(sound.prefs.music)}`,
+          label: `${t('settings.music')}: ${onOff(sound.prefs.music > 0)}`,
           act: () => {
-            sound.setPrefs({ music: !sound.prefs.music });
+            sound.setPrefs({ music: sound.prefs.music > 0 ? 0 : 0.6 });
             this.setPaused(true);
           },
         },
@@ -850,6 +1054,17 @@ export class GameScene extends Phaser.Scene {
         },
         { label: t('online.pause.leave'), act: () => this.toMenu() },
       ],
+    });
+  }
+
+  /** Volume sliders over the paused game; "Back" returns to the pause sheet. */
+  private showVolume(): void {
+    this.overlay?.destroy();
+    this.overlay = this.sheet({
+      title: t('settings.volume'),
+      lines: [],
+      extra: { h: volumeHeight() + 24, make: (x, y, w) => volumeSliders(this, x, y, w) },
+      actions: [{ label: t('menu.back'), act: () => this.setPaused(true), primary: true }],
       animate: false,
     });
   }
@@ -858,7 +1073,7 @@ export class GameScene extends Phaser.Scene {
   private centerLost(): void {
     if (this.watching) return;
     this.watching = true;
-    if (this.world.s.match?.mode === 'ffa') this.showEnd(false, true);
+    if (this.world.s.match?.mode === 'ffa') this.showOnlineEnd(false, false);
     else this.say(t('online.center_lost'), 6000, true);
   }
 
@@ -868,20 +1083,18 @@ export class GameScene extends Phaser.Scene {
     const ffa = s.match?.mode === 'ffa';
     const won = s.outcome === 'victory' && (!ffa || s.match?.winner === this.me);
     sound.play(won ? 'victory' : 'defeat');
-    this.showEnd(won);
+    this.showOnlineEnd(won, this.watching);
   }
 
-  private showEnd(victory: boolean, watch = false): void {
-    if (this.online) return this.showOnlineEnd(victory, watch);
+  private showEnd(victory: boolean): void {
+    if (this.ended) return;
+    this.ended = true;
+    this.trackEnd(victory ? 'victory' : 'defeat');
     if (!this.guide) clearSlot(this.slot);
     const w = this.world;
-    const tiles: [string, string][] = [
-      [t('win.time', { time: this.fmt(w.s.time) }), ''],
-      [t('win.threat', { level: w.threatLevel }), ''],
-      [t('win.nests', { count: w.player(this.me).stats.nests }), ''],
-      [t('win.caches', { count: w.player(this.me).stats.caches }), ''],
-    ];
-    let badge: string | undefined;
+    const me = w.player(this.me);
+    const lines = [victory ? t('win.text') : t('lose.text'), t('win.time', { time: this.fmt(w.s.time) }), t('win.threat', { level: w.threatLevel }), t('win.nests', { count: me.stats.nests }), t('win.caches', { count: me.stats.caches })];
+    let badge: string | undefined = victory ? undefined : t('lose.badge');
     if (victory) {
       let best = Infinity;
       try {
@@ -892,16 +1105,59 @@ export class GameScene extends Phaser.Scene {
       }
       badge = w.s.time < best ? t('win.new_record') : t('win.best_time', { time: this.fmt(best) });
     }
+    // Free play scores points for the world ranking; the tutorial doesn't.
+    const rec = this.guide ? null : recordRun({ victory, seconds: w.s.time, nests: me.stats.nests, energy: me.stats.energy, heroes: me.stats.heroes.length, callTarget: w.s.boss.dead, difficulty: w.s.difficulty, threat: w.threatLevel, daily: this.start.daily });
+    this.lastRun = rec;
+    if (rec) {
+      lines.splice(1, 0, t('end.score', { score: rec.score.toLocaleString('ru-RU') }));
+      if (rec.rankAfter > rec.rankBefore) badge = t('social.rank.up', { rank: t(`social.rank.${rec.rankAfter}`) });
+      const ch = this.start.challenge;
+      if (ch) lines.splice(2, 0, t(rec.score > ch.score ? 'end.challenge_won' : 'end.challenge_lost', { name: ch.name, mine: rec.score, theirs: ch.score }));
+      if (shouldNudge()) lines.push(t('donate.nudge'));
+    }
+    // Free play: "Итоги смены" with the meta progress (design/META.md §5); the tutorial keeps the plain sheet.
+    if (this.tally) {
+      const { view } = this.tally.commit(w, victory ? 'win' : 'lose');
+      this.tally = null;
+      this.overlay?.destroy();
+      this.overlay = showResults(this, view, {
+        again: () => this.restart(),
+        dossier: () => {
+          sound.stopMusic(0.3);
+          this.scene.start('dossier');
+        },
+        menu: () => this.toMenu(),
+        takeNext: (id) => pickAllies(loadMeta(), [id]),
+        extra: [
+          ...(rec ? [{ label: t('end.share'), act: () => void this.shareShot() }, { label: t('end.board'), act: () => openBoard({ tab: this.start.daily ? 'day' : 'week' }) }] : []),
+          { label: t('end.coffee'), act: () => openDonate(victory ? 'win' : 'lose') },
+        ],
+      });
+      return;
+    }
+    const boardBtn: { label: string; act: () => void; half: boolean; ref?: (tx: Phaser.GameObjects.Text) => void } = {
+      label: t('end.board'),
+      act: () => openBoard({ tab: this.start.daily ? 'day' : 'week' }),
+      half: true,
+      ref: (tx) =>
+        void rec?.place.then((place) => {
+          if (place && tx.active) tx.setText(t('end.board_place', { place }));
+        }),
+    };
     this.overlay?.destroy();
     this.overlay = this.sheet({
-      portrait: victory ? 'portrait.demon' : 'portrait.bld_command',
+      // Comic illustration when the artist's screen is in (style per layer); until then the Command Center sprite, grey on a loss.
+      art: victory ? 'screen.win' : 'screen.lose',
+      portrait: 'portrait.bld_command',
       grey: !victory,
       badge,
       title: victory ? t('win.title') : t('lose.title'),
-      lines: [victory ? t('win.text') : t('lose.text'), ...tiles.map((x) => x[0])],
+      lines,
       actions: [
         { label: victory ? t('win.again') : t('lose.again'), act: () => this.restart(), primary: true },
-        { label: t('menu.quit_to_menu'), act: () => this.toMenu() },
+        ...(rec ? [{ label: t('end.share'), act: () => void this.shareShot(), half: true }, boardBtn] : []),
+        { label: t('end.coffee'), act: () => openDonate(victory ? 'win' : 'lose'), half: true, gold: true },
+        { label: t('menu.quit_to_menu'), act: () => this.toMenu(), half: true },
       ],
     });
   }
@@ -935,13 +1191,75 @@ export class GameScene extends Phaser.Scene {
     });
   }
 
+  /**
+   * Screenshot of the board as a vertical card (stories, Shorts) and the share sheet.
+   * After a run the link challenges friends to beat the score on the same map.
+   */
+  private async shareShot(): Promise<void> {
+    const w = this.world;
+    const me = w.player(this.me);
+    // Hide the sheet for one frame so the card shows the city, not the menu.
+    const ov = this.overlay;
+    ov?.setVisible(false);
+    const shot = await new Promise<HTMLImageElement | null>((res) => {
+      this.game.renderer.snapshot((img) => res(img instanceof HTMLImageElement ? img : null));
+    }).catch(() => null);
+    ov?.setVisible(true);
+    const rec = w.s.outcome === 'playing' ? null : this.lastRun;
+    const name = displayName(t('social.default_name'));
+    const card = await resultCard(shot, {
+      kind: w.s.outcome === 'victory' ? 'win' : w.s.outcome === 'defeat' ? 'lose' : 'live',
+      score: rec?.score,
+      time: this.fmt(w.s.time),
+      threat: w.threatLevel,
+      nests: me.stats.nests,
+      name,
+      rank: t(`social.rank.${rankOf(profile().total)}`),
+      tag: this.start.daily ? t('end.daily', { day: this.start.daily }) : undefined,
+    }).catch(() => undefined);
+    const url = rec && !this.guide ? challengeUrl(w.s.seed, rec.score, name) : undefined;
+    void share({ from: rec ? 'result' : 'pause', text: rec ? t('share.result_text', { score: rec.score }) : t('share.invite_text'), url, image: card });
+  }
+
+  // -------------------------------------------------------------- analytics
+
+  /** What every match event carries; also read when the player leaves the app mid-match. */
+  private matchParams(): Record<string, string | number> {
+    const w = this.world;
+    const p = w.player(this.me);
+    return {
+      mode: this.guide ? 'tutorial' : 'free',
+      seconds: w.s.time,
+      started: w.started ? 1 : 0,
+      threat: w.threatLevel,
+      nests: p.stats.nests,
+      caches: p.stats.caches,
+      buildings: w.s.buildings.filter((b) => b.owner === this.me).length,
+      residents: w.s.units.filter((u) => u.owner === this.me && u.kind === 'resident').length,
+      heroes: p.stats.heroes.length,
+      boss: w.s.boss.hero,
+      ...(this.guide ? { step: this.guide.stepIndex } : {}),
+    };
+  }
+
+  private trackStart(continued: boolean): void {
+    analytics.where(this.guide ? 'tutorial' : 'match', () => this.matchParams());
+    if (this.guide) analytics.track('tutorial_begin');
+    else analytics.track('match_start', { slot: this.slot, continued, assist: this.world.player(this.me).assist.mode, seconds: this.world.s.time });
+  }
+
+  /** result: victory, defeat or restart (the player gave up and started over). */
+  private trackEnd(result: string): void {
+    analytics.track(this.guide ? 'tutorial_end' : 'match_end', { result, ...this.matchParams() });
+  }
+
   private fmt(seconds: number): string {
     const s = Math.floor(seconds);
     return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
   }
 
   /** Bottom sheet over the dimmed board (UI_SPEC §5). */
-  private sheet(o: { title: string; lines: string[]; actions: { label: string; act: () => void; primary?: boolean }[]; badge?: string; portrait?: string; grey?: boolean; animate?: boolean }): Phaser.GameObjects.Container {
+  private sheet(o: { title: string; lines: string[]; actions: { label: string; act: () => void; primary?: boolean; gold?: boolean; half?: boolean; ref?: (tx: Phaser.GameObjects.Text) => void }[]; badge?: string; art?: string; portrait?: string; grey?: boolean; animate?: boolean; extra?: { h: number; make: (x: number, y: number, w: number) => Phaser.GameObjects.GameObject[] } }): Phaser.GameObjects.Container {
     const c = this.add.container(0, 0).setDepth(30);
     const shade = this.add.rectangle(0, 0, VIEW.width, VIEW.height, 0x0a1218, 0.55).setOrigin(0).setInteractive();
     shade.on('pointerdown', (_p: Phaser.Input.Pointer, _x: number, _y: number, ev: Ev) => ev.stopPropagation());
@@ -964,30 +1282,71 @@ export class GameScene extends Phaser.Scene {
       y += tx.height + 12;
     }
     y += 20;
+    if (o.extra) {
+      content.push(...o.extra.make(64, y, w - 128));
+      y += o.extra.h;
+    }
+    // Half-width actions pair up side by side to keep the sheet short.
+    let col = 0;
     for (const a of o.actions) {
+      const half = !!a.half;
+      if (!half && col) {
+        col = 0;
+        y += 112;
+      }
+      const bw = half ? (w - 96) / 2 : w - 80;
+      const bx = half && col ? 56 + bw : 40;
       const bg = this.add.graphics();
-      chip(bg, 40, y, w - 80, 96, a.primary ? C.teal : C.graphite, a.primary ? 1 : 0.1, 18);
+      chip(bg, bx, y, bw, 96, a.gold ? C.amber : a.primary ? C.teal : C.graphite, a.primary || a.gold ? 1 : 0.1, 18);
       if (a.primary) {
         bg.fillStyle(C.graphite, 0.35);
-        bg.fillRect(58, y + 90, w - 116, 6);
+        bg.fillRect(bx + 18, y + 90, bw - 36, 6);
       }
-      const tx = this.add.text(w / 2, y + 48, a.label, TXT.body(29, a.primary ? INK.white : INK.graphite, '700')).setOrigin(0.5);
-      const hit = this.add.zone(40, y, w - 80, 96).setOrigin(0).setInteractive({ useHandCursor: true });
+      const tx = this.add.text(bx + bw / 2, y + 48, a.label, TXT.body(half ? 25 : 29, a.primary ? INK.white : INK.graphite, '700')).setOrigin(0.5);
+      if (tx.width > bw - 24) tx.setScale((bw - 24) / tx.width);
+      a.ref?.(tx);
+      const hit = this.add.zone(bx, y, bw, 96).setOrigin(0).setInteractive({ useHandCursor: true });
       hit.on('pointerdown', stop(a.act));
       content.push(bg, tx, hit);
-      y += 112;
+      if (half && !col) col = 1;
+      else {
+        col = 0;
+        y += 112;
+      }
     }
+    if (col) y += 112;
     const h = y + 28;
     const top = VIEW.height - h - 40;
     const bg = this.add.graphics();
     plate(bg, 0, 0, w, h, 30);
     const body = this.add.container(x, top, [bg, ...content]);
-    if (o.portrait && this.textures.exists(o.portrait)) {
-      const img = this.add.image(VIEW.width / 2, top + 30, o.portrait).setOrigin(0.5, 1);
-      img.setScale(Math.min(3, 300 / img.height));
+    // Picture above the sheet, never under its edge (ART_REVIEW AR-12).
+    const room = Math.min(380, top - 40);
+    if (o.art && this.textures.exists(o.art) && room > 120) {
+      // Comic illustration: a framed panel with an ink border, like the intro comic.
+      const img = this.add.image(VIEW.width / 2, top - 14, o.art).setOrigin(0.5, 1);
+      img.setScale(Math.min((w - 24) / img.width, room / img.height));
+      const fw = img.displayWidth;
+      const fh = img.displayHeight;
+      const shadow = this.add.graphics();
+      shadow.fillStyle(0x0b1117, 0.35);
+      shadow.fillRect(VIEW.width / 2 - fw / 2 + 6, top - 14 - fh + 8, fw, fh);
+      const frame = this.add.graphics();
+      frame.lineStyle(6, 0x10171c, 1);
+      frame.strokeRect(VIEW.width / 2 - fw / 2, top - 14 - fh, fw, fh);
+      c.add([shadow, img, frame]);
+    } else if (o.portrait && this.textures.exists(o.portrait) && room > 80) {
+      // Pixel sprite: whole-number scale only and no rotation, so pixels stay square.
+      const img = this.add.image(VIEW.width / 2, top - 10, o.portrait).setOrigin(0.5, 1);
+      img.setScale(Math.max(1, Math.min(3, Math.floor(Math.min(room - 20, 300) / img.height))));
       img.texture.setFilter(Phaser.Textures.FilterMode.NEAREST);
-      if (o.grey) img.setTint(0x9aa4aa).setAngle(-8);
-      c.add(img);
+      const shadow = this.add.ellipse(VIEW.width / 2, top - 12, img.displayWidth * 0.9, 22, 0x0b1117, 0.3);
+      if (o.grey) {
+        // Lost: drained of colour (WebGL), dimmed on canvas.
+        img.preFX?.addColorMatrix().grayscale(0.85);
+        img.setTint(0xa9b1b6);
+      }
+      c.add([shadow, img]);
     }
     c.add(body);
     if (o.animate !== false) {
@@ -1003,16 +1362,9 @@ export class GameScene extends Phaser.Scene {
   /** "Next to this block: 2 nests" with Russian plural forms. */
   private nearText(x: number, y: number): string {
     const cl = this.world.clues(x, y);
-    const plural = (n: number) => {
-      const m10 = n % 10;
-      const m100 = n % 100;
-      if (m10 === 1 && m100 !== 11) return 'one';
-      if (m10 >= 2 && m10 <= 4 && (m100 < 12 || m100 > 14)) return 'few';
-      return 'many';
-    };
     const lines: string[] = [];
     if (cl.threat) lines.push(t(`cell.near.threat.${plural(cl.threat)}`, { count: cl.threat }));
-    if (cl.demon) lines.push(t('cell.near.demon.one', { count: cl.demon }));
+    if (cl.demon) lines.push(t('cell.near.boss.one', { count: cl.demon }));
     if (cl.finds) lines.push(t(`cell.near.finds.${plural(cl.finds)}`, { count: cl.finds }));
     return lines.length ? lines.join('\n') : t('cell.near.clear');
   }
@@ -1044,30 +1396,71 @@ export class GameScene extends Phaser.Scene {
       return;
     }
     if (p.middleButtonDown()) return;
-    // Tap an enemy or an opened nest: all defenders attack it (any mode).
+    // Tap an enemy or an opened nest: all residents attack it (any mode).
     const foe = this.board.enemyAt(wp.x, wp.y);
     if (foe) {
-      w.apply({ type: 'attack', target: `u:${foe.id}` }, this.me);
+      if (w.apply({ type: 'attack', target: `u:${foe.id}` }, this.me).ok) this.orderSaid();
       return;
     }
     const site = c.revealed ? w.site(x, y) : undefined;
     if (site && !site.destroyed) {
-      if (w.apply({ type: 'attack', target: `s:${x},${y}` }, this.me).ok) this.say(t('tutorial.attack'));
+      if (w.apply({ type: 'attack', target: `s:${x},${y}` }, this.me).ok) this.orderSaid();
       return;
     }
-    const b = w.building(c.building);
-    if (b && b.owner === this.me && b.type === 'school' && b.complete) {
-      w.apply({ type: 'setRecruit', building: b.id, on: !b.recruit }, this.me);
-      this.say(t(b.recruit ? 'building.school.train_on' : 'building.school.train_off'));
+    // A tap that just missed a running enemy must not drop the order (QA-037): only a tap well away
+    // from the target and from any enemy lifts it, and the player is told so.
+    const order = w.player(this.me).order;
+    if (c.revealed && order && c.content === 'ground') {
+      const tp = w.targetPos(order) as { x: number; y: number } | undefined;
+      const enemyNear = w.s.units.some((u) => u.owner < 0 && u.hp > 0 && Math.hypot(u.x - x, u.y - y) <= 2);
+      if ((!tp || Math.hypot(tp.x - x, tp.y - y) > 2.5) && !enemyNear && w.apply({ type: 'cancelOrder' }, this.me).ok) {
+        this.say(t('order.cancelled'));
+        return;
+      }
+    }
+    // Long press on an existing building: show name + desc (QA-009, UI_SPEC §4.4).
+    if (c.revealed && c.building !== undefined) {
+      const bid = c.building;
+      this.pressTimer = this.time.delayedCall(LONG_PRESS_MS, () => {
+        const b = this.world.s.buildings.find((bld) => bld.id === bid);
+        if (!b) return;
+        const nameKey = `building.${b.type}.name`;
+        const descKey = b.complete ? `building.${b.type}.desc` : 'building.under_construction';
+        this.say(`${t(nameKey)}\n${t(descKey)}`, 3500);
+        this.pressTimer = null;
+      });
       return;
     }
-    if (c.revealed && w.player(this.me).order && c.content === 'ground') w.apply({ type: 'cancelOrder' }, this.me);
+    // Open land: liberated → build here; not liberated → say why and light the land that is.
+    if (c.revealed && c.content === 'ground' && c.building === undefined && w.inTerritory(this.me, x, y) && !(this.guide && !this.tutorialWantsBuild())) {
+      // A number first shows the eight cells it counts; the second tap on it builds (config.input.tapNumberCell).
+      const cl = w.clues(x, y);
+      const sp = this.spotlight;
+      if ((cl.threat || cl.demon) && !this.ghost && !(sp && sp.x === x && sp.y === y)) {
+        this.spotlight = { x, y, until: this.time.now + 3500 };
+        this.say(`${this.nearText(x, y)}\n${t('build.tap_again')}`, 3500);
+        if (cl.threat) this.guide?.notify('clue_touched');
+        return;
+      }
+      this.spotlight = null;
+      this.openBuild(x, y);
+      return;
+    }
     // Touching an opened clue shows the eight cells it counts.
     if (c.revealed && c.building === undefined && (c.content === 'ground' || c.resolved)) {
       this.spotlight = { x, y, until: this.time.now + 2500 };
-      this.say(this.nearText(x, y));
+      if (this.guide || c.content !== 'ground') this.say(this.nearText(x, y));
+      else {
+        this.setGhost(null);
+        this.territoryFlash = this.time.now + 2600;
+        const to = this.nearestFreeLand(x, y);
+        this.pointTo = to ? { ...to, until: this.time.now + 3600 } : null;
+        this.say(t('build.refuse.not_liberated'), 3600);
+      }
       if (w.clues(x, y).threat > 0) this.guide?.notify('clue_touched');
     }
+    // A tap on a closed block while placing: drop the building and dig instead.
+    if (!c.revealed && this.ghost) this.setGhost(null);
     // Second tap on a cell the scanner knows is dangerous: dig it anyway.
     const k = cellKey(x, y);
     if (this.confirmCell === k) {

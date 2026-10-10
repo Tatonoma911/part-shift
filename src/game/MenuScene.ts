@@ -1,22 +1,37 @@
 import Phaser from 'phaser';
+import { account } from '../account/cloud';
+import { openAccountPanel } from '../account/panel';
 import { config } from '../core/data';
 import type { AssistMode } from '../core/state';
 import { lang, setLang, t } from '../i18n';
 import { introSeen, playIntro } from '../intro';
-import { learning, learningLang } from './learn';
-import { BUILDING_ANCHOR, createArt, preloadArt } from './assets';
+import { analytics, askAnalyticsConsent, closeConsent } from '../analytics';
+import { canVibrate, comfort, PALETTES, setComfort, TEXT_SCALES } from './comfort';
+import { learning, learningLang, setLearningHooks } from './learn';
+import { volumeHeight, volumeSliders } from './volume';
+import { createArt, preloadArt } from './assets';
+import { preloadComm } from './Comm';
 import { sound } from './audio';
 import type { GameStart } from './GameScene';
 import { C, INK, LANDSCAPE, VIEW } from './layout';
+import { menuIcon, type MenuIconId } from './menuIcons';
+import { preloadMetaArt } from './meta/art';
+import { loadMeta, pickAllies } from './meta/store';
+import { allySelect } from './meta/AllySelect';
+import { metaPreview } from './meta/preview';
 import { clearSlot, lastSlot, loadSettings, loadSlot, saveSettings, SLOTS } from './saves';
 import { tutorialDone } from './Tutorial';
 import { setBackHandler } from '../platform/native';
 import { closeOnlineScreen, openOnlineScreen, onlineScreenOpen } from '../net/lobby';
 import { onlineAvailable } from '../net/online';
 import { chip, plate, TXT } from './ui';
+import { drawMenuBackdrop, drawMenuHeroes } from './MenuBackdrop';
+import { dailySeed, dayId, heroOfWeek, invite, openBoard, openDonate, openFeedback, readChallenge } from '../social';
 
 type Ev = Phaser.Types.Input.EventData;
-type Page = 'main' | 'slots' | 'settings';
+type Page = 'main' | 'slots' | 'settings' | 'comfort';
+
+/** HeroOut heroes, all of them infected villains now (lore/VILLAINS.md); the menu shows three at random. */
 
 /**
  * Title screen: continue, new shift into one of three slots, the tutorial,
@@ -28,6 +43,8 @@ export class MenuScene extends Phaser.Scene {
   private armed: number | null = null;
   private current: Page = 'main';
   private storyPlaying = false;
+  /** The ally picker before a new shift, while it is open. */
+  private allyUi: Phaser.GameObjects.Container | null = null;
 
   constructor() {
     super('menu');
@@ -35,6 +52,8 @@ export class MenuScene extends Phaser.Scene {
 
   preload(): void {
     preloadArt(this);
+    preloadMetaArt(this);
+    preloadComm(this);
     const bar = this.add.graphics();
     this.load.on('progress', (v: number) => {
       bar.clear();
@@ -46,20 +65,23 @@ export class MenuScene extends Phaser.Scene {
 
   create(): void {
     this.input.enabled = true;
+    this.allyUi = null;
     if (!this.anims.exists('resident.idle')) createArt(this);
-    const unlock = () => sound.unlock();
-    window.addEventListener('pointerdown', unlock, { capture: true });
-    window.addEventListener('keydown', unlock, { capture: true });
-    this.events.once('shutdown', () => {
-      window.removeEventListener('pointerdown', unlock, { capture: true });
-      window.removeEventListener('keydown', unlock, { capture: true });
+    // QA-018: disable Phaser input while the guide/coach overlay is open, so touches
+    // don't fall through to menu buttons behind the DOM layer.
+    setLearningHooks({
+      pause: () => { this.input.enabled = false; },
+      resume: () => { this.input.enabled = true; },
     });
+    this.events.once('shutdown', () => setLearningHooks(null));
 
     // Links for tests and sharing: ?seed=…, ?tutorial=1 go straight to the board.
     const params = new URLSearchParams(location.search);
     if (!this.registry.get('deepLinked') && (params.has('seed') || params.get('tutorial') === '1')) {
       this.registry.set('deepLinked', true);
-      const start: GameStart = params.get('tutorial') === '1' ? { tutorial: true } : { slot: 3, fresh: true, seed: Number(params.get('seed')) || undefined };
+      // Seed links (a friend's "beat my score" challenge) play in slot 0, outside the three menu slots.
+      const ch = readChallenge(params);
+      const start: GameStart = params.get('tutorial') === '1' ? { tutorial: true } : { slot: 0, fresh: true, seed: Number(params.get('seed')) || undefined, challenge: ch ? { score: ch.score, name: ch.name } : undefined };
       this.scene.start('game', start);
       return;
     }
@@ -71,6 +93,9 @@ export class MenuScene extends Phaser.Scene {
     this.drawBackdrop();
     this.show('main');
     if (roomCode && onlineAvailable()) this.online(roomCode);
+    metaPreview(this);
+    analytics.where('menu');
+    analytics.track('menu_view', { tutorial_done: tutorialDone(), has_run: lastSlot() !== null });
     // Android back: skips the intro comic, sub-pages return to the main page; on the main page the app goes to the background.
     setBackHandler(() => {
       if (learning().isOpen) return true;
@@ -90,35 +115,44 @@ export class MenuScene extends Phaser.Scene {
     if (!introSeen() && !this.registry.get('introShown')) {
       this.registry.set('introShown', true);
       this.story(false);
+    } else {
+      // Statistics are asked about once a shift has been played, not over the first menu (AR-09),
+      // and only in a calm main menu: never over the ally choice or carried into the shift (QA-043).
+      if (loadMeta().stats.runs_played) {
+        this.time.delayedCall(1200, () => {
+          if (this.sys.isActive() && this.current === 'main' && !this.allyUi) askAnalyticsConsent();
+        });
+      }
+      this.events.once('shutdown', closeConsent);
+      sound.playMusic('menu');
     }
   }
 
   private story(skipGate: boolean): void {
     this.input.enabled = false;
     this.storyPlaying = true;
-    playIntro({ skipGate }).finally(() => {
-      this.storyPlaying = false;
-      if (this.scene.isActive()) this.input.enabled = true;
-    });
+    const startedAt = Date.now();
+    analytics.where('intro', () => ({ seconds: (Date.now() - startedAt) / 1000, auto: !skipGate }));
+    analytics.track('intro_start', { auto: !skipGate });
+    playIntro({ skipGate })
+      .then((r) => analytics.track('intro_end', { auto: !skipGate, skipped: r.skipped, seconds: (Date.now() - startedAt) / 1000 }))
+      .catch(() => undefined)
+      .finally(() => {
+        analytics.where('menu');
+        this.storyPlaying = false;
+        if (this.scene.isActive()) {
+          this.input.enabled = true;
+          sound.playMusic('menu');
+        }
+      });
   }
 
   private drawBackdrop(): void {
     // Landscape: the art sits in the left half, the menu panel on the right.
     const ax = LANDSCAPE ? (VIEW.width / 2 - 780) / 2 + 40 : 0;
     const ay = LANDSCAPE ? 60 : 0;
-    const g = this.add.graphics();
-    g.fillGradientStyle(0xeaf5f8, 0xeaf5f8, C.sky2, C.sky2, 1);
-    g.fillRect(0, 0, VIEW.width, VIEW.height);
-    g.fillStyle(0xbfd9e2, 0.6);
-    let x = 0;
-    let k = 0;
-    while (x < VIEW.width) {
-      const w = 44 + ((k * 37) % 56);
-      const h = 220 + ((k * 71) % 260);
-      g.fillRect(x, (LANDSCAPE ? 760 : 980) - h, w, h + 700);
-      x += w + 8;
-      k++;
-    }
+    // One comic layer: painted city and comic hero portraits (AR-00, AR-07, AR-08).
+    drawMenuBackdrop(this);
     // Logo: PART graphite, SHIFT teal (BRAND_UI "Шрифты").
     const part = this.add.text(0, 150, 'PART', TXT.num(96, INK.graphite)).setOrigin(0, 0.5);
     const shift = this.add.text(0, 150, 'SHIFT', TXT.num(96, INK.teal)).setOrigin(0, 0.5);
@@ -129,22 +163,14 @@ export class MenuScene extends Phaser.Scene {
     part.y = shift.y = 150 + ay;
     shift.x = part.x + part.width;
     this.add.text(ax + 390, 236 + ay, t('game.subtitle').toUpperCase(), TXT.caps()).setOrigin(0.5);
+    // The week's leader gets their name on everyone's title screen.
+    void heroOfWeek().then((h) => {
+      if (!h || !this.scene.isActive()) return;
+      const tx = this.add.text(ax + 390, 276 + ay, `${t('social.hero_week', { name: h.name, score: h.score.toLocaleString('ru-RU') })}`, TXT.body(22, INK.amber, '700')).setOrigin(0.5);
+      if (tx.width > 740) tx.setScale(740 / tx.width);
+    });
 
-    // A slice of the city: buildings, residents at work and the Demon looming behind.
-    const demon = this.add.image(ax + 560, 560 + ay, 'portrait.demon').setOrigin(0.5, 1).setScale(2.2).setAlpha(0.9);
-    demon.texture.setFilter(Phaser.Textures.FilterMode.NEAREST);
-    const row: [string, number][] = [
-      ['home', 120],
-      ['reactor', 230],
-      ['command', 360],
-      ['school', 490],
-      ['cooler', 600],
-    ];
-    for (const [id, bx] of row) {
-      const a = BUILDING_ANCHOR[id];
-      this.add.image(ax + bx, 610 + ay, `building.${id}`).setOrigin(a[0] / a[2], a[1] / a[3]).setScale(1.6);
-    }
-    [170, 300, 430, 560].forEach((rx, i) => this.add.sprite(ax + rx, 640 + ay, i % 2 ? 'defender' : 'resident').setOrigin(0.5, 1).setScale(1.4).play(i % 2 ? 'defender.idle' : 'resident.idle'));
+    drawMenuHeroes(this, ax, ay);
   }
 
   private show(page: Page): void {
@@ -162,7 +188,8 @@ export class MenuScene extends Phaser.Scene {
     c.add(bg);
     let y = top + 40;
     const button = (label: string, act: (() => void) | null, primary = false, sub?: string) => {
-      const h = sub ? 110 : 92;
+      // Landscape is short: slimmer rows so settings fit without scrolling.
+      const h = sub ? 110 : LANDSCAPE ? 76 : 92;
       const g = this.add.graphics();
       chip(g, x0 + 32, y, w - 64, h, primary ? C.teal : C.graphite, act ? (primary ? 1 : 0.08) : 0.04, 18);
       if (primary) {
@@ -171,8 +198,15 @@ export class MenuScene extends Phaser.Scene {
       }
       const color = primary ? INK.white : act ? INK.graphite : INK.dim;
       const tx = this.add.text(cx, y + (sub ? 38 : h / 2), label, TXT.body(29, color, '700')).setOrigin(0.5);
+      // A label never touches the button edges (ART_REVIEW AR-10): shrink it to fit, larger text sizes included.
+      const room = w - 64 - 56;
+      if (tx.width > room) tx.setScale(room / tx.width);
       c.add([g, tx]);
-      if (sub) c.add(this.add.text(cx, y + 78, sub, TXT.body(21, primary ? '#D9F3F8' : INK.dim, '500')).setOrigin(0.5));
+      if (sub) {
+        const st = this.add.text(cx, y + 78, sub, TXT.body(21, primary ? '#D9F3F8' : INK.dim, '500')).setOrigin(0.5);
+        if (st.width > room) st.setScale(room / st.width);
+        c.add(st);
+      }
       if (act) {
         const hit = this.add.zone(x0 + 32, y, w - 64, h).setOrigin(0).setInteractive({ useHandCursor: true });
         hit.on('pointerdown', (_p: Phaser.Input.Pointer, _x: number, _y: number, ev: Ev) => {
@@ -193,11 +227,17 @@ export class MenuScene extends Phaser.Scene {
       } else if (!tutorialDone()) button(t('menu.tutorial'), () => this.play({ tutorial: true }), true);
       button(t('menu.new_run'), () => this.show('slots'), !last && tutorialDone());
       button(t('online.menu'), onlineAvailable() ? () => this.online() : null, false, onlineAvailable() ? t('online.menu_sub') : t('menu.soon'));
+      // Meta progress: returned heroes, stats, records, rank (design/META.md §6).
+      button(t('dossier.title'), () => this.scene.start('dossier'));
       if (last || tutorialDone()) button(t('menu.tutorial'), () => this.play({ tutorial: true }));
       button(t('menu.guide'), () => learning().openGuide());
       button(t('menu.settings'), () => this.show('settings'));
       button(t('menu.story'), () => this.story(true));
-      button(t('menu.account'), null, false, t('menu.soon'));
+      const acc = account.view;
+      const accSub = acc.status === 'disabled' ? t('menu.soon') : acc.status === 'signed' ? acc.name || acc.email : undefined;
+      button(t('menu.account'), () => openAccountPanel(), false, accSub);
+      this.socialRow(c, x0 + 32, y, w - 64);
+      y += (LANDSCAPE ? 76 : 92) + 16;
     } else if (page === 'slots') {
       c.add(this.add.text(cx, y + 6, t('menu.slots').toUpperCase(), TXT.caps()).setOrigin(0.5));
       y += 44;
@@ -227,17 +267,54 @@ export class MenuScene extends Phaser.Scene {
         }
       }
       button(t('menu.back'), () => this.show('main'));
+    } else if (page === 'comfort') {
+      // «Удобство» (UI_SPEC §4.7): each row cycles its value on tap.
+      const cf = comfort();
+      const onOff = (v: boolean) => t(v ? 'comfort.on' : 'comfort.off');
+      c.add(this.add.text(cx, y + 6, t('settings.comfort').toUpperCase(), TXT.caps()).setOrigin(0.5));
+      y += 40;
+      button(`${t('comfort.palette')}: ${t(`comfort.palette.${cf.palette}`)}`, () => {
+        setComfort({ palette: PALETTES[(PALETTES.indexOf(cf.palette) + 1) % PALETTES.length] });
+        this.show('comfort');
+      }, false, t(`comfort.palette.${cf.palette}.hint`));
+      // Swatch: what "safe" and "danger" look like in this palette.
+      const sw = this.add.graphics();
+      const sy = y - 16 - 110 + 78;
+      sw.fillStyle(C.green, 1);
+      sw.fillCircle(x0 + 80, sy, 10);
+      sw.fillStyle(C.coral, 1);
+      sw.fillTriangle(x0 + w - 92, sy + 9, x0 + w - 68, sy + 9, x0 + w - 80, sy - 11);
+      c.add(sw);
+      button(`${t('comfort.calm')}: ${onOff(cf.calm)}`, () => {
+        setComfort({ calm: !cf.calm });
+        this.show('comfort');
+      }, false, t('comfort.calm.hint'));
+      button(`${t('comfort.shake')}: ${onOff(cf.shake)}`, () => {
+        setComfort({ shake: !cf.shake });
+        this.show('comfort');
+      });
+      button(`${t('comfort.text')}: ${Math.round(cf.textScale * 100)}%`, () => {
+        const i = TEXT_SCALES.indexOf(cf.textScale);
+        setComfort({ textScale: TEXT_SCALES[(i + 1) % TEXT_SCALES.length] });
+        this.show('comfort');
+      });
+      button(
+        `${t('comfort.vibrate')}: ${canVibrate() ? onOff(cf.vibrate) : t('comfort.vibrate.none')}`,
+        canVibrate()
+          ? () => {
+              setComfort({ vibrate: !cf.vibrate });
+              if (!cf.vibrate) navigator.vibrate?.(40);
+              this.show('comfort');
+            }
+          : null,
+      );
+      button(t('menu.back'), () => this.show('settings'), true);
     } else {
       const st = loadSettings();
-      const onOff = (v: boolean) => t(v ? 'settings.on' : 'settings.off');
-      button(`${t('settings.sfx')}: ${onOff(sound.prefs.sfx)}`, () => {
-        sound.setPrefs({ sfx: !sound.prefs.sfx });
-        this.show('settings');
-      });
-      button(`${t('settings.music')}: ${onOff(sound.prefs.music)}`, () => {
-        sound.setPrefs({ music: !sound.prefs.music });
-        this.show('settings');
-      });
+      c.add(this.add.text(cx, y + 6, t('settings.volume').toUpperCase(), TXT.caps()).setOrigin(0.5));
+      y += 40;
+      c.add(volumeSliders(this, x0 + 64, y, w - 128));
+      y += volumeHeight() + 8;
       button(`${t('settings.language')}: ${t(`settings.language.${lang}`)}`, () => {
         const next = lang === 'ru' ? 'en' : 'ru';
         setLang(next);
@@ -246,11 +323,22 @@ export class MenuScene extends Phaser.Scene {
         this.scene.restart();
       });
       const modes: AssistMode[] = ['full', 'scanner', 'off'];
-      button(`${t('settings.assist.title')}: ${t(`assist.mode.${st.assist}`)}`, () => {
-        saveSettings({ ...st, assist: modes[(modes.indexOf(st.assist) + 1) % modes.length] });
+      // Short name on the button, the current mode in the sub-line (AR-10: the long label did not fit).
+      button(
+        t('settings.assist'),
+        () => {
+          saveSettings({ ...st, assist: modes[(modes.indexOf(st.assist) + 1) % modes.length] });
+          this.show('settings');
+        },
+        false,
+        t(`assist.mode.${st.assist}.short`),
+      );
+      button(t('settings.comfort'), () => this.show('comfort'));
+      button(`${t('analytics.setting')}: ${t(analytics.consent === 'granted' ? 'settings.on' : 'settings.off')}`, () => {
+        analytics.setConsent(analytics.consent !== 'granted');
         this.show('settings');
       });
-      button(t('settings.replay_tutorial'), () => this.play({ tutorial: true }));
+      button(t('settings.feedback'), () => openFeedback('settings'));
       button(t('settings.reset_hints'), () => {
         learning().resetProgress();
         this.show('settings');
@@ -277,7 +365,63 @@ export class MenuScene extends Phaser.Scene {
     });
   }
 
+  /** Ranking · Invite · Feedback · Coffee (the coffee chip is gold: supporting the author is one tap away). */
+  private socialRow(c: Phaser.GameObjects.Container, x: number, y: number, w: number): void {
+    const h = LANDSCAPE ? 76 : 92;
+    // Brand icons, not system emoji (AR-21): emoji look different on every phone.
+    const items: [MenuIconId, string, () => void, boolean][] = [
+      ['leaderboard', t('social.menu.board'), () => openBoard({ playDaily: () => this.playDaily() }), false],
+      ['invite', t('social.menu.invite'), () => invite('menu'), false],
+      ['feedback', t('social.menu.feedback'), () => openFeedback('menu'), false],
+      ['coffee', t('social.menu.coffee'), () => openDonate('menu'), true],
+    ];
+    const gap = 10;
+    const bw = (w - gap * (items.length - 1)) / items.length;
+    items.forEach(([icon, label, act, gold], i) => {
+      const bx = x + i * (bw + gap);
+      const g = this.add.graphics();
+      chip(g, bx, y, bw, h, gold ? C.amber : C.graphite, gold ? 1 : 0.08, 14);
+      const ic = menuIcon(this, bx + bw / 2, y + h * 0.34, LANDSCAPE ? 32 : 40, icon);
+      const tx = this.add.text(bx + bw / 2, y + h * 0.74, label, TXT.body(LANDSCAPE ? 17 : 19, INK.graphite, '700')).setOrigin(0.5);
+      if (tx.width > bw - 10) tx.setScale((bw - 10) / tx.width);
+      const hit = this.add.zone(bx, y, bw, h).setOrigin(0).setInteractive({ useHandCursor: true });
+      hit.on('pointerdown', (_p: Phaser.Input.Pointer, _x: number, _y: number, ev: Ev) => {
+        ev.stopPropagation();
+        sound.play('ui_tap');
+        act();
+      });
+      c.add([g, ...ic, tx, hit]);
+    });
+  }
+
+  /** City of the day: one map for everybody; slot 4 keeps today's run, a new day starts fresh. */
+  private playDaily(): void {
+    const day = dayId();
+    const seed = dailySeed(day);
+    const s = loadSlot(4);
+    this.play({ slot: 4, fresh: !s || s.seed !== seed, seed, daily: day });
+  }
+
   private play(start: GameStart): void {
+    closeConsent();
+    // A new shift with heroes back on the team: pick who comes along first (META.md, allySelection).
+    const meta = loadMeta();
+    if (start.fresh && !start.tutorial && meta.unlocked.length && !this.allyUi) {
+      this.allyUi = allySelect(
+        this,
+        meta,
+        (ids) => {
+          pickAllies(meta, ids);
+          this.allyUi = null;
+          this.scene.start('game', { ...start, allies: ids });
+        },
+        () => {
+          this.allyUi?.destroy();
+          this.allyUi = null;
+        },
+      );
+      return;
+    }
     this.scene.start('game', start);
   }
 

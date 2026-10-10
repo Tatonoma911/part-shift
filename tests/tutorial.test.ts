@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { createTutorialWorld, tutorial } from '../src/core/levels';
 import { run } from './helpers';
+import { TutorialGuide } from '../src/game/Tutorial';
 
 describe('First Shift tutorial map', () => {
   it('builds an open field with its overrides; sites follow the chosen center', () => {
@@ -24,7 +25,7 @@ describe('First Shift tutorial map', () => {
     expect(w.cell(4, 7).content).toBe('cache');
   });
 
-  it('has no threat growth, no Demon and an unbreakable center; the nest releases only 2 adaptants with arms', () => {
+  it('has no threat growth, no call target and an unbreakable center; the nest releases only 2 adaptants with arms', () => {
     const w = createTutorialWorld();
     w.apply({ type: 'placeCommand', x: 3, y: 8 });
     w.s.time = 2000;
@@ -34,8 +35,29 @@ describe('First Shift tutorial map', () => {
     w.cell(2, 3).revealed = false;
     w.apply({ type: 'queueDig', x: 2, y: 3, force: true });
     run(w, 60);
-    expect(w.s.units.some((u) => u.kind === 'demon')).toBe(false);
+    expect(w.s.units.some((u) => u.kind === 'hero')).toBe(false);
     expect(w.s.sites[0].spawned).toBe(2);
     expect(w.building(w.player(0).command)!.hp).toBeGreaterThan(0);
+  });
+});
+describe('First Shift steps', () => {
+  it('waits to ask for a threat number until one is on the board (QA-008)', () => {
+    const g = new TutorialGuide();
+    const w = g.world;
+    w.apply({ type: 'placeCommand', x: 3, y: 8 });
+    g.update();
+    for (let i = 0; i < 3; i++) g.notify('queued');
+    g.update();
+    expect(g.stepIndex).toBe(2);
+    // Step 3 would auto-advance after 6 s, but no threat number is open yet.
+    w.s.time += 7;
+    expect(g.update()).toBe(false);
+    expect(g.stepIndex).toBe(2);
+    // Open a ground block next to the nest at (2,3): now step 4 has its number.
+    const c = w.cell(3, 4);
+    c.revealed = true;
+    expect(g.update()).toBe(true);
+    expect(g.stepIndex).toBe(3);
+    expect(g.focusCells().length).toBeGreaterThan(0);
   });
 });

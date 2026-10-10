@@ -1,6 +1,7 @@
-// Turns the Vite build into one self-contained HTML fragment for a claude.ai Artifact
-// (no external files allowed there). `npm run artifact` builds with ARTIFACT=1 (images inlined) and calls this.
-import { mkdirSync, readFileSync, readdirSync, writeFileSync } from 'node:fs';
+// Turns the Vite build into the claude.ai Artifact: one HTML page with the game script, plus the
+// art and audio files it loads (published next to the page, see artifact/files.json).
+// `npm run artifact` builds with ARTIFACT=1 and calls this.
+import { copyFileSync, mkdirSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
 
 const js = readdirSync('dist-artifact/assets').find((f) => f.endsWith('.js'));
 const code = readFileSync(`dist-artifact/assets/${js}`, 'utf8').replace(/<\/script/gi, '<\\/script');
@@ -16,6 +17,11 @@ const html = `<title>Part Shift</title>
 <div id="app"></div>
 <script type="module">${code}</script>
 `;
-mkdirSync('artifact', { recursive: true });
+rmSync('artifact', { recursive: true, force: true });
+mkdirSync('artifact/files', { recursive: true });
 writeFileSync('artifact/part-shift.html', html);
-console.log(`artifact/part-shift.html: ${(html.length / 1024).toFixed(0)} KB`);
+// The script resolves its files relative to the page, so they are published at the page's root.
+const files = readdirSync('dist-artifact/assets').filter((f) => f !== js);
+for (const f of files) copyFileSync(`dist-artifact/assets/${f}`, `artifact/files/${f}`);
+writeFileSync('artifact/files.json', JSON.stringify(files));
+console.log(`artifact/part-shift.html: ${(html.length / 1024).toFixed(0)} KB + ${files.length} files in artifact/files`);

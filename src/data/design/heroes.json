@@ -1,0 +1,930 @@
+{
+  "version": "0.4",
+  "_doc": "design/HEROES.md",
+  "_rules": "15 heroes. In a run they are enemies (gone mad). Killing a hero gives 2 parts: the arm to the resident who landed the killing blow, the leg/wings/tail to the resident with the next highest damage dealt. Meta: each hero unlocks as an ally by its condition; chosen allies start the run at the command center.",
+  "lairsPerMapByTier": {
+    "1": 1,
+    "2": 1,
+    "3": 1
+  },
+  "lairSelfOpenThreatLevels": "difficulty.json per level ([2,4,5])",
+  "n73Appears": "только когда открыты остальные 14: на «Аврале» входит в bossPool",
+  "allySlots": [
+    {
+      "unlockedHeroes": 0,
+      "slots": 1
+    },
+    {
+      "unlockedHeroes": 5,
+      "slots": 2
+    },
+    {
+      "unlockedHeroes": 10,
+      "slots": 3
+    }
+  ],
+  "allyRespawnSeconds": "see allyRules.respawnSeconds",
+  "heroes": [
+    {
+      "id": "standard",
+      "name_ru": "Стандарт",
+      "canon": "CHASSIS_S01 (канон)",
+      "tech": "kinetic",
+      "tier": 1,
+      "looks": "серийное шасси: светлая рубашка, тёмные брюки; обезумевший приходит тройкой одинаковых копий",
+      "enemy": {
+        "hp": 240,
+        "damage": 10,
+        "defense": 1,
+        "attackSeconds": 1.0,
+        "speed": 2.4,
+        "attackTech": "kinetic",
+        "resist": {
+          "thermo": 1.0,
+          "cryo": 1.0,
+          "volt": 1.0,
+          "toxin": 1.0,
+          "impact": 1.0
+        },
+        "flying": false,
+        "ability": {
+          "id": "serial_copies",
+          "desc": "появляется сразу тремя копиями, у каждой 1/3 HP"
+        },
+        "reward": 60
+      },
+      "drops": [
+        {
+          "slot": "arm",
+          "id": "standard_arm",
+          "tech": "kinetic",
+          "damage": 5,
+          "trait": "none"
+        },
+        {
+          "slot": "leg",
+          "id": "standard_leg",
+          "tech": "kinetic",
+          "hp": 15,
+          "speed": 0.3
+        }
+      ],
+      "ally": {
+        "passive": "spawnIntervalFactor",
+        "value": 0.85,
+        "desc": "жители появляются на 15 % чаще"
+      },
+      "unlock": {
+        "type": "tutorial_complete",
+        "desc": "пройти обучение"
+      }
+    },
+    {
+      "id": "patch",
+      "name_ru": "Патч",
+      "canon": "PATCH (визуальное направление)",
+      "tech": "kinetic",
+      "tier": 1,
+      "looks": "спасательная собака с механической ногой",
+      "enemy": {
+        "hp": 180,
+        "damage": 10,
+        "defense": 1,
+        "attackSeconds": 1.0,
+        "speed": 4.0,
+        "attackTech": "kinetic",
+        "resist": {
+          "thermo": 1.0,
+          "cryo": 1.0,
+          "volt": 1.0,
+          "toxin": 1.0,
+          "impact": 0.75
+        },
+        "flying": false,
+        "ability": {
+          "id": "orb_thief",
+          "desc": "очень быстрый, ворует летящие сгустки Энергии (−5 за сгусток) и убегает"
+        },
+        "reward": 60
+      },
+      "drops": [
+        {
+          "slot": "arm",
+          "id": "patch_arm",
+          "tech": "kinetic",
+          "damage": 5,
+          "trait": "bite_bleed",
+          "bleedDps": 2
+        },
+        {
+          "slot": "leg",
+          "id": "patch_leg",
+          "tech": "kinetic",
+          "hp": 15,
+          "speed": 0.8
+        }
+      ],
+      "ally": {
+        "passive": "orbSpeedFactor",
+        "value": 2.0,
+        "bonus": {
+          "digEnergyFactor": 1.1
+        },
+        "desc": "сгустки Энергии летят вдвое быстрее, копка даёт +10 %"
+      },
+      "unlock": {
+        "type": "lifetime_stat",
+        "stat": "caches_opened",
+        "count": 30,
+        "desc": "открыть 30 тайников за все партии"
+      }
+    },
+    {
+      "id": "canopy",
+      "name_ru": "Садовница",
+      "canon": "CANOPY (визуальное направление)",
+      "tech": "toxin",
+      "tier": 1,
+      "looks": "пожилая городская садовница в зелёном костюме, секатор, дроны-растения",
+      "enemy": {
+        "hp": 240,
+        "damage": 10,
+        "defense": 1,
+        "attackSeconds": 1.0,
+        "speed": 2.4,
+        "attackTech": "toxin",
+        "resist": {
+          "thermo": 1.5,
+          "cryo": 1.0,
+          "volt": 1.0,
+          "toxin": 0.5,
+          "impact": 1.0
+        },
+        "flying": false,
+        "ability": {
+          "id": "overgrowth",
+          "desc": "раз в 10 с выращивает заросли на 3 открытых клетках: жители там замедлены на 40 %"
+        },
+        "reward": 60
+      },
+      "drops": [
+        {
+          "slot": "arm",
+          "id": "canopy_arm",
+          "tech": "toxin",
+          "damage": 5,
+          "trait": "pollen",
+          "poisonOnHit": true
+        },
+        {
+          "slot": "leg",
+          "id": "canopy_leg",
+          "tech": "toxin",
+          "hp": 15,
+          "speed": 0.2,
+          "regenPerSec": 1
+        }
+      ],
+      "ally": {
+        "passive": "energyProductionFactor",
+        "value": 1.25,
+        "desc": "Микрореакторы и копка дают на 25 % больше Энергии"
+      },
+      "unlock": {
+        "type": "run_stat",
+        "stat": "energy_earned",
+        "count": 1000,
+        "desc": "заработать 1000 Энергии за одну партию"
+      }
+    },
+    {
+      "id": "current",
+      "name_ru": "Течение",
+      "canon": "CURRENT (визуальное направление)",
+      "tech": "cryo",
+      "tier": 1,
+      "looks": "водный спасатель в синем костюме с ранцем",
+      "enemy": {
+        "hp": 240,
+        "damage": 10,
+        "defense": 1,
+        "attackSeconds": 1.0,
+        "speed": 2.4,
+        "attackTech": "cryo",
+        "resist": {
+          "thermo": 1.0,
+          "cryo": 0.5,
+          "volt": 1.5,
+          "toxin": 1.0,
+          "impact": 1.0
+        },
+        "flying": false,
+        "ability": {
+          "id": "water_jet",
+          "desc": "струя на 3 клетки отталкивает жителей на 1 клетку и снимает их полезные эффекты"
+        },
+        "reward": 60
+      },
+      "drops": [
+        {
+          "slot": "arm",
+          "id": "current_arm",
+          "tech": "cryo",
+          "damage": 5,
+          "trait": "wet",
+          "chillStacks": 1
+        },
+        {
+          "slot": "leg",
+          "id": "current_leg",
+          "tech": "cryo",
+          "hp": 15,
+          "swimWater": true
+        }
+      ],
+      "ally": {
+        "passive": "cleanseAura",
+        "radius": 3,
+        "everySeconds": 5,
+        "desc": "снимает с жителей ожог, отравление и холод; ходит по воде"
+      },
+      "unlock": {
+        "type": "defeat_hero",
+        "hero": "current",
+        "count": 15,
+        "desc": "победить Течение 15 раз"
+      }
+    },
+    {
+      "id": "lineman",
+      "name_ru": "Линейщик",
+      "canon": "RESPONDER_CABLE (канон)",
+      "tech": "volt",
+      "tier": 2,
+      "looks": "подтянутый высотник, кобальт и белая куртка, оранжевый кабель на предплечье",
+      "enemy": {
+        "hp": 340,
+        "damage": 14,
+        "defense": 2,
+        "attackSeconds": 1.1,
+        "speed": 2.0,
+        "attackTech": "volt",
+        "resist": {
+          "thermo": 1.25,
+          "cryo": 1.0,
+          "volt": 0.5,
+          "toxin": 1.0,
+          "impact": 1.5
+        },
+        "flying": false,
+        "ability": {
+          "id": "cable_pull",
+          "desc": "раз в 7 с притягивает жителя кабелем с 4 клеток и оглушает на 1 с"
+        },
+        "reward": 90
+      },
+      "drops": [
+        {
+          "slot": "arm",
+          "id": "lineman_arm",
+          "tech": "volt",
+          "damage": 7,
+          "trait": "cable_pull",
+          "range": 3
+        },
+        {
+          "slot": "leg",
+          "id": "lineman_leg",
+          "tech": "volt",
+          "hp": 25,
+          "speed": 0.4
+        }
+      ],
+      "ally": {
+        "passive": "pullEnemies",
+        "everySeconds": 10,
+        "desc": "в бою подтягивает врага к жителям; удары жителей рядом с ним дают разряд",
+        "pullEnemies": {
+          "mode": "taunt",
+          "radius": 5,
+          "everySeconds": 10,
+          "durationSeconds": 4,
+          "_note": "no drag; enemies in radius switch to him; residents' hits next to him add a volt discharge"
+        }
+      },
+      "unlock": {
+        "type": "lifetime_stat",
+        "stat": "reaction_conductive_chain",
+        "count": 50,
+        "desc": "вызвать реакцию «Проводящая цепь» 50 раз"
+      }
+    },
+    {
+      "id": "frostline",
+      "name_ru": "Фростлайн",
+      "canon": "RESPONDER_CRYOGEL (канон)",
+      "tech": "cryo",
+      "tier": 2,
+      "looks": "компактная спортивная женщина, пучок, циан, два прозрачных бачка",
+      "enemy": {
+        "hp": 340,
+        "damage": 14,
+        "defense": 2,
+        "attackSeconds": 1.1,
+        "speed": 2.0,
+        "attackTech": "cryo",
+        "resist": {
+          "thermo": 1.25,
+          "cryo": 0.5,
+          "volt": 1.5,
+          "toxin": 1.0,
+          "impact": 1.0
+        },
+        "flying": false,
+        "ability": {
+          "id": "cryo_kick",
+          "desc": "раз в 6 с удар ногой конусом на 2 клетки: 15 урона и 2 стака холода"
+        },
+        "reward": 90
+      },
+      "drops": [
+        {
+          "slot": "arm",
+          "id": "frostline_arm",
+          "tech": "cryo",
+          "damage": 7,
+          "trait": "chill"
+        },
+        {
+          "slot": "leg",
+          "id": "frostline_leg",
+          "tech": "cryo",
+          "hp": 25,
+          "trait": "cryo_kick",
+          "speed": 0.6
+        }
+      ],
+      "ally": {
+        "passive": "slowAura",
+        "radius": 3,
+        "slowPercent": 25,
+        "desc": "враги рядом с ней замедлены"
+      },
+      "unlock": {
+        "type": "lifetime_stat",
+        "stat": "enemies_frozen",
+        "count": 200,
+        "desc": "заморозить 200 врагов"
+      }
+    },
+    {
+      "id": "mason",
+      "name_ru": "Каменщик",
+      "canon": "MASON (визуальное направление)",
+      "tech": "impact",
+      "tier": 2,
+      "looks": "крупный бородатый геотехник, строительные опоры",
+      "enemy": {
+        "hp": 340,
+        "damage": 14,
+        "defense": 2,
+        "attackSeconds": 1.1,
+        "speed": 2.0,
+        "attackTech": "impact",
+        "resist": {
+          "thermo": 1.0,
+          "cryo": 1.0,
+          "volt": 1.0,
+          "toxin": 1.5,
+          "impact": 0.5
+        },
+        "flying": false,
+        "ability": {
+          "id": "barricade",
+          "desc": "ставит опоры-завалы на открытые клетки и перекрывает жителям путь"
+        },
+        "reward": 90
+      },
+      "drops": [
+        {
+          "slot": "arm",
+          "id": "mason_arm",
+          "tech": "impact",
+          "damage": 7,
+          "trait": "stagger"
+        },
+        {
+          "slot": "leg",
+          "id": "mason_leg",
+          "tech": "impact",
+          "hp": 25,
+          "defense": 2,
+          "speed": -0.2
+        }
+      ],
+      "ally": {
+        "passive": "buildingsHpFactor",
+        "value": 1.5,
+        "bonus": {
+          "rubbleWorkFactor": 0.5
+        },
+        "desc": "здания +50 % прочности, завалы разбираются вдвое быстрее"
+      },
+      "unlock": {
+        "type": "lifetime_stat",
+        "stat": "buildings_built",
+        "count": 100,
+        "desc": "построить 100 зданий"
+      }
+    },
+    {
+      "id": "sweep",
+      "name_ru": "Чистильщик",
+      "canon": "SWEEP (визуальное направление)",
+      "tech": "thermo",
+      "tier": 2,
+      "looks": "санитар в хим-костюме с уборочным инструментом и паровым стерилизатором",
+      "enemy": {
+        "hp": 340,
+        "damage": 14,
+        "defense": 2,
+        "attackSeconds": 1.1,
+        "speed": 2.0,
+        "attackTech": "thermo",
+        "resist": {
+          "thermo": 0.5,
+          "cryo": 1.5,
+          "volt": 1.0,
+          "toxin": 1.0,
+          "impact": 1.0
+        },
+        "flying": false,
+        "ability": {
+          "id": "steam_clean",
+          "desc": "раз в 8 с облако пара радиусом 2: 6 урона в секунду 3 с"
+        },
+        "reward": 90
+      },
+      "drops": [
+        {
+          "slot": "arm",
+          "id": "sweep_arm",
+          "tech": "thermo",
+          "damage": 7,
+          "trait": "burn"
+        },
+        {
+          "slot": "leg",
+          "id": "sweep_leg",
+          "tech": "thermo",
+          "hp": 25,
+          "statusImmune": [
+            "poison"
+          ]
+        }
+      ],
+      "ally": {
+        "passive": "hazardImmunityAura",
+        "radius": 3,
+        "bonus": {
+          "partRecycleFactor": 2
+        },
+        "desc": "жители рядом не получают урон от раскалённой земли и яда; переработка частей даёт вдвое больше Энергии"
+      },
+      "unlock": {
+        "type": "lifetime_stat",
+        "stat": "parts_recycled",
+        "count": 50,
+        "desc": "переработать 50 лишних частей"
+      }
+    },
+    {
+      "id": "beacon",
+      "name_ru": "Маяк",
+      "canon": "BEACON (визуальное направление)",
+      "tech": "volt",
+      "tier": 2,
+      "looks": "высокая женщина с сигнальными и поисковыми приборами",
+      "enemy": {
+        "hp": 340,
+        "damage": 14,
+        "defense": 2,
+        "attackSeconds": 1.1,
+        "speed": 2.0,
+        "attackTech": "volt",
+        "resist": {
+          "thermo": 1.0,
+          "cryo": 1.0,
+          "volt": 0.5,
+          "toxin": 1.0,
+          "impact": 1.5
+        },
+        "flying": false,
+        "ability": {
+          "id": "alarm_flare",
+          "desc": "сигнальная ракета: открытые гнёзда в радиусе 6 выпускают врагов вдвое быстрее 10 с"
+        },
+        "reward": 90
+      },
+      "drops": [
+        {
+          "slot": "arm",
+          "id": "beacon_arm",
+          "tech": "volt",
+          "damage": 7,
+          "trait": "shock"
+        },
+        {
+          "slot": "leg",
+          "id": "beacon_leg",
+          "tech": "volt",
+          "hp": 25,
+          "speed": 0.4,
+          "visionTiles": 1
+        }
+      ],
+      "ally": {
+        "passive": "scannerBonus",
+        "extraCharges": 2,
+        "freeSafeRevealEverySeconds": 60,
+        "desc": "+2 заряда сканера; раз в минуту помечает одну безопасную клетку"
+      },
+      "unlock": {
+        "type": "run_challenge",
+        "challenge": "win_without_accidental_open",
+        "desc": "победить, ни разу не вскрыв гнездо случайно"
+      }
+    },
+    {
+      "id": "hive",
+      "name_ru": "Улей",
+      "canon": "HIVE (визуальное направление)",
+      "tech": "toxin",
+      "tier": 2,
+      "looks": "рука-соты, пчёлы-мониторы, мёд и кобальт",
+      "enemy": {
+        "hp": 340,
+        "damage": 14,
+        "defense": 2,
+        "attackSeconds": 1.1,
+        "speed": 2.0,
+        "attackTech": "toxin",
+        "resist": {
+          "thermo": 1.5,
+          "cryo": 1.0,
+          "volt": 1.0,
+          "toxin": 0.5,
+          "impact": 1.0
+        },
+        "flying": false,
+        "ability": {
+          "id": "drone_swarm",
+          "desc": "рой дронов жалит до 4 жителей рядом и отравляет"
+        },
+        "reward": 90
+      },
+      "drops": [
+        {
+          "slot": "arm",
+          "id": "hive_arm",
+          "tech": "toxin",
+          "damage": 7,
+          "trait": "poison",
+          "stingTargets": 2
+        },
+        {
+          "slot": "leg",
+          "id": "hive_leg",
+          "tech": "toxin",
+          "hp": 25,
+          "speed": 0.3
+        }
+      ],
+      "ally": {
+        "passive": "hiveScout",
+        "everySeconds": 60,
+        "desc": "раз в минуту рой отмечает одно скрытое гнездо или убежище"
+      },
+      "unlock": {
+        "type": "defeat_hero",
+        "hero": "hive",
+        "count": 20,
+        "desc": "победить Улей 20 раз"
+      }
+    },
+    {
+      "id": "kiln",
+      "name_ru": "Килн",
+      "canon": "RESPONDER_KILN (канон)",
+      "tech": "impact",
+      "tier": 3,
+      "looks": "огромный добрый темнокожий мужчина, охра/янтарь и белая керамика, таранная перчатка",
+      "enemy": {
+        "hp": 460,
+        "damage": 18,
+        "defense": 3,
+        "attackSeconds": 1.3,
+        "speed": 1.6,
+        "attackTech": "impact",
+        "resist": {
+          "thermo": 0.75,
+          "cryo": 1.25,
+          "volt": 1.0,
+          "toxin": 1.5,
+          "impact": 0.5
+        },
+        "flying": false,
+        "ability": {
+          "id": "ram_charge",
+          "desc": "раз в 8 с таран на 3 клетки: 30 урона и отброс"
+        },
+        "reward": 130
+      },
+      "drops": [
+        {
+          "slot": "arm",
+          "id": "kiln_arm",
+          "tech": "impact",
+          "damage": 9,
+          "trait": "ram_charge",
+          "defense": 3
+        },
+        {
+          "slot": "leg",
+          "id": "kiln_leg",
+          "tech": "impact",
+          "hp": 35,
+          "defense": 2
+        }
+      ],
+      "ally": {
+        "passive": "guardAura",
+        "radius": 2,
+        "damageTakenFactor": 0.8,
+        "desc": "танк: жители рядом получают на 20 % меньше урона"
+      },
+      "unlock": {
+        "type": "defeat_hero",
+        "hero": "kiln",
+        "count": 50,
+        "desc": "победить Килна 50 раз"
+      }
+    },
+    {
+      "id": "seraph",
+      "name_ru": "Серафим",
+      "canon": "CHASSIS_SERAPH (канон)",
+      "tech": "kinetic",
+      "tier": 3,
+      "looks": "женщина с большими механическими крыльями и нимбом-дроном, целиком в кадре",
+      "enemy": {
+        "hp": 460,
+        "damage": 18,
+        "defense": 3,
+        "attackSeconds": 1.3,
+        "speed": 1.6,
+        "attackTech": "kinetic",
+        "resist": {
+          "thermo": 1.0,
+          "cryo": 1.0,
+          "volt": 1.5,
+          "toxin": 0.5,
+          "impact": 0.75
+        },
+        "flying": true,
+        "ability": {
+          "id": "halo_heal",
+          "desc": "лечит других врагов в радиусе 3 на 8 HP каждые 2 с; летает над водой"
+        },
+        "reward": 130
+      },
+      "drops": [
+        {
+          "slot": "arm",
+          "id": "seraph_arm",
+          "tech": "kinetic",
+          "damage": 9,
+          "trait": "none"
+        },
+        {
+          "slot": "wings",
+          "id": "seraph_wings",
+          "tech": "kinetic",
+          "hp": 35,
+          "speed": 1.0,
+          "flying": true
+        }
+      ],
+      "ally": {
+        "passive": "healAura",
+        "radius": 3,
+        "healAmount": 4,
+        "healEverySeconds": 2,
+        "desc": "лечит жителей рядом"
+      },
+      "unlock": {
+        "type": "run_challenge",
+        "challenge": "win_no_resident_lost",
+        "desc": "победить, не потеряв ни одного жителя"
+      }
+    },
+    {
+      "id": "doctor",
+      "name_ru": "Доктор",
+      "canon": "CHASSIS_LAB_DOCTOR (канон)",
+      "tech": "toxin",
+      "tier": 3,
+      "looks": "белый халат, обычный мужчина, инжектор с гелем Splice Medium",
+      "enemy": {
+        "hp": 460,
+        "damage": 18,
+        "defense": 3,
+        "attackSeconds": 1.3,
+        "speed": 1.6,
+        "attackTech": "toxin",
+        "resist": {
+          "thermo": 1.5,
+          "cryo": 1.0,
+          "volt": 1.0,
+          "toxin": 0.5,
+          "impact": 1.0
+        },
+        "flying": false,
+        "ability": {
+          "id": "splice_inject",
+          "desc": "раз в 10 с вкалывает гель ближайшему врагу: +50 % HP и регенерация"
+        },
+        "reward": 130
+      },
+      "drops": [
+        {
+          "slot": "arm",
+          "id": "doctor_arm",
+          "tech": "toxin",
+          "damage": 9,
+          "trait": "poison",
+          "healSelfOnHit": 3
+        },
+        {
+          "slot": "leg",
+          "id": "doctor_leg",
+          "tech": "toxin",
+          "hp": 35,
+          "speed": 0.3
+        }
+      ],
+      "ally": {
+        "passive": "fieldSurgery",
+        "reviveEverySeconds": 90,
+        "desc": "раз в 90 с поднимает только что погибшего жителя; приращение части лечит жителя полностью",
+        "reviveRule": "every 90 s, if any resident died since last trigger, a new full-HP resident appears next to the Doctor; respects population cap"
+      },
+      "unlock": {
+        "type": "run_challenge",
+        "challenge": "resident_full_slots",
+        "desc": "собрать одному жителю все конечности сразу (2 руки, 2 ноги, хвост, крылья)"
+      }
+    },
+    {
+      "id": "demon",
+      "name_ru": "Демон",
+      "canon": "CHASSIS_DEMON (канон)",
+      "tech": "thermo",
+      "tier": 4,
+      "looks": "крупный мужчина, чёрно-красная техноброня, 4 полноценные руки, буровой хвост",
+      "enemy": {
+        "hp": 760,
+        "damage": 22,
+        "defense": 4,
+        "attackSeconds": 2.2,
+        "speed": 1.5,
+        "attackTech": "thermo",
+        "resist": {
+          "thermo": 0.5,
+          "cryo": 1.5,
+          "volt": 1.0,
+          "toxin": 1.0,
+          "impact": 0.75
+        },
+        "flying": false,
+        "ability": {
+          "id": "steam_blast",
+          "desc": "замах хвостом 0.9 с, струя пара на 3.25 клетки, раскалённая земля 3.2 с по 4 урона в секунду"
+        },
+        "reward": 250
+      },
+      "drops": [
+        {
+          "slot": "arm",
+          "id": "demon_arm",
+          "tech": "thermo",
+          "damage": 12,
+          "trait": "four_arms_extra_hit"
+        },
+        {
+          "slot": "tail",
+          "id": "drill_tail",
+          "tech": "thermo",
+          "hp": 60,
+          "splashRadius": 1,
+          "splashFactor": 0.5
+        }
+      ],
+      "ally": {
+        "passive": "drillDig",
+        "digTimeFactor": 0.7,
+        "desc": "жители копают на 30 % быстрее; сам Демон пробуривает клетку за 2 с"
+      },
+      "unlock": {
+        "type": "defeat_hero",
+        "hero": "demon",
+        "count": 10,
+        "desc": "победить Демона 10 раз"
+      }
+    },
+    {
+      "id": "n73",
+      "name_ru": "Семьдесят Третий",
+      "canon": "NEUROCORE_N73 (канон)",
+      "tech": "volt",
+      "tier": 4,
+      "looks": "костяной позвоночник с циановым ядром, не человек",
+      "enemy": {
+        "hp": 600,
+        "damage": 22,
+        "defense": 4,
+        "attackSeconds": 2.2,
+        "speed": 1.5,
+        "attackTech": "volt",
+        "resist": {
+          "thermo": 1.0,
+          "cryo": 1.0,
+          "volt": 0.5,
+          "toxin": 1.0,
+          "impact": 1.5
+        },
+        "flying": false,
+        "ability": {
+          "id": "neuro_override",
+          "desc": "раз в 15 с перехватывает одного жителя на 6 с: тот дерётся против своих"
+        },
+        "reward": 250
+      },
+      "drops": [
+        {
+          "slot": "arm",
+          "id": "n73_arm",
+          "tech": "volt",
+          "damage": 12,
+          "trait": "neuro_fail"
+        },
+        {
+          "slot": "leg",
+          "id": "n73_spine",
+          "tech": "volt",
+          "hp": 60,
+          "attackSpeedFactor": 1.15
+        }
+      ],
+      "ally": {
+        "passive": "neuroLink",
+        "attackSpeedFactor": 1.2,
+        "bonus": {
+          "convertAdaptantEverySeconds": 30
+        },
+        "desc": "все жители бьют на 20 % быстрее; раз в 30 с переманивает адаптанта"
+      },
+      "unlock": {
+        "type": "unlock_all",
+        "desc": "открыть всех остальных 14 героев"
+      }
+    }
+  ],
+  "bossPool": {
+    "tiers": [
+      3,
+      4
+    ],
+    "heroes": [
+      "kiln",
+      "seraph",
+      "doctor",
+      "demon"
+    ],
+    "_note": "[Антон] Демон — один из героев, не главный злодей; сильнейший герой района выбирается случайно из этого пула и не повторяет героя 3 уровня в убежище"
+  },
+  "_names": "screen names come from text/ru.json enemy.{id}.name; name_ru is a working copy",
+  "callTargetHpFactor": "difficulty.json per level (Смена 1.4)",
+  "allyRules": {
+    "_doc": "from Программист 2 PR #15, fixed by design",
+    "hpFactor": 0.5,
+    "damageFactor": 0.6,
+    "defense": "as enemy form",
+    "attackSeconds": "as enemy form",
+    "range": 1,
+    "respawnSeconds": 60,
+    "respawnAt": "command center",
+    "leashRadiusFromCommand": 5,
+    "takesParts": false
+  }
+}

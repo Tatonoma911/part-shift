@@ -1,0 +1,712 @@
+{
+ "_doc": "text/VOICE.md. Какие строки ru.json показывать на какие события игры. Пул = список ключей, берётся случайный, не повторяя последний показанный из этого пула.",
+ "version": "0.4",
+ "channels": {
+  "control": {
+   "view": "radio",
+   "cooldownSeconds": 25,
+   "maxPerMinute": 3,
+   "showSeconds": 4.5,
+   "_note": "плашка-объявление Контроля с его лицом-маской; priority-события пробивают кулдаун"
+  },
+  "hero": {
+   "view": "bubble",
+   "cooldownSeconds": 12,
+   "showSeconds": 3,
+   "_note": "облачко над спрайтом героя"
+  },
+  "survivor": {
+   "view": "bubble",
+   "cooldownSeconds": 0,
+   "showSeconds": 3.5
+  },
+  "cache": {
+   "view": "toast_second_line",
+   "cooldownSeconds": 0
+  },
+  "ad": {
+   "view": "billboard",
+   "cooldownSeconds": 60,
+   "_note": "бегущая строка рекламы под HUD или на экране загрузки/паузы"
+  },
+  "tip": {
+   "view": "loading_pause",
+   "cooldownSeconds": 0
+  }
+ },
+ "triggers": [
+  {
+   "event": "run_start",
+   "channel": "control",
+   "priority": true,
+   "delaySeconds": 3,
+   "pool": [
+    "control.bark.run_start",
+    "control.bark.warehouse"
+   ]
+  },
+  {
+   "event": "command_placed",
+   "channel": "control",
+   "priority": true,
+   "delaySeconds": 6,
+   "pool": [
+    "control.bark.command_center"
+   ]
+  },
+  {
+   "event": "dig_done",
+   "channel": "control",
+   "chance": 0.08,
+   "pool": [
+    "control.bark.dig",
+    "control.bark.dig.2",
+    "control.bark.dig.3",
+    "control.bark.care_zone"
+   ]
+  },
+  {
+   "event": "build_done",
+   "channel": "control",
+   "chance": 0.35,
+   "pool": [
+    "control.bark.build",
+    "control.bark.build_done.1",
+    "control.bark.build_done.2"
+   ]
+  },
+  {
+   "event": "resident_born",
+   "channel": "control",
+   "chance": 0.25,
+   "pool": [
+    "control.bark.resident_born",
+    "control.bark.survey"
+   ]
+  },
+  {
+   "event": "defender_trained",
+   "channel": "control",
+   "chance": 0.4,
+   "pool": [
+    "control.bark.defender_trained.1",
+    "control.bark.defender_trained.2"
+   ]
+  },
+  {
+   "event": "enemy_spawn",
+   "first": true,
+   "channel": "control",
+   "priority": true,
+   "pool": [
+    "control.bark.nest_opened",
+    "control.bark.resist",
+    "control.bark.hero_on_shift"
+   ]
+  },
+  {
+   "event": "nest_destroyed",
+   "channel": "control",
+   "chance": 0.6,
+   "pool": [
+    "control.bark.nest_destroyed.1",
+    "control.bark.nest_destroyed.2"
+   ]
+  },
+  {
+   "event": "part_attached",
+   "channel": "control",
+   "chance": 0.5,
+   "pool": [
+    "control.bark.trophy",
+    "control.bark.limbs_warranty",
+    "control.bark.lost_arm"
+   ]
+  },
+  {
+   "event": "part_recycled",
+   "channel": "control",
+   "chance": 0.4,
+   "pool": [
+    "control.bark.part_recycled"
+   ]
+  },
+  {
+   "event": "resident_die",
+   "channel": "control",
+   "chance": 0.3,
+   "pool": [
+    "control.bark.resident_die.1"
+   ]
+  },
+  {
+   "event": "energy_low",
+   "channel": "control",
+   "chance": 1,
+   "pool": [
+    "control.bark.low_energy",
+    "control.bark.plus"
+   ],
+   "_note": "Энергии не хватает на постройку (build_refused по энергии)"
+  },
+  {
+   "event": "threat_level_up",
+   "channel": "control",
+   "priority": true,
+   "pool": [
+    "control.bark.threat_up",
+    "control.bark.dome_fee",
+    "control.bark.dome"
+   ]
+  },
+  {
+   "event": "center_hit",
+   "channel": "control",
+   "first": true,
+   "priority": true,
+   "pool": [
+    "control.bark.command_attack",
+    "control.bark.hold_line"
+   ]
+  },
+  {
+   "event": "demon_warning",
+   "channel": "control",
+   "priority": true,
+   "pool": [
+    "control.bark.demon_warning"
+   ]
+  },
+  {
+   "event": "demon_awake",
+   "channel": "control",
+   "priority": true,
+   "pool": [
+    "control.bark.demon_waking"
+   ]
+  },
+  {
+   "event": "hero_spawn",
+   "channel": "control",
+   "priority": true,
+   "poolByHero": {
+    "kiln": [
+     "control.bark.hero.kiln"
+    ],
+    "lineman": [
+     "control.bark.hero.lineman"
+    ],
+    "frostline": [
+     "control.bark.hero.frostline"
+    ],
+    "seraph": [
+     "control.bark.hero.seraph"
+    ]
+   }
+  },
+  {
+   "event": "hero_spawn",
+   "channel": "hero",
+   "poolByHero": {
+    "standard": [
+     "hero.line.standard.1",
+     "hero.line.standard.2",
+     "hero.line.standard.3",
+     "hero.line.standard.4"
+    ],
+    "patch": [
+     "hero.line.patch.1",
+     "hero.line.patch.2",
+     "hero.line.patch.3",
+     "hero.line.patch.4"
+    ],
+    "canopy": [
+     "hero.line.canopy.1",
+     "hero.line.canopy.2",
+     "hero.line.canopy.3",
+     "hero.line.canopy.4"
+    ],
+    "current": [
+     "hero.line.current.1",
+     "hero.line.current.2",
+     "hero.line.current.3",
+     "hero.line.current.4"
+    ],
+    "lineman": [
+     "hero.line.lineman.1",
+     "hero.line.lineman.2",
+     "hero.line.lineman.3",
+     "hero.line.lineman.4"
+    ],
+    "frostline": [
+     "hero.line.frostline.1",
+     "hero.line.frostline.2",
+     "hero.line.frostline.3",
+     "hero.line.frostline.4"
+    ],
+    "mason": [
+     "hero.line.mason.1",
+     "hero.line.mason.2",
+     "hero.line.mason.3",
+     "hero.line.mason.4"
+    ],
+    "sweep": [
+     "hero.line.sweep.1",
+     "hero.line.sweep.2",
+     "hero.line.sweep.3",
+     "hero.line.sweep.4"
+    ],
+    "beacon": [
+     "hero.line.beacon.1",
+     "hero.line.beacon.2",
+     "hero.line.beacon.3",
+     "hero.line.beacon.4"
+    ],
+    "hive": [
+     "hero.line.hive.1",
+     "hero.line.hive.2",
+     "hero.line.hive.3",
+     "hero.line.hive.4"
+    ],
+    "kiln": [
+     "hero.line.kiln.1",
+     "hero.line.kiln.2",
+     "hero.line.kiln.3",
+     "hero.line.kiln.4"
+    ],
+    "seraph": [
+     "hero.line.seraph.1",
+     "hero.line.seraph.2",
+     "hero.line.seraph.3",
+     "hero.line.seraph.4"
+    ],
+    "doctor": [
+     "hero.line.doctor.1",
+     "hero.line.doctor.2",
+     "hero.line.doctor.3",
+     "hero.line.doctor.4"
+    ],
+    "demon": [
+     "hero.line.demon.1",
+     "hero.line.demon.2",
+     "hero.line.demon.3",
+     "hero.line.demon.4"
+    ],
+    "n73": [
+     "hero.line.n73.1",
+     "hero.line.n73.2",
+     "hero.line.n73.3",
+     "hero.line.n73.4"
+    ]
+   }
+  },
+  {
+   "event": "hero_tick",
+   "channel": "hero",
+   "everySeconds": 15,
+   "chance": 0.5,
+   "poolByHero": {
+    "standard": [
+     "hero.line.standard.1",
+     "hero.line.standard.2",
+     "hero.line.standard.3",
+     "hero.line.standard.4"
+    ],
+    "patch": [
+     "hero.line.patch.1",
+     "hero.line.patch.2",
+     "hero.line.patch.3",
+     "hero.line.patch.4"
+    ],
+    "canopy": [
+     "hero.line.canopy.1",
+     "hero.line.canopy.2",
+     "hero.line.canopy.3",
+     "hero.line.canopy.4"
+    ],
+    "current": [
+     "hero.line.current.1",
+     "hero.line.current.2",
+     "hero.line.current.3",
+     "hero.line.current.4"
+    ],
+    "lineman": [
+     "hero.line.lineman.1",
+     "hero.line.lineman.2",
+     "hero.line.lineman.3",
+     "hero.line.lineman.4"
+    ],
+    "frostline": [
+     "hero.line.frostline.1",
+     "hero.line.frostline.2",
+     "hero.line.frostline.3",
+     "hero.line.frostline.4"
+    ],
+    "mason": [
+     "hero.line.mason.1",
+     "hero.line.mason.2",
+     "hero.line.mason.3",
+     "hero.line.mason.4"
+    ],
+    "sweep": [
+     "hero.line.sweep.1",
+     "hero.line.sweep.2",
+     "hero.line.sweep.3",
+     "hero.line.sweep.4"
+    ],
+    "beacon": [
+     "hero.line.beacon.1",
+     "hero.line.beacon.2",
+     "hero.line.beacon.3",
+     "hero.line.beacon.4"
+    ],
+    "hive": [
+     "hero.line.hive.1",
+     "hero.line.hive.2",
+     "hero.line.hive.3",
+     "hero.line.hive.4"
+    ],
+    "kiln": [
+     "hero.line.kiln.1",
+     "hero.line.kiln.2",
+     "hero.line.kiln.3",
+     "hero.line.kiln.4"
+    ],
+    "seraph": [
+     "hero.line.seraph.1",
+     "hero.line.seraph.2",
+     "hero.line.seraph.3",
+     "hero.line.seraph.4"
+    ],
+    "doctor": [
+     "hero.line.doctor.1",
+     "hero.line.doctor.2",
+     "hero.line.doctor.3",
+     "hero.line.doctor.4"
+    ],
+    "demon": [
+     "hero.line.demon.1",
+     "hero.line.demon.2",
+     "hero.line.demon.3",
+     "hero.line.demon.4"
+    ],
+    "n73": [
+     "hero.line.n73.1",
+     "hero.line.n73.2",
+     "hero.line.n73.3",
+     "hero.line.n73.4"
+    ]
+   }
+  },
+  {
+   "event": "demon_awake",
+   "channel": "hero",
+   "pool": [
+    "hero.line.demon.1",
+    "hero.line.demon.2"
+   ]
+  },
+  {
+   "event": "hero_defeated",
+   "channel": "control",
+   "priority": true,
+   "pool": [
+    "control.bark.hero_defeated"
+   ]
+  },
+  {
+   "event": "survivor_found",
+   "channel": "survivor",
+   "pool": [
+    "survivor.line.1",
+    "survivor.line.2",
+    "survivor.line.3",
+    "survivor.line.4",
+    "survivor.line.5",
+    "survivor.line.6",
+    "survivor.line.7"
+   ]
+  },
+  {
+   "event": "cache_open",
+   "channel": "cache",
+   "pool": [
+    "cache.line.1",
+    "cache.line.2",
+    "cache.line.3",
+    "cache.line.4",
+    "cache.line.5"
+   ]
+  },
+  {
+   "event": "pause",
+   "channel": "control",
+   "chance": 0.5,
+   "pool": [
+    "control.bark.pause"
+   ]
+  },
+  {
+   "event": "idle",
+   "channel": "control",
+   "afterQuietSeconds": 75,
+   "pool": [
+    "control.bark.idle",
+    "control.bark.rate",
+    "control.bark.hold_line",
+    "control.bark.plus",
+    "control.bark.cat",
+    "control.bark.warehouse",
+    "control.bark.heroes_count"
+   ]
+  },
+  {
+   "event": "idle",
+   "channel": "ad",
+   "afterQuietSeconds": 40,
+   "pool": [
+    "ad.always_on_shift",
+    "ad.gel",
+    "ad.dome",
+    "ad.cat",
+    "ad.leg_insurance",
+    "ad.lite",
+    "ad.energy",
+    "ad.crane",
+    "ad.family",
+    "ad.kids"
+   ]
+  },
+  {
+   "event": "victory",
+   "channel": "control",
+   "priority": true,
+   "pool": [
+    "control.bark.win",
+    "control.bark.victory_extra"
+   ]
+  },
+  {
+   "event": "defeat",
+   "channel": "control",
+   "priority": true,
+   "pool": [
+    "control.bark.lose"
+   ]
+  },
+  {
+   "event": "loading",
+   "channel": "tip",
+   "pool": [
+    "tip.1",
+    "tip.2",
+    "tip.3",
+    "tip.4",
+    "tip.5",
+    "tip.6",
+    "tip.7",
+    "tip.8",
+    "tip.9"
+   ]
+  },
+  {
+   "event": "pause",
+   "channel": "tip",
+   "pool": [
+    "tip.1",
+    "tip.2",
+    "tip.3",
+    "tip.4",
+    "tip.5",
+    "tip.6",
+    "tip.7",
+    "tip.8",
+    "tip.9"
+   ]
+  },
+  {
+   "event": "hero_defeated",
+   "channel": "control",
+   "chance": 0.5,
+   "pool": [
+    "control.bark.hero_two_parts"
+   ]
+  },
+  {
+   "event": "run_start_with_ally",
+   "channel": "control",
+   "priority": true,
+   "pool": [
+    "control.bark.ally_start"
+   ]
+  },
+  {
+   "event": "hero_unlocked",
+   "channel": "control",
+   "priority": true,
+   "pool": [
+    "control.bark.unlock"
+   ]
+  },
+  {
+   "event": "hero_defeated",
+   "channel": "hero",
+   "byHero": "hero.defeat.{hero}",
+   "_note": "последняя фраза героя в облачке при победе над ним"
+  },
+  {
+   "event": "hero_unlocked",
+   "channel": "unlock_screen",
+   "byHero": "unlock.{hero}.line",
+   "_note": "фраза героя на экране «Герой вернулся», под ней ally.{hero}.bio"
+  },
+  {
+   "event": "ally_tick",
+   "channel": "hero",
+   "everySeconds": 30,
+   "chance": 0.4,
+   "poolByHero": {
+    "standard": [
+     "ally.line.standard.1",
+     "ally.line.standard.2"
+    ],
+    "patch": [
+     "ally.line.patch.1",
+     "ally.line.patch.2"
+    ],
+    "canopy": [
+     "ally.line.canopy.1",
+     "ally.line.canopy.2"
+    ],
+    "current": [
+     "ally.line.current.1",
+     "ally.line.current.2"
+    ],
+    "lineman": [
+     "ally.line.lineman.1",
+     "ally.line.lineman.2"
+    ],
+    "frostline": [
+     "ally.line.frostline.1",
+     "ally.line.frostline.2"
+    ],
+    "mason": [
+     "ally.line.mason.1",
+     "ally.line.mason.2"
+    ],
+    "sweep": [
+     "ally.line.sweep.1",
+     "ally.line.sweep.2"
+    ],
+    "beacon": [
+     "ally.line.beacon.1",
+     "ally.line.beacon.2"
+    ],
+    "hive": [
+     "ally.line.hive.1",
+     "ally.line.hive.2"
+    ],
+    "kiln": [
+     "ally.line.kiln.1",
+     "ally.line.kiln.2"
+    ],
+    "seraph": [
+     "ally.line.seraph.1",
+     "ally.line.seraph.2"
+    ],
+    "doctor": [
+     "ally.line.doctor.1",
+     "ally.line.doctor.2"
+    ],
+    "demon": [
+     "ally.line.demon.1",
+     "ally.line.demon.2"
+    ],
+    "n73": [
+     "ally.line.n73.1",
+     "ally.line.n73.2"
+    ]
+   },
+   "_note": "реплики союзника в облачке"
+  },
+  {
+   "event": "speed_x2",
+   "channel": "control",
+   "first": true,
+   "pool": [
+    "control.bark.speed_x2"
+   ]
+  },
+  {
+   "event": "run_start_rush",
+   "channel": "control",
+   "priority": true,
+   "pool": [
+    "control.bark.rush_start"
+   ]
+  },
+  {
+   "event": "coop_run_start",
+   "channel": "control",
+   "priority": true,
+   "delaySeconds": 8,
+   "pool": [
+    "control.bark.coop.1",
+    "control.bark.coop.3"
+   ]
+  },
+  {
+   "event": "energy_transfer",
+   "channel": "control",
+   "chance": 0.5,
+   "pool": [
+    "control.bark.coop.2"
+   ]
+  },
+  {
+   "event": "ping_help",
+   "channel": "control",
+   "chance": 0.3,
+   "pool": [
+    "control.bark.coop.4"
+   ]
+  },
+  {
+   "event": "run_end_win",
+   "channel": "results",
+   "pool": [
+    "results.control_win.1",
+    "results.control_win.2",
+    "results.control_win.3"
+   ]
+  },
+  {
+   "event": "run_end_lose",
+   "channel": "results",
+   "pool": [
+    "results.control_lose.1",
+    "results.control_lose.2",
+    "results.control_lose.3"
+   ]
+  },
+  {
+   "event": "raid_incoming",
+   "channel": "control",
+   "priority": true,
+   "pool": [
+    "control.bark.raid.1",
+    "control.bark.raid.2",
+    "control.bark.raid.3"
+   ]
+  },
+  {
+   "event": "ruins",
+   "channel": "control",
+   "chance": 0.6,
+   "pool": [
+    "control.bark.ruins.1",
+    "control.bark.ruins.2"
+   ]
+  }
+ ]
+}
