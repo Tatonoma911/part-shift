@@ -1484,6 +1484,15 @@ export class World {
         v.armorPlates -= lost;
         v.base = { ...v.base, defense: Math.max(0, v.base.defense - lost * armorPlateDef.defenseAdd) };
       }
+      // Limb torn off on knockout (MVP_RULES §4.1а): arm first (-20% damage), then leg (-25% speed).
+      const prevLimbs = v.lostLimbs ?? [];
+      if (prevLimbs.length < 4) {
+        const slot: 'arm' | 'leg' = prevLimbs.filter(l => l === 'arm').length < 2 ? 'arm' : 'leg';
+        v.lostLimbs = [...prevLimbs, slot];
+        if (slot === 'arm') v.base = { ...v.base, damage: Math.max(1, Math.round(v.base.damage * 0.8)) };
+        else v.base = { ...v.base, speed: Math.max(0.5, Math.round(v.base.speed * 0.75 * 10) / 10) };
+        this.emit('ally_limb_lost', { x: v.x, y: v.y, owner: v.owner, unit: v.id, text: slot });
+      }
       this.emit('ally_down', { x: v.x, y: v.y, owner: v.owner, unit: v.id, text: v.hero });
       return;
     }
@@ -2189,10 +2198,11 @@ export class World {
     return u;
   }
 
-  /** Spawns the next available hero from the pool (rules.allies, or all heroes as fallback) at (x,y).
-   *  Skips heroes already alive or waiting to respawn so each hero type appears at most once. */
+  /** Spawns the next available hero from the squad pool (rules.allies) at (x,y).
+   *  Empty pool = no spawns. Skips heroes already alive or waiting to respawn. */
   private spawnAllyFromPool(p: Player, x: number, y: number): Unit | null {
-    const pool = this.rules.allies?.length ? this.rules.allies : Object.keys(heroDefs);
+    // undefined = no squad configured (tutorial/test) → fall back to all heroes; [] = squad explicitly empty → no spawns.
+    const pool = this.rules.allies !== undefined ? this.rules.allies : Object.keys(heroDefs);
     const alive = new Set(this.s.units.filter((u) => u.owner === p.id && u.kind === 'ally' && u.hp > 0).map((u) => u.hero));
     const waiting = new Set(Object.keys(p.allyBack ?? {}));
     const id = pool.find((hid) => !alive.has(hid) && !waiting.has(hid));

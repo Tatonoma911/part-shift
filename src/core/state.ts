@@ -127,6 +127,8 @@ export interface Unit {
   mutations?: { slot: SlotId; tech: Tech }[];
   /** Ally/resident: armor plates from armor_crate (enemies.json armorPlate). */
   armorPlates?: number;
+  /** Ally: limbs torn off on knockout (MVP_RULES §4.1а). 'arm' = -20% damage, 'leg' = -25% speed each. */
+  lostLimbs?: ('arm' | 'leg')[];
   /** Seconds until the hero's ability fires again. */
   abilityCd?: number;
   /** Demon special attack state. */
