@@ -112,6 +112,19 @@ export function generateField(s: GameState, opts: Options): void {
     const p = set(pick(rubblePool()), 'rubble');
     if (p) cellAt(s, p.x, p.y).stock = mapgen.rubble.energy;
   }
+
+  // Elemental zones: Voronoi partition of non-water cells outside the safe radius (mapgen.cellElements).
+  assignCellZones(s, commands, minCmdDist);
+  // Nests and mines inside a zone inherit that zone's element.
+  for (let y = 0; y < s.height; y++) {
+    for (let x = 0; x < s.width; x++) {
+      const c = cellAt(s, x, y);
+      if (c.element && (c.content === 'nest' || c.content === 'heavy_nest' || c.content === 'mine')) {
+        c.tech = c.element;
+      }
+    }
+  }
+
   s.generated = true;
 }
 
@@ -163,4 +176,77 @@ function allDryReachable(s: GameState, from: { x: number; y: number }): boolean 
 
 export function isSiteContent(c: CellContent): boolean {
   return SITE_KINDS.includes(c);
+}
+
+/**
+ * Voronoi elemental zones on non-water cells outside the safe radius (mapgen.cellElements).
+ * Seeds are random; one smoothing pass merges isolated cells with their majority neighbour.
+ */
+function assignCellZones(s: GameState, _commands: { x: number; y: number }[], minCmdDist: (x: number, y: number) => number): void {
+  const zoneCfg = (mapgen as unknown as { cellElements: { zones: { count: [number, number] }; elements: Tech[]; maxSameElementZones: number; safeRadiusNeutral: boolean } }).cellElements;
+  if (!zoneCfg) return;
+
+  const [minCount, maxCount] = zoneCfg.zones.count;
+  const count = minCount + randIntOf(s, maxCount - minCount + 1);
+  const techs = zoneCfg.elements as Tech[];
+  const maxSame = zoneCfg.maxSameElementZones;
+
+  // Collect eligible seed positions outside safe radius, not water
+  const eligible: { x: number; y: number }[] = [];
+  for (let y = 0; y < s.height; y++) {
+    for (let x = 0; x < s.width; x++) {
+      if (cellAt(s, x, y).content !== 'water' && minCmdDist(x, y) > mapgen.safeRadius) eligible.push({ x, y });
+    }
+  }
+
+  // Pick seeds; cap same-element count at maxSame
+  const seeds: { x: number; y: number; tech: Tech }[] = [];
+  const techCounts: Record<string, number> = {};
+  const pool = [...eligible];
+  for (let i = 0; i < count && pool.length; i++) {
+    const pos = pool.splice(randIntOf(s, pool.length), 1)[0];
+    // Find a tech not yet at the cap; fall back to any if exhausted
+    let tech = techs[randIntOf(s, techs.length)];
+    for (let attempt = 0; attempt < techs.length * 2; attempt++) {
+      if ((techCounts[tech] ?? 0) < maxSame) break;
+      tech = techs[randIntOf(s, techs.length)];
+    }
+    techCounts[tech] = (techCounts[tech] ?? 0) + 1;
+    seeds.push({ ...pos, tech });
+  }
+  if (!seeds.length) return;
+
+  // Assign each eligible cell to its nearest seed (Chebyshev)
+  for (let y = 0; y < s.height; y++) {
+    for (let x = 0; x < s.width; x++) {
+      const c = cellAt(s, x, y);
+      if (c.content === 'water') continue;
+      if (zoneCfg.safeRadiusNeutral && minCmdDist(x, y) <= mapgen.safeRadius) continue;
+      let best = Infinity;
+      let chosen = seeds[0].tech;
+      for (const seed of seeds) {
+        const d = cheb(x, y, seed.x, seed.y);
+        if (d < best) { best = d; chosen = seed.tech; }
+      }
+      c.element = chosen;
+    }
+  }
+
+  // One smoothing pass: a cell switches to the majority of its 8 neighbours when ≥5 agree
+  const snap = s.cells.map((c) => c.element);
+  for (let y = 0; y < s.height; y++) {
+    for (let x = 0; x < s.width; x++) {
+      const c = cellAt(s, x, y);
+      if (!c.element) continue;
+      const counts: Record<string, number> = {};
+      for (const [dx, dy] of N8) {
+        const nx = x + dx, ny = y + dy;
+        if (!inBounds(s, nx, ny)) continue;
+        const el = snap[ny * s.width + nx];
+        if (el) counts[el] = (counts[el] ?? 0) + 1;
+      }
+      const best = Object.entries(counts).sort((a, b) => b[1] - a[1])[0];
+      if (best && best[1] >= 5) c.element = best[0] as Tech;
+    }
+  }
 }

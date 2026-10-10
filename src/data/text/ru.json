@@ -238,6 +238,7 @@
   "building.rotation_center.name": "Центр ротации конечностей",
   "building.rotation_center.desc": "Корпоративная программа «Поделись рукой». Герои рядом меняются трофеями. Нужно 2 Школы спасателей.",
   "building.station.name": "Станция: {hero}",
+  "building.station.label": "Станция героя",
   "building.station.desc": "Пост службы {hero}. Вызывает на выезд только этого героя. Чем выше уровень героя, тем дороже станция.",
   "building.station.standard.name": "Склад шасси Стандарт",
   "building.station.patch.name": "Вольер Патча",
