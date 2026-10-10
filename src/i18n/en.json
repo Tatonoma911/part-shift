@@ -353,6 +353,7 @@
   "dock.build_here": "What goes here? Pick a building and tap ✓",
   "dock.build_tutorial": "Tap the glowing land next to the center to build",
   "dock.cancel": "Cancel",
+  "dig.unreachable": "Heroes can't reach that yet: open a cell next to your land first.",
   "build.refuse.not_liberated": "This land isn't free yet. Build next to your buildings: each one frees the land around it.",
   "settings.comfort": "Comfort",
   "comfort.on": "on",

@@ -340,6 +340,21 @@ export class World {
     return p.queue.includes(k) || p.autoQueue.includes(k);
   }
 
+  /** True when a hero can walk from the command center to a cell next to (x, y) over opened ground. */
+  digReachable(playerId: number, x: number, y: number): boolean {
+    const cmd = this.building(this.s.players[playerId]?.command);
+    if (!cmd) return false;
+    const next = neighbors(this.s, x, y);
+    const path = findPath(
+      this.s.width,
+      this.s.height,
+      { x: cmd.x, y: cmd.y },
+      (ax, ay) => walkableForPlayer(this.s, ax, ay),
+      (ax, ay) => next.some((n) => n.x === ax && n.y === ay),
+    );
+    return path !== null;
+  }
+
   /** Cells where this player may build (own territory, not claimed by a rival). */
   inTerritory(playerId: number, x: number, y: number): boolean {
     const owns = (pid: number) =>
@@ -509,6 +524,8 @@ export class World {
           c.markKind = undefined;
         }
         if ((c.revealed && !harvestable) || c.marked || p.queue.includes(k)) return bad();
+        // A plain tap or swipe on a cell no hero can reach would sit in the queue forever: refuse it and say so.
+        if (!cmd.force && !this.digReachable(playerId, cmd.x, cmd.y)) return bad('dig.unreachable');
         const known = this.visibleKnowledge(playerId).get(k);
         if (this.cfg.assist.blockSwipeOnKnownDanger && !cmd.force && (known === 'threat' || known === 'demon')) {
           return bad('assist.known_danger');

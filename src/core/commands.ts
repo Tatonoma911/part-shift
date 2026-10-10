@@ -41,6 +41,7 @@ export type Command =
 
 /** Why a command was refused; the keys match the writer's texts (text/ru.json). */
 export type RefuseReason =
+  | 'dig.unreachable'
   | 'build.not_enough_energy'
   | 'build.invalid_cell'
   | 'build.cell_occupied'
