@@ -28,8 +28,8 @@ export type Command =
   | { type: 'scan' }
   /** Take one card of the open cache offer (boons.json). */
   | { type: 'pickBoon'; id: string }
-  /** Answer the boss call: engage the call target immediately. */
-  | { type: 'answerCall' }
+  /** Answer the boss call. choice 0 = refuse (free, boss risk); choice 1 = comply (costs energy, delays boss). */
+  | { type: 'answerCall'; choice?: 0 | 1 }
   /** Call a raid now (spends callEarlyEnergy from GameState.raid). */
   | { type: 'callRaidEarly' };
 

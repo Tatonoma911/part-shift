@@ -52,7 +52,7 @@ export const STEP = 0.05;
 /** How long a capsule peek shows the sensors (buildings.json watchtower.peek.showSeconds). */
 const CAPSULE_PEEK_SECONDS = 20;
 
-export type GameEvent = { type: string; x?: number; y?: number; amount?: number; owner?: number; text?: string; unit?: number; fork?: number };
+export type GameEvent = { type: string; x?: number; y?: number; amount?: number; owner?: number; text?: string; unit?: number; fork?: number; wave?: boolean };
 
 export interface WorldOptions {
   seed: number;
@@ -385,6 +385,27 @@ export class World {
     return { tech: u.attackTech ?? 'kinetic', tier };
   }
 
+  // Dig weakness: §3.4 — cryo weakens thermo, thermo weakens cryo, volt→impact, toxin→volt, impact→toxin
+  private static readonly DIG_WEAKNESS: Partial<Record<Tech, Tech>> = {
+    cryo: 'thermo', thermo: 'cryo', volt: 'impact', toxin: 'volt', impact: 'toxin',
+  };
+
+  /** Speed multiplier for digging a cell with this element (§3.4). Picks the best arm tech. */
+  private digSpeedOf(u: Unit, cellElement: Tech | undefined): number {
+    if (!cellElement) return u.kind === 'resident' ? 0.75 : 1.0;
+    const weakness = World.DIG_WEAKNESS[cellElement];
+    let best = 0.75; // bare hand
+    for (const slot of ['arm_right', 'arm_left'] as SlotId[]) {
+      const p = u.parts[slot];
+      if (!p) continue;
+      const tech = partDefs[p.id].tech as AttackTech;
+      if (!isTech(tech)) continue;
+      const mul = tech === weakness ? 1.6 : tech === cellElement ? 0.35 : 1.0;
+      if (mul > best) best = mul;
+    }
+    return best;
+  }
+
   /** Damage multiplier for this element against this unit (resist tables, parts resist their own tech). */
   resistOf(v: Unit, tech: AttackTech): number {
     if (!isTech(tech)) return 1;
@@ -551,27 +572,28 @@ export class World {
       }
       case 'answerCall': {
         if (!s.controlCall) return bad('call.no_active');
-        const forkCount = (this.cfg as unknown as { tempo?: { controlCallForks?: number } }).tempo?.controlCallForks ?? 10;
-        const fork = Math.floor(rand(s) * forkCount);
-        s.controlCall = { ...s.controlCall, fork };
-        this.emit('boss_call_fork', { fork, owner: playerId });
-        // Fork effects: 0-2 = boss hesitates (skips waking this call), 3-5 = spawn enemies, 6-8 = reveal cell, 9 = energy toll
-        if (fork <= 2) {
-          // Контроль bluffs — boss doesn't wake this call
-        } else if (fork <= 5) {
-          this.emit('boss_wake', { owner: playerId });
-        } else if (fork <= 8) {
-          const hiddenIdxs = s.cells.reduce<number[]>((acc, c, i) => { if (!c.revealed && c.content !== 'water') acc.push(i); return acc; }, []);
-          if (hiddenIdxs.length) {
-            const idx = hiddenIdxs[Math.floor(rand(s) * hiddenIdxs.length)];
-            s.cells[idx].revealed = true;
-            this.emit('dig_done', { x: idx % s.width, y: Math.floor(idx / s.width), owner: playerId });
-          }
+        // Ensure options are set (generated when call starts; set here as fallback).
+        if (!s.controlCall.options) {
+          s.controlCall = { ...s.controlCall, options: [
+            { cost: 0,  effect: 'refuse' },  // 0 = refuse: boss risk, free
+            { cost: 25, effect: 'comply' },  // 1 = comply: pay energy, boss delayed
+          ]};
+        }
+        const choice = (cmd as { type: 'answerCall'; choice?: 0 | 1 }).choice ?? 0;
+        const callOpts = s.controlCall.options!;
+        const opt = callOpts[choice] ?? callOpts[0];
+        if (opt.cost > 0 && p.energy < opt.cost) return bad('build.not_enough_energy');
+        if (opt.cost > 0) p.energy -= opt.cost;
+        s.controlCall = { ...s.controlCall, fork: choice };
+        this.emit('boss_call_fork', { fork: choice, owner: playerId });
+        if (opt.effect === 'comply') {
+          // Comply: Контроль backs off this call — boss doesn't wake.
+          this.emit('call_complied', { owner: playerId });
         } else {
-          const toll = 20;
-          if (p.energy >= toll) p.energy -= toll;
+          // Refuse: Контроль wakes the boss.
           this.emit('boss_wake', { owner: playerId });
         }
+        s.controlCall = null;
         return ok;
       }
       case 'callRaidEarly': {
@@ -1058,6 +1080,45 @@ export class World {
         }
       }
     }
+    // Cascade wave (§17.2): quiet ground cell triggers BFS reveal of neighbors, depth by tempo level.
+    if (!isSiteCell(c) && c.content !== 'water') {
+      const cl = this.clues(x, y);
+      if (cl.threat + cl.demon + cl.finds === 0) {
+        const tempoLevel = s.tempo?.level ?? 0;
+        // Tempo 0→depth 1, 1→2, 2→4, 3→unlimited (9999)
+        const waveDepth = tempoLevel === 0 ? 1 : tempoLevel === 1 ? 2 : tempoLevel === 2 ? 4 : 9999;
+        this.cascadeWave(x, y, owner, waveDepth);
+      }
+    }
+  }
+
+  /** BFS cascade-reveal of quiet ground cells (§17.2). Cells opened by wave give 0.25 tempo points. */
+  private cascadeWave(cx: number, cy: number, owner: number, maxDepth: number): void {
+    const s = this.s;
+    const frontier: Array<{ x: number; y: number; depth: number }> = [{ x: cx, y: cy, depth: 0 }];
+    const visited = new Set<string>();
+    visited.add(cellKey(cx, cy));
+    while (frontier.length > 0) {
+      const { x, y, depth } = frontier.shift()!;
+      if (depth >= maxDepth) continue;
+      for (const n of neighbors(s, x, y)) {
+        const nk = cellKey(n.x, n.y);
+        if (visited.has(nk)) continue;
+        visited.add(nk);
+        const nc = n.cell;
+        // Wave only opens plain ground cells — no site cells, no water, no special content.
+        if (nc.revealed || nc.content === 'water' || isSiteCell(nc) || nc.content !== 'ground') continue;
+        nc.revealed = true;
+        nc.dig = undefined;
+        this.emit('dig_done', { x: n.x, y: n.y, owner, wave: true });
+        this.addTempo(owner, 'wave');
+        // Continue cascade only if this neighbor is also quiet.
+        const ncl = this.clues(n.x, n.y);
+        if (ncl.threat + ncl.demon + ncl.finds === 0) {
+          frontier.push({ x: n.x, y: n.y, depth: depth + 1 });
+        }
+      }
+    }
   }
 
   // -- population (MVP_RULES §4: a resident every spawnSeconds while below the cap)
@@ -1154,7 +1215,8 @@ export class World {
         if (u.path.length > 0) return this.move(u, dt);
         if (t.progress === 0) this.emit('dig_start', { x: t.x, y: t.y, owner: u.owner });
         const c = this.cell(t.x, t.y);
-        c.dig = (c.dig ?? 0) + this.workShare(u, (o) => o.task.type === 'dig' && o.task.x === t.x && o.task.y === t.y) * dt;
+        const digMul = this.digSpeedOf(u, c.element as Tech | undefined);
+        c.dig = (c.dig ?? 0) + this.workShare(u, (o) => o.task.type === 'dig' && o.task.x === t.x && o.task.y === t.y) * dt * digMul;
         t.progress = Math.max(c.dig, 1e-6);
         if (c.dig >= this.cfg.dig.digSeconds * this.boonFactor(u.owner, 'sharp_shovels') * this.allyFactor(u.owner, 'drillDig', 'digTimeFactor')) {
           c.dig = undefined;
@@ -1569,11 +1631,11 @@ export class World {
   }
 
   /** Add tempo points for a progress event. */
-  private addTempo(_owner: number, event: 'dig' | 'cache' | 'nest' | 'survivor' | 'raidClear'): void {
+  private addTempo(_owner: number, event: 'dig' | 'cache' | 'nest' | 'survivor' | 'raidClear' | 'wave'): void {
     const s = this.s;
     if (!s.tempo) s.tempo = { points: 0, level: 0, stagnant: false, lastProgress: s.time };
     const tempoConf = (this.cfg as unknown as { tempo?: { points?: Record<string, number> } }).tempo;
-    const defaults: Record<string, number> = { dig: 1, cache: 5, nest: 10, survivor: 3, raidClear: 15 };
+    const defaults: Record<string, number> = { dig: 1, cache: 5, nest: 10, survivor: 3, raidClear: 15, wave: 0.25 };
     const pts = tempoConf?.points?.[event] ?? defaults[event] ?? 1;
     s.tempo.points += pts;
     s.tempo.lastProgress = s.time;
@@ -1693,6 +1755,34 @@ export class World {
   private hit(attacker: Unit, target: string, factor = 1, primary = true): void {
     const st = this.stats(attacker);
     this.lastCombat = this.s.time;
+    // Super strike (§17.5): fires on next attack after 10 kills, resets charge.
+    if (
+      attacker.superCharge === 100 &&
+      (attacker.kind === 'ally' || attacker.kind === 'hero') &&
+      target.startsWith('u:')
+    ) {
+      attacker.superCharge = 0;
+      const v = this.unit(Number(target.slice(2)));
+      if (v && v.hp > 0) {
+        if (v.kind === 'hero') {
+          const isBossTarget = v.hero === this.s.boss.hero;
+          const fraction = isBossTarget ? 0.15 : 0.30;
+          const superDmg = Math.ceil(this.maxHp(v) * fraction);
+          this.damage(v, superDmg, attacker);
+          // Tear off one mutation limb (§17.5 + §4.1а).
+          if (v.mutations && v.mutations.length > 0) {
+            const torn = v.mutations.splice(0, 1)[0];
+            v.base = { ...v.base, defense: Math.max(0, (v.base?.defense ?? 0) - 1) };
+            this.emit('enemy_limb_lost', { x: v.x, y: v.y, owner: attacker.owner, text: `${v.hero}:${torn.slot}` });
+          }
+        } else {
+          // Regular enemy: instant kill.
+          this.damage(v, v.hp + 999, attacker);
+        }
+        this.emit('super_strike', { x: v.x, y: v.y, owner: attacker.owner, unit: attacker.id });
+      }
+      return;
+    }
     if (target.startsWith('s:')) {
       const { x, y } = parseKey(target.slice(2));
       const site = this.site(x, y)!;
