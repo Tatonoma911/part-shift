@@ -45,7 +45,7 @@ function render(): void {
     }, label);
   const clips = h('div.demo-clips');
   const names: Record<string, string> = {
-    start: 'lesson.start.title', dig: 'lesson.dig.title', clue: 'lesson.clue.title', deduce: 'lesson.deduce.title', cascade: 'clue.empty.name', build: 'lesson.build.title',
+    start: 'lesson.start.title', dig: 'lesson.dig.title', clue: 'lesson.clue.title', deduce: 'lesson.deduce.title', cascade: 'clue.empty.name', build: 'lesson.build.title', birth: 'lesson.birth.title', knockout: 'people.knockout.name',
     order: 'lesson.fight.title', nest: 'clue.danger.name', parts: 'lesson.parts.title', elements: 'lesson.elements.title', heroes: 'hero.lairs.name', call: 'lesson.call.title', threat: 'res.threat.name', caution: 'clue.caution.name', energy: 'resource.energy.name',
   };
   root.append(
@@ -59,7 +59,7 @@ function render(): void {
         h('button.psl-btn.dark', { onclick: () => learning.openGuide('lessons') }, tr('sec.basics')),
       ),
       h('h2', {}, ru ? 'Подсказки «новая механика»' : '"New mechanic" cards'),
-      h('p.lead', {}, ru ? 'В игре каждая всплывает один раз, когда механика впервые встречается в партии: первый бой, первый трофей, рост угрозы, выход героя, цель вызова. Игра на это время встаёт на паузу.' : 'In the game each pops up once, the first time the mechanic appears in a match. The game pauses meanwhile.'),
+      h('p.lead', {}, ru ? 'В игре каждая всплывает один раз, когда механика впервые встречается в партии: первое здание, первый бой, первый трофей, нокаут, рост угрозы, выход заражённого героя, цель вызова. Игра на это время встаёт на паузу.' : 'In the game each pops up once, the first time the mechanic appears in a match. The game pauses meanwhile.'),
       h('div.demo-chips', {}, ...Object.keys(COACH).map((k) => h('button.psl-chip', { onclick: () => learning.coach(k as keyof typeof COACH, true) }, tr(COACH[k].title)))),
       h('h2', {}, ru ? 'Все обучающие ролики' : 'All teaching clips'),
       h('p.lead', {}, ru ? 'Нарисованы движком из спрайтов игры. Нажмите на ролик, чтобы начать его заново.' : 'Drawn live from the game sprites. Tap a clip to restart it.'),

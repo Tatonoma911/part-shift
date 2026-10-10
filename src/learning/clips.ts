@@ -1,4 +1,5 @@
-import { COL, type ClipDef } from './clip';
+import { COL, type ClipDef, type MenuItem } from './clip';
+import { ourSet } from './content';
 
 /**
  * The teaching clips. Each one shows one mechanic on a few real cells, with
@@ -10,6 +11,18 @@ const THERMO = '#FF8A3D';
 const CRYO = '#3DD6FF';
 const VOLT = '#FFE14D';
 const TOXIN = '#8CE04A';
+
+/** Our heroes (uninfected stand-ins) by id. */
+const H = {
+  standard: ourSet('standard'),
+  patch: ourSet('patch'),
+  canopy: ourSet('canopy'),
+  current: ourSet('current'),
+  frostline: ourSet('frostline'),
+  lineman: ourSet('lineman'),
+  sweep: ourSet('sweep'),
+  mason: ourSet('mason'),
+};
 
 /** Tap anywhere: the Command Center lands there (no pre-selected cells, Антон 2026-10-09). */
 const start: ClipDef = {
@@ -29,10 +42,10 @@ const start: ClipDef = {
     s.fingerHide(2.1);
     s.caption(2.4, 'cap.command_up');
     s.spawnFx(2.6, 'fx', 'resident_born', 2, 2);
-    const r = s.spawn(2.7, 'resident', 2, 2);
+    const r = s.spawn(2.7, H.standard, 2, 2);
     s.walk(3.5, r, [[2, 2], [3, 2]], 2);
     s.spawnFx(3.9, 'fx', 'resident_born', 2, 2);
-    const r2 = s.spawn(4.0, 'resident', 2, 2);
+    const r2 = s.spawn(4.0, H.patch, 2, 2);
     s.walk(4.6, r2, [[2, 2], [1, 2]], 2);
   },
 };
@@ -46,8 +59,8 @@ const dig: ClipDef = {
   script(s) {
     s.openRect(0, 0, 2, 3);
     s.building(0, 'command', 1, 1);
-    const r1 = s.actor('resident', 2, 1);
-    const r2 = s.actor('resident', 2, 2);
+    const r1 = s.actor(H.standard, 2, 1);
+    const r2 = s.actor(H.canopy, 2, 2);
     s.caption(0.2, 'cap.swipe');
     s.fingerTo(0.4, 0.7, s.px(3, 0.15), s.px(5.5, 3.8));
     s.swipe(1.2, [[3, 0], [3, 1], [3, 2]], 0.35, (x, y, t) => s.set(t, x, y, { queued: true }));
@@ -85,7 +98,7 @@ const clue: ClipDef = {
     s.cell(3, 2).clue = { threat: 1 };
     s.cell(0, 3).clue = { finds: 1 };
     s.cell(1, 3).clue = { finds: 1 };
-    s.actor('resident', 3, 4);
+    s.actor(H.standard, 3, 4);
     s.caption(0.3, 'cap.tap_number');
     s.fingerTo(0.5, 0.7, s.px(2, 2.15), s.px(4.2, 4.6));
     s.tap(1.4);
@@ -113,7 +126,7 @@ const deduce: ClipDef = {
     s.cell(2, 2).clue = { threat: 1, finds: 1 };
     s.cell(3, 2).clue = { finds: 1 };
     s.cell(4, 2).clue = { finds: 1 };
-    s.actor('resident', 2, 3);
+    s.actor(H.patch, 2, 3);
     s.caption(0.3, 'cap.tap_number');
     s.fingerTo(0.5, 0.7, s.px(0, 2.15), s.px(3.5, 3.8));
     s.tap(1.3);
@@ -138,8 +151,8 @@ const cascade: ClipDef = {
   length: 8.4,
   script(s) {
     s.openRect(0, 0, 1, 2);
-    const r = s.actor('resident', 1, 1, 'dig');
-    const r2 = s.actor('resident', 1, 0);
+    const r = s.actor(H.standard, 1, 1, 'dig');
+    const r2 = s.actor(H.current, 1, 0);
     s.set(0, 2, 1, { queued: true });
     s.work(0.3, 1.8, 2, 1);
     s.open(2.1, 2, 1);
@@ -165,55 +178,136 @@ const cascade: ClipDef = {
   },
 };
 
-/** Build tab, pick the School, tap a glowing tile; a resident builds it and every resident gets stronger. */
+const BUILD_MENU: MenuItem[] = [
+  { key: 'reactor', kind: 'building', cost: 50 },
+  { key: 'home', kind: 'building', cost: 40 },
+  { key: 'school', kind: 'building', cost: 100 },
+];
+
+/** Tap open ground, pick a building from the sheet; a hero builds it and it frees land around itself. */
 const build: ClipDef = {
   cols: 5,
   rows: 4,
   hud: true,
-  dock: true,
+  capTop: true,
+  length: 9,
+  script(s) {
+    s.openRect(0, 0, 4, 3);
+    s.building(0, 'command', 1, 1);
+    const r = s.actor(H.standard, 2, 2);
+    const r2 = s.actor(H.patch, 0, 3, 'dig');
+    s.setEnergy(0, 130);
+    s.caption(0.3, 'cap.open_build');
+    s.fingerTo(0.5, 0.6, s.px(3, 1.15), s.px(4.4, 3.6));
+    s.tap(1.3);
+    s.showFrame(1.3, 3, 1, COL.teal, 2.5);
+    s.openMenu(1.4, BUILD_MENU);
+    s.caption(1.6, 'cap.pick');
+    s.fingerTo(1.8, 0.5, s.menuSlot(0));
+    s.tap(2.5);
+    s.selectMenu(2.55, 'reactor');
+    s.closeMenu(2.9);
+    s.setEnergy(2.9, 80);
+    s.fingerHide(3.0);
+    s.ghost(2.9, 'reactor', 3, 1, 3.6);
+    s.caption(3.0, 'cap.place');
+    const at = s.walk(3.0, r, [[2, 2], [2, 1]], 2.6, 'build');
+    s.building(at, 'reactor', 3, 1, 2.2);
+    s.play(at + 2.2, r, 'idle');
+    s.caption(at + 2.3, 'cap.built');
+    for (const [x, y] of [[4, 0], [4, 1], [4, 2], [3, 0], [3, 2], [2, 0]] as [number, number][]) s.set(at + 2.3, x, y, { glow: COL.green });
+    for (const [x, y] of [[4, 0], [4, 1], [4, 2], [3, 0], [3, 2], [2, 0]] as [number, number][]) s.set(at + 4.4, x, y, { glow: undefined });
+    s.orb(at + 3.0, 3, 1, 0.7, 1);
+    s.play(0, r2, 'dig');
+  },
+};
+
+/** Tap a building, pick who to print; the stand-in is printed and goes to work. */
+const birth: ClipDef = {
+  cols: 5,
+  rows: 4,
+  hud: true,
+  capTop: true,
   length: 10,
   script(s) {
     s.openRect(0, 0, 4, 3);
     s.building(0, 'command', 1, 1);
-    s.building(0, 'reactor', 0, 3);
-    const r = s.actor('resident', 2, 2);
-    const r2 = s.actor('resident', 2, 0, 'dig');
-    s.setEnergy(0, 180);
-    s.caption(0.3, 'cap.open_build');
-    s.fingerTo(0.5, 0.6, s.dockButton('build'), s.px(4, 3.4));
+    s.building(0, 'home', 3, 2);
+    s.actor(H.standard, 0, 3, 'dig');
+    const e = s.actor('adaptant_thermo', 4, 0, 'idle', { flip: true, alpha: 0.9 });
+    s.setEnergy(0, 120);
+    s.caption(0.3, 'cap.tap_building');
+    s.fingerTo(0.5, 0.6, s.px(3, 1.9), s.px(4.4, 3.6));
     s.tap(1.3);
-    s.tl.at(1.35, () => (s.dock = { active: 'build', picker: true, sel: null, t0: 1.35 }));
-    s.caption(1.5, 'cap.pick');
-    s.fingerTo(1.7, 0.5, s.pickerSlot(1));
-    s.tap(2.4);
-    s.tl.at(2.45, () => s.dock && (s.dock.sel = 'school'));
-    s.tl.at(2.8, () => s.dock && (s.dock.picker = false));
-    const spots: [number, number][] = [[3, 1], [3, 2], [3, 0], [2, 3], [3, 3], [4, 2], [4, 1]];
-    for (const [x, y] of spots) s.set(2.8, x, y, { glow: COL.seam });
-    s.caption(2.9, 'cap.place');
-    s.fingerTo(3.0, 0.5, s.px(3, 2.15));
-    s.tap(3.7);
-    for (const [x, y] of spots) s.set(3.75, x, y, { glow: undefined });
-    s.tl.at(3.75, () => s.dock && (s.dock.active = 'dig'));
-    s.setEnergy(3.75, 80);
-    s.fingerHide(4.1);
-    s.building(4.2, 'school', 3, 2, 2.4);
-    s.play(4.0, r, 'build');
-    s.caption(4.2, 'cap.built');
-    s.play(6.6, r, 'idle');
-    s.play(6.6, r2, 'idle');
-    s.caption(6.9, 'cap.trained');
-    for (const a of [r, r2]) {
-      s.spawnFx(6.9, 'fx', 'resident_born', a.x, a.y);
-      s.tl.at(6.95, () => (a.glow = COL.seam));
-      s.tl.tween(6.95, 0.35, (k) => (a.scale = 1 + 0.18 * Math.sin(k * Math.PI)));
-    }
-    s.showCard(7.3, 'building.school.name', 'card.level_up', COL.teal, 9.8);
-    s.play(8.0, r2, 'dig');
+    s.openMenu(1.4, [
+      { key: 'auto', kind: 'auto', cost: 0 },
+      { key: H.patch, kind: 'hero', cost: 0, tier: 1 },
+      { key: H.current, kind: 'hero', cost: 0, tier: 1 },
+      { key: H.frostline, kind: 'hero', cost: 40, tier: 2 },
+    ]);
+    s.caption(1.6, 'cap.pick_hero');
+    s.fingerTo(1.8, 0.6, s.menuSlot(3, 4));
+    s.tap(2.7);
+    s.selectMenu(2.75, H.frostline);
+    s.closeMenu(3.1);
+    s.setEnergy(3.1, 80);
+    s.fingerHide(3.2);
+    s.caption(3.2, 'cap.printing');
+    s.work(3.2, 2.6, 3, 2);
+    s.spawnFx(5.8, 'fx', 'resident_born', 3, 2.6);
+    const f = s.spawn(5.9, H.frostline, 3, 2.6, 'idle', { glow: CRYO });
+    s.caption(6.0, 'cap.on_shift');
+    s.walk(6.6, f, [[3, 2.6], [3, 1], [3.4, 0.5]], 2.4);
+    s.face(7.4, f, 1);
+    s.hit(7.6, f, e, 0.5, 'hit_cryo');
+    s.pop(7.85, 4, 0.3, '×1.5', CRYO);
+    s.hit(8.3, f, e, 0, 'hit_cryo');
+    s.play(8.6, e, 'death');
+    s.fade(9.3, e, 0);
   },
 };
 
-/** Residents drop their work to fight a nearby enemy, go back to digging, and a tap sends them all. */
+/** Knocked out: the enemy tears off a limb, the hero is reprinted at its building, the Med Center regrows it. */
+const knockout: ClipDef = {
+  cols: 5,
+  rows: 4,
+  length: 9.6,
+  script(s) {
+    s.openRect(0, 0, 4, 3);
+    s.building(0, 'command', 0, 1);
+    s.building(0, 'medcenter', 1, 0);
+    const h = s.actor(H.standard, 2, 1, 'idle', { hp: 0.45 });
+    const e = s.actor('heavy_adaptant', 3, 1, 'idle', { hp: 0.8, flip: true });
+    s.hit(0.3, e, h, 0.2, 'hit_impact');
+    s.hit(0.8, h, e, 0.7);
+    s.hit(1.4, e, h, 0, 'hit_impact');
+    s.play(1.75, h, 'death');
+    s.caption(1.9, 'cap.limb');
+    s.flyIcon(2.0, 'icon.part', [2, 1], [3, 1], 0.5);
+    s.fade(2.7, h, 0, 0.4);
+    s.walk(2.8, e, [[3, 1], [4, 1]], 1.2);
+    s.fade(3.6, e, 0, 0.4);
+    s.caption(4.0, 'cap.respawn');
+    s.spawnFx(4.1, 'fx', 'resident_born', 0.9, 1.6);
+    s.tl.at(4.2, () => {
+      h.x = 0.9;
+      h.y = 1.6;
+      h.hp = 0.3;
+      h.glow = COL.coral;
+      h.alpha = 1;
+      h.anim = 'idle';
+      h.t0 = 4.2;
+    });
+    s.walk(5.0, h, [[0.9, 1.6], [1.6, 1.1]], 2);
+    s.caption(5.8, 'cap.regrow');
+    s.work(5.9, 2.4, 1, 0);
+    s.hp(5.9, h, 1, 2.4);
+    s.tl.at(8.3, () => (h.glow = undefined));
+    s.spawnFx(8.3, 'fx', 'resident_born', 1.6, 1.1);
+  },
+};
+
+/** Heroes drop their work to fight a nearby enemy, go back to digging, and a tap sends them all. */
 const order: ClipDef = {
   cols: 6,
   rows: 4,
@@ -223,8 +317,8 @@ const order: ClipDef = {
     Object.assign(s.cell(1, 0), { open: false });
     Object.assign(s.cell(2, 0), { open: false });
     s.building(0, 'command', 0, 2);
-    const r1 = s.actor('resident', 1, 1, 'dig', { hp: 1 });
-    const r2 = s.actor('resident', 2, 1, 'dig', { hp: 1 });
+    const r1 = s.actor(H.standard, 1, 1, 'dig', { hp: 1 });
+    const r2 = s.actor(H.patch, 2, 1, 'dig', { hp: 1 });
     s.work(0, 1.0, 1, 0, 1, 0.6);
     s.work(0, 1.0, 2, 0, 0.9, 0.5);
     const e1 = s.spawn(0.2, 'adaptant_volt', 5, 2, 'idle', { hp: 1 });
@@ -266,7 +360,7 @@ const order: ClipDef = {
   },
 };
 
-/** A proven nest: tap the mark, confirm, residents fight what comes out, then destroy the nest. */
+/** A proven nest: tap the mark, confirm, heroes fight what comes out, then destroy the nest. */
 const nest: ClipDef = {
   cols: 6,
   rows: 4,
@@ -278,8 +372,8 @@ const nest: ClipDef = {
     s.cell(3, 2).clue = { threat: 1 };
     s.mark(0, 4, 1, 'threat');
     s.building(0, 'reactor', 0, 2);
-    const d1 = s.actor('resident', 2, 1, 'idle', { hp: 1 });
-    const d2 = s.actor('resident', 2, 2, 'idle', { hp: 1 });
+    const d1 = s.actor(H.standard, 2, 1, 'idle', { hp: 1 });
+    const d2 = s.actor(H.current, 2, 2, 'idle', { hp: 1 });
     s.caption(0.3, 'cap.tap_marker');
     s.fingerTo(0.5, 0.6, s.px(4, 1.15), s.px(5.5, 3.6));
     s.tap(1.3);
@@ -336,7 +430,7 @@ const parts: ClipDef = {
   length: 8,
   script(s) {
     s.openRect(0, 0, 3, 2);
-    const d = s.actor('resident', 1, 1, 'idle', { hp: 1 });
+    const d = s.actor(H.standard, 1, 1, 'idle', { hp: 1 });
     const e = s.actor('adaptant_thermo', 2, 1, 'idle', { hp: 1, flip: true });
     s.hit(0.4, d, e, 0.7);
     s.hit(0.9, e, d, 0.85, 'hit_thermo');
@@ -351,7 +445,7 @@ const parts: ClipDef = {
     s.fade(4.2, e, 0, 0.4);
     s.play(3.6, d, 'install_part');
     s.tl.at(3.9, () => (d.glow = THERMO));
-    s.tl.tween(3.9, 0.35, (k) => (d.scale = 1 + 0.15 * Math.sin(k * Math.PI)));
+    s.tl.tween(3.9, 0.35, (k) => (d.scale = 0.8 * (1 + 0.15 * Math.sin(k * Math.PI))));
     s.play(4.3, d, 'idle');
     s.spawnFx(3.9, 'fx', 'hit_thermo', 1, 0.6);
     s.showCard(4.3, 'card.module', 'card.thermo_arm', THERMO, 7.8, 'card.rank');
@@ -366,8 +460,8 @@ const elements: ClipDef = {
   length: 10.6,
   script(s) {
     s.openRect(0, 0, 4, 3);
-    const cryo = s.actor('resident', 1, 1, 'idle', { hp: 1, glow: CRYO });
-    const volt = s.actor('resident', 0, 0, 'idle', { hp: 1, glow: VOLT });
+    const cryo = s.actor(H.current, 1, 1, 'idle', { hp: 1, glow: CRYO });
+    const volt = s.actor(H.lineman, 0, 0, 'idle', { hp: 1, glow: VOLT });
     const e1 = s.spawn(0.2, 'adaptant_thermo', 4, 1, 'idle', { hp: 1 });
     s.walk(0.2, e1, [[4, 1], [2, 1]], 2.4);
     s.face(1.0, cryo, 1);
@@ -399,7 +493,7 @@ const elements: ClipDef = {
   },
 };
 
-/** A hero lair opens by itself; residents swarm the hero, it drops two parts. */
+/** An infected hero's lair opens by itself; our heroes swarm it, it drops two parts. */
 const heroes: ClipDef = {
   cols: 6,
   rows: 4,
@@ -412,11 +506,11 @@ const heroes: ClipDef = {
     s.mark(0, 4, 1, 'threat');
     s.building(0, 'command', 0, 1);
     const rs = [
-      s.actor('resident', 2, 0, 'idle', { hp: 1, glow: CRYO }),
-      s.actor('resident', 2, 1, 'idle', { hp: 1 }),
-      s.actor('resident', 2, 2, 'idle', { hp: 1, glow: TOXIN }),
-      s.actor('resident', 1, 2, 'idle', { hp: 1 }),
-      s.actor('resident', 1, 0, 'idle', { hp: 1 }),
+      s.actor(H.current, 2, 0, 'idle', { hp: 1, glow: CRYO }),
+      s.actor(H.standard, 2, 1, 'idle', { hp: 1 }),
+      s.actor(H.canopy, 2, 2, 'idle', { hp: 1, glow: TOXIN }),
+      s.actor(H.patch, 1, 2, 'idle', { hp: 1 }),
+      s.actor(H.frostline, 1, 0, 'idle', { hp: 1, glow: CRYO }),
     ];
     s.caption(0.4, 'cap.hero_out');
     s.tl.tween(0.4, 0.8, (k) => (s.cell(4, 1).glow = k < 1 ? COL.coral : undefined));
@@ -446,7 +540,7 @@ const heroes: ClipDef = {
   },
 };
 
-/** The call: purple numbers lead to the target's lair, the hero comes out, residents beat it and close the shift. */
+/** The call: purple numbers lead to the target's lair, the infected hero comes out, our heroes beat it and close the shift. */
 const call: ClipDef = {
   cols: 6,
   rows: 4,
@@ -457,9 +551,9 @@ const call: ClipDef = {
     s.cell(3, 1).clue = { demon: 1 };
     s.cell(3, 2).clue = { demon: 1, threat: 1 };
     s.mark(0, 4, 1, 'demon');
-    const d1 = s.actor('resident', 2, 1, 'idle', { hp: 1, glow: CRYO });
-    const d2 = s.actor('resident', 2, 2, 'idle', { hp: 1, glow: CRYO });
-    const d3 = s.actor('resident', 1, 1, 'idle', { hp: 1, glow: THERMO });
+    const d1 = s.actor(H.current, 2, 1, 'idle', { hp: 1, glow: CRYO });
+    const d2 = s.actor(H.frostline, 2, 2, 'idle', { hp: 1, glow: CRYO });
+    const d3 = s.actor(H.sweep, 1, 1, 'idle', { hp: 1, glow: THERMO });
     s.caption(0.3, 'cap.boss');
     s.showFrame(0.3, 3, 1, COL.violet, 1.2);
     s.fingerTo(0.6, 0.6, s.px(4, 1.15), s.px(5.5, 3.6));
@@ -517,7 +611,7 @@ const threat: ClipDef = {
   script(s) {
     s.openRect(0, 0, 4, 3);
     s.building(0, 'command', 1, 1);
-    s.actor('resident', 2, 2, 'dig');
+    s.actor(H.standard, 2, 2, 'dig');
     const e1 = s.actor('adaptant_cryo', 4, 1, 'walk', { flip: true });
     const e2 = s.actor('adaptant_volt', 4, 3, 'walk', { flip: true });
     s.tl.at(0, () => s.hud && (s.hud.threat = 1));
@@ -574,7 +668,7 @@ const energy: ClipDef = {
     s.openRect(0, 0, 4, 3);
     s.openNow([[3, 1]], 'vein_0_1');
     Object.assign(s.cell(4, 3), { open: false });
-    const r1 = s.actor('resident', 2, 1, 'dig');
+    const r1 = s.actor(H.standard, 2, 1, 'dig');
     const reactor = s.building(0, 'reactor', 1, 2);
     s.caption(0.3, 'cap.vein');
     for (const t of [0.3, 1.1, 1.9, 2.7]) s.spawnFx(t, 'fx', 'vein_spark', 3, 1);
@@ -584,15 +678,16 @@ const energy: ClipDef = {
     s.buildingAnim(3.0, reactor, 'working');
     for (const t of [3.3, 4.1]) s.orb(t, 1, 2, 0.7, 1);
     s.set(4.6, 4, 3, { queued: true });
-    const r2 = s.spawn(4.6, 'resident', 3, 3, 'dig');
+    const r2 = s.spawn(4.6, H.patch, 3, 3, 'dig');
     s.caption(4.8, 'cap.cache');
     s.work(4.7, 1.2, 4, 3);
     s.open(5.9, 4, 3, { tile: 'cache' });
     s.spawnFx(5.95, 'fx', 'cache_open', 4, 3);
     s.play(5.9, r2, 'idle');
-    s.orb(6.1, 4, 3, 0.8, 60);
+    s.orb(6.1, 4, 3, 0.8, 20);
+    s.showCard(6.6, 'map.boons.name', 'boon.sharp_shovels.name', COL.amber, 8.6, 'boon.sharp_shovels.desc');
   },
 };
 
-export const CLIPS: Record<string, ClipDef> = { start, dig, clue, deduce, cascade, build, order, nest, parts, elements, heroes, call, threat, caution, energy };
+export const CLIPS: Record<string, ClipDef> = { start, dig, clue, deduce, cascade, build, birth, order, nest, parts, knockout, elements, heroes, call, threat, caution, energy };
 export type ClipId = keyof typeof CLIPS;

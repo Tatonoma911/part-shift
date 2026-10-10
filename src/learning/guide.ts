@@ -233,6 +233,10 @@ export class Guide {
       for (const [name, text] of e.items) list.append(h('div.psl-item', {}, h('b', {}, tr(name)), h('span', {}, tr(text))));
       this.body.append(list);
     }
+    if (e.alt) {
+      const v = visualView(e.alt.visual, 'big');
+      if (v) this.body.append(h('div.psl-sub', {}, tr(e.alt.label)), h('div.psl-sprite.alt', {}, v));
+    }
     if (e.tip) this.body.append(h('div.psl-tip', {}, h('b', {}, tr('ui.tip')), h('span', {}, tr(e.tip))));
     if (e.clip && e.visual) {
       const v = visualView(e.visual, 'big');

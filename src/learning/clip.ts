@@ -12,7 +12,6 @@ export const CELL = 52;
 export const STEP = 54;
 const PAD = 10;
 const HUD_H = 58;
-const DOCK_H = 74;
 
 export const COL = {
   night: '#0B1117',
@@ -117,7 +116,7 @@ export class Timeline {
 }
 
 /** Everything a clip draws. Scripts change it through the helpers below. */
-const ANIM_FALLBACK: Record<string, string> = { attack: 'build', install_part: 'build', rip_part: 'hit', emerge: 'idle', tic: 'idle' };
+const ANIM_FALLBACK: Record<string, string> = { attack: 'build', install_part: 'attack', rip_part: 'hit', emerge: 'idle', tic: 'idle', dig: 'attack', build: 'attack', walk_back: 'walk', flee: 'walk' };
 
 export class Stage {
   cells: Cell[] = [];
@@ -130,7 +129,8 @@ export class Stage {
   target: { x: number; y: number; t0: number } | null = null;
   lane: { x0: number; y: number; x1: number; t0: number } | null = null;
   hud: { energy: number; bumpT: number; threat: number; frac: number; threatBumpT: number } | null = null;
-  dock: { active: 'dig' | 'build'; picker: boolean; sel: string | null; t0: number } | null = null;
+  /** Bottom sheet: the build menu (tap on open ground) or the hero picker (tap on a building). */
+  menu: { items: MenuItem[]; sel: string | null; t0: number } | null = null;
   chip: { text: string; x: number; y: number; t0: number; pressT: number } | null = null;
   card: { caps: string; title: string; sub?: string; color: string; t0: number } | null = null;
   pops: { text: string; color: string; x: number; y: number; t0: number }[] = [];
@@ -140,7 +140,7 @@ export class Stage {
     readonly cols: number,
     readonly rows: number,
     readonly tl: Timeline,
-    readonly opts: { hud?: boolean; dock?: boolean; zoom?: number },
+    readonly opts: { hud?: boolean; zoom?: number },
   ) {
     for (let i = 0; i < cols * rows; i++) this.cells.push({ open: false });
   }
@@ -160,7 +160,7 @@ export class Stage {
   }
 
   get height(): number {
-    return this.rows * STEP - (STEP - CELL) + PAD * 2 + (this.opts.hud ? HUD_H : 0) + (this.opts.dock ? DOCK_H : 0);
+    return this.rows * STEP - (STEP - CELL) + PAD * 2 + (this.opts.hud ? HUD_H : 0);
   }
 
   /** Pixel center of a (fractional) cell. */
@@ -208,7 +208,8 @@ export class Stage {
   // ------------------------------------------------------------- actors
 
   actor(set: string, x: number, y: number, anim = 'idle', patch: Partial<Actor> = {}): Actor {
-    const a: Actor = { set, anim, t0: 0, x, y, flip: false, alpha: 1, scale: 1, ...patch };
+    // our heroes are drawn on 72 px frames: a touch smaller so they fit the 52 px blocks
+    const a: Actor = { set, anim, t0: 0, x, y, flip: false, alpha: 1, scale: set.startsWith('ally_') ? 0.8 : 1, ...patch };
     this.actors.push(a);
     return a;
   }
@@ -473,20 +474,36 @@ export class Stage {
     this.tl.at(until, () => (this.card = null));
   }
 
-  dockButton(which: 'dig' | 'build'): { x: number; y: number } {
-    const y = this.height - PAD - DOCK_H / 2 + 6;
-    const w = this.width - PAD * 2;
-    return { x: PAD + (which === 'dig' ? w * 0.25 : w * 0.75), y };
+  /** Opens the bottom sheet with building or hero choices. */
+  openMenu(t: number, items: MenuItem[]): void {
+    this.tl.at(t, () => (this.menu = { items, sel: null, t0: t }));
   }
 
-  pickerSlot(i: number): { x: number; y: number } {
+  selectMenu(t: number, key: string): void {
+    this.tl.at(t, () => this.menu && (this.menu.sel = key));
+  }
+
+  closeMenu(t: number): void {
+    this.tl.at(t, () => (this.menu = null));
+  }
+
+  /** Center of menu slot i (of n). */
+  menuSlot(i: number, n = 3): { x: number; y: number } {
     const w = this.width - PAD * 2;
-    return { x: PAD + w * (0.2 + i * 0.3), y: this.height - PAD - DOCK_H - 44 };
+    return { x: PAD + (w * (i + 0.5)) / n, y: this.height - PAD - MENU_H / 2 };
   }
 }
 
-export const PICKER = ['home', 'school', 'reactor'];
-const PICKER_COST: Record<string, number> = { home: 40, school: 100, reactor: 50 };
+/** A choice in the bottom sheet: a building (by type) or one of our heroes (by sprite set). */
+export interface MenuItem {
+  key: string;
+  kind: 'building' | 'hero' | 'auto';
+  cost: number;
+  tier?: number;
+}
+
+const MENU_H = 92;
+
 
 const GROUND = ['ground_0', 'ground_1', 'ground_0', 'ground_grass_0', 'ground_1', 'ground_grass_1', 'ground_0', 'ground_grass_2'];
 export function groundTile(x: number, y: number): string {
@@ -941,7 +958,7 @@ export function render(ctx: CanvasRenderingContext2D, s: Stage, now: number): vo
   }
 
   if (s.hud) drawHud(ctx, s, now);
-  if (s.dock) drawDock(ctx, s, now);
+  if (s.menu) drawMenu(ctx, s, now);
   if (s.chip) drawChip(ctx, s.chip, now);
   if (s.card) drawCard(ctx, s, s.card, now);
   drawFinger(ctx, s, now);
@@ -1000,66 +1017,64 @@ function drawHud(ctx: CanvasRenderingContext2D, s: Stage, now: number): void {
   ctx.textAlign = 'left';
 }
 
-function drawDock(ctx: CanvasRenderingContext2D, s: Stage, now: number): void {
-  const d = s.dock!;
+function drawMenu(ctx: CanvasRenderingContext2D, s: Stage, now: number): void {
+  const m = s.menu!;
+  const k = ease.out(Math.min(1, (now - m.t0) / 0.25));
   const x = PAD;
-  const y = s.height - PAD - DOCK_H + 10;
   const w = s.width - PAD * 2;
-  const h = DOCK_H - 10;
+  const py = s.height - PAD - MENU_H + (1 - k) * 24;
+  ctx.save();
+  ctx.globalAlpha = k;
   ctx.fillStyle = COL.paper;
-  cutRect(ctx, x, y, w, h, 12, 12);
+  cutRect(ctx, x, py, w, MENU_H, 12, 12);
   ctx.fill();
   ctx.strokeStyle = COL.seam;
   ctx.lineWidth = 1.5;
-  cutRect(ctx, x + 4, y + 4, w - 8, h - 8, 9, 9);
+  cutRect(ctx, x + 4, py + 4, w - 8, MENU_H - 8, 9, 9);
   ctx.stroke();
-  (['dig', 'build'] as const).forEach((m, i) => {
-    const bx = x + 10 + i * ((w - 20) / 2);
-    const bw = (w - 20) / 2 - 4;
-    const active = d.active === m;
-    ctx.fillStyle = active ? COL.graphite : 'rgba(16,23,28,0.06)';
-    cutRect(ctx, bx, y + 10, bw, h - 20, 9, 9);
+  const n = m.items.length;
+  const sw = Math.min(84, w / n - 8);
+  m.items.forEach((it, i) => {
+    const c = s.menuSlot(i, n);
+    const sel = m.sel === it.key;
+    const top = py + 9;
+    const h = MENU_H - 18;
+    ctx.fillStyle = sel ? 'rgba(87,216,242,0.35)' : 'rgba(16,23,28,0.05)';
+    cutRect(ctx, c.x - sw / 2, top, sw, h, 8, 8);
     ctx.fill();
-    drawImage(ctx, m === 'dig' ? 'icon.dig' : 'icon.build', bx + bw / 2 - 52, y + h / 2 - 13, 26, 26);
-    ctx.fillStyle = active ? '#fff' : COL.graphite;
-    ctx.font = `700 15px ${FONT}`;
-    ctx.textBaseline = 'middle';
-    ctx.fillText(tr(m === 'dig' ? 'chip.dig' : 'chip.build'), bx + bw / 2 - 20, y + h / 2 + 1);
-  });
-  if (d.picker) {
-    const k = ease.out(Math.min(1, (now - d.t0) / 0.25));
-    const py = s.height - PAD - DOCK_H - 84 + (1 - k) * 20;
+    if (sel) {
+      ctx.strokeStyle = COL.teal;
+      ctx.lineWidth = 2.5;
+      ctx.stroke();
+    }
     ctx.save();
-    ctx.globalAlpha = k;
-    ctx.fillStyle = COL.paper;
-    cutRect(ctx, x, py, w, 78, 10, 10);
-    ctx.fill();
-    ctx.strokeStyle = COL.seam;
-    ctx.stroke();
-    PICKER.forEach((type, i) => {
-      const c = s.pickerSlot(i);
-      const sel = d.sel === type;
-      ctx.fillStyle = sel ? 'rgba(87,216,242,0.35)' : 'rgba(16,23,28,0.05)';
-      cutRect(ctx, c.x - 40, py + 6, 80, 66, 8, 8);
-      ctx.fill();
-      if (sel) {
-        ctx.strokeStyle = COL.teal;
-        ctx.lineWidth = 2.5;
-        ctx.stroke();
-      }
-      const img = art.get(`building.${type}`);
-      if (img) ctx.drawImage(img, c.x - 26, py + 4, 52, 52 * (img.naturalHeight / img.naturalWidth || 1.33));
-      ctx.fillStyle = COL.graphite;
-      ctx.font = `800 12px ${FONT_NUM}`;
+    ctx.beginPath();
+    ctx.rect(c.x - sw / 2, top, sw, h - 16);
+    ctx.clip();
+    if (it.kind === 'building') {
+      const img = art.get(`building.${it.key}`);
+      if (img) ctx.drawImage(img, c.x - 24, top + 2, 48, 48 * (img.naturalHeight / img.naturalWidth || 1.33));
+    } else if (it.kind === 'hero') {
+      drawFrame(ctx, it.key, frameAt(it.key, 'idle', now), c.x, top + h - 14, { scale: 0.78 });
+    } else {
+      ctx.fillStyle = COL.teal;
+      ctx.font = `800 13px ${FONT_NUM}`;
       ctx.textAlign = 'center';
-      ctx.fillStyle = 'rgba(244,247,247,0.92)';
-      ctx.fillRect(c.x - 24, py + 54, 48, 16);
-      ctx.fillStyle = COL.cobalt;
-      ctx.fillText(`⚡${PICKER_COST[type]}`, c.x, py + 63);
-      ctx.textAlign = 'left';
-    });
+      ctx.fillText(tr('ui.auto').toUpperCase(), c.x, top + 30);
+    }
     ctx.restore();
-  }
+    if (it.kind === 'auto') return;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillStyle = 'rgba(244,247,247,0.94)';
+    ctx.fillRect(c.x - sw / 2 + 4, top + h - 17, sw - 8, 15);
+    ctx.font = `800 11px ${FONT_NUM}`;
+    ctx.fillStyle = COL.cobalt;
+    const label = `⚡${it.cost}`;
+    ctx.fillText(it.tier ? `${'★'.repeat(it.tier)} ${label}` : label, c.x, top + h - 9);
+    ctx.textAlign = 'left';
+  });
+  ctx.restore();
 }
 
 function drawChip(ctx: CanvasRenderingContext2D, c: { text: string; x: number; y: number; t0: number; pressT: number }, now: number): void {
@@ -1179,7 +1194,8 @@ export interface ClipDef {
   cols: number;
   rows: number;
   hud?: boolean;
-  dock?: boolean;
+  /** Captions at the top (the clip uses the bottom sheet). */
+  capTop?: boolean;
   /** Seconds before the loop restarts (the last frame holds for the remainder). */
   length: number;
   script(s: Stage, tl: Timeline): void;
@@ -1223,7 +1239,12 @@ export class ClipPlayer {
     this.canvas = document.createElement('canvas');
     this.ctx = this.canvas.getContext('2d')!;
     this.cap = document.createElement('div');
-    this.cap.className = def.dock ? 'psl-clip-cap top' : 'psl-clip-cap';
+    this.cap.className = def.capTop ? 'psl-clip-cap top' : 'psl-clip-cap';
+    if (def.capTop && def.hud) {
+      // below the HUD strip
+      const h = def.rows * STEP - (STEP - CELL) + PAD * 2 + HUD_H;
+      this.cap.style.top = `${((PAD + HUD_H + 4) / h) * 100}%`;
+    }
     this.cap.setAttribute('aria-live', 'polite');
     this.bar = document.createElement('div');
     this.bar.className = 'psl-clip-bar';
@@ -1264,9 +1285,8 @@ export class ClipPlayer {
 
   private reset(): void {
     this.tl = new Timeline();
-    this.stage = new Stage(this.def.cols, this.def.rows, this.tl, { hud: this.def.hud, dock: this.def.dock });
+    this.stage = new Stage(this.def.cols, this.def.rows, this.tl, { hud: this.def.hud });
     if (this.def.hud) this.stage.hud = { energy: 80, bumpT: -9, threat: 0, frac: 0.15, threatBumpT: -9 };
-    if (this.def.dock) this.stage.dock = { active: 'dig', picker: false, sel: null, t0: 0 };
     this.def.script(this.stage, this.tl);
     this.tl.items.sort((a, b) => a.t - b.t);
     this.clock = 0;

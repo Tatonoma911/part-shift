@@ -100,6 +100,7 @@ const CSS = `
 .psl-items{display:grid;gap:6px;margin:4px 0 6px}
 .psl-item{background:#fff;padding:10px 12px;font-size:14px;line-height:1.4;clip-path:polygon(8px 0,100% 0,100% calc(100% - 8px),calc(100% - 8px) 100%,0 100%,0 8px)}
 .psl-item b{display:block;font-family:Unbounded,sans-serif;font-weight:800;font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:#115A80;margin-bottom:3px}
+.psl-sprite.alt{height:150px;background:radial-gradient(circle at 50% 70%,#fff 0%,#F7E9EB 60%,#F1D9DD 100%)}
 .psl-cycle{display:block;height:180px;width:auto;max-width:100%}
 .psl-thumb .psl-cycle,.psl-card .psl-cycle{height:48px}
 .psl-tip{display:flex;gap:10px;align-items:flex-start;margin-top:12px;padding:10px 12px;background:rgba(232,163,58,.14);border-left:3px solid #E8A33A;font-size:14px;line-height:1.4}

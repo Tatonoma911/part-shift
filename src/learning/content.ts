@@ -2,9 +2,10 @@ import buildingsJson from '../data/design/buildings.json';
 import configJson from '../data/design/config.json';
 import elementsJson from '../data/design/elements.json';
 import enemiesJson from '../data/design/enemies.json';
+import boonsJson from '../data/design/boons.json';
 import heroesJson from '../data/design/heroes.json';
 import partsJson from '../data/design/parts.json';
-import unitsJson from '../data/design/units.json';
+import { animSets } from './art';
 import type { ClipId } from './clips';
 
 /**
@@ -35,6 +36,8 @@ export interface Entry {
   clip?: ClipId;
   tip?: string;
   stats?: () => [string, string][];
+  /** A second picture under the text, with a caption (a hero's infected form). */
+  alt?: { visual: Visual; label: string };
   related?: string[];
 }
 
@@ -58,7 +61,6 @@ const num = (v: unknown): v is number => typeof v === 'number' && Number.isFinit
 
 const byId = (rows: unknown): Record<string, Row> => Object.fromEntries(((rows as Row[] | undefined) ?? []).map((r) => [r.id as string, r]));
 const B = byId((buildingsJson as Row).buildings);
-const U = byId((unitsJson as Row).units);
 const E = byId((enemiesJson as Row).enemies);
 const S = byId((enemiesJson as Row).sites);
 const P = byId((partsJson as Row).parts);
@@ -71,9 +73,28 @@ interface Hero {
   enemy: { hp: number; damage: number; defense: number; speed: number; resist: Record<string, number>; flying?: boolean };
   drops: { slot: string; id: string }[];
 }
-const heroes = heroesJson as unknown as { heroes: Hero[]; bossPool?: { heroes?: string[] } };
+interface OurSide {
+  statsFromEnemyForm: { hpFactor: number; damageFactor: number; defenseFactor: number };
+  starterRoster: string[];
+  birth: { byTier: Record<string, { seconds: number; cost: number }> };
+}
+const heroes = heroesJson as unknown as { heroes: Hero[]; bossPool?: { heroes?: string[] }; ourSide?: OurSide };
 export const HEROES: Hero[] = heroes.heroes;
 const bossPool = new Set(heroes.bossPool?.heroes ?? []);
+/** Rules v0.7 (MVP_RULES §4); the tables in the repo may still predate it, so the same numbers stand in. */
+const OURS: OurSide = heroes.ourSide ?? {
+  statsFromEnemyForm: { hpFactor: 0.6, damageFactor: 0.8, defenseFactor: 0.6 },
+  starterRoster: ['standard', 'patch', 'canopy', 'current'],
+  birth: { byTier: { 1: { seconds: 30, cost: 0 }, 2: { seconds: 45, cost: 40 }, 3: { seconds: 60, cost: 90 }, 4: { seconds: 90, cost: 160 } } },
+};
+export const STARTERS = OURS.starterRoster;
+/** Sprite set of a hero on our side (the uninfected stand-in); the infected sheet if none is drawn yet. */
+export const ourSet = (id: string): string => (animSets[`ally_${id}`] ? `ally_${id}` : id);
+export const birthOf = (tier: number): { seconds: number; cost: number } => OURS.birth.byTier[String(tier)] ?? { seconds: 30, cost: 0 };
+const birthLabel = (tier: number): string => {
+  const b = birthOf(tier);
+  return `stat.birth_v|${b.cost} ⚡ · ${b.seconds}`;
+};
 export const TECH_COLOR: Record<string, string> = Object.fromEntries(((elementsJson as Row).techs as { id: string; color: string }[]).map((t) => [t.id, t.color]));
 /** Cycle order: each beats the next. */
 export const CYCLE: Tech[] = ['volt', 'cryo', 'thermo', 'toxin', 'impact'];
@@ -140,6 +161,8 @@ function heroStats(x: Hero): () => [string, string][] {
     ];
     if (weak.length) out.push(['stat.weak', techList(weak)]);
     if (strong.length) out.push(['stat.resist', techList(strong)]);
+    const f = OURS.statsFromEnemyForm;
+    out.push(['stat.ours_hp', plain(Math.round(x.enemy.hp * f.hpFactor))], ['stat.ours_dmg', plain(Math.round(x.enemy.damage * f.damageFactor))], ['stat.birth', birthLabel(x.tier)]);
     out.push(['hero.drops', `stat.parts|${x.drops.map((d) => d.id).join(',')}`]);
     if (bossPool.has(x.id)) out.push(['stat.boss', 'stat.yes|']);
     return out;
@@ -152,6 +175,7 @@ export const LESSONS: Lesson[] = [
   { id: 'clue', clip: 'clue' },
   { id: 'deduce', clip: 'deduce' },
   { id: 'build', clip: 'build' },
+  { id: 'birth', clip: 'birth' },
   { id: 'fight', clip: 'order' },
   { id: 'parts', clip: 'parts' },
   { id: 'elements', clip: 'elements' },
@@ -190,7 +214,7 @@ export const SECTIONS: Section[] = [
         clip: 'energy',
         stats: () => rows(cfg.economy, [['startEnergy', 'stat.start', plain], ['energyPerDugTile', 'stat.per_block', plain], ['cacheEnergy', 'stat.cache', plain]]),
       },
-      { id: 'res.residents', name: 'resource.residents.name', desc: 'res.residents.text', visual: { kind: 'anim', set: 'resident', anim: 'walk' }, related: ['unit.resident', 'building.home', 'building.school'] },
+      { id: 'res.residents', name: 'resource.residents.name', desc: 'res.residents.text', visual: { kind: 'anim', set: ourSet('standard'), anim: 'walk', scale: 2.3 }, related: ['people.ours', 'people.birth', 'people.cap'] },
       { id: 'res.threat', name: 'res.threat.name', desc: 'res.threat.text', visual: { kind: 'image', key: 'icon.timer' }, clip: 'threat', tip: 'lesson.call.tip', related: ['hero.lairs'] },
     ],
   },
@@ -202,8 +226,8 @@ export const SECTIONS: Section[] = [
       name: `building.${id}.name`,
       desc: `bld.${id}.text`,
       visual: { kind: 'image', key: `building.${id}`, scale: 2 } as Visual,
-      clip: id === 'school' ? ('build' as ClipId) : id === 'reactor' ? ('energy' as ClipId) : id === 'command' ? ('start' as ClipId) : undefined,
-      tip: id === 'school' || id === 'reactor' ? 'lesson.build.tip' : undefined,
+      clip: id === 'home' || id === 'school' ? ('birth' as ClipId) : id === 'reactor' ? ('energy' as ClipId) : id === 'command' ? ('start' as ClipId) : undefined,
+      tip: id === 'home' || id === 'reactor' ? 'lesson.build.tip' : undefined,
       stats: buildingStats(id),
     })),
   },
@@ -211,17 +235,22 @@ export const SECTIONS: Section[] = [
     id: 'people',
     icon: 'icon.resident',
     entries: [
+      { id: 'people.ours', name: 'people.ours.name', desc: 'people.ours.text', how: ['res.residents.text', 'people.resident.how'], visual: { kind: 'anim', set: ourSet('standard'), anim: 'idle', scale: 2.3 }, clip: 'order', related: ['people.birth', 'hero.allies', 'world.heroes'] },
       {
-        id: 'unit.resident',
-        name: 'unit.resident.name',
-        desc: 'unit.resident.desc',
-        how: ['res.residents.text', 'people.resident.how'],
-        visual: { kind: 'anim', set: 'resident', anim: 'dig', scale: 3 },
-        clip: 'order',
-        stats: fighterStats(U.resident),
-        related: ['parts.how', 'people.ranks', 'building.school'],
+        id: 'people.birth',
+        name: 'people.birth.name',
+        desc: 'people.birth.text',
+        how: ['people.birth.auto'],
+        visual: { kind: 'anim', set: ourSet('patch'), anim: 'idle', scale: 2.3 },
+        clip: 'birth',
+        tip: 'lesson.birth.tip',
+        stats: () => [1, 2, 3, 4].map((t) => [`stat.tier${t}`, `stat.birth_v|${birthOf(t).cost} ⚡ · ${birthOf(t).seconds}`] as [string, string]),
+        related: ['building.command', 'building.home', 'building.school', 'people.cap'],
       },
-      { id: 'people.ranks', name: 'people.ranks.name', desc: 'people.ranks.text', visual: { kind: 'anim', set: 'defender', anim: 'install_part', scale: 3 }, clip: 'parts' },
+      { id: 'people.cap', name: 'people.cap.name', desc: 'people.cap.text', visual: { kind: 'image', key: 'building.home', scale: 2 }, related: ['building.home', 'map.survivor'] },
+      { id: 'people.rally', name: 'people.rally.name', desc: 'people.rally.text', visual: { kind: 'anim', set: ourSet('kiln'), anim: 'attack', scale: 2.3 }, clip: 'heroes' },
+      { id: 'people.knockout', name: 'people.knockout.name', desc: 'people.knockout.text', visual: { kind: 'anim', set: ourSet('mason'), anim: 'hit', scale: 2.3 }, related: ['building.medcenter', 'parts.slots'] },
+      { id: 'people.ranks', name: 'people.ranks.name', desc: 'people.ranks.text', visual: { kind: 'anim', set: ourSet('frostline'), anim: 'idle', scale: 2.3 }, clip: 'parts' },
     ],
   },
   {
@@ -269,7 +298,7 @@ export const SECTIONS: Section[] = [
     entries: [
       { id: 'hero.call', name: 'mode.call.name', desc: 'lesson.call.text', visual: { kind: 'glyph', channel: 'boss' }, clip: 'call', tip: 'lesson.call.tip', related: ['clue.boss', 'enemy.boss'] },
       { id: 'hero.lairs', name: 'hero.lairs.name', desc: 'hero.lairs.text', how: ['enemy.lair.how'], visual: { kind: 'anim', set: 'kiln', anim: 'idle', scale: 2.3 }, clip: 'heroes', related: ['clue.threat', 'parts.heroes'] },
-      { id: 'hero.allies', name: 'hero.allies.name', desc: 'hero.allies.text', visual: { kind: 'anim', set: 'canopy', anim: 'idle', scale: 2.3 } },
+      { id: 'hero.allies', name: 'hero.allies.name', desc: 'hero.allies.text', visual: { kind: 'anim', set: ourSet('canopy'), anim: 'idle', scale: 2.3 }, related: ['people.birth'] },
       ...HEROES.map((x) => ({
         id: `hero.${x.id}`,
         name: `enemy.${x.id}.name`,
@@ -277,9 +306,10 @@ export const SECTIONS: Section[] = [
         how: [`ability.${x.id}`],
         items: [
           ['hero.as_ally', `ally.${x.id}.desc`],
-          ['hero.unlock', `unlock.${x.id}`],
+          ['hero.unlock', STARTERS.includes(x.id) ? 'hero.starter' : `unlock.${x.id}`],
         ] as [string, string][],
-        visual: { kind: 'anim', set: x.id, anim: 'idle', scale: HERO_SCALE[x.id] ?? 2.3 } as Visual,
+        visual: { kind: 'anim', set: ourSet(x.id), anim: 'idle', scale: HERO_SCALE[x.id] ?? 2.3 } as Visual,
+        alt: ourSet(x.id) !== x.id ? { visual: { kind: 'anim', set: x.id, anim: 'idle', scale: HERO_SCALE[x.id] ?? 2.3 } as Visual, label: 'enemy.hero.label' } : undefined,
         clip: x.id === 'kiln' ? ('heroes' as ClipId) : undefined,
         stats: heroStats(x),
         related: [`elem.${x.tech === 'kinetic' ? 'cycle' : x.tech}`, bossPool.has(x.id) ? 'hero.call' : 'hero.lairs'],
@@ -306,7 +336,14 @@ export const SECTIONS: Section[] = [
       { id: 'map.rubble', name: 'terrain.rubble.name', desc: 'terrain.rubble.desc', how: ['map.rubble.how'], visual: { kind: 'image', key: 'tile.rubble_0', scale: 3 } },
       { id: 'map.vein', name: 'terrain.energy_vein.name', desc: 'terrain.energy_vein.desc', how: ['map.vein.how'], visual: { kind: 'image', key: 'tile.vein_0_1', scale: 3 }, clip: 'energy' },
       { id: 'map.water', name: 'terrain.water.name', desc: 'terrain.water.desc', how: ['map.water.how'], visual: { kind: 'image', key: 'tile.water_1', scale: 3 } },
-      { id: 'map.cache', name: 'site.cache.name', desc: 'site.cache.desc', how: ['map.cache.how'], visual: { kind: 'image', key: 'tile.cache', scale: 3 }, clip: 'energy', stats: () => rows(cfg.economy, [['cacheEnergy', 'stat.reward', en]]) },
+      { id: 'map.cache', name: 'site.cache.name', desc: 'site.cache.desc', how: ['map.cache.how'], visual: { kind: 'image', key: 'tile.cache', scale: 3 }, clip: 'energy', related: ['map.boons'] },
+      {
+        id: 'map.boons',
+        name: 'map.boons.name',
+        desc: 'map.boons.text',
+        items: ((boonsJson as Row).boons as { id: string }[]).map((b) => [`boon.${b.id}.name`, `boon.${b.id}.desc`] as [string, string]),
+        visual: { kind: 'image', key: 'tile.cache', scale: 3 },
+      },
       { id: 'map.survivor', name: 'site.survivor.name', desc: 'site.survivor.desc', how: ['map.survivor.how'], visual: { kind: 'anim', set: 'resident', anim: 'idle', scale: 3 } },
     ],
   },
@@ -353,7 +390,9 @@ export const COACH: Record<string, { name: string; title: string; text: string; 
   deduce: { name: 'coach.clue.name', title: 'lesson.deduce.title', text: 'lesson.deduce.text', clip: 'deduce', entry: 'clue.safe' },
   finds: { name: 'coach.finds.name', title: 'coach.finds.title', text: 'coach.finds.text', clip: 'clue', entry: 'clue.finds' },
   build: { name: 'coach.build.name', title: 'lesson.build.title', text: 'lesson.build.text', clip: 'build', entry: 'building.reactor' },
-  fight: { name: 'coach.fight.name', title: 'lesson.fight.title', text: 'lesson.fight.text', clip: 'nest', entry: 'unit.resident' },
+  birth: { name: 'coach.birth.name', title: 'coach.birth.title', text: 'coach.birth.text', clip: 'birth', entry: 'people.birth' },
+  fight: { name: 'coach.fight.name', title: 'lesson.fight.title', text: 'lesson.fight.text', clip: 'nest', entry: 'people.ours' },
+  knockout: { name: 'coach.knockout.name', title: 'coach.knockout.title', text: 'coach.knockout.text', clip: 'knockout', entry: 'people.knockout' },
   parts: { name: 'coach.parts.name', title: 'lesson.parts.title', text: 'lesson.parts.text', clip: 'parts', entry: 'parts.how' },
   elements: { name: 'coach.elements.name', title: 'coach.elements.title', text: 'coach.elements.text', clip: 'elements', entry: 'elem.cycle' },
   threat: { name: 'coach.threat.name', title: 'coach.threat.title', text: 'coach.threat.text', clip: 'threat', entry: 'res.threat' },
@@ -370,6 +409,9 @@ export const EVENT_TOPIC: Record<string, string> = {
   heavy_nest_open: 'fight',
   enemy_engaged: 'fight',
   part_attached: 'parts',
+  build_done: 'birth',
+  knockout: 'knockout',
+  limb_torn: 'knockout',
   elements_part: 'elements',
   reaction: 'elements',
   threat_level_up: 'threat',
