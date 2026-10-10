@@ -6,12 +6,12 @@
   "resident": {
    "sheet": "resident.png",
    "frameSize": [
-    110,
+    54,
     56
    ],
    "cols": 8,
    "anchor": [
-    55,
+    27,
     54
    ],
    "anims": {
@@ -106,8 +106,7 @@
       59,
       60,
       61,
-      62,
-      63
+      62
      ],
      "fps": 10,
      "loop": false
@@ -119,12 +118,12 @@
   "defender": {
    "sheet": "defender.png",
    "frameSize": [
-    110,
+    54,
     56
    ],
    "cols": 8,
    "anchor": [
-    55,
+    27,
     54
    ],
    "anims": {
@@ -193,8 +192,7 @@
       43,
       44,
       45,
-      46,
-      47
+      46
      ],
      "fps": 10,
      "loop": false
@@ -727,6 +725,93 @@
    },
    "faces": "right",
    "note": "Из генератора: 067_anim_heavy_adaptant.png"
+  },
+  "standard": {
+   "sheet": "standard.png",
+   "frameSize": [
+    72,
+    72
+   ],
+   "cols": 8,
+   "anchor": [
+    36,
+    70
+   ],
+   "anims": {
+    "idle": {
+     "frames": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5
+     ],
+     "fps": 8,
+     "loop": true
+    },
+    "walk": {
+     "frames": [
+      8,
+      9,
+      10,
+      11,
+      12,
+      13
+     ],
+     "fps": 10,
+     "loop": true
+    },
+    "attack": {
+     "frames": [
+      16,
+      17,
+      18,
+      19,
+      20,
+      21
+     ],
+     "fps": 12,
+     "loop": false
+    },
+    "hit": {
+     "frames": [
+      24,
+      25,
+      26
+     ],
+     "fps": 12,
+     "loop": false
+    },
+    "death": {
+     "frames": [
+      32,
+      33,
+      34,
+      35,
+      36,
+      37,
+      38,
+      39
+     ],
+     "fps": 10,
+     "loop": false
+    },
+    "rip_part": {
+     "frames": [
+      40,
+      41,
+      42,
+      43,
+      44,
+      45
+     ],
+     "fps": 12,
+     "loop": false
+    }
+   },
+   "faces": "right",
+   "note": "Стандарт S-01, обезумевший. Покой/ход/удар — альбом движений Антона; урон/гибель/часть/тик — из кадра покоя целиком."
   },
   "ally_standard": {
    "sheet": "ally_standard.png",
@@ -4945,8 +5030,7 @@
       0,
       1,
       2,
-      3,
-      4
+      3
      ],
      "fps": 10,
      "loop": false
@@ -4957,8 +5041,7 @@
       7,
       8,
       9,
-      10,
-      11
+      10
      ],
      "fps": 10,
      "loop": false
@@ -5057,8 +5140,7 @@
       13,
       14,
       15,
-      16,
-      17
+      16
      ],
      "fps": 10,
      "loop": false
@@ -5067,9 +5149,7 @@
      "frames": [
       18,
       19,
-      20,
-      21,
-      22
+      20
      ],
      "fps": 10,
      "loop": false
@@ -5209,7 +5289,7 @@
     52,
     52
    ],
-   "cols": 6,
+   "cols": 18,
    "anchor": [
     0,
     0
@@ -5227,29 +5307,41 @@
     },
     "small_drone_swarm": {
      "frames": [
-      6,
-      7,
-      8,
-      9,
-      10,
-      11
+      18,
+      19,
+      20,
+      21,
+      22,
+      23,
+      24,
+      25,
+      26,
+      27,
+      28,
+      29,
+      30,
+      31,
+      32,
+      33,
+      34,
+      35
      ],
      "fps": 10,
      "loop": false
     },
     "vertical_cyan_halo": {
      "frames": [
-      12,
-      13
+      36,
+      37
      ],
      "fps": 10,
      "loop": false
     },
     "cyan_healing_sparkles": {
      "frames": [
-      18,
-      19,
-      20
+      54,
+      55,
+      56
      ],
      "fps": 10,
      "loop": false
@@ -5263,7 +5355,7 @@
     52,
     52
    ],
-   "cols": 6,
+   "cols": 14,
    "anchor": [
     0,
     0
@@ -5273,40 +5365,54 @@
      "frames": [
       0,
       1,
-      2,
-      3
+      2
      ],
      "fps": 10,
      "loop": false
     },
     "amber_signal_flare": {
      "frames": [
-      6,
-      7,
-      8
+      14,
+      15,
+      16
      ],
      "fps": 10,
      "loop": false
     },
     "body_part_tearing": {
      "frames": [
-      12,
-      13,
-      14,
-      15,
-      16,
-      17
+      28,
+      29,
+      30,
+      31,
+      32,
+      33,
+      34,
+      35,
+      36,
+      37,
+      38,
+      39
      ],
      "fps": 10,
      "loop": false
     },
     "body_part_attaching": {
      "frames": [
-      18,
-      19,
-      20,
-      21,
-      22
+      42,
+      43,
+      44,
+      45,
+      46,
+      47,
+      48,
+      49,
+      50,
+      51,
+      52,
+      53,
+      54,
+      55
      ],
      "fps": 10,
      "loop": false
@@ -5330,8 +5436,7 @@
      "frames": [
       0,
       1,
-      2,
-      3
+      2
      ],
      "fps": 10,
      "loop": false
@@ -5339,8 +5444,7 @@
     "ring_when_energy": {
      "frames": [
       8,
-      9,
-      10
+      9
      ],
      "fps": 10,
      "loop": false

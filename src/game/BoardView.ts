@@ -70,6 +70,8 @@ const BLOCK_EL = ['thermo', 'cryo', 'volt', 'impact', 'toxin'];
 const DECOR_EL = ['cryo', 'volt', 'impact'];
 const CIVILIANS = ['civilian_office', 'civilian_courier', 'civilian_granny'];
 /** Game slot ids → the short names the limb-mask sets use in `slots`. */
+/** Find contents → drawn icon (blueprint fragment, armor plates, Control record). */
+const FIND_ICON: Partial<Record<string, string>> = { blueprint: 'icon.build', armor_crate: 'icon.boon_armor_plates', lore_record: 'icon.control_mask' };
 const SLOT_SHORT: Record<string, string> = { arm_left: 'arm_l', arm_right: 'arm_r', leg_left: 'leg_l', leg_right: 'leg_r', tail: 'tail', wings: 'wings' };
 
 function elementOf(tech: string | undefined, pool = BLOCK_EL): string {
@@ -401,6 +403,15 @@ export class BoardView {
       }
       case 'part_recycled':
         this.fxAtCell('energy_arrive', e.x, e.y, 1.2);
+        break;
+      case 'blueprint_found':
+        this.popFind('blueprint', e.x, e.y);
+        break;
+      case 'lore_found':
+        this.popFind('lore_record', e.x, e.y);
+        break;
+      case 'armor_crate_open':
+        this.popFind('armor_crate', e.x, e.y);
         break;
       case 'survivor_joined':
         this.rescueRun(e.x, e.y, e.owner ?? this.me);
@@ -842,6 +853,20 @@ export class BoardView {
     this.nestArt.set(i, img);
   }
 
+  /** A find's icon pops out of the opened block and fades (its own art comes with batch 04, 155 and 177). */
+  private popFind(content: string, x: number, y: number): void {
+    const icon = FIND_ICON[content];
+    const p = this.center(x, y);
+    this.fx('energy_arrive', p.x, p.y - 10, 1.3);
+    if (!icon || !this.scene.textures.exists(icon)) return;
+    const img = this.scene.add.image(p.x, p.y - 8, icon).setDepth(D.site + 0.6);
+    // Icons come in different sizes (a 32 px glyph, a large boon picture): pop each to about 64 px.
+    const k = 64 / Math.max(img.width, img.height);
+    img.setScale(k * 0.5);
+    this.scene.tweens.add({ targets: img, y: p.y - 58, scale: k, duration: 650, ease: 'Back.easeOut' });
+    this.scene.tweens.add({ targets: img, alpha: 0, delay: 1300, duration: 400, onComplete: () => img.destroy() });
+  }
+
   /** Every seventh-ish closed block carries a live hazard: ice, arcing wires or smoke (block_fx loop_*). */
   private updateDecor(i: number, revealed: boolean, px: number, py: number, h: number): void {
     const spr = this.decor.get(i);
@@ -1168,6 +1193,18 @@ export class BoardView {
         g.fillStyle(TECH_COLOR[partDefs[part.id]?.tech] ?? 0xffffff, 1);
         g.fillCircle(fx - 14 + k * 9, top + 2, 3.5);
       });
+      // Stumps (MVP_RULES §4.1а): a grey cap with Splice gel, after the trophy pips.
+      // Drawn above the sprite's head: the board graphics sit under the units.
+      const capY = Math.min(top + 2, fy - v.spr.displayHeight * v.spr.originY - 6);
+      (u.lostLimbs ?? []).forEach((_, k) => {
+        const px = fx + 14 - k * 11;
+        g.fillStyle(0x0b1117, 1);
+        g.fillCircle(px, capY, 6);
+        g.fillStyle(0x8a9399, 1);
+        g.fillCircle(px, capY, 4.5);
+        g.fillStyle(0x5fd6ff, 1);
+        g.fillCircle(px, capY, 2.2);
+      });
       // Health bar: enemies always, our units when hurt or fighting; weakness orbs above enemies (UI_SPEC §3.5).
       const enemy = u.owner < 0;
       if (enemy || u.hp < st.hp || u.target !== undefined) this.vitals.draw(g, `u:${u.id}`, fx - 24, top - 12, 48, u.hp / st.hp, enemy ? 'enemy' : 'ally', this.scene.time.now);
@@ -1217,9 +1254,15 @@ export class BoardView {
     const cur = v.spr.anims.currentAnim;
     const anim = cur ? cur.key.slice(v.set.length + 1) : 'idle';
     const idx = (v.spr.anims.currentFrame?.index ?? 1) - 1;
+    // Trophies tinted by element. Stumps wait for their drawn frames (batch 04, 159–163); until then a pip shows them.
+    const draw: { slot: string; mask: string; tint: number; tech?: string }[] = [];
     for (const [slot, part] of Object.entries(u.parts)) {
       const mask = part && ls.slots[SLOT_SHORT[slot]];
       if (!mask) continue;
+      const tech = partDefs[part!.id]?.tech;
+      draw.push({ slot, mask, tint: TECH_COLOR[tech] ?? 0xffffff, tech });
+    }
+    for (const { slot, mask, tint, tech } of draw) {
       done.add(slot);
       mine ??= new Map();
       this.trophies.set(u.id, mine);
@@ -1233,7 +1276,6 @@ export class BoardView {
         s.setVisible(false);
         continue;
       }
-      const tech = partDefs[part!.id]?.tech;
       s.setVisible(true)
         .setFrame(a.frames[Math.min(idx, a.frames.length - 1)])
         .setOrigin(v.spr.originX, v.spr.originY)
@@ -1241,7 +1283,7 @@ export class BoardView {
         .setScale(v.spr.scaleX, v.spr.scaleY)
         .setFlipX(v.spr.flipX)
         .setDepth(v.spr.depth + 0.00005)
-        .setTint(TECH_COLOR[tech] ?? 0xffffff)
+        .setTint(tint)
         .setAlpha(0.9);
       if (Math.random() < 0.02) this.fx(hitOf(tech), v.spr.x + (Math.random() - 0.5) * 24, v.spr.y - v.spr.displayHeight * 0.45, 0.35);
     }

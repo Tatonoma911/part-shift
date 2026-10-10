@@ -16,6 +16,9 @@ const CHANNEL_OF: Partial<Record<Cell['content'], ClueChannel>> = {
   boss_hatch: 'demon',
   cache: 'finds',
   survivor: 'finds',
+  blueprint: 'finds',
+  armor_crate: 'finds',
+  lore_record: 'finds',
 };
 
 /** Revealed cells that show clue numbers (plain land, or a site already dealt with). */

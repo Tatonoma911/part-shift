@@ -14,7 +14,7 @@ import { C } from './layout';
  *
  * Orbs: one per technology the enemy is weak to, in the element colour from
  * design/data/elements.json, each with its own shape (colour-blind safe):
- * Термо ▲, Криогель ✱, Ток ⚡, Токсин ●, Удар ■. Strong weakness (×1.5) gets a
+ * Огонь ▲, Лёд ✱, Молния ⚡, Токсин ●, Удар ■. Strong weakness (×1.5) gets a
  * bigger orb with a white ring.
  */
 type Tech = 'thermo' | 'cryo' | 'volt' | 'toxin' | 'impact';

@@ -53,9 +53,9 @@ describe('scanner deduction', () => {
       for (const [key, v] of w.knowledge()) {
         const [x, y] = key.split(',').map(Number);
         const c = w.cell(x, y);
-        if (v === 'safe') expect(['nest', 'heavy_nest', 'demon_hatch']).not.toContain(c.content);
-        if (v === 'threat') expect(['nest', 'heavy_nest']).toContain(c.content);
-        if (v === 'demon') expect(c.content).toBe('demon_hatch');
+        if (v === 'safe') expect(['nest', 'heavy_nest', 'hero_lair', 'boss_hatch']).not.toContain(c.content);
+        if (v === 'threat') expect(['nest', 'heavy_nest', 'hero_lair']).toContain(c.content);
+        if (v === 'demon') expect(c.content).toBe('boss_hatch');
       }
     }
   }, 30_000);
