@@ -4,9 +4,9 @@
     {
       "id": "resident",
       "name_ru": "Житель",
-      "hp": 40,
-      "defense": 1,
-      "damage": 6,
+      "hp": 100,
+      "defense": 2.5,
+      "damage": 15,
       "attackSeconds": 0.9,
       "range": 1,
       "speed": 3.0,
@@ -32,5 +32,6 @@
       },
       "_note": "[Антон] every resident is both digger and fighter; no separate defender unit"
     }
-  ]
+  ],
+  "_deprecated": "v0.7: resident removed [Антон 2026-10-10]; units are heroes (heroes.json ourSide)"
 }

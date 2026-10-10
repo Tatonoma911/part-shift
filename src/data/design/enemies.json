@@ -5,8 +5,8 @@
       "id": "nest",
       "name_ru": "Гнездо адаптантов",
       "clueChannel": "threat",
-      "hp": 180,
-      "defense": 3,
+      "hp": 450,
+      "defense": 7.5,
       "spawns": "adaptant",
       "initialSpawn": 3,
       "spawnSeconds": 4,
@@ -45,31 +45,60 @@
           "count": 3
         }
       ],
-      "_b2": "early nests weaker; spawnByThreat overrides spawnSeconds/maxAlive"
+      "_b2": "early nests weaker; spawnByThreat overrides spawnSeconds/maxAlive",
+      "hostages": {
+        "chance": 0.5,
+        "count": [
+          1,
+          2
+        ],
+        "_note": "горожане у гнезда: при вскрытии гнезда разбегаются к нам, враги охотятся на них"
+      },
+      "visualByElement": {
+        "thermo": "burning building",
+        "cryo": "frozen building",
+        "volt": "building under sparks",
+        "toxin": "building in toxic fog",
+        "impact": "portal down / collapse"
+      }
     },
     {
       "id": "heavy_nest",
       "name_ru": "Гнездо тяжёлого адаптанта",
       "clueChannel": "threat",
-      "hp": 240,
-      "defense": 3,
+      "hp": 600,
+      "defense": 7.5,
       "spawns": "heavy_adaptant",
       "initialSpawn": 1,
       "respawnAfterDeathSeconds": 30,
       "maxAlive": 1,
       "reward": 60,
-      "tech": "impact"
+      "tech": "impact",
+      "visualByElement": {
+        "thermo": "burning building",
+        "cryo": "frozen building",
+        "volt": "building under sparks",
+        "toxin": "building in toxic fog",
+        "impact": "portal down / collapse"
+      }
     },
     {
       "id": "boss_hatch",
       "name_ru": "Убежище сильнейшего героя района",
       "clueChannel": "boss",
-      "hp": 260,
-      "defense": 4,
+      "hp": 650,
+      "defense": 10,
       "spawns": "hero:fromBossPool",
       "initialSpawn": 1,
       "maxAlive": 1,
-      "reward": 0
+      "reward": 0,
+      "visualByElement": {
+        "thermo": "burning building",
+        "cryo": "frozen building",
+        "volt": "building under sparks",
+        "toxin": "building in toxic fog",
+        "impact": "portal down / collapse"
+      }
     },
     {
       "id": "hero_lair",
@@ -80,7 +109,14 @@
       "selfOpenTarget": "nearest_command",
       "_note": "one random hero per map; at threat level 4 an unopened lair opens by itself and the hero roams to the nearest command [Антон: heroes went mad and roam the city]",
       "heroFrom": "heroes.json by tier (lairsPerMapByTier)",
-      "selfOpenThreatLevels": "heroes.json lairSelfOpenThreatLevels (tier1→2, tier2→4, tier3→6)"
+      "selfOpenThreatLevels": "heroes.json lairSelfOpenThreatLevels (tier1→2, tier2→4, tier3→6)",
+      "visualByElement": {
+        "thermo": "burning building",
+        "cryo": "frozen building",
+        "volt": "building under sparks",
+        "toxin": "building in toxic fog",
+        "impact": "portal down / collapse"
+      }
     },
     {
       "id": "cache",
@@ -94,13 +130,16 @@
     },
     {
       "id": "survivor",
-      "name_ru": "Выживший",
+      "name_ru": "Склад Контроля (горожане)",
       "clueChannel": "finds",
       "onReveal": {
-        "resident": 1,
-        "permanentSlotOnCommand": true
+        "civilians": [
+          3,
+          6
+        ]
       },
-      "findIcon": "survivor",
+      "_note": "[Антон 2026-10-10] Контроль держит горожан на складах как «собственность компании»; вскрыли склад — горожане бегут в Командный центр",
+      "findIcon": "warehouse",
       "findValue": 1
     },
     {
@@ -111,7 +150,8 @@
       "findValue": 4,
       "onReveal": {
         "blueprintFragment": 1
-      }
+      },
+      "_doc": "MVP_RULES §5.1; collected in meta, opens buildings and restores hero backups"
     },
     {
       "id": "armor_crate",
@@ -121,7 +161,8 @@
       "findValue": 3,
       "onReveal": {
         "armorPlates": 3
-      }
+      },
+      "_doc": "MVP_RULES §5.1"
     },
     {
       "id": "lore_record",
@@ -131,16 +172,17 @@
       "findValue": 2,
       "onReveal": {
         "loreRecord": 1
-      }
+      },
+      "_doc": "collectible lore page → Досье «Архив» and the universe site"
     }
   ],
   "enemies": [
     {
       "id": "adaptant",
       "name_ru": "Адаптант",
-      "hp": 36,
-      "damage": 8,
-      "defense": 1,
+      "hp": 90,
+      "damage": 20,
+      "defense": 2.5,
       "attackSeconds": 1,
       "range": 1,
       "speed": 2.4,
@@ -192,9 +234,9 @@
     {
       "id": "heavy_adaptant",
       "name_ru": "Тяжёлый адаптант",
-      "hp": 260,
-      "damage": 22,
-      "defense": 3,
+      "hp": 650,
+      "damage": 55,
+      "defense": 7.5,
       "attackSeconds": 2.4,
       "range": 1,
       "speed": 0.75,
@@ -219,11 +261,42 @@
       }
     }
   ],
+  "civilian": {
+    "_doc": "MVP_RULES §4.4",
+    "hp": 50,
+    "speed": 3.2,
+    "fights": false,
+    "runsTo": "command center via own territory (shortest safe path)",
+    "enemiesTargetWithinCells": 2,
+    "onReachCommand": {
+      "score": 25,
+      "energy": 5,
+      "addToBalance": 1
+    },
+    "leaveIfNoPathSeconds": 20,
+    "_noteNoPath": "if no path exists they hide in place and wait for a path to be dug",
+    "_v02": "[Антон 14:45] горожан заметно больше; они копятся «на балансе», ускоряют Энергию, их можно продать в Звонках Контроля",
+    "balance": {
+      "hud": "счётчик «Горожане» рядом с Энергией",
+      "energyIncomeBonusPerCivilian": 0.04,
+      "bonusCapCivilians": 10,
+      "bonusCapPerShelter": 5,
+      "_bonus": "все поступления Энергии (реакторы, жилы, тайники) × (1 + 0,04 × min(горожане, кап)); 10 горожан = +40 %",
+      "loseOnBuildingDestroyed": 1,
+      "loseOnCommandHitBelowHalf": "1 per 20% HP lost below 50%",
+      "spentBy": [
+        "call.buyback and other Control calls",
+        "future: hire/рекламные сделки"
+      ],
+      "countsForMedal": "civilians_rescued"
+    }
+  },
   "armorPlate": {
-    "defenseAdd": 2,
-    "hpAdd": 15,
+    "defenseAdd": 5,
+    "hpAdd": 40,
     "maxPerHero": 3,
     "giveTo": "heroes within 4 cells with fewest plates, else nearest",
-    "lostOnKnockout": 1
+    "lostOnKnockout": 1,
+    "visible": "plate icon(s) on the hero's HP bar"
   }
 }

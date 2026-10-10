@@ -23,20 +23,20 @@
       "tiers": [
         {
           "tier": 1,
-          "damage": 3,
-          "burnDps": 2,
+          "damage": 7.5,
+          "burnDps": 5,
           "burnSeconds": 3
         },
         {
           "tier": 2,
-          "damage": 5,
-          "burnDps": 3,
+          "damage": 10,
+          "burnDps": 7.5,
           "burnSeconds": 3
         },
         {
           "tier": 3,
-          "damage": 8,
-          "burnDps": 4,
+          "damage": 20,
+          "burnDps": 10,
           "burnSeconds": 3
         }
       ]
@@ -48,19 +48,19 @@
       "tiers": [
         {
           "tier": 1,
-          "damage": 2,
+          "damage": 5,
           "slowPercent": 30,
           "slowSeconds": 2
         },
         {
           "tier": 2,
-          "damage": 4,
+          "damage": 10,
           "slowPercent": 40,
           "slowSeconds": 2
         },
         {
           "tier": 3,
-          "damage": 6,
+          "damage": 15,
           "slowPercent": 50,
           "slowSeconds": 2.5
         }
@@ -73,21 +73,21 @@
       "tiers": [
         {
           "tier": 1,
-          "damage": 2,
+          "damage": 5,
           "chainTargets": 1,
           "chainDamageFactor": 0.5,
           "chainRange": 1.5
         },
         {
           "tier": 2,
-          "damage": 4,
+          "damage": 10,
           "chainTargets": 1,
           "chainDamageFactor": 0.5,
           "chainRange": 1.5
         },
         {
           "tier": 3,
-          "damage": 6,
+          "damage": 15,
           "chainTargets": 2,
           "chainDamageFactor": 0.6,
           "chainRange": 1.5
@@ -101,18 +101,18 @@
       "tiers": [
         {
           "tier": 1,
-          "damage": 3,
-          "defense": 1
+          "damage": 7.5,
+          "defense": 2.5
         },
         {
           "tier": 2,
-          "damage": 5,
-          "defense": 2
+          "damage": 10,
+          "defense": 5
         },
         {
           "tier": 3,
-          "damage": 7,
-          "defense": 3
+          "damage": 20,
+          "defense": 7.5
         }
       ]
     },
@@ -123,20 +123,20 @@
       "tiers": [
         {
           "tier": 1,
-          "damage": 2,
-          "armorShred": 1,
+          "damage": 5,
+          "armorShred": 2.5,
           "shredSeconds": 4
         },
         {
           "tier": 2,
-          "damage": 3,
-          "armorShred": 2,
+          "damage": 7.5,
+          "armorShred": 5,
           "shredSeconds": 4
         },
         {
           "tier": 3,
-          "damage": 5,
-          "armorShred": 2,
+          "damage": 10,
+          "armorShred": 5,
           "shredSeconds": 4
         }
       ]
@@ -149,17 +149,17 @@
         {
           "tier": 1,
           "speed": 0.4,
-          "hp": 10
+          "hp": 25
         },
         {
           "tier": 2,
           "speed": 0.6,
-          "hp": 15
+          "hp": 40
         },
         {
           "tier": 3,
           "speed": 0.8,
-          "hp": 20
+          "hp": 50
         }
       ],
       "_note": "dropped by ordinary adaptants of any tech"
@@ -172,20 +172,20 @@
         {
           "tier": 1,
           "speed": 0.1,
-          "hp": 20,
-          "defense": 1
+          "hp": 50,
+          "defense": 2.5
         },
         {
           "tier": 2,
           "speed": 0.2,
-          "hp": 30,
-          "defense": 1
+          "hp": 75,
+          "defense": 2.5
         },
         {
           "tier": 3,
           "speed": 0.3,
-          "hp": 40,
-          "defense": 2
+          "hp": 100,
+          "defense": 5
         }
       ],
       "_note": "dropped by heavy adaptants"
