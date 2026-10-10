@@ -57,3 +57,27 @@ describe('Контроль calls (random draw)', () => {
     expect(cmd.hp).toBe(hpBefore);
   });
 });
+
+describe('Контроль: hero buffs and full heal', () => {
+  it('premium heals every hero and slows ours for its duration', () => {
+    const w = handWorld(['.....', '.....', '..n..', '.....'], 7, { controlCalls: true });
+    w.apply({ type: 'placeCommand', x: 0, y: 1 });
+    const hero = w.s.units.find((u) => u.owner === 0 && u.hp > 0)!;
+    hero.hp = 1;
+    w.s.controlCall = { id: 'premium', scheduled: true };
+    expect(w.apply({ type: 'answerCall', choice: 'a' } as never).ok).toBe(true);
+    expect(hero.hp).toBe(w.maxHp(hero));
+  });
+
+  it('timed buffs expire after durationSeconds', () => {
+    const w = handWorld(['.....', '.....', '..n..', '.....'], 7, { controlCalls: true });
+    w.apply({ type: 'placeCommand', x: 0, y: 1 });
+    w.s.controlCall = { id: 'premium', scheduled: true };
+    w.apply({ type: 'answerCall', choice: 'b' } as never);
+    expect(w.s.callBuffs?.speed?.factor).toBe(0.8);
+    const hero = w.s.units.find((u) => u.owner === 0 && u.kind !== 'resident' && u.hp > 0) ?? w.s.units.find((u) => u.owner === 0)!;
+    const fast = w.stats(hero).speed;
+    run(w, 25);
+    expect(w.stats(hero).speed).toBeGreaterThan(fast);
+  });
+});

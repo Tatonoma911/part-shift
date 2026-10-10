@@ -349,6 +349,8 @@ export interface GameState {
   raidCalledEarly?: boolean;
   /** Active boss call, or null if none. options[0]=refuse, options[1]=comply. fork set after player chooses. */
   controlCall?: { id: string; options?: { cost: number; effect: 'refuse' | 'comply' }[]; fork?: number; scheduled?: boolean } | null;
+  /** Timed Контроль buffs on our units (events.json heroesDamageFactor / heroesMoveSpeedFactor + durationSeconds). */
+  callBuffs?: { damage?: { factor: number; until: number }; speed?: { factor: number; until: number } };
   /** Random Контроль calls of this run (events.json perRun / firstAtSeconds / gapSeconds). */
   callPlan?: { nextAt: number; left: number; used: string[] };
   rules?: RuleOverrides;

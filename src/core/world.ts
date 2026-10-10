@@ -393,6 +393,11 @@ export class World {
     if (!isEnemy(u) && this.overgrownAt(u)) out.speed *= 1 - (HERO_ABILITY.overgrowth.amount ?? 40) / 100;
     if (u.poison) out.defense = Math.max(0, out.defense - u.poison.defense);
     if (u.bare) out.defense = 0;
+    if (!isEnemy(u)) {
+      const cb = this.s.callBuffs;
+      if (cb?.damage && this.s.time < cb.damage.until) out.damage *= cb.damage.factor;
+      if (cb?.speed && this.s.time < cb.speed.until) out.speed *= cb.speed.factor;
+    }
     return out;
   }
 
@@ -3229,6 +3234,17 @@ export class World {
     if (civ > 0) this.loseCivilians(p, civ, 'call');
     const sooner = num('nextRaidSooner');
     if (sooner > 0 && this.s.raidAt !== undefined) this.s.raidAt -= sooner;
+    const dur = num('durationSeconds');
+    if (dur > 0) {
+      const dmgF = num('heroesDamageFactor');
+      const spdF = num('heroesMoveSpeedFactor');
+      this.s.callBuffs = { ...this.s.callBuffs };
+      if (dmgF) this.s.callBuffs.damage = { factor: dmgF, until: this.s.time + dur };
+      if (spdF) this.s.callBuffs.speed = { factor: spdF, until: this.s.time + dur };
+    }
+    if (e.healAllHeroesFull === true) {
+      for (const u of this.s.units) if (u.owner === p.id && !isEnemy(u) && u.hp > 0) u.hp = this.maxHp(u);
+    }
     const cmdMax = num('commandMaxHpFactor');
     if (cmdMax) {
       for (const b of this.s.buildings) if (b.owner === p.id && b.type === 'command' && b.hp > 0) b.hp = Math.round(b.hp * cmdMax);
@@ -3291,7 +3307,7 @@ export class World {
 }
 
 /** Effects applyCallEffect and the campaign can carry out today; events with others stay out of the draw. */
-const CALL_EFFECTS = new Set(['energy', 'civiliansFromBalance', 'civiliansLose', 'nextRaidSooner', 'commandHpPercent', 'commandMaxHpFactor', 'randomBuildingHpPercent']);
+const CALL_EFFECTS = new Set(['energy', 'civiliansFromBalance', 'civiliansLose', 'nextRaidSooner', 'commandHpPercent', 'commandMaxHpFactor', 'randomBuildingHpPercent', 'heroesDamageFactor', 'heroesMoveSpeedFactor', 'durationSeconds', 'healAllHeroesFull']);
 const CALL_REQUIRES = new Set(['civiliansOnBalance']);
 function callEffectsSupported(ev: { a?: Record<string, unknown>; b?: Record<string, unknown>; requires?: Record<string, unknown> }): boolean {
   const keysOk = (o?: Record<string, unknown>) => Object.keys(o ?? {}).every((k) => CALL_EFFECTS.has(k));
