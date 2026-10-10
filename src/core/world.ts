@@ -522,7 +522,7 @@ export class World {
         this.emit('building_upgraded', { x: b.x, y: b.y, owner: playerId, text: String(b.level) });
         return ok;
       }
-      case 'boostBuilding': {
+      case 'heroBoost': {
         const b = this.s.buildings.find((x) => x.id === cmd.building && x.owner === playerId);
         if (!b || !b.complete || b.ruined) return bad('invalid');
         if ((b.boostCooldown ?? 0) > 0) return bad('building.boost.on_cooldown');
@@ -533,6 +533,35 @@ export class World {
         b.boostCooldown = def.boost?.cooldown ?? 60;
         this.emit('aura_pulse', { x: b.x, y: b.y, owner: playerId, text: b.type });
         this.emit('building_boosted', { x: b.x, y: b.y, owner: playerId, text: b.type });
+        return ok;
+      }
+      case 'cancelBuild': {
+        const b = this.s.buildings.find((x) => x.id === cmd.building && x.owner === playerId);
+        if (!b) return bad('invalid');
+        if (b.complete) return bad('building.cancel.complete');
+        const refund = b.spent ?? buildingDefs[b.type].cost;
+        if (p.energy + refund < 0) return bad('building.cancel.not_enough_energy');
+        for (const u of this.s.units) if (u.task.type === 'build' && u.task.building === b.id) this.setTask(u, { type: 'idle' });
+        this.s.buildings = this.s.buildings.filter((x) => x !== b);
+        this.cell(b.x, b.y).building = undefined;
+        p.energy += refund;
+        this.emit('build_cancelled', { x: b.x, y: b.y, owner: playerId, text: b.type });
+        this.rev++;
+        return ok;
+      }
+      case 'answerCall': {
+        if (!s.controlCall) return bad('call.no_active');
+        this.emit('boss_wake', { owner: playerId });
+        return ok;
+      }
+      case 'callRaidEarly': {
+        const rd = s.raid;
+        if (!rd?.canCallEarly) return bad('raid.not_ready');
+        if (p.energy < rd.callEarlyEnergy) return bad('raid.not_enough_energy');
+        p.energy -= rd.callEarlyEnergy;
+        // Force the raid clock to fire immediately next tick.
+        s.raidAt = 0;
+        this.emit('raid_siren', { owner: playerId });
         return ok;
       }
       case 'demolish': {
@@ -733,6 +762,7 @@ export class World {
     this.idleHint();
     this.cleanup();
     this.checkOutcome();
+    this.syncDerivedFields();
   }
 
   private assistTimers(dt: number): void {
@@ -1462,6 +1492,24 @@ export class World {
     const b = this.targetPos(target);
     this.startRally(source.x, source.y, this.building(Number(target.slice(2)))!.owner);
     this.emit('raid_incoming', { x: b.x, y: b.y, owner: this.building(Number(target.slice(2)))!.owner, amount: size, text: source.tunnel ? `${source.x},${source.y}` : undefined });
+  }
+
+  /** Keep raid/tempo/controlCall in sync so the UI always sees current values. */
+  private syncDerivedFields(): void {
+    const s = this.s;
+    const r = difficulties[s.difficulty]?.raids;
+    const callEarlyEnergy = 50;
+    const nextIn = r?.enabled ? Math.max(0, (s.raidAt ?? r.firstAfterSeconds) - s.time) : Infinity;
+    const activeRaiders = s.units.filter((u) => isEnemy(u) && u.raid !== undefined && u.hp > 0);
+    s.raid = {
+      nextIn,
+      active: activeRaiders.length > 0,
+      techs: [...new Set(activeRaiders.map((u) => u.tech).filter((t): t is Tech => t !== undefined))],
+      callEarlyEnergy,
+      canCallEarly: !!(r?.enabled) && nextIn > 0 && s.players.some((p) => p.energy >= callEarlyEnergy),
+    };
+    s.controlCall = s.boss.awake && !s.boss.dead ? { id: s.boss.hero } : null;
+    if (!s.tempo) s.tempo = { points: 0, level: 0, stagnant: false };
   }
 
   /** The raid goes for the building nearest to it; the command center only when nothing else stands. */
