@@ -178,7 +178,7 @@ export class RunTally {
     if (!this.fullLimbs) this.fullLimbs = w.s.units.some((u) => u.owner === this.me && u.kind === 'ally' && Object.values(u.parts).filter(Boolean).length >= 4);
     const facts = this.facts(w, win, mode);
     const stars = this.stars(w, win, mode, opts.coop);
-    const run = { victory: win, seconds: w.s.time, nests: p.stats.nests, energy: p.stats.energy, heroes: p.stats.heroes.length, callTarget: w.s.boss.dead, difficulty: diff, mode, stars: stars.stars };
+    const run = { victory: win, seconds: w.s.time, nests: p.stats.nests, energy: p.stats.energy, heroes: p.stats.heroes.length, callTarget: w.s.boss.dead, difficulty: diff, mode, stars: stars.stars, civilians: p.stats.civiliansRescued ?? 0 };
     const total = runScore(run);
     const inc = (k: string, n: number) => {
       if (n) m.stats[k] = stat(m, k) + Math.floor(n);
@@ -272,6 +272,7 @@ export class RunTally {
       { key: 'results.score.nests', value: p.stats.nests * S.nestDestroyed },
       { key: 'results.score.heroes', value: p.stats.heroes.length * S.heroDefeated },
     ];
+    if (run.civilians) lines.push({ key: 'results.score.civilians', value: run.civilians * (S.civilianRescued ?? 0) });
     if (run.callTarget) lines.push({ key: 'results.score.call_target', value: S.callTargetDefeatedExtra });
     if (win) {
       lines.push({ key: 'results.score.win', value: S.winBonus });

@@ -132,6 +132,8 @@ export interface Unit {
   stun?: number;
   /** Shell break: defense counts as 0. */
   bare?: number;
+  /** Mine concussion (hazards.json mine.unmarkedDig.concussion): seconds left of slower digging, hitting and walking. */
+  concussed?: number;
   /** Enemies: the nest or lair that released them. */
   nest?: string;
   /** Heroes: heroes.json id. Adaptants: the nest tech (sprite and resists). */
@@ -224,6 +226,10 @@ export interface Player {
   boons?: Record<string, number>;
   /** An opened cache waiting for the player's pick: three boon ids, and when it was offered. */
   boonOffer?: { ids: string[]; at: number };
+  /** Townsfolk «on the balance» (MVP_RULES §4.4 v0.2): each speeds up Energy income; Контроль's calls spend them. */
+  civilians?: number;
+  /** Command center: 20 % steps below half HP already charged in lost townsfolk (civilian.balance.loseOnCommandHitBelowHalf). */
+  civCmdSteps?: number;
   /** Allies down, waiting to come back at the center: hero id → game time it returns. */
   allyBack?: Record<string, number>;
   /** Bonus capsule «damage_resist»: our heroes take less damage until this game time. */
@@ -232,7 +238,7 @@ export interface Player {
   allyScars?: Record<string, { parts: Unit['parts']; lostLimbs: ('arm' | 'leg')[]; armorPlates: number }>;
   /** Ally passive timers (heroes.json ally.everySeconds): hero id → seconds left. */
   allyTimers?: Record<string, number>;
-  stats: { nests: number; caches: number; heroes: string[]; energy: number; lost: number; parts: number; blueprints: number; loreRecords: number };
+  stats: { nests: number; caches: number; heroes: string[]; energy: number; lost: number; parts: number; blueprints: number; loreRecords: number; civiliansRescued?: number; civiliansLost?: number };
   /** Scanner helper (design/ONBOARDING.md §1.3). */
   assist: AssistState;
 }
@@ -282,6 +288,8 @@ export interface RuleOverrides {
   allies?: string[];
   nest?: { initialSpawn?: number; maxAlive?: number; spawnSeconds?: number; totalBudget?: number };
   adaptant?: { partDropChance?: number; partSlot?: 'arm' | 'leg' };
+  /** Site counts for the generator (campaign shifts, Обеденный вызов: hazards.mine.quickMode, modes.json mapgen.counts.survivor). */
+  counts?: { mine?: number; survivor?: number };
 }
 
 export interface GameState {
@@ -325,6 +333,8 @@ export interface GameState {
    * lastProgress = game time of the last progress event.
    */
   tempo?: { points: number; level: number; stagnant: boolean; lastProgress?: number };
+  /** Seconds the threat clock runs ahead of `time` (a mine blast: hazards.json mine.unmarkedDig.threatBump). */
+  threatShift?: number;
   /** True while the current raid wave was called early (callRaidEarly command); cleared when the wave ends. */
   raidCalledEarly?: boolean;
   /** Active boss call, or null if none. options[0]=refuse, options[1]=comply. fork set after player chooses. */

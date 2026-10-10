@@ -16,6 +16,8 @@ export interface RunResult {
   mode?: 'call' | 'quick' | 'coop_call';
   /** Shift rating 1–3 (ACHIEVEMENTS.md §6): 2 and 3 stars add a bonus before the multipliers. */
   stars?: number;
+  /** Townsfolk who reached the command center (meta.json runScore.civilianRescued each). */
+  civilians?: number;
 }
 
 const S = meta.runScore;
@@ -26,7 +28,7 @@ export function starBonus(stars: number): number {
 }
 
 export function runScore(r: RunResult): number {
-  let s = Math.floor(r.energy) * S.energyEarned + r.nests * S.nestDestroyed + (r.heroes ?? 0) * S.heroDefeated;
+  let s = Math.floor(r.energy) * S.energyEarned + r.nests * S.nestDestroyed + (r.heroes ?? 0) * S.heroDefeated + (r.civilians ?? 0) * (S.civilianRescued ?? 0);
   if (r.callTarget) s += S.callTargetDefeatedExtra;
   if (r.victory) {
     s += S.winBonus;

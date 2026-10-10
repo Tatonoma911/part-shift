@@ -39,6 +39,10 @@ import {
   boons as boonDefs,
   armorPlateDef,
   hazards,
+  byDifficulty,
+  civilianRules,
+  CIVILIANS_PER_SITE_DEFAULT,
+  controlEvents,
 } from './data';
 import { cellAt, cellKey, cheb, dist, inBounds, neighbors, parseKey, walkableForEnemy, walkableForPlayer } from './grid';
 import { generateField } from './mapgen';
@@ -191,6 +195,8 @@ export class World {
   /** Game time of the last hit anyone landed (idle-nest hint). */
   private lastCombat = 0;
   private lastIdleHint = -Infinity;
+  /** Fields the generator made before one passed the no-guess check (1 = the first one). */
+  genAttempts = 0;
 
   /** Rule tables for this match (design tables plus any overrides). */
   readonly cfg: typeof config;
@@ -246,14 +252,19 @@ export class World {
     return this.s.players.some((p) => p.command !== null);
   }
 
+  /** The threat clock: game time plus what mine blasts pushed it ahead (hazards.json mine.unmarkedDig.threatBump). */
+  get threatTime(): number {
+    return this.s.time + (this.s.threatShift ?? 0);
+  }
+
   get threatLevel(): number {
     if (this.rules.threatEnabled === false) return 0;
-    return Math.floor(this.s.time / this.cfg.threat.secondsPerLevel);
+    return Math.floor(this.threatTime / this.cfg.threat.secondsPerLevel);
   }
 
   /** 0..1 progress toward the next threat level (the big arc timer). */
   get threatProgress(): number {
-    return (this.s.time % this.cfg.threat.secondsPerLevel) / this.cfg.threat.secondsPerLevel;
+    return (this.threatTime % this.cfg.threat.secondsPerLevel) / this.cfg.threat.secondsPerLevel;
   }
 
   /** The call target (heroes.json). */
@@ -359,6 +370,11 @@ export class World {
     }
     out.attackSeconds /= haste;
     if (u.slow) out.speed *= 1 - u.slow.percent / 100;
+    if (u.concussed) {
+      const k = hazards.mine.unmarkedDig.concussion;
+      out.speed *= k.moveSpeedFactor;
+      out.attackSeconds /= k.attackSpeedFactor;
+    }
     if (!isEnemy(u) && this.overgrownAt(u)) out.speed *= 1 - (HERO_ABILITY.overgrowth.amount ?? 40) / 100;
     if (u.poison) out.defense = Math.max(0, out.defense - u.poison.defense);
     if (u.bare) out.defense = 0;
@@ -571,6 +587,16 @@ export class World {
       }
       case 'answerCall': {
         if (!s.controlCall) return bad('call.no_active');
+        // A Контроль call from events.json: apply the chosen option's effects (MVP_RULES §17.7).
+        const ev = controlEvents[s.controlCall.id];
+        if (ev) {
+          const pick = (cmd as { choice?: 0 | 1 | 'a' | 'b' }).choice;
+          const effect = (pick === 'b' || pick === 1 ? ev.b : ev.a) ?? {};
+          if (!this.applyCallEffect(p, effect)) return bad('call.unavailable');
+          s.controlCall = null;
+          this.emit('call_answered', { owner: playerId, text: `${ev.id}:${pick === 'b' || pick === 1 ? 'b' : 'a'}` });
+          return ok;
+        }
         // Ensure options are set (generated when call starts; set here as fallback).
         if (!s.controlCall.options) {
           s.controlCall = { ...s.controlCall, options: [
@@ -739,7 +765,9 @@ export class World {
     const s = this.s;
     if (!s.generated) {
       const nests = s.players.length > 1 ? 6 * s.players.length : undefined;
-      generateField(s, { commands: list, nests });
+      const gen = { commands: list, nests, mines: this.rules.counts?.mine, survivors: this.rules.counts?.survivor };
+      generateField(s, gen);
+      this.genAttempts = 1;
       // Стажёр and Смена never leave the player a 50/50 (MVP_RULES §15.2); tutorial boards are hand-laid.
       const noGuess = this.difficulty.noGuessBoard && s.players.length === 1 && !this.rules.relativeSites;
       for (let attempt = 1; noGuess && attempt < NO_GUESS_ATTEMPTS && !solvable(s, list); attempt++) {
@@ -748,7 +776,8 @@ export class World {
           c.content = 'ground';
           for (const k of ['tech', 'stock', 'hero', 'heroTier'] as const) delete c[k];
         }
-        generateField(s, { commands: list, nests });
+        generateField(s, gen);
+        this.genAttempts = attempt + 1;
       }
     }
     for (const { player, x, y } of list) {
@@ -801,6 +830,7 @@ export class World {
     this.orbs(dt);
     this.hotGround(dt);
     this.hazardClock(dt);
+    this.commandCivilianLosses();
     this.idleHint();
     this.cleanup();
     this.checkOutcome();
@@ -853,7 +883,11 @@ export class World {
     }
   }
 
-  /** One blast per mine: element damage and status to our units and buildings around it (hazards.json mine.unmarkedDig). */
+  /**
+   * One blast per mine (hazards.json mine.unmarkedDig, MVP_RULES §5.2 v0.2): each of our heroes around it loses
+   * a share of max HP but keeps at least leavesMinHp, may lose a limb and is concussed; buildings lose a share
+   * of max HP; the threat clock jumps ahead and the tempo drops to zero.
+   */
   private mineBlast(x: number, y: number, c: Cell): void {
     const s = this.s;
     const m = hazards.mine.unmarkedDig;
@@ -864,6 +898,8 @@ export class World {
     const st = m.status[tech];
     const fx = typeof st === 'object' ? st : {};
     const sts = elements.statuses;
+    const fraction = byDifficulty(m.heroDamageMaxHpFraction, s.difficulty) ?? 0;
+    const minHp = m.leavesMinHp ?? 1;
     let hits = 0;
     for (const u of s.units) {
       if (isEnemy(u) || u.hp <= 0 || cheb(Math.round(u.x), Math.round(u.y), x, y) > m.radius) continue;
@@ -874,16 +910,60 @@ export class World {
       const stun = fx.stunSeconds ?? fx.freezeSeconds;
       if (stun) u.stun = Math.max(u.stun ?? 0, stun);
       if (fx.defenseMinus) u.bare = Math.max(u.bare ?? 0, fx.seconds ?? 10);
-      this.damage(u, m.damage);
+      // A share of max HP; the blast alone never knocks anyone out (neverKillsAlone, leavesMinHp).
+      const loss = fraction * this.maxHp(u);
+      if (m.neverKillsAlone === false) {
+        this.damage(u, loss);
+        if (u.hp <= 0) continue;
+      } else {
+        u.hp = Math.min(u.hp, Math.max(minHp, u.hp - loss));
+      }
+      if (rand(s) < m.tearLimbChance) this.tearLimb(u);
+      // A torn trophy may lower max HP; never below the floor because of it.
+      u.hp = Math.max(Math.min(u.hp, minHp), Math.min(u.hp, this.maxHp(u)));
+      u.concussed = Math.max(u.concussed ?? 0, m.concussion.seconds);
     }
     if (m.hitsBuildings) {
       for (const b of s.buildings) {
-        if (b.hp <= 0 || cheb(b.x, b.y, x, y) > m.radius || (b.type === 'command' && this.rules.commandInvulnerable)) continue;
-        b.hp -= m.damage;
+        if (b.hp <= 0 || b.ruined || cheb(b.x, b.y, x, y) > m.radius || (b.type === 'command' && this.rules.commandInvulnerable)) continue;
+        b.hp -= m.buildingDamageMaxHpFraction * buildingDefs[b.type].hp;
         if (b.type === 'command') this.emit('center_hit', { x: b.x, y: b.y, owner: b.owner });
       }
     }
+    // The nests hear it: the threat clock jumps ahead, so the next level comes sooner.
+    const bump = m.threatBump?.threatSeconds ?? 0;
+    if (bump > 0) {
+      const before = this.threatLevel;
+      s.threatShift = (s.threatShift ?? 0) + bump;
+      if (this.threatLevel > before) this.emit('threat_level_up', { amount: this.threatLevel });
+    }
+    if (m.tempoReset && s.tempo) s.tempo.points = 0;
     this.emit('mine_blast', { x, y, text: tech, amount: hits });
+  }
+
+  /**
+   * A limb torn off without a knockout (MVP_RULES §4.1а): a trophy first, else (allies) one of the hero's own;
+   * an own arm is −20 % damage, a leg −25 % speed until a part fills the stump (takePart). Returns the slot lost.
+   */
+  private tearLimb(v: Unit): string | null {
+    const trophy = (Object.keys(v.parts) as SlotId[]).find((sl) => v.parts[sl]);
+    let lost: string | null = null;
+    if (trophy) {
+      v.parts = { ...v.parts };
+      delete v.parts[trophy];
+      lost = trophy;
+    } else if (v.kind === 'ally' && (v.lostLimbs?.length ?? 0) < 4) {
+      const limbs = (v.lostLimbs ??= []);
+      const slot: 'arm' | 'leg' = limbs.filter((l) => l === 'arm').length < 2 ? 'arm' : 'leg';
+      limbs.push(slot);
+      v.base =
+        slot === 'arm'
+          ? { ...v.base, damage: Math.max(1, Math.round(v.base.damage * 0.8)) }
+          : { ...v.base, speed: Math.max(0.5, Math.round(v.base.speed * 0.75 * 10) / 10) };
+      lost = slot;
+    }
+    if (lost) this.emit(v.kind === 'ally' ? 'ally_limb_lost' : 'resident_limb_lost', { x: v.x, y: v.y, owner: v.owner, unit: v.id, text: `${v.hero ?? v.kind}:${lost}` });
+    return lost;
   }
 
   /** A bonus capsule gives one random bonus, once (hazards.json bonusCapsule.pool). */
@@ -999,9 +1079,17 @@ export class World {
       }
       case 'survivor': {
         c.resolved = true;
-        player.capBonus++;
-        this.spawnResident(owner, x, y);
+        const onReveal = siteDefs.survivor?.onReveal;
+        // Tables before v0.7: a survivor also joins as a resident with a permanent place.
+        if (onReveal?.resident) {
+          player.capBonus++;
+          this.spawnResident(owner, x, y);
+        }
         this.emit('survivor_joined', { x, y, owner });
+        // A Контроль warehouse (MVP_RULES §4.4 v0.2): its townsfolk reach the center and go on the balance.
+        const [lo, hi] = onReveal?.civilians ?? CIVILIANS_PER_SITE_DEFAULT;
+        const n = lo + randIntOf(s, Math.max(1, hi - lo + 1));
+        for (let i = 0; i < n; i++) this.rescueCivilian(player, x, y);
         this.addTempo(owner, 'survivor');
         break;
       }
@@ -1221,7 +1309,7 @@ export class World {
         if (u.path.length > 0) return this.move(u, dt);
         if (t.progress === 0) this.emit('dig_start', { x: t.x, y: t.y, owner: u.owner });
         const c = this.cell(t.x, t.y);
-        const digMul = this.digSpeedOf(u, c.element as Tech | undefined);
+        const digMul = this.digSpeedOf(u, c.element as Tech | undefined) * (u.concussed ? hazards.mine.unmarkedDig.concussion.digSpeedFactor : 1);
         c.dig = (c.dig ?? 0) + this.workShare(u, (o) => o.task.type === 'dig' && o.task.x === t.x && o.task.y === t.y) * dt * digMul;
         t.progress = Math.max(c.dig, 1e-6);
         if (c.dig >= this.cfg.dig.digSeconds * this.boonFactor(u.owner, 'sharp_shovels') * this.allyFactor(u.owner, 'drillDig', 'digTimeFactor')) {
@@ -1806,6 +1894,7 @@ export class World {
       const b = this.building(Number(target.slice(2)))!;
       if (b.type === 'command' && this.rules.commandInvulnerable) return;
       const vs = attacker.kind === 'hero' ? buildingDamage.heroVsBuildingFactor : isEnemy(attacker) ? buildingDamage.enemyVsBuildingFactor : 1;
+      const was = b.hp;
       let rawDmg = Math.max(this.cfg.combat.minDamage, st.damage * factor * vs - buildingDefs[b.type].defense);
       // F-03: cap hero DPS on buildings (FEEL_AUDIT §3): ≤3.3% cmd HP/s, ≤6% other HP/s.
       if (attacker.kind === 'hero') {
@@ -1814,6 +1903,10 @@ export class World {
         rawDmg = Math.min(rawDmg, Math.max(this.cfg.combat.minDamage, maxDmg));
       }
       b.hp -= rawDmg;
+      // A building destroyed by the enemy: one townsperson panics and leaves the balance (civilian.balance).
+      if (was > 0 && b.hp <= 0 && isEnemy(attacker) && b.type !== 'command') {
+        this.loseCivilians(this.s.players[b.owner], civilianRules.balance.loseOnBuildingDestroyed, 'building');
+      }
       if (b.type === 'command') this.emit('center_hit', { x: b.x, y: b.y, owner: b.owner });
       return;
     }
@@ -2052,6 +2145,7 @@ export class World {
   private effects(u: Unit, dt: number): void {
     if (u.stun) u.stun = Math.max(0, u.stun - dt) || undefined;
     if (u.bare) u.bare = Math.max(0, u.bare - dt) || undefined;
+    if (u.concussed) u.concussed = Math.max(0, u.concussed - dt) || undefined;
     if (u.slow) {
       u.slow.left -= dt;
       if (u.slow.left <= 0) {
@@ -2267,11 +2361,11 @@ export class World {
       const at = (levels[c.heroTier - 1] ?? Infinity) * per;
       const x = i % this.s.width;
       const y = Math.floor(i / this.s.width);
-      if (!c.warned && this.s.time >= at - 30) {
+      if (!c.warned && this.threatTime >= at - 30) {
         c.warned = true;
         this.emit('hero_warning', { x, y, text: c.hero });
       }
-      if (this.s.time >= at) this.openHeroSite(x, y, 'hero_lair', c.hero!);
+      if (this.threatTime >= at) this.openHeroSite(x, y, 'hero_lair', c.hero!);
     });
   }
 
@@ -3013,10 +3107,89 @@ export class World {
     }
   }
 
-  /** Energy income; stats.energy feeds the run score (meta.json runScore.energyEarned). */
+  /**
+   * Energy income; stats.energy feeds the run score (meta.json runScore.energyEarned).
+   * Every income (reactors, veins, caches, rewards) is sped up by the townsfolk on the balance;
+   * spending and refunds change p.energy directly and never come through here.
+   */
   private earn(p: Player, amount: number): void {
-    p.energy += amount;
-    p.stats.energy += amount;
+    const got = amount * this.civilianIncomeFactor(p.id);
+    p.energy += got;
+    p.stats.energy += got;
+  }
+
+  /** Bonus cap on townsfolk: base + per standing Приют горожан (civilian.balance.bonusCap*). */
+  civilianBonusCap(playerId: number): number {
+    const b = civilianRules.balance;
+    const shelters = this.s.buildings.filter((o) => o.owner === playerId && o.type === 'civ_shelter' && o.complete && o.hp > 0 && !o.ruined).length;
+    return b.bonusCapCivilians + b.bonusCapPerShelter * shelters;
+  }
+
+  /** Energy income multiplier: 1 + 0.04 × min(townsfolk on the balance, cap) (MVP_RULES §4.4 v0.2). */
+  civilianIncomeFactor(playerId: number): number {
+    const p = this.s.players[playerId];
+    const n = Math.min(p?.civilians ?? 0, this.civilianBonusCap(playerId));
+    return 1 + civilianRules.balance.energyIncomeBonusPerCivilian * n;
+  }
+
+  /** A townsperson reaches the command center: score, Energy and +1 on the balance (civilian.onReachCommand). */
+  private rescueCivilian(p: Player, x: number, y: number): void {
+    const r = civilianRules.onReachCommand;
+    this.earn(p, r.energy);
+    p.civilians = (p.civilians ?? 0) + r.addToBalance;
+    p.stats.civiliansRescued = (p.stats.civiliansRescued ?? 0) + 1;
+    this.emit('civilian_rescued', { x, y, owner: p.id, amount: r.score });
+  }
+
+  /** Townsfolk leave the balance (a lost building, a battered center, a Контроль call). Returns how many left. */
+  private loseCivilians(p: Player | undefined, n: number, why: string): number {
+    if (!p || n <= 0) return 0;
+    const lost = Math.min(p.civilians ?? 0, n);
+    if (lost <= 0) return 0;
+    p.civilians = (p.civilians ?? 0) - lost;
+    p.stats.civiliansLost = (p.stats.civiliansLost ?? 0) + lost;
+    this.emit('civilians_balance_lost', { owner: p.id, amount: lost, text: why });
+    return lost;
+  }
+
+  /** 1 townsperson per 20 % of HP the command center loses below 50 % (civilian.balance.loseOnCommandHitBelowHalf). */
+  private commandCivilianLosses(): void {
+    for (const p of this.s.players) {
+      const b = this.building(p.command);
+      if (!b || b.hp <= 0) continue;
+      const below = 0.5 - b.hp / buildingDefs[b.type].hp;
+      const steps = below > 0 ? Math.floor(below / 0.2 + 1e-9) : 0;
+      if (steps > (p.civCmdSteps ?? 0)) {
+        this.loseCivilians(p, steps - (p.civCmdSteps ?? 0), 'command');
+        p.civCmdSteps = steps;
+      }
+    }
+  }
+
+  /** A Контроль call option (events.json). False when the player can't pay it; nothing changes then. */
+  private applyCallEffect(p: Player, e: Record<string, unknown>): boolean {
+    const num = (k: string) => (typeof e[k] === 'number' ? (e[k] as number) : 0);
+    const energy = num('energy');
+    const civ = num('civiliansFromBalance') + num('civiliansLose');
+    if (energy < 0 && p.energy < -energy) return false;
+    if (civ > 0 && (p.civilians ?? 0) < civ) return false;
+    // Selling townsfolk is not income: no balance bonus on it.
+    p.energy += energy;
+    if (energy > 0) p.stats.energy += energy;
+    if (civ > 0) this.loseCivilians(p, civ, 'call');
+    const sooner = num('nextRaidSooner');
+    if (sooner > 0 && this.s.raidAt !== undefined) this.s.raidAt -= sooner;
+    return true;
+  }
+
+  /** Whether a Контроль call may be offered to this player (events.json requires; unmet → the event is skipped). */
+  callAvailable(eventId: string, playerId = 0): boolean {
+    const ev = controlEvents[eventId];
+    if (!ev) return false;
+    const req = ev.requires ?? {};
+    const p = this.s.players[playerId];
+    const need = Number(req.civiliansOnBalance ?? req.civiliansRescued ?? 0);
+    return (p?.civilians ?? 0) >= need;
   }
 
   private emit(type: string, data: Omit<GameEvent, 'type'> = {}): void {

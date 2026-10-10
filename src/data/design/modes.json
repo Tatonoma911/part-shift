@@ -73,7 +73,12 @@
           "cooler",
           "school",
           "medcenter"
-        ]
+        ],
+        "mapgen.cellElements.zones.count": [
+          4,
+          5
+        ],
+        "mapgen.counts.survivor": 3
       },
       "records": "own best time and best score",
       "scoreMultiplier": "meta.json runScore.multiplierByMode.quick",

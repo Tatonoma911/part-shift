@@ -2,7 +2,7 @@
  * Field generation for «Срочный вызов» (design/data/mapgen.json, MVP_RULES §3.2).
  * Runs after the command center(s) are placed, so the start is always safe.
  */
-import { hazards, heroList, heroRules, mapgen, sites as siteDefs, TECHS, type Tech } from './data';
+import { byDifficulty, hazards, heroList, heroRules, mapgen, sites as siteDefs, TECHS, type Tech } from './data';
 import { cellAt, cheb, inBounds, N8 } from './grid';
 import { rand, randIntOf } from './rng';
 import type { CellContent, GameState } from './state';
@@ -14,6 +14,9 @@ interface Options {
   nests?: number;
   /** Multiplayer: caches, survivors, veins and rubble × this, so each player gets the same share. */
   countScale?: number;
+  /** Mine / survivor-site count override (campaign shifts, quick mode), before countScale and the co-op factor. */
+  mines?: number;
+  survivors?: number;
 }
 
 const SITE_KINDS: CellContent[] = ['nest', 'heavy_nest', 'hero_lair', 'boss_hatch', 'cache', 'survivor', 'blueprint', 'armor_crate', 'lore_record', 'mine', 'bonus_capsule', 'medkit'];
@@ -84,7 +87,7 @@ export function generateField(s: GameState, opts: Options): void {
   }
   const k = opts.countScale ?? 1;
   const mc = mapgen.counts as unknown as Record<string, number | { chance: number; max: number }>;
-  const counts = { cache: (mc.cache as number) * k, survivor: (mc.survivor as number) * k, energy_vein: (mc.energy_vein as number) * k, rubble: (mc.rubble as number) * k };
+  const counts = { cache: (mc.cache as number) * k, survivor: (opts.survivors ?? (mc.survivor as number)) * k, energy_vein: (mc.energy_vein as number) * k, rubble: (mc.rubble as number) * k };
   for (let i = 0; i < counts.cache; i++) set(pick(free()), 'cache');
   for (let i = 0; i < counts.survivor; i++) set(pick(free()), 'survivor');
   const blueprintCount = (mc.blueprint as number | undefined) ?? 0;
@@ -94,7 +97,8 @@ export function generateField(s: GameState, opts: Options): void {
   const loreRule = mc.lore_record as { chance: number; max: number } | undefined;
   if (loreRule && rand(s) < loreRule.chance) set(pick(free()), 'lore_record');
   // Mines (hazards.json, MVP_RULES §5.2): counted on the «Опасно» channel like nests, never inside the safe radius.
-  const mines = (hazards.mine.countByDifficulty[s.difficulty] ?? hazards.mine.countByDifficulty.shift ?? 0) * (k > 1 ? hazards.mine.coopFactor : 1);
+  // v0.2: Стажёр 8, Смена 14, Аврал 20 (quick mode and campaign shifts pass `mines`).
+  const mines = (opts.mines ?? byDifficulty(hazards.mine.countByDifficulty, s.difficulty) ?? 0) * (k > 1 ? hazards.mine.coopFactor : 1);
   for (let i = 0; i < mines; i++) {
     const p = set(pick(free()), 'mine');
     // Any element until cell zones (mapgen.cellElements) exist; then the zone's element.

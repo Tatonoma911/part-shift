@@ -224,8 +224,6 @@ export class GameScene extends Phaser.Scene {
     buildBtnBg: Phaser.GameObjects.Graphics;
   };
   private shownEnergy = 0;
-  /** Townsfolk who reached the command centre this shift (event `civilian_rescued`). */
-  private rescued = 0;
   private dock!: {
     /** Context line instead of mode tabs: what a tap does now, and a cancel chip while placing. */
     head: { text: Phaser.GameObjects.Text; cancel: Phaser.GameObjects.Container };
@@ -621,7 +619,6 @@ export class GameScene extends Phaser.Scene {
 
   /** A townsperson reached the centre: «+25» rises from it and the HUD counter bumps (§4.4). */
   private civilianRescued(e: GameEvent): void {
-    this.rescued += 1;
     const cmd = this.world.s.buildings.find((b) => b.owner === this.me && b.type === 'command');
     const at = e.x !== undefined ? { x: e.x, y: e.y! } : cmd ? { x: cmd.x, y: cmd.y } : null;
     if (at) {
@@ -798,7 +795,8 @@ export class GameScene extends Phaser.Scene {
     this.shownEnergy = Math.abs(diff) < 1 ? real : this.shownEnergy + diff * Math.min(1, deltaMs / 120);
     this.hud.energy.setText(String(Math.round(this.shownEnergy)));
     this.hud.residents.setText(`${allies}/${slots}`);
-    this.hud.squad.setText(String(this.rescued));
+    // «Горожане» on the balance (MVP_RULES §4.4 v0.2): rescues add, lost buildings and Контроль's calls take away.
+    this.hud.squad.setText(String(w.player(this.me).civilians ?? 0));
 
     const level = w.threatLevel;
     if (level > this.lastThreat) this.tweens.add({ targets: this.hud.ringBox, scale: 1.25, duration: 300, yoyo: true });
