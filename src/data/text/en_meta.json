@@ -1080,5 +1080,9 @@
   "zone.short.cryo": "ice",
   "zone.short.volt": "sparks",
   "zone.short.toxin": "fog",
-  "zone.short.impact": "rubble"
+  "zone.short.impact": "rubble",
+  "event.survivor_slot": "A citizen made it to safety. They'll say thanks later; right now they're running.",
+  "lose.badge": "Shift failed",
+  "cell.mark_caution": "Unsure",
+  "cell.mark_caution.hint": "Hold a closed block to mark it \"Danger\" or \"Unsure\". Swipes skip marked blocks."
 }

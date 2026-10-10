@@ -1,5 +1,5 @@
 {
-  "_meta.version": "0.36",
+  "_meta.version": "0.37",
   "_meta.date": "2026-10-10",
   "_meta.note": "Русский оригинал строк MVP, сверено с design/MVP_RULES.md, ONBOARDING.md и ELEMENTS.md 0.3. Ключи плоские, плейсхолдеры в фигурных скобках, множественное число через суффиксы .one/.few/.many. Формат описан в text/README.md",
   "game.title": "Part Shift",
@@ -1642,5 +1642,9 @@
   "zone.short.cryo": "лёд",
   "zone.short.volt": "искры",
   "zone.short.toxin": "туман",
-  "zone.short.impact": "завалы"
+  "zone.short.impact": "завалы",
+  "event.survivor_slot": "Горожанин добрался до своих. Спасибо скажет потом, сейчас он бежит.",
+  "lose.badge": "Смена сорвана",
+  "cell.mark_caution": "Не уверен",
+  "cell.mark_caution.hint": "Удерживайте закрытый квартал, чтобы поставить метку «Опасно» или «Не уверен». Свайп обходит помеченные."
 }
