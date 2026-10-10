@@ -244,7 +244,7 @@ describe('heroes and the call target', () => {
     expect(raiders.map((u) => [u.x, u.y])).toEqual(at);
     expect(home.hp).toBe(10);
     run(w, 30);
-    expect(w.s.buildings.includes(home)).toBe(false);
+    expect(home.ruined).toBe(true);
     expect(w.cell(3, 2).ruin).toBe('home');
     for (const u of w.s.units) if (u.owner < 0) u.hp = 0;
     w.s.units = w.s.units.filter((u) => u.hp > 0);

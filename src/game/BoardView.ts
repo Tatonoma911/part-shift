@@ -118,8 +118,6 @@ export class BoardView {
   /** Trophy limbs drawn over our heroes (ally_*_limbs masks), per unit then per slot. */
   private readonly trophies = new Map<number, Map<string, Phaser.GameObjects.Sprite>>();
   private readonly clueTexts = new Map<number, Phaser.GameObjects.Text[]>();
-  /** Batch04 find/cache overlay sprites per cell index. */
-  private readonly findViews = new Map<number, Phaser.GameObjects.Image>();
   private readonly buildingViews = new Map<number, { spr: Phaser.GameObjects.Sprite; state: string; type: string; x: number; y: number }>();
   private readonly units = new Map<number, UnitView>();
   private readonly orbs: Phaser.GameObjects.Sprite[] = [];
@@ -986,34 +984,6 @@ export class BoardView {
     }
   }
 
-  /** Batch04 find/cache overlay sprite on a revealed cell. */
-  private updateFindOverlay(i: number, c: ReturnType<typeof this.world.cell>, px: number, py: number): void {
-    const FIND_KEYS: Partial<Record<string, string>> = {
-      blueprint: 'b4.find_blueprint_fragment',
-      armor_crate: 'b4.find_armor_crate',
-      lore_record: 'b4.find_lore_record',
-      cache: 'b4.cache_common',
-    };
-    const key = c.revealed && !c.resolved ? FIND_KEYS[c.content ?? ''] : undefined;
-    let spr = this.findViews.get(i);
-    if (!key) {
-      spr?.setVisible(false);
-      return;
-    }
-    if (!this.scene.textures.exists(key)) {
-      spr?.setVisible(false);
-      return;
-    }
-    if (!spr) {
-      spr = this.scene.add.image(0, 0, key).setDepth(D.site + 0.6);
-      this.findViews.set(i, spr);
-    }
-    const cx = px + CELL / 2;
-    const cy = py + CELL;
-    const scale = CELL / this.scene.textures.get(key).getSourceImage().width;
-    spr.setTexture(key).setPosition(cx, cy).setOrigin(0.5, 1).setScale(scale).setVisible(true);
-  }
-
   // ---------------------------------------------------------------- clues
 
   /** HeroOut sensor sign with up to three windows: beacon, target, box (MVP_RULES §3.1а, Sensor.ts). */
@@ -1284,7 +1254,6 @@ export class BoardView {
       v.spr.setPosition(fx, fy).setDepth(D.unit + fy / 4000);
       v.ring?.setPosition(fx, fy).setDepth(D.unit + fy / 4000 - 0.0001);
       v.lastCd = u.attackCooldown;
-
       const st = w.stats(u);
       const top = fy - (u.kind === 'hero' ? (v.spr.scaleX > 1 ? 104 : 74) : u.kind === 'heavy_adaptant' ? 70 : 54);
       // Trophy parts: drawn limbs tinted by element where the animator made masks, else a coloured pip per slot.
