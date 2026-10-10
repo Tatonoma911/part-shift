@@ -6,7 +6,7 @@ import { lang, setLang, t } from '../i18n';
 import { introSeen, playIntro } from '../intro';
 import { analytics, askAnalyticsConsent, closeConsent } from '../analytics';
 import { canVibrate, comfort, PALETTES, setComfort, TEXT_SCALES } from './comfort';
-import { learning, learningLang, setLearningHooks } from './learn';
+import { learning, learningLang, openGuide, setLearningHooks } from './learn';
 import { volumeHeight, volumeSliders } from './volume';
 import { createArt, preloadArt } from './assets';
 import { preloadComm } from './Comm';
@@ -223,7 +223,7 @@ export class MenuScene extends Phaser.Scene {
       // Meta progress: returned heroes, stats, records, rank (design/META.md §6).
       button(t('dossier.title'), () => this.scene.start('dossier'));
       if (last || tutorialDone()) button(t('menu.tutorial'), () => this.play({ tutorial: true }));
-      button(t('menu.guide'), () => learning().openGuide());
+      button(t('menu.guide'), () => openGuide());
       button(t('menu.settings'), () => this.show('settings'));
       button(t('menu.story'), () => this.story(true));
       const acc = account.view;

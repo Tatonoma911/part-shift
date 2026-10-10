@@ -12,7 +12,7 @@ import { RunTally } from './meta/record';
 import { showResults } from './meta/ResultsScreen';
 import { boonPoolFor, loadMeta, pickAllies, roster } from './meta/store';
 import { pickBoon } from './meta/BoonPick';
-import { learning, setLearningHooks } from './learn';
+import { learning, openGuide, setLearningHooks } from './learn';
 import { volumeHeight, volumeSliders } from './volume';
 import { BoardView } from './BoardView';
 import { Comm } from './Comm';
@@ -370,7 +370,7 @@ export class GameScene extends Phaser.Scene {
   private restart(): void {
     if (this.world.s.outcome === 'playing') this.trackEnd('restart');
     if (!this.guide) clearSlot(this.slot);
-    sound.stopMusic(0.2);
+    // No stop: the next run's music crossfades from this one.
     // The city of the day and a friend's challenge replay the same map; free play gets a new one.
     const st = this.start;
     this.scene.restart({ slot: this.slot, fresh: true, tutorial: st.tutorial, seed: st.daily || st.challenge ? this.world.s.seed : undefined, daily: st.daily, challenge: st.challenge });
@@ -380,7 +380,7 @@ export class GameScene extends Phaser.Scene {
     if (this.world.s.outcome === 'playing') analytics.track(this.guide ? 'tutorial_leave' : 'match_leave', this.matchParams());
     this.save();
     this.online?.leave();
-    sound.stopMusic(0.3);
+    // The menu theme crossfades in over the run music.
     this.scene.start('menu');
   }
 
@@ -391,7 +391,7 @@ export class GameScene extends Phaser.Scene {
       ['−', () => this.cams.zoomBy(1 / 1.3)],
       ['⟲', () => this.cams.reset()],
       // Field guide (Learning thread).
-      ['?', () => learning().openGuide()],
+      ['?', () => openGuide()],
     ];
     // QA-019: in portrait the board fills the full width, so vertical buttons on the
     // right would cover board cells. Instead place them horizontally in the gap between
@@ -994,7 +994,7 @@ export class GameScene extends Phaser.Scene {
           label: t('menu.guide'),
           act: () => {
             this.setPaused(false);
-            learning().openGuide();
+            openGuide();
           },
         },
         { label: t('pause.account'), act: () => openAccountPanel() },
@@ -1064,7 +1064,7 @@ export class GameScene extends Phaser.Scene {
           label: t('menu.guide'),
           act: () => {
             this.setPaused(false);
-            learning().openGuide();
+            openGuide();
           },
         },
         { label: t('online.pause.leave'), act: () => this.toMenu() },
@@ -1094,10 +1094,9 @@ export class GameScene extends Phaser.Scene {
 
   private endOnline(): void {
     const s = this.world.s;
-    sound.stopMusic();
     const ffa = s.match?.mode === 'ffa';
     const won = s.outcome === 'victory' && (!ffa || s.match?.winner === this.me);
-    sound.play(won ? 'victory' : 'defeat');
+    sound.playEnd(won);
     this.showOnlineEnd(won, this.watching);
   }
 
@@ -1138,7 +1137,6 @@ export class GameScene extends Phaser.Scene {
       this.overlay = showResults(this, view, {
         again: () => this.restart(),
         dossier: () => {
-          sound.stopMusic(0.3);
           this.scene.start('dossier');
         },
         menu: () => this.toMenu(),
