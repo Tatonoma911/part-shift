@@ -513,6 +513,15 @@ export class World {
         p.autoQueue = p.autoQueue.filter((q) => q !== k);
         return ok;
       }
+      case 'useMedkit': {
+        const c = this.cell(cmd.x, cmd.y);
+        if (!inBounds(this.s, cmd.x, cmd.y) || !c.revealed || c.content !== 'medkit' || c.heal !== undefined || !c.stock) return bad();
+        c.stock -= 1;
+        c.heal = hazards.medkit.seconds;
+        this.rev++;
+        this.emit('medkit_use', { x: cmd.x, y: cmd.y, owner: playerId });
+        return ok;
+      }
       case 'toggleMark': {
         if (!inBounds(s, cmd.x, cmd.y)) return bad();
         const c = this.cell(cmd.x, cmd.y);
@@ -890,6 +899,7 @@ export class World {
           }
           if (c.heal <= 0) {
             c.heal = undefined;
+            if (!c.stock) c.resolved = true;
             this.rev++;
             this.emit('medkit_empty', { x, y });
           }
@@ -1125,8 +1135,8 @@ export class World {
         this.openCapsule(player, x, y);
         break;
       case 'medkit':
-        c.resolved = true;
-        c.heal = hazards.medkit.seconds;
+        // A found medkit keeps its charges; the player taps it to heal (useMedkit).
+        c.stock = hazards.medkit.count;
         this.emit('medkit_open', { x, y, owner });
         break;
       case 'blueprint': {

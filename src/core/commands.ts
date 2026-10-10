@@ -9,6 +9,7 @@ export type Command =
   | { type: 'queueDig'; x: number; y: number; force?: boolean }
   | { type: 'cancelDig'; x: number; y: number }
   | { type: 'toggleMark'; x: number; y: number; clear?: boolean }
+  | { type: 'useMedkit'; x: number; y: number }
   | { type: 'build'; building: string; x: number; y: number; hero?: string }
   | { type: 'setRecruit'; building: number; on: boolean }
   /** Upgrade a completed building to the next level (buildings.json levels[]). */

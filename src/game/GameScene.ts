@@ -1789,6 +1789,11 @@ export class GameScene extends Phaser.Scene {
       return;
     }
     this.confirmCell = null;
+    // An opened medkit is used by a tap: it heals the heroes around it (hazards.json medkit).
+    if (c.revealed && c.content === 'medkit') {
+      if (w.apply({ type: 'useMedkit', x, y }, this.me).ok) this.say(t('event.medkit.open'), 1800);
+      return;
+    }
     // Swiping over auto-queued cells promotes them to the player's own queue; only own orders get cancelled.
     const own = w.player(this.me).queue.includes(k);
     const r = !c.revealed && !own ? w.apply({ type: 'queueDig', x, y }, this.me) : null;
