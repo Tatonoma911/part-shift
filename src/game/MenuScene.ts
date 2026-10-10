@@ -188,7 +188,7 @@ export class MenuScene extends Phaser.Scene {
     c.add(bg);
     let y = top + 40;
     // `mode`: the art 173 icon on the left (Срочный вызов = flag, Общий = swords, Обучение = brain); `stars`: best rating on the right.
-    const button = (label: string, act: (() => void) | null, primary = false, sub?: string, mode?: ModeId, stars?: number) => {
+    const button = (label: string, act: (() => void) | null, primary = false, sub?: string, mode?: ModeId, stars?: number, iconKey?: string) => {
       // Landscape is short: slimmer rows so settings fit without scrolling.
       const h = sub ? 110 : LANDSCAPE ? 76 : 92;
       const g = this.add.graphics();
@@ -201,11 +201,18 @@ export class MenuScene extends Phaser.Scene {
       const tx = this.add.text(cx, y + (sub ? 38 : h / 2), label, TXT.body(29, color, '700')).setOrigin(0.5);
       // A label never touches the button edges (ART_REVIEW AR-10): shrink it to fit, larger text sizes included.
       // With an icon or stars at the sides, the label keeps clear of both.
-      const side = mode || stars !== undefined ? 2 * (stars !== undefined ? 110 : 76) : 0;
+      const side = mode || iconKey || stars !== undefined ? 2 * (stars !== undefined ? 110 : 76) : 0;
       const room = w - 64 - 56 - side;
       if (tx.width > room) tx.setScale(room / tx.width);
       c.add([g, tx]);
       if (mode) c.add(modeIcon(this, x0 + 32 + 46, y + h / 2, Math.min(64, h - 24), mode).setAlpha(act ? 1 : 0.5));
+      if (iconKey && this.textures.exists(iconKey)) {
+        const img = this.add.image(x0 + 32 + 46, y + h / 2, iconKey);
+        const sz = Math.min(48, h - 16);
+        img.setScale(sz / Math.max(img.width, img.height));
+        img.setAlpha(act ? 1 : 0.5);
+        c.add(img);
+      }
       if (stars !== undefined) bestStars(this, c, x0 + w - 32 - 20 - 3 * 28 - 4, y + h / 2, 28, stars);
       if (sub) {
         const st = this.add.text(cx, y + 78, sub, TXT.body(21, primary ? '#D9F3F8' : INK.dim, '500')).setOrigin(0.5);
@@ -243,13 +250,13 @@ export class MenuScene extends Phaser.Scene {
       else button(t('menu.new_run'), () => this.play({ slot: 0, fresh: true, shiftN: getFirstUncleared() }), !last, undefined, 'call', callStars);
       button(t('online.menu'), onlineAvailable() ? () => this.online() : null, false, onlineAvailable() ? t('online.menu_sub') : t('menu.soon'), 'coop');
       // Meta progress: returned heroes, stats, records, rank (design/META.md §6).
-      button(t('dossier.title'), () => this.scene.start('dossier'));
+      button(t('dossier.title'), () => this.scene.start('dossier'), false, undefined, undefined, undefined, 'icon.defender');
       if (last || tutorialDone()) button(t('menu.tutorial'), () => this.play({ tutorial: true }), false, undefined, 'tutorial');
-      button(t('menu.guide'), () => openGuide());
-      button(t('menu.settings'), () => this.show('settings'));
+      button(t('menu.guide'), () => openGuide(), false, undefined, undefined, undefined, 'icon.lamp_finds');
+      button(t('menu.settings'), () => this.show('settings'), false, undefined, undefined, undefined, 'icon.settings');
       const acc = account.view;
       const accSub = acc.status === 'disabled' ? t('menu.soon') : acc.status === 'signed' ? acc.name || acc.email : undefined;
-      button(t('menu.account'), () => openAccountPanel(), false, accSub);
+      button(t('menu.account'), () => openAccountPanel(), false, accSub, undefined, undefined, 'icon.shield');
       y += this.socialRow(c, x0 + 32, y, w - 64) + 16;
     } else if (page === 'slots') {
       c.add(this.add.text(cx, y + 6, t('menu.slots').toUpperCase(), TXT.caps()).setOrigin(0.5));
