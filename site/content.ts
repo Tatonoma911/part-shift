@@ -434,7 +434,7 @@ export const ARTBOOK: { id: string; title: L; note: L; shots: Shot[] }[] = [
   {
     id: 'cards',
     title: { ru: 'Карточки героев', en: 'Hero cards' },
-    note: { ru: 'Концепт-листы: полный рост, портрет, палитра и рабочий инструмент. Цвет у каждого героя — его функция.', en: 'Concept sheets: full body, portrait, palette and working tool. Each hero’s colour is their function.' },
+    note: { ru: 'Концепт-листы: полный рост, портрет, палитра и рабочий инструмент. Цвет у каждого героя — его функция. Имена на карточках — рабочие названия, не утверждённый канон.', en: 'Concept sheets: full body, portrait, palette and working tool. Each hero’s colour is their function. Names shown are working titles, not confirmed canon.' },
     shots: ['kiln', 'lineman', 'frostline', 'seraph', 'current', 'mason', 'beacon', 'canopy', 'sweep', 'patch', 'hive'].map((id) => ({
       src: `card-${id}.webp`,
       cap: { ru: HEROES.find((h) => h.id === id)!.name.ru, en: HEROES.find((h) => h.id === id)!.name.en },
