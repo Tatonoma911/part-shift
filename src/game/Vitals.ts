@@ -101,6 +101,21 @@ function techGlyph(g: G, tech: Tech, x: number, y: number, r: number): void {
   }
 }
 
+/** One element orb (hero cards): colour, white ring, glyph. «Без стихии» is a white orb with a dot. */
+export function drawTechOrb(g: G, tech: string, x: number, y: number, r: number): void {
+  g.fillStyle(0x0b1117, 0.5);
+  g.fillCircle(x + 1, y + 2, r + 2);
+  g.fillStyle(TECH_HEX[tech] ?? 0xffffff, 1);
+  g.fillCircle(x, y, r);
+  g.lineStyle(2.5, tech === 'kinetic' ? 0x10171c : 0xffffff, 1);
+  g.strokeCircle(x, y, r);
+  if ((TECHS as string[]).includes(tech)) techGlyph(g, tech as Tech, x, y, r);
+  else {
+    g.fillStyle(0x10171c, 0.8);
+    g.fillCircle(x, y, r * 0.28);
+  }
+}
+
 /** A row of weakness orbs centred on (x, y). Returns the row width. */
 export function drawWeakOrbs(g: G, x: number, y: number, weak: Weakness[], max = 3): number {
   const list = weak.slice(0, max);

@@ -1,6 +1,6 @@
 import Phaser from 'phaser';
 import { hasText, t } from '../i18n';
-import { animSets, createArt, preloadArt } from './assets';
+import { createArt, preloadArt } from './assets';
 import { C, INK, LANDSCAPE, VIEW } from './layout';
 import { preloadComm } from './Comm';
 import { drawMenuBackdrop } from './MenuBackdrop';
@@ -8,33 +8,32 @@ import { preloadMetaArt } from './meta/art';
 import { chip, plate, TXT } from './ui';
 
 /**
- * Loading screen (Антон 10.10: «чтобы было приятно и интересно ждать»).
- * Loads a handful of pictures first (the menu city, the starters' walk sheets,
- * the board tiles), then shows them while the rest of the art loads:
+ * Loading screen (Антон 10.10: «чтобы было приятно и интересно ждать»; 11:22: no walking heroes,
+ * «очень красивый баннер со статикой, и логотип будет переливаться, пока идёт полоска»).
  *   - the comic city of the menu with the logo in the same place, so the menu takes over seamlessly;
+ *     a light glint runs across PART SHIFT while the game loads;
+ *   - a big still comic banner (HeroOut at work over Lumen City, one of three panels per launch),
+ *     framed like a comic page; the artist's 184/185 loading art replaces it when it lands;
  *   - «Эфир» card: rotating tips and Контроль announcements from the writer (tip.*, control.bark.*), tap for the next one;
- *   - HeroOut street camera: the four starters walk to their shift over a strip of board blocks.
- *     The heroes are the animator's frame sheets (ally_*.walk, drawn frames, no code motion);
- *     only the street under them scrolls, at the pace of the steps;
- *   - a hazard-tape progress bar with a funny status line under the camera.
- * Style per layer: city and card = menu (comic + BRAND_UI), the camera = a framed piece of the pixel board.
+ *   - a hazard-tape progress bar with a funny status line.
+ * One layer, comic + BRAND_UI. No code-made motion of characters.
  */
 
-/** Starters walk on the camera (MVP_RULES §4: birth roster at the start). The dog leads. */
-const SQUAD = ['patch', 'standard', 'current', 'canopy'];
-/** Back row: quarantined blocks and rubble; front row: opened ground. */
-const BACK_TILES = ['closed_0', 'closed_1', 'closed_2', 'closed_3', 'closed_1', 'rubble_0', 'closed_2', 'closed_0', 'closed_3'];
-const FRONT_TILES = ['ground_0', 'ground_1', 'ground_grass_0', 'ground_0', 'ground_grass_1', 'ground_1', 'ground_grass_2', 'ground_0'];
+/** Still comic banners (comic/assets/panels), one per launch. */
+const BANNERS = [
+  new URL('../assets/comic/panels/city_rescue.jpg', import.meta.url).href,
+  new URL('../assets/comic/panels/heroes_turn.jpg', import.meta.url).href,
+  new URL('../assets/comic/panels/roof_wide.jpg', import.meta.url).href,
+];
 /** Generic Контроль lines that fit anywhere (no board event needed). */
 const CONTROL = ['hold_line', 'plus', 'rate', 'resist', 'dome', 'dome_fee', 'care_zone', 'limbs_warranty', 'lost_arm', 'cat', 'hero_on_shift', 'survey', 'warehouse', 'idle', 'run_start'];
 const STEPS = 8;
 /** Shortest time on screen, so the first line can be read; tests and deep links skip it. */
 const MIN_MS = 2200;
 const LINE_MS = 4600;
-/** Street speed in px/s at tile scale 2: matches the walk cycle (8 frames at 10 fps, two steps). */
-const STREET_SPEED = 96;
-const SCALE = 2;
-const TILE = 52 * SCALE;
+/** Logo glint: one pass across the letters, then a pause. */
+const GLINT_MS = 2200;
+const GLINT_PAUSE_MS = 400;
 
 type Line = { kind: 'tip' | 'fact' | 'control'; text: string };
 
@@ -74,8 +73,7 @@ export class LoadingScene extends Phaser.Scene {
   private barBox = { x: 0, y: 0, w: 0, h: 0 };
   private pct!: Phaser.GameObjects.Text;
   private status!: Phaser.GameObjects.Text;
-  private street: Phaser.GameObjects.Image[] = [];
-  private streetW = 0;
+  private logo: Phaser.GameObjects.Text[] = [];
   private startedAt = 0;
   private loaded = false;
   private leaving = false;
@@ -86,13 +84,13 @@ export class LoadingScene extends Phaser.Scene {
 
   preload(): void {
     // Only what the loading screen itself shows: small and fast.
-    const want = new Set(['screen.menu_bg_vertical', 'icon.control_mask', ...SQUAD.map((id) => `ally_${id}`), ...BACK_TILES.map((k) => `tile.${k}`), ...FRONT_TILES.map((k) => `tile.${k}`)]);
+    const want = new Set(['screen.menu_bg_vertical', 'icon.control_mask']);
     preloadArt(this, (key) => want.has(key));
+    this.load.image('boot.banner', Phaser.Utils.Array.GetRandom(BANNERS));
   }
 
   create(): void {
     this.startedAt = performance.now();
-    for (const k of this.textures.getTextureKeys()) if (k.startsWith('tile.') || k.startsWith('ally_')) this.textures.get(k).setFilter(Phaser.Textures.FilterMode.NEAREST);
     document.getElementById('boot')?.classList.add('gone');
     setTimeout(() => document.getElementById('boot')?.remove(), 600);
 
@@ -101,15 +99,14 @@ export class LoadingScene extends Phaser.Scene {
     // Right column on PC (where the menu panel will be), the lower half on a phone.
     const x0 = LANDSCAPE ? VIEW.width / 2 + 40 : 32;
     const w = LANDSCAPE ? 680 : VIEW.width - 64;
-    const cardH = LANDSCAPE ? 230 : 250;
-    // Phone: a taller camera (three rows) and the whole stack centred under the logo.
-    const camH = (LANDSCAPE ? 2 : 3) * TILE + 52;
-    const stack = cardH + 36 + camH + 28 + 128;
-    const top = LANDSCAPE ? 70 : Math.round(300 + (VIEW.height - 340 - stack) / 2);
-    this.drawCard(x0, top, w, cardH);
-    const camY = top + cardH + 36;
-    this.drawCamera(x0, camY, w, camH);
-    this.drawProgress(x0, camY + camH + 28, w);
+    const cardH = LANDSCAPE ? 216 : 250;
+    // The banner keeps the panel's 2:1 shape; the whole stack is centred under the logo on a phone.
+    const banH = Math.round(w * (LANDSCAPE ? 0.46 : 0.62));
+    const stack = banH + 28 + cardH + 28 + 128;
+    const top = LANDSCAPE ? Math.round((VIEW.height - stack) / 2) : Math.round(300 + (VIEW.height - 340 - stack) / 2);
+    this.drawBanner(x0, top, w, banH);
+    this.drawCard(x0, top + banH + 28, w, cardH);
+    this.drawProgress(x0, top + banH + 28 + cardH + 28, w);
 
     // Load the rest of the game with this screen on top.
     preloadArt(this);
@@ -143,12 +140,7 @@ export class LoadingScene extends Phaser.Scene {
     const msg = step < 0 ? t('loading.ready') : t(`loading.step.${step + 1}`);
     if (this.status.text !== msg) this.status.setText(msg);
     this.pct.setText(`${Math.round(this.shown * 100)}%`);
-    // Street under the walking squad.
-    const dx = (STREET_SPEED * delta) / 1000;
-    for (const img of this.street) {
-      img.x -= dx;
-      if (img.x + TILE <= img.getData('x0')) img.x += this.streetW;
-    }
+    this.glint(real);
     if (this.loaded && !this.leaving && this.shown >= 0.999 && (this.fast || performance.now() - this.startedAt >= MIN_MS)) this.leave();
   }
 
@@ -167,7 +159,58 @@ export class LoadingScene extends Phaser.Scene {
     const shift = this.add.text(0, 150 + ay, 'SHIFT', { ...TXT.num(96, INK.teal), fontStyle: '900' }).setOrigin(0, 0.5);
     part.x = ax + (780 - part.width - shift.width) / 2;
     shift.x = part.x + part.width;
+    this.logo = [part, shift];
     this.add.text(ax + 390, 236 + ay, t('game.subtitle').toUpperCase(), TXT.caps()).setOrigin(0.5);
+  }
+
+  /**
+   * The logo shimmers while loading: a light band slides across PART SHIFT as one word.
+   * Done with a text gradient fill (works on WebGL and canvas), letters stay in place.
+   */
+  private glint(now: number): void {
+    const [part, shift] = this.logo;
+    if (!part || !shift) return;
+    const cycle = GLINT_MS + GLINT_PAUSE_MS;
+    const ph = ((now - this.startedAt) % cycle) / GLINT_MS;
+    const total = part.width + shift.width;
+    // Band centre in logo pixels; off the word during the pause.
+    const at = ph <= 1 ? -0.35 * total + ph * 1.7 * total : -2 * total;
+    const paint = (txt: Phaser.GameObjects.Text, base: string, mid: string, glow: string, offset: number) => {
+      const ctx = txt.context;
+      const gr = ctx.createLinearGradient(-offset + at - 260, 0, -offset + at + 260, txt.height * 0.5);
+      gr.addColorStop(0, base);
+      gr.addColorStop(0.3, base);
+      gr.addColorStop(0.44, mid);
+      gr.addColorStop(0.5, glow);
+      gr.addColorStop(0.56, mid);
+      gr.addColorStop(0.7, base);
+      gr.addColorStop(1, base);
+      txt.setFill(gr as unknown as string);
+    };
+    paint(part, INK.graphite, '#115A80', '#9FF4FF', 0);
+    paint(shift, INK.teal, '#57D8F2', '#F2FFFF', part.width);
+  }
+
+  /** Big still comic banner in a comic-page frame: thick ink border, offset shadow, a caption tag. */
+  private drawBanner(x: number, y: number, w: number, h: number): void {
+    const g = this.add.graphics();
+    g.fillStyle(C.night, 0.22);
+    g.fillRect(x + 8, y + 10, w, h);
+    g.fillStyle(C.graphite, 1);
+    g.fillRect(x - 6, y - 6, w + 12, h + 12);
+    g.fillStyle(C.white, 1);
+    g.fillRect(x - 2, y - 2, w + 4, h + 4);
+    if (this.textures.exists('boot.banner')) {
+      const img = this.add.image(x + w / 2, y + h / 2, 'boot.banner');
+      // Cover the frame without stretching; crop what sticks out.
+      img.setScale(Math.max(w / img.width, h / img.height));
+      const mask = this.make.graphics({}, false);
+      mask.fillRect(x, y, w, h);
+      img.setMask(mask.createGeometryMask());
+    }
+    // Caption box, like a comic narration box.
+    const cap = this.add.text(x + 18, y + h - 16, t('loading.banner').toUpperCase(), { ...TXT.caps(INK.graphite), backgroundColor: '#FFE14D', padding: { x: 12, y: 6 } }).setOrigin(0, 1);
+    if (cap.width > w - 36) cap.setScale((w - 36) / cap.width);
   }
 
   /** «Эфир» card: one line at a time, a new one every few seconds or on tap. */
@@ -216,63 +259,6 @@ export class LoadingScene extends Phaser.Scene {
       timer.reset({ delay: LINE_MS, loop: true, callback: show });
       show();
     });
-  }
-
-  /** HeroOut street camera: a framed strip of the pixel board with the squad walking to the shift. */
-  private drawCamera(x: number, y: number, w: number, h: number): void {
-    const g = this.add.graphics();
-    g.fillStyle(C.night, 0.18);
-    g.fillRect(x + 4, y + 8, w, h);
-    chip(g, x, y, w, h, C.graphite, 1, 18);
-    const ix = x + 12;
-    const iy = y + 40;
-    const iw = w - 24;
-    const ih = h - 52;
-    // The street: back row of quarantined blocks, front row of opened ground. Wraps around while the squad walks.
-    const cols = Math.ceil(iw / TILE) + 2;
-    this.streetW = cols * TILE;
-    // Phone adds a second row of quarantined blocks in front: the squad walks a cleared street between them.
-    const rows: [string[], number][] = [
-      [BACK_TILES, iy],
-      [FRONT_TILES, iy + TILE],
-    ];
-    if (!LANDSCAPE) rows.push([[...BACK_TILES].reverse(), iy + 2 * TILE]);
-    for (const [set, ry] of rows) {
-      for (let k = 0; k < cols; k++) {
-        const key = `tile.${set[k % set.length]}`;
-        if (!this.textures.exists(key)) continue;
-        const img = this.add.image(ix + k * TILE, ry, key).setOrigin(0).setScale(SCALE);
-        img.setData('x0', ix - TILE);
-        this.street.push(img);
-      }
-    }
-    const mask = this.make.graphics({}, false);
-    mask.fillRect(ix, iy, iw, ih);
-    const geo = mask.createGeometryMask();
-    this.street.forEach((s) => s.setMask(geo));
-    // The squad: drawn walk frames from the animator's sheets, standing on the front row.
-    const feet = iy + TILE + TILE * 0.62;
-    const lead = ix + iw * (LANDSCAPE ? 0.8 : 0.82);
-    const gap = Math.min(150, (iw * 0.7) / SQUAD.length);
-    SQUAD.forEach((id, k) => {
-      const key = `ally_${id}`;
-      const set = animSets[key];
-      if (!set || !this.textures.exists(key) || !set.anims.walk) return;
-      const anim = `boot.${key}.walk`;
-      if (!this.anims.exists(anim)) this.anims.create({ key: anim, frames: this.anims.generateFrameNumbers(key, { frames: set.anims.walk.frames }), frameRate: set.anims.walk.fps, repeat: -1 });
-      const s = this.add.sprite(lead - k * gap, feet, key).setScale(SCALE);
-      s.setOrigin(set.anchor[0] / set.frameSize[0], set.anchor[1] / set.frameSize[1]);
-      if (set.faces === 'left') s.setFlipX(true);
-      s.play({ key: anim, startFrame: (k * 3) % set.anims.walk.frames.length });
-      s.setMask(geo);
-    });
-    // Camera overlay: «REC» dot, camera name, the 9:14 clock (tip.9: the crane went mad at 9:14).
-    const rec = this.add.graphics();
-    rec.fillStyle(C.coral, 1);
-    rec.fillCircle(x + 30, y + 21, 7);
-    this.tweens.add({ targets: rec, alpha: 0.2, duration: 600, yoyo: true, repeat: -1 });
-    this.add.text(x + 46, y + 21, t('loading.camera').toUpperCase(), TXT.caps('#DCEBF0')).setOrigin(0, 0.5);
-    this.add.text(x + w - 22, y + 21, '09:14', TXT.caps('#9FF4FF')).setOrigin(1, 0.5);
   }
 
   /** Paper plate with a status line and a hazard-tape bar with the percent. */

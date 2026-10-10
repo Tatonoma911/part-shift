@@ -1018,8 +1018,22 @@ export class GameScene extends Phaser.Scene {
           },
         },
         { label: t('pause.account'), act: () => openAccountPanel() },
-        { label: t('pause.restart'), act: () => this.restart() },
+        { label: t('pause.restart'), act: () => this.confirmRestart() },
         { label: t('menu.quit_to_menu'), act: () => this.toMenu() },
+      ],
+      animate: false,
+    });
+  }
+
+  /** «Начать смену заново» asks first: the current shift is lost (UI step 18, writer strings). */
+  private confirmRestart(): void {
+    this.overlay?.destroy();
+    this.overlay = this.sheet({
+      title: t('pause.restart'),
+      lines: [t('pause.restart_confirm')],
+      actions: [
+        { label: t('common.no'), act: () => this.setPaused(true), primary: true },
+        { label: t('common.yes'), act: () => this.restart() },
       ],
       animate: false,
     });

@@ -25,6 +25,8 @@ import { closeOnlineScreen, openOnlineScreen, onlineScreenOpen } from '../net/lo
 import { onlineAvailable } from '../net/online';
 import { chip, plate, TXT } from './ui';
 import { drawMenuBackdrop, drawMenuHeroes } from './MenuBackdrop';
+import { resetDialog } from './ResetProgress';
+import { universeButton } from './UniverseScene';
 import { dailySeed, dayId, heroOfWeek, invite, openBoard, openDonate, openFeedback, readChallenge } from '../social';
 
 type Ev = Phaser.Types.Input.EventData;
@@ -164,6 +166,8 @@ export class MenuScene extends Phaser.Scene {
     });
 
     drawMenuHeroes(this, ax, ay);
+    // The door into the universe sits at the heroes' feet (Антон 11:22); the intro comic moved in there.
+    universeButton(this, ax + 390, LANDSCAPE ? ay + 736 : 606, LANDSCAPE ? 600 : 620, () => this.scene.start('universe'));
   }
 
   private show(page: Page): void {
@@ -225,7 +229,6 @@ export class MenuScene extends Phaser.Scene {
       if (last || tutorialDone()) button(t('menu.tutorial'), () => this.play({ tutorial: true }));
       button(t('menu.guide'), () => openGuide());
       button(t('menu.settings'), () => this.show('settings'));
-      button(t('menu.story'), () => this.story(true));
       const acc = account.view;
       const accSub = acc.status === 'disabled' ? t('menu.soon') : acc.status === 'signed' ? acc.name || acc.email : undefined;
       button(t('menu.account'), () => openAccountPanel(), false, accSub);
@@ -325,6 +328,15 @@ export class MenuScene extends Phaser.Scene {
       button(t('settings.reset_hints'), () => {
         learning().resetProgress();
         this.show('settings');
+      });
+      // Start over completely (Антон 10.10): a list of what goes and a held button (ResetProgress.ts).
+      button(t('settings.reset_all'), () => {
+        const d = resetDialog(
+          this,
+          60,
+          () => location.reload(),
+          () => d.destroy(),
+        );
       });
       button(t('menu.back'), () => this.show('main'), true);
     }
