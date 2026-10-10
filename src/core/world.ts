@@ -2827,7 +2827,7 @@ export class World {
       }
       this.rev++;
       for (const u of s.units) if (u.task.type === 'build' && u.task.building === b.id) this.setTask(u, { type: 'idle' });
-      this.emit('building_lost', { x: b.x, y: b.y, owner: b.owner, text: b.type });
+      this.emit('building_lost', { x: b.x, y: b.y, owner: b.owner, text: b.hero ? `${b.type}.${b.hero}` : b.type });
       const p = s.players[b.owner];
       if (p.command === b.id) {
         p.alive = false;

@@ -472,7 +472,7 @@ export class GameScene extends Phaser.Scene {
       this.lastCenterHit = this.time.now;
     } else if (e.type === 'build_done' && e.x !== undefined) {
       const b = this.world.s.buildings.find((x) => x.x === e.x && x.y === e.y);
-      if (b) this.say(t('build.done', { building: t(`building.${b.type}.name`) }));
+      if (b) this.say(t('build.done', { building: b.hero ? t('building.station.name', { hero: heroName(b.hero) }) : t(`building.${b.type}.name`) }));
     } else if (TOASTS[e.type]) {
       this.say(TOASTS[e.type].text(e), 2800, TOASTS[e.type].bad);
     }
@@ -839,7 +839,7 @@ export class GameScene extends Phaser.Scene {
       const a = BUILDING_ANCHOR[id] ?? [36, 78, 72, 96];
       const img = this.add.image(x + cw / 2, top + 66, `building.${id}`).setOrigin(0.5, a[1] / a[3]);
       img.setScale(Math.min(1, 74 / a[3]));
-      const name = this.add.text(x + cw / 2, top + 98, t(`building.${id}.name`), { ...TXT.body(16, INK.graphite, '600'), align: 'center', wordWrap: { width: cw - 10 } }).setOrigin(0.5, 0.5);
+      const name = this.add.text(x + cw / 2, top + 98, id === 'station' ? t('building.station.label') : t(`building.${id}.name`), { ...TXT.body(16, INK.graphite, '600'), align: 'center', wordWrap: { width: cw - 10 } }).setOrigin(0.5, 0.5);
       const cost = this.add.text(x + cw / 2 + 10, top + 132, `${buildingDefs[id].cost}`, TXT.num(19, INK.cobalt)).setOrigin(0.5);
       const eicon = this.add.image(x + cw / 2 - cost.width / 2 - 4, top + 132, 'icon.energy');
       const hit = this.add.zone(x, top, cw, ch).setOrigin(0).setInteractive({ useHandCursor: true });
