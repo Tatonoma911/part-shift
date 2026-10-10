@@ -529,6 +529,18 @@ export class BoardView {
             case 'cache':
               key = c.resolved ? GROUND[h % 8] : 'cache';
               break;
+            case 'blueprint':
+              key = c.resolved ? GROUND[h % 8] : 'cache';
+              break;
+            case 'armor_crate':
+              key = c.resolved ? GROUND[h % 8] : 'cache';
+              break;
+            case 'lore_record':
+              key = c.resolved ? GROUND[h % 8] : 'cache';
+              break;
+            case 'survivor':
+              key = c.resolved ? GROUND[h % 8] : (this.scene.textures.exists('survivor') ? 'survivor' : 'cache');
+              break;
             case 'nest':
             case 'heavy_nest': {
               const dead = c.resolved || w.site(x, y)?.destroyed;

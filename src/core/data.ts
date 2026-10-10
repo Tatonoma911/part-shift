@@ -133,7 +133,11 @@ export interface SiteDef {
   reward?: number;
   techPool?: Tech[];
   tech?: Tech;
-  onReveal?: { energy?: number; resident?: number; permanentSlotOnCommand?: boolean };
+  onReveal?: { energy?: number; resident?: number; permanentSlotOnCommand?: boolean; blueprintFragment?: number; armorPlates?: number; loreRecord?: number };
+  /** Icon shown in the blue sensor window (design/MVP_RULES §5.1). */
+  findIcon?: string;
+  /** Higher = more valuable for the sensor icon priority (design/MVP_RULES §5.1). */
+  findValue?: number;
   /** Overrides spawnSeconds / maxAlive from a threat level on (QA B-2: early nests are weaker). */
   spawnByThreat?: { fromLevel: number; spawnSeconds: number; maxAlive: number }[];
   initialSpawnByThreat?: { fromLevel: number; count: number }[];
@@ -178,7 +182,16 @@ export const heroRules = heroesJson as unknown as {
   lairSelfOpenThreatLevels: number[];
   bossPool: { heroes: string[] };
   allyRules: { hpFactor: number; damageFactor: number; range: number; respawnSeconds: number; leashRadiusFromCommand: number };
+  enemyMutations: {
+    countByTier: Record<string, number>;
+    slots: string[];
+    elementPool: Tech[];
+    otherThanOwnTechChance: number;
+    sameElementForAllMutationsChance: number;
+  };
 };
+
+export const armorPlateDef = (enemiesJson as unknown as { armorPlate: { defenseAdd: number; hpAdd: number; maxPerHero: number; giveTo: string; lostOnKnockout: number } }).armorPlate;
 
 /** Hero parts are tier 3 (MVP_RULES §8.1) and share the parts table shape. */
 const HERO_PART_TIER = 3;

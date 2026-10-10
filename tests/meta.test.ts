@@ -76,7 +76,7 @@ describe('cache bonuses (boons.json, META.md §8)', () => {
   });
 
   it('effects: Заначка pays 120, Бронежилеты add defense, Подкрепление adds residents and places', () => {
-    const { w } = caches();
+    const { w } = caches({ allies: ['patch', 'canopy', 'current', 'lineman', 'frostline'] });
     const p = w.player(0);
     const grant = (id: string) => {
       p.boonOffer = { ids: [id], at: 0 };

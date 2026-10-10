@@ -88,7 +88,9 @@
       "clueChannel": "finds",
       "onReveal": {
         "energy": 60
-      }
+      },
+      "findIcon": "cache",
+      "findValue": 2
     },
     {
       "id": "survivor",
@@ -97,6 +99,38 @@
       "onReveal": {
         "resident": 1,
         "permanentSlotOnCommand": true
+      },
+      "findIcon": "survivor",
+      "findValue": 1
+    },
+    {
+      "id": "blueprint",
+      "name_ru": "Фрагмент чертежа",
+      "clueChannel": "finds",
+      "findIcon": "blueprint",
+      "findValue": 4,
+      "onReveal": {
+        "blueprintFragment": 1
+      }
+    },
+    {
+      "id": "armor_crate",
+      "name_ru": "Ящик бронеплит",
+      "clueChannel": "finds",
+      "findIcon": "armor",
+      "findValue": 3,
+      "onReveal": {
+        "armorPlates": 3
+      }
+    },
+    {
+      "id": "lore_record",
+      "name_ru": "Запись Контроля",
+      "clueChannel": "finds",
+      "findIcon": "record",
+      "findValue": 2,
+      "onReveal": {
+        "loreRecord": 1
       }
     }
   ],
@@ -184,5 +218,12 @@
         "impact": 0.5
       }
     }
-  ]
+  ],
+  "armorPlate": {
+    "defenseAdd": 2,
+    "hpAdd": 15,
+    "maxPerHero": 3,
+    "giveTo": "heroes within 4 cells with fewest plates, else nearest",
+    "lostOnKnockout": 1
+  }
 }
