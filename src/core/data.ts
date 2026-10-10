@@ -102,6 +102,9 @@ export interface BuildingDef {
   heroCapAdd?: number;
   /** Medcenter: a hero standing in its heal aura regrows one lost limb after this many seconds. */
   regrowLimbSeconds?: number;
+  /** Archive: squad heroes come back this much faster (rebirth timer ×), and this run's hero unlock progress counts ×. */
+  birthTimeFactor?: number;
+  unlockProgressFactorThisRun?: number;
   /** Forge: change one trophy's element; strength and slot stay (buildings.json forge.recolor). */
   recolor?: { radius: number; cooldownSeconds: number; energyCost: number };
   /** Rotation centre: move or swap trophies between our heroes in range (buildings.json rotation_center.swap). */

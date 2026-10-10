@@ -2172,7 +2172,7 @@ export class World {
     if (v.kind === 'ally') {
       // An ally is knocked out, not lost: it is back at the center after a while.
       const p = s.players[v.owner];
-      (p.allyBack ??= {})[v.hero!] = s.time + ALLY.respawnSeconds;
+      (p.allyBack ??= {})[v.hero!] = s.time + ALLY.respawnSeconds * this.birthFactor(v.owner);
       // Armor plates: lose 1 on knockout (enemies.json armorPlate.lostOnKnockout).
       if (v.armorPlates && v.armorPlates > 0) {
         const lost = Math.min(v.armorPlates, armorPlateDef.lostOnKnockout);
@@ -2298,6 +2298,13 @@ export class World {
     u.lostLimbs!.splice(stump, 1);
     if (!u.lostLimbs!.length) u.lostLimbs = undefined;
     u.base = kind === 'arm' ? { ...u.base, damage: Math.round(u.base.damage / 0.8) } : { ...u.base, speed: Math.round((u.base.speed / 0.75) * 10) / 10 };
+  }
+
+  /** Rebirth timer factor of a player: the Archive (buildings.json backup_lab.birthTimeFactor) when one stands. */
+  private birthFactor(playerId: number): number {
+    let f = 1;
+    for (const b of this.s.buildings) if (b.owner === playerId && b.complete && !b.ruined) f = Math.min(f, buildingDefs[b.type].birthTimeFactor ?? 1);
+    return f;
   }
 
   /** A stump regrows after `seconds` in a medcenter's heal aura: the limb's stats come back (the reverse of tearLimb). */
