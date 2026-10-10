@@ -14,10 +14,10 @@ import { BOARD, C, CELL, DOCK, GOAL, GUIDE, HUD, INK, LANDSCAPE, STEP, VIEW } fr
 import { markTutorialDone, TutorialGuide } from './Tutorial';
 import { brackets, chip, glyph, plate, TXT } from './ui';
 import { setBackHandler } from '../platform/native';
+import type { OnlineSession } from '../net/online';
 
 const BEST_KEY = 'partshift.best.v1';
 const LONG_PRESS_MS = 480;
-const ME = 0;
 
 type Mode = 'dig' | 'build';
 
@@ -27,6 +27,8 @@ export interface GameStart {
   fresh?: boolean;
   tutorial?: boolean;
   seed?: number;
+  /** Online match (src/net): the state comes from the server, no pause, no save slot. */
+  online?: OnlineSession;
 }
 type Ev = Phaser.Types.Input.EventData;
 
@@ -68,6 +70,11 @@ export class GameScene extends Phaser.Scene {
   private start: GameStart = {};
   private slot = 1;
   private guide: TutorialGuide | null = null;
+  /** Our player id: 0 offline, the server's seat online. */
+  private me = 0;
+  private online: OnlineSession | null = null;
+  /** Online: our center fell, we watch the rest of the match. */
+  private watching = false;
 
   private mode: Mode = 'dig';
   private buildType: string = BUILDABLE[0];
@@ -118,6 +125,9 @@ export class GameScene extends Phaser.Scene {
   init(data: GameStart): void {
     this.start = data ?? {};
     this.slot = this.start.slot ?? 1;
+    this.online = this.start.online ?? null;
+    this.me = this.online?.me ?? 0;
+    this.watching = false;
     // Fresh state for scene restarts.
     this.guide = null;
     this.mode = 'dig';
@@ -144,17 +154,20 @@ export class GameScene extends Phaser.Scene {
     if (st.tutorial) this.guide = new TutorialGuide();
     // Free play: residents dig only where the player sends them, nothing is queued for them at the start.
     const rules = { config: { 'dig.autoQueueZeroNeighbors': false } };
-    this.world = this.guide
-      ? this.guide.world
-      : saved
-        ? new World({ state: saved })
-        : new World({ seed: st.seed || Math.floor(Math.random() * 1e9), assist, rules });
-    if (!this.guide) {
+    this.world = this.online?.world
+      ? this.online.world
+      : this.guide
+        ? this.guide.world
+        : saved
+          ? new World({ state: saved })
+          : new World({ seed: st.seed || Math.floor(Math.random() * 1e9), assist, rules });
+    if (this.online) this.watchOnline(this.online);
+    else if (!this.guide) {
       if (!saved) clearSlot(this.slot);
       touchSlot(this.slot);
     }
     (window as unknown as { partShift: unknown }).partShift = { world: this.world, scene: this, sound };
-    this.shownEnergy = this.world.player(ME).energy;
+    this.shownEnergy = this.world.player(this.me).energy;
     this.lastThreat = this.world.threatLevel;
 
     this.cams = new Cameras(this);
@@ -166,8 +179,11 @@ export class GameScene extends Phaser.Scene {
     const by = this.guide && !LANDSCAPE ? BOARD.y + BOARD.h - bh - 8 : Math.round(BOARD.y + (BOARD.h - bh) / 2);
     const frame = this.add.graphics().setDepth(0.5);
     brackets(frame, bx - 10, by - 10, bw + 20, bh + 20);
-    this.board = new BoardView(this, this.world, bx, by);
+    this.board = new BoardView(this, this.world, bx, by, this.me);
     this.cams.setBounds(bx, by, bw, bh);
+    // Online fields are bigger than the screen: start at the normal cell size over our own center.
+    const home = this.online ? this.world.building(this.world.player(this.me).command) : undefined;
+    if (home) this.cams.focus(bx + home.x * STEP + CELL / 2, by + home.y * STEP + CELL / 2, 1);
     this.createZoomButtons();
 
     this.createHud();
@@ -183,14 +199,14 @@ export class GameScene extends Phaser.Scene {
     this.input.keyboard?.on('keydown-SPACE', () => this.setPaused(!this.paused));
     this.input.keyboard?.on('keydown-ESC', () => {
       if (this.ghost) this.setGhost(null);
-      else this.world.apply({ type: 'cancelOrder' }, ME);
+      else this.world.apply({ type: 'cancelOrder' }, this.me);
     });
     this.input.keyboard?.on('keydown-ONE', () => this.setMode('dig'));
     this.input.keyboard?.on('keydown-TWO', () => this.setMode('build'));
     const onHide = () => {
       if (!document.hidden) return;
-      // Leaving the tab or the app (home button, a call) pauses the run, which also saves it.
-      if (!this.paused) this.setPaused(true);
+      // Leaving the tab or the app (home button, a call) pauses the run, which also saves it. Online time runs on.
+      if (!this.paused && !this.online) this.setPaused(true);
       this.save();
     };
     document.addEventListener('visibilitychange', onHide);
@@ -205,8 +221,9 @@ export class GameScene extends Phaser.Scene {
 
   update(time: number, deltaMs: number): void {
     const w = this.world;
-    if (!this.paused && !this.overlayPaused && w.s.outcome === 'playing') {
-      if (!this.coachedBuild && !this.guide && w.player(ME).energy >= 100) this.coachedBuild = learning().coach('build') || this.coachedBuild;
+    // Online there is no pause (MVP_RULES §14.2): menus and hints never stop the server's clock.
+    if (this.online || (!this.paused && !this.overlayPaused && w.s.outcome === 'playing')) {
+      if (!this.coachedBuild && !this.guide && w.player(this.me).energy >= 100) this.coachedBuild = learning().coach('build') || this.coachedBuild;
       w.tick(Math.min(deltaMs, 250) / 1000);
       this.saveTimer += deltaMs / 1000;
       if (this.saveTimer >= config.save.autosaveSeconds) {
@@ -226,7 +243,7 @@ export class GameScene extends Phaser.Scene {
       ghost: this.mode === 'build' ? this.ghost : null,
       spotlight: this.spotlight,
       focus: this.guide?.focusCells() ?? [],
-      showRisk: w.player(ME).assist.mode === 'full',
+      showRisk: w.player(this.me).assist.mode === 'full',
     });
     this.updateHud(deltaMs);
     this.updateDock();
@@ -236,7 +253,7 @@ export class GameScene extends Phaser.Scene {
   // ------------------------------------------------------------- persistence
 
   private save(): void {
-    if (!this.guide && this.world.started && this.world.s.outcome === 'playing') {
+    if (!this.guide && !this.online && this.world.started && this.world.s.outcome === 'playing') {
       saveSlot(this.slot, this.world.s);
       touchSlot(this.slot);
     }
@@ -250,6 +267,7 @@ export class GameScene extends Phaser.Scene {
 
   private toMenu(): void {
     this.save();
+    this.online?.leave();
     sound.stopMusic(0.3);
     this.scene.start('menu');
   }
@@ -290,7 +308,9 @@ export class GameScene extends Phaser.Scene {
   }
 
   private onEvent(e: GameEvent): void {
-    if (e.owner !== undefined && e.owner !== ME && e.owner >= 0) return;
+    if (this.online && (e.type === 'victory' || e.type === 'defeat')) return this.endOnline();
+    if (this.online && e.type === 'building_lost' && e.owner === this.me && e.text === 'command') this.centerLost();
+    if (e.owner !== undefined && e.owner !== this.me && e.owner >= 0) return;
     if (e.type === 'victory' || e.type === 'defeat') sound.stopMusic();
     sound.play(e.type);
     if (!this.guide) this.coachOn(e);
@@ -417,7 +437,7 @@ export class GameScene extends Phaser.Scene {
   /** In a tutorial step that asks for buildings, preselect the first one not built yet. */
   private nextTutorialBuilding(): void {
     const want = this.guide?.step?.highlightBuild ?? [];
-    const next = want.find((id) => !this.world.s.buildings.some((b) => b.owner === ME && b.type === id));
+    const next = want.find((id) => !this.world.s.buildings.some((b) => b.owner === this.me && b.type === id));
     if (next) this.buildType = next;
   }
 
@@ -476,17 +496,17 @@ export class GameScene extends Phaser.Scene {
 
   private updateHud(deltaMs: number): void {
     const w = this.world;
-    const mine = w.s.units.filter((u) => u.owner === ME);
-    const slots = w.s.buildings.filter((b) => b.owner === ME && b.complete).reduce((n, b) => n + b.slots.length, 0);
+    const mine = w.s.units.filter((u) => u.owner === this.me);
+    const slots = w.s.buildings.filter((b) => b.owner === this.me && b.complete).reduce((n, b) => n + b.slots.length, 0);
     const residents = mine.filter((u) => u.kind === 'resident').length;
     const defenders = mine.filter((u) => u.kind === 'defender').length;
     // The counter rolls toward the real value so energy visibly "arrives".
-    const real = Math.floor(w.player(ME).energy);
+    const real = Math.floor(w.player(this.me).energy);
     const diff = real - this.shownEnergy;
     this.shownEnergy = Math.abs(diff) < 1 ? real : this.shownEnergy + diff * Math.min(1, deltaMs / 120);
     this.hud.energy.setText(String(Math.round(this.shownEnergy)));
     this.hud.residents.setText(`${residents}/${slots}`);
-    this.hud.squad.setText(`${defenders}/${w.defenderCapacity(ME)}`);
+    this.hud.squad.setText(`${defenders}/${w.defenderCapacity(this.me)}`);
 
     const level = w.threatLevel;
     if (level > this.lastThreat) this.tweens.add({ targets: this.hud.ringBox, scale: 1.25, duration: 300, yoyo: true });
@@ -506,7 +526,7 @@ export class GameScene extends Phaser.Scene {
 
     let goal = t('mode.demon_hunt.goal');
     let bg = C.graphite;
-    if (this.paused) {
+    if (this.paused && !this.online) {
       goal = t('pause.plan_banner');
       bg = C.amber;
     } else if (w.s.demon.warned && !w.s.demon.awake && !w.s.demon.dead) {
@@ -576,16 +596,16 @@ export class GameScene extends Phaser.Scene {
     qhit.on(
       'pointerdown',
       stop(() => {
-        const p = this.world.player(ME);
+        const p = this.world.player(this.me);
         for (const k of [...p.queue]) {
           const [x, y] = k.split(',').map(Number);
-          this.world.apply({ type: 'cancelDig', x, y }, ME);
+          this.world.apply({ type: 'cancelDig', x, y }, this.me);
         }
       }),
     );
     dig.add([qg, queue, qx2, qhit]);
     let scan: Phaser.GameObjects.Text | null = null;
-    if (this.world.player(ME).assist.mode === 'scanner') {
+    if (this.world.player(this.me).assist.mode === 'scanner') {
       const sg = this.add.graphics();
       chip(sg, qx, top + 78, 250, 66, C.teal, 1, 12);
       scan = this.add.text(qx + 125, top + 111, '', TXT.body(24, INK.white, '700')).setOrigin(0.5);
@@ -593,7 +613,7 @@ export class GameScene extends Phaser.Scene {
       shit.on(
         'pointerdown',
         stop(() => {
-          if (!this.world.apply({ type: 'scan' }, ME).ok) this.say(t('assist.scan.empty'));
+          if (!this.world.apply({ type: 'scan' }, this.me).ok) this.say(t('assist.scan.empty'));
         }),
       );
       dig.add([sg, scan, shit]);
@@ -647,7 +667,7 @@ export class GameScene extends Phaser.Scene {
 
   private updateDock(): void {
     const w = this.world;
-    const p = w.player(ME);
+    const p = w.player(this.me);
     if (this.mode === 'dig') {
       this.dock.queue.setText(t('hud.queue', { count: p.queue.length + p.autoQueue.length }));
       if (this.dock.scan) {
@@ -698,7 +718,7 @@ export class GameScene extends Phaser.Scene {
     this.ghostButtons = this.add
       .container(x, y, [
         ...mk(-48, true, '✓', () => {
-          const r = this.world.apply({ type: 'build', building: this.buildType, x: at.x, y: at.y }, ME);
+          const r = this.world.apply({ type: 'build', building: this.buildType, x: at.x, y: at.y }, this.me);
           if (!r.ok) this.say(t(r.reason === 'invalid' ? 'build.invalid_cell' : r.reason), 2800, true);
           this.setGhost(null);
         }),
@@ -725,6 +745,7 @@ export class GameScene extends Phaser.Scene {
 
   private setPaused(on: boolean): void {
     if (this.world.s.outcome !== 'playing') return;
+    if (this.online) return this.onlineMenu(on);
     if (on !== this.paused) sound.play(on ? 'pause' : 'resume');
     this.paused = on;
     this.overlay?.destroy();
@@ -765,14 +786,100 @@ export class GameScene extends Phaser.Scene {
     });
   }
 
-  private showEnd(victory: boolean): void {
+  // ------------------------------------------------------------------ online
+
+  private watchOnline(online: OnlineSession): void {
+    const name = (id: number) => this.world.s.match?.names[id] ?? String(id + 1);
+    online.on({
+      presence: (connected) => {
+        const was = this.onlinePresence;
+        connected.forEach((c, id) => {
+          if (id !== this.me && was[id] !== undefined && was[id] !== c) this.say(t(c ? 'online.player_back' : 'online.player_dropped', { name: name(id) }), 2800, !c);
+        });
+        this.onlinePresence = [...connected];
+      },
+      refused: (reason) => this.say(t(reason === 'invalid' ? 'build.invalid_cell' : reason), 2800, true),
+      closed: () => {
+        if (this.world.s.outcome !== 'playing') return;
+        this.overlay?.destroy();
+        this.overlay = this.sheet({
+          title: t('online.error.closed'),
+          lines: [],
+          actions: [{ label: t('menu.quit_to_menu'), act: () => this.toMenu(), primary: true }],
+        });
+      },
+    });
+    this.onlinePresence = [...online.connected];
+    this.events.once('shutdown', () => online.leave());
+  }
+
+  private onlinePresence: boolean[] = [];
+
+  /** Online "pause": the same sheet, but the match keeps running behind it. */
+  private onlineMenu(on: boolean): void {
+    this.paused = on;
+    this.overlay?.destroy();
+    this.overlay = null;
+    if (!on) return;
+    const onOff = (v: boolean) => t(v ? 'settings.on' : 'settings.off');
+    this.overlay = this.sheet({
+      title: t('online.menu_title'),
+      lines: [t('online.pause.hint')],
+      actions: [
+        { label: t('pause.resume'), act: () => this.setPaused(false), primary: true },
+        {
+          label: `${t('settings.sfx')}: ${onOff(sound.prefs.sfx)}`,
+          act: () => {
+            sound.setPrefs({ sfx: !sound.prefs.sfx });
+            this.setPaused(true);
+          },
+        },
+        {
+          label: `${t('settings.music')}: ${onOff(sound.prefs.music)}`,
+          act: () => {
+            sound.setPrefs({ music: !sound.prefs.music });
+            this.setPaused(true);
+          },
+        },
+        {
+          label: t('menu.guide'),
+          act: () => {
+            this.setPaused(false);
+            learning().openGuide();
+          },
+        },
+        { label: t('online.pause.leave'), act: () => this.toMenu() },
+      ],
+      animate: false,
+    });
+  }
+
+  /** Our center fell while others play on: FFA shows the loss at once, coop lets us watch the team. */
+  private centerLost(): void {
+    if (this.watching) return;
+    this.watching = true;
+    if (this.world.s.match?.mode === 'ffa') this.showEnd(false, true);
+    else this.say(t('online.center_lost'), 6000, true);
+  }
+
+  private endOnline(): void {
+    const s = this.world.s;
+    sound.stopMusic();
+    const ffa = s.match?.mode === 'ffa';
+    const won = s.outcome === 'victory' && (!ffa || s.match?.winner === this.me);
+    sound.play(won ? 'victory' : 'defeat');
+    this.showEnd(won);
+  }
+
+  private showEnd(victory: boolean, watch = false): void {
+    if (this.online) return this.showOnlineEnd(victory, watch);
     if (!this.guide) clearSlot(this.slot);
     const w = this.world;
     const tiles: [string, string][] = [
       [t('win.time', { time: this.fmt(w.s.time) }), ''],
       [t('win.threat', { level: w.threatLevel }), ''],
-      [t('win.nests', { count: w.player(ME).stats.nests }), ''],
-      [t('win.caches', { count: w.player(ME).stats.caches }), ''],
+      [t('win.nests', { count: w.player(this.me).stats.nests }), ''],
+      [t('win.caches', { count: w.player(this.me).stats.caches }), ''],
     ];
     let badge: string | undefined;
     if (victory) {
@@ -795,6 +902,35 @@ export class GameScene extends Phaser.Scene {
       actions: [
         { label: victory ? t('win.again') : t('lose.again'), act: () => this.restart(), primary: true },
         { label: t('menu.quit_to_menu'), act: () => this.toMenu() },
+      ],
+    });
+  }
+
+  private showOnlineEnd(victory: boolean, watch: boolean): void {
+    const s = this.world.s;
+    const ffa = s.match?.mode === 'ffa';
+    const winner = s.match?.winner;
+    const text = ffa ? (victory ? t('online.win.ffa') : winner != null ? t('online.lose.ffa', { name: s.match!.names[winner] }) : t('lose.text')) : victory ? t('win.text') : t('lose.text');
+    this.overlay?.destroy();
+    this.overlay = this.sheet({
+      portrait: victory ? 'portrait.demon' : 'portrait.bld_command',
+      grey: !victory,
+      title: victory ? t('win.title') : t('lose.title'),
+      lines: [watch ? t('online.center_lost') : text, t('win.time', { time: this.fmt(s.time) }), t('win.nests', { count: s.players[this.me].stats.nests })],
+      actions: [
+        ...(watch
+          ? [
+              {
+                label: t('online.watch'),
+                act: () => {
+                  this.overlay?.destroy();
+                  this.overlay = null;
+                },
+                primary: true,
+              },
+            ]
+          : []),
+        { label: t('menu.quit_to_menu'), act: () => this.toMenu(), primary: !watch },
       ],
     });
   }
@@ -889,11 +1025,11 @@ export class GameScene extends Phaser.Scene {
     const w = this.world;
     const { x, y } = at;
     if (!w.started) {
-      if (w.apply({ type: 'placeCommand', x, y }, ME).ok && !this.guide) this.say(t('tutorial.dig'), 5000);
+      if (w.apply({ type: 'placeCommand', x, y }, this.me).ok && !this.guide) this.say(t('tutorial.dig'), 5000);
       return;
     }
     if (this.mode === 'build') {
-      const why = w.canBuild(ME, this.buildType, x, y);
+      const why = w.canBuild(this.me, this.buildType, x, y);
       if (why === null) this.setGhost({ x, y });
       else {
         this.setGhost(null);
@@ -911,21 +1047,21 @@ export class GameScene extends Phaser.Scene {
     // Tap an enemy or an opened nest: all defenders attack it (any mode).
     const foe = this.board.enemyAt(wp.x, wp.y);
     if (foe) {
-      w.apply({ type: 'attack', target: `u:${foe.id}` }, ME);
+      w.apply({ type: 'attack', target: `u:${foe.id}` }, this.me);
       return;
     }
     const site = c.revealed ? w.site(x, y) : undefined;
     if (site && !site.destroyed) {
-      if (w.apply({ type: 'attack', target: `s:${x},${y}` }, ME).ok) this.say(t('tutorial.attack'));
+      if (w.apply({ type: 'attack', target: `s:${x},${y}` }, this.me).ok) this.say(t('tutorial.attack'));
       return;
     }
     const b = w.building(c.building);
-    if (b && b.owner === ME && b.type === 'school' && b.complete) {
-      w.apply({ type: 'setRecruit', building: b.id, on: !b.recruit }, ME);
+    if (b && b.owner === this.me && b.type === 'school' && b.complete) {
+      w.apply({ type: 'setRecruit', building: b.id, on: !b.recruit }, this.me);
       this.say(t(b.recruit ? 'building.school.train_on' : 'building.school.train_off'));
       return;
     }
-    if (c.revealed && w.player(ME).order && c.content === 'ground') w.apply({ type: 'cancelOrder' }, ME);
+    if (c.revealed && w.player(this.me).order && c.content === 'ground') w.apply({ type: 'cancelOrder' }, this.me);
     // Touching an opened clue shows the eight cells it counts.
     if (c.revealed && c.building === undefined && (c.content === 'ground' || c.resolved)) {
       this.spotlight = { x, y, until: this.time.now + 2500 };
@@ -936,17 +1072,17 @@ export class GameScene extends Phaser.Scene {
     const k = cellKey(x, y);
     if (this.confirmCell === k) {
       this.confirmCell = null;
-      if (w.apply({ type: 'queueDig', x, y, force: true }, ME).ok) this.guide?.notify('queued');
+      if (w.apply({ type: 'queueDig', x, y, force: true }, this.me).ok) this.guide?.notify('queued');
       return;
     }
     this.confirmCell = null;
     // Swiping over auto-queued cells promotes them to the player's own queue; only own orders get cancelled.
-    const own = w.player(ME).queue.includes(k);
-    const r = !c.revealed && !own ? w.apply({ type: 'queueDig', x, y }, ME) : null;
+    const own = w.player(this.me).queue.includes(k);
+    const r = !c.revealed && !own ? w.apply({ type: 'queueDig', x, y }, this.me) : null;
     if (r?.ok) this.guide?.notify('queued');
     if (r && !r.ok && r.reason === 'assist.known_danger') {
       this.confirmCell = k;
-      this.say(t(w.visibleKnowledge(ME).get(k) === 'demon' ? 'cell.confirm_demon.hint' : 'cell.confirm_nest.hint'), 4000, true);
+      this.say(t(w.visibleKnowledge(this.me).get(k) === 'demon' ? 'cell.confirm_demon.hint' : 'cell.confirm_nest.hint'), 4000, true);
       return;
     }
     this.dragMode = r?.ok ? 'queue' : own ? 'cancel' : 'queue';
@@ -955,8 +1091,8 @@ export class GameScene extends Phaser.Scene {
     const idx = y * w.s.width + x;
     this.pressTimer = this.time.delayedCall(LONG_PRESS_MS, () => {
       if (this.lastDragCell !== idx || !this.dragMode) return;
-      if (this.dragMode === 'queue') w.apply({ type: 'cancelDig', x, y }, ME);
-      w.apply({ type: 'toggleMark', x, y }, ME);
+      if (this.dragMode === 'queue') w.apply({ type: 'cancelDig', x, y }, this.me);
+      w.apply({ type: 'toggleMark', x, y }, this.me);
       this.dragMode = null;
     });
   }
@@ -980,8 +1116,8 @@ export class GameScene extends Phaser.Scene {
     this.rightClick = null;
     if (rc && Math.hypot(p.x - rc.px, p.y - rc.py) < 10) {
       const w = this.world;
-      if (w.isQueued(ME, rc.x, rc.y)) w.apply({ type: 'cancelDig', x: rc.x, y: rc.y }, ME);
-      else w.apply({ type: 'toggleMark', x: rc.x, y: rc.y }, ME);
+      if (w.isQueued(this.me, rc.x, rc.y)) w.apply({ type: 'cancelDig', x: rc.x, y: rc.y }, this.me);
+      else w.apply({ type: 'toggleMark', x: rc.x, y: rc.y }, this.me);
     }
     this.dragMode = null;
     this.pressTimer?.remove();
@@ -993,7 +1129,7 @@ export class GameScene extends Phaser.Scene {
     if (idx === this.lastDragCell) return;
     if (this.lastDragCell !== -1) this.pressTimer?.remove();
     this.lastDragCell = idx;
-    if (this.dragMode === 'queue' && this.world.apply({ type: 'queueDig', x, y }, ME).ok) this.guide?.notify('queued');
-    else if (this.dragMode === 'cancel') this.world.apply({ type: 'cancelDig', x, y }, ME);
+    if (this.dragMode === 'queue' && this.world.apply({ type: 'queueDig', x, y }, this.me).ok) this.guide?.notify('queued');
+    else if (this.dragMode === 'cancel') this.world.apply({ type: 'cancelDig', x, y }, this.me);
   }
 }

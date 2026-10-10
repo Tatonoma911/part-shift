@@ -53,8 +53,11 @@ export function commandSpots(players: number, width: number, height: number): Sp
 export function createMatch(opts: MatchOptions): World {
   const players = opts.names.length;
   const { width, height } = boardFor(players);
+  const ruleConfig: Record<string, number | boolean> = { 'dig.autoQueueZeroNeighbors': false };
+  // Coop: 2× faster threat escalation — players must communicate or fall behind.
+  if (opts.mode === 'coop') ruleConfig['threat.secondsPerLevel'] = multiplayer.coop.escalationSecondsPerLevel;
   // FFA has no shared Demon bonus HP: it hunts whoever is closest.
-  const w = new World({ seed: opts.seed, players, width, height, rules: { config: { 'dig.autoQueueZeroNeighbors': false } } });
+  const w = new World({ seed: opts.seed, players, width, height, rules: { config: ruleConfig } });
   const s = w.s;
   s.match = { mode: opts.mode, names: [...opts.names], winner: null };
   if (opts.mode === 'ffa') s.demon.hpScale = 1;

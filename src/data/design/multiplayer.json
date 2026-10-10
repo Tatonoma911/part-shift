@@ -53,5 +53,9 @@
   },
   "energyTransfer": false,
   "disconnectGraceSeconds": 60,
-  "adsDuringMatch": false
+  "adsDuringMatch": false,
+  "coop": {
+    "escalationSecondsPerLevel": 60,
+    "comment": "Coop is significantly harder: threat levels arrive 2× faster (120→60s) and enemy nests respond accordingly. Players must coordinate or they lose."
+  }
 }

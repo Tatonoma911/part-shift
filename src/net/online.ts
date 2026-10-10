@@ -188,7 +188,8 @@ export class OnlineSession {
   }
 
   leave(): void {
+    if (this.leaving) return;
     this.leaving = true;
-    void this.room.leave(true);
+    this.room.leave(true).catch(() => undefined);
   }
 }

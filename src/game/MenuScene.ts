@@ -11,6 +11,8 @@ import { C, INK, LANDSCAPE, VIEW } from './layout';
 import { clearSlot, lastSlot, loadSettings, loadSlot, saveSettings, SLOTS } from './saves';
 import { tutorialDone } from './Tutorial';
 import { setBackHandler } from '../platform/native';
+import { closeOnlineScreen, openOnlineScreen, onlineScreenOpen } from '../net/lobby';
+import { onlineAvailable } from '../net/online';
 import { chip, plate, TXT } from './ui';
 
 type Ev = Phaser.Types.Input.EventData;
@@ -43,6 +45,7 @@ export class MenuScene extends Phaser.Scene {
   }
 
   create(): void {
+    this.input.enabled = true;
     if (!this.anims.exists('resident.idle')) createArt(this);
     const unlock = () => sound.unlock();
     window.addEventListener('pointerdown', unlock, { capture: true });
@@ -60,11 +63,21 @@ export class MenuScene extends Phaser.Scene {
       this.scene.start('game', start);
       return;
     }
+    // Friend invite link: ?room=CODE — open the online screen and join the room.
+    const roomCode = params.get('room');
+    if (!this.registry.get('deepLinked') && roomCode && onlineAvailable()) {
+      this.registry.set('deepLinked', true);
+    }
     this.drawBackdrop();
     this.show('main');
+    if (roomCode && onlineAvailable()) this.online(roomCode);
     // Android back: skips the intro comic, sub-pages return to the main page; on the main page the app goes to the background.
     setBackHandler(() => {
       if (learning().isOpen) return true;
+      if (onlineScreenOpen()) {
+        closeOnlineScreen();
+        return true;
+      }
       if (this.storyPlaying) {
         document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
         return true;
@@ -179,6 +192,7 @@ export class MenuScene extends Phaser.Scene {
         button(t('menu.continue'), () => this.play({ slot: last }), true, `${t('menu.slot', { n: last })} · ${this.fmt(s.time)}`);
       } else if (!tutorialDone()) button(t('menu.tutorial'), () => this.play({ tutorial: true }), true);
       button(t('menu.new_run'), () => this.show('slots'), !last && tutorialDone());
+      button(t('online.menu'), onlineAvailable() ? () => this.online() : null, false, onlineAvailable() ? t('online.menu_sub') : t('menu.soon'));
       if (last || tutorialDone()) button(t('menu.tutorial'), () => this.play({ tutorial: true }));
       button(t('menu.guide'), () => learning().openGuide());
       button(t('menu.settings'), () => this.show('settings'));
@@ -248,6 +262,19 @@ export class MenuScene extends Phaser.Scene {
     // Keep the panel on screen when it grows (settings has six rows).
     const overflow = top + h + 24 - VIEW.height;
     if (overflow > 0) c.y = -overflow;
+  }
+
+  /** Online screen over the menu (src/net/lobby.ts); the match opens the board. */
+  private online(initialCode?: string): void {
+    this.input.enabled = false;
+    openOnlineScreen({
+      assist: loadSettings().assist,
+      initialCode,
+      onStart: (online) => this.play({ online }),
+      onClose: () => {
+        if (this.scene.isActive()) this.input.enabled = true;
+      },
+    });
   }
 
   private play(start: GameStart): void {
