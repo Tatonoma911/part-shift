@@ -3101,7 +3101,7 @@ export class World {
     if (s.players.every((p) => !p.alive)) {
       s.outcome = 'defeat';
       this.emit('defeat');
-    } else if (s.boss.dead && !s.cells.some((c) => c.hot)) {
+    } else if (s.cells.some(isSiteCell) && s.cells.every((c) => !isSiteCell(c) || c.resolved)) {
       s.outcome = 'victory';
       this.emit('victory');
     }
