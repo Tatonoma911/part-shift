@@ -1,5 +1,5 @@
 {
-  "version": "0.3",
+  "version": "0.5",
   "_doc": "design/CAMPAIGN.md (QA F-01, F-02). Смены 1–12, каждая добавляет одну вещь",
   "alwaysOn": [
     "wave (unlimited depth until tempoAffectsWave)",
@@ -67,7 +67,7 @@
       },
       "overrides": {
         "mapgen.counts": {
-          "nest": 3,
+          "nest": 2,
           "cache": 2,
           "energy_vein": 2,
           "rubble": 6,
@@ -86,8 +86,7 @@
         ],
         "enemyHpFactor": 0.6,
         "enemyDamageFactor": 0.6,
-        "startEnergy": 150,
-        "mapgen.counts.nest": 2
+        "startEnergy": 150
       },
       "reward": "Школа спасателей в каталоге + стр. комикса",
       "grows": "поле 9×11, 2 гнезда"
@@ -121,7 +120,7 @@
       },
       "overrides": {
         "mapgen.counts": {
-          "nest": 4,
+          "nest": 3,
           "cache": 2,
           "survivor": 2,
           "rubble": 8
@@ -142,8 +141,7 @@
         ],
         "enemyHpFactor": 0.7,
         "enemyDamageFactor": 0.7,
-        "startEnergy": 140,
-        "mapgen.counts.nest": 3
+        "startEnergy": 140
       },
       "reward": "Медцентр + стр. комикса",
       "grows": "10×12, 3 гнезда, рейд раз в 90 с"
@@ -238,7 +236,13 @@
         },
         "lairTier": [
           2
-        ]
+        ],
+        "enemyHpFactor": 0.9,
+        "enemyDamageFactor": 0.9,
+        "startEnergy": 120,
+        "raids": {
+          "everySeconds": 90
+        }
       },
       "reward": "4-й слот отряда + стр. комикса",
       "grows": "12×14, 5 гнёзд, герой 2 ур."
@@ -277,7 +281,8 @@
           "survivor": 3,
           "hero_lair": 1,
           "boss_hatch": 1,
-          "armor_crate": 1
+          "armor_crate": 1,
+          "mine": 4
         },
         "lairTier": [
           1
@@ -286,7 +291,14 @@
           2
         ],
         "callTargetHpFactor": 1.0,
-        "bossSelfWakeSeconds": 720
+        "bossSelfWakeSeconds": 720,
+        "enemyHpFactor": 1.2,
+        "enemyDamageFactor": 1.0,
+        "startEnergy": 110,
+        "raids": {
+          "everySeconds": 50
+        },
+        "hazards.mine.count": 4
       },
       "reward": "тайники с выбором 1 из 3 бонусов + стр. комикса",
       "grows": "12×15, враги на уровне «Смены», цель 2 ур."
@@ -319,14 +331,15 @@
         "earlyRaid": false
       },
       "overrides": {
-        "hazards.mine.count": 4,
+        "hazards.mine.count": 6,
         "mapgen.counts": {
-          "nest": 5,
+          "nest": 6,
           "hero_lair": 2,
           "boss_hatch": 1,
           "bonus_capsule": 2,
           "medkit": 2,
-          "survivor": 4
+          "survivor": 4,
+          "mine": 6
         },
         "lairTier": [
           1,
@@ -336,7 +349,13 @@
           2,
           3
         ],
-        "callTargetHpFactor": 1.2
+        "callTargetHpFactor": 1.2,
+        "enemyHpFactor": 1.2,
+        "enemyDamageFactor": 1.1,
+        "startEnergy": 110,
+        "raids": {
+          "everySeconds": 50
+        }
       },
       "reward": "улучшение зданий до 3 уровня + стр. комикса",
       "grows": "13×16, 4 мины, цель 2–3 ур."
@@ -370,10 +389,11 @@
       },
       "overrides": {
         "mapgen.counts": {
-          "nest": 6,
+          "nest": 7,
           "hero_lair": 2,
           "boss_hatch": 1,
-          "survivor": 4
+          "survivor": 4,
+          "mine": 8
         },
         "lairTier": [
           1,
@@ -387,7 +407,13 @@
           1,
           1
         ],
-        "hazards.mine.count": 6
+        "hazards.mine.count": 8,
+        "enemyHpFactor": 1.2,
+        "enemyDamageFactor": 1.15,
+        "startEnergy": 100,
+        "raids": {
+          "everySeconds": 50
+        }
       },
       "reward": "чертёж Ретранслятора (+1 к лимиту героев)",
       "grows": "13×17, 6 мин, цель 3 ур."
@@ -430,9 +456,17 @@
         ],
         "callTargetHpFactor": 1.4,
         "mapgen.counts": {
-          "survivor": 5
+          "survivor": 5,
+          "nest": 8,
+          "mine": 10
         },
-        "hazards.mine.count": 8
+        "hazards.mine.count": 10,
+        "enemyHpFactor": 1.2,
+        "enemyDamageFactor": 1.2,
+        "startEnergy": 100,
+        "raids": {
+          "everySeconds": 50
+        }
       },
       "reward": "чертёж Вышки наблюдения",
       "grows": "14×18, 8 мин, 3 убежища выходят сами"
@@ -470,9 +504,17 @@
           4
         ],
         "mapgen.counts": {
-          "survivor": 5
+          "survivor": 5,
+          "nest": 8,
+          "mine": 14
         },
-        "hazards.mine.count": 10
+        "hazards.mine.count": 14,
+        "enemyHpFactor": 1.5,
+        "enemyDamageFactor": 1.25,
+        "startEnergy": 90,
+        "raids": {
+          "everySeconds": 40
+        }
       },
       "reward": "чертёж Глушилки Splice",
       "grows": "10 мин, тяжёлые гнёзда, цель 3–4"
@@ -510,9 +552,17 @@
           4
         ],
         "mapgen.counts": {
-          "survivor": 6
+          "survivor": 6,
+          "nest": 10,
+          "mine": 16
         },
-        "hazards.mine.count": 12
+        "hazards.mine.count": 16,
+        "enemyHpFactor": 1.5,
+        "enemyDamageFactor": 1.3,
+        "startEnergy": 90,
+        "raids": {
+          "everySeconds": 40
+        }
       },
       "reward": "чертёж Архива бэкапов",
       "grows": "12 мин, цель 3–4"
@@ -554,9 +604,17 @@
           4
         ],
         "mapgen.counts": {
-          "survivor": 6
+          "survivor": 6,
+          "nest": 11,
+          "mine": 18
         },
-        "hazards.mine.count": 14
+        "hazards.mine.count": 18,
+        "enemyHpFactor": 1.5,
+        "enemyDamageFactor": 1.35,
+        "startEnergy": 80,
+        "raids": {
+          "everySeconds": 40
+        }
       },
       "reward": "чертёж Кузницы стихий",
       "grows": "14 мин, два убежища 3 ур., цель 4"
@@ -600,9 +658,17 @@
         "callTargetHpFactor": 1.6,
         "_note": "финал кампании",
         "mapgen.counts": {
-          "survivor": 6
+          "survivor": 6,
+          "nest": 12,
+          "mine": 20
         },
-        "hazards.mine.count": 14
+        "hazards.mine.count": 20,
+        "enemyHpFactor": 1.6,
+        "enemyDamageFactor": 1.4,
+        "startEnergy": 80,
+        "raids": {
+          "everySeconds": 40
+        }
       },
       "reward": "«Аврал», свободные смены, «Вызов дня», «Обеденный вызов»; звание +5 000 очков",
       "grows": "15×19, 14 мин, цель 4 ур. ×1,6 HP"
@@ -613,5 +679,6 @@
     "3-4": "~75 %",
     "5-8": "~55 %",
     "9-12": "~35 %"
-  }
+  },
+  "_balance": "[QA F-17, 2026-10-10] Бот показал плоскую кривую (84–90 % на всех сложностях). Смены 5–12 раньше наследовали одну сложность «Смена» без ступеней. Теперь каждая смена 1–12 задаёт свои enemyHpFactor, enemyDamageFactor, число гнёзд, стартовую Энергию и интервал рейдов. Цели: 1–2 ≥95 %, 3–4 ~75 %, 5–8 ~55 %, 9–12 ~35 % (бот проверяет, человек тоже; цифры переносим после прогона). Стажёр всегда легче Смены: по данным enemyHp 0.8 < 1.05, startEnergy 120 > 70, рейды только со смены 2. [v0.5, 2026-10-10 19:07, по предложению баланс-бота v2: смены 5–8 — гнёзда 5→8, HP ×1,2, рейд раз в 50 с, мины 4→10; смены 9–12 — гнёзда 8→12, HP ×1,5 (финал ×1,6), рейд раз в 40 с, мины 14→20. Смены 3–4 оставлены: бот предлагал HP ×0,8, это легче текущих 0,85/0,9, а бот сам пишет, что кривая слишком лёгкая; гнёзда на смене 3–4 уже 4 и 5.]"
 }
