@@ -38,6 +38,7 @@ import type { PeerSession as OnlineSession } from '../net/peer';
 import { challengeUrl, closeSocial, displayName, openBoard, openDonate, profile, rankOf, recordRun, resultCard, share, shouldNudge, socialOpen, type RecordedRun } from '../social';
 
 const BEST_KEY = 'partshift.best.v1';
+const LOSS_KEY = 'partshift.losses.v1';
 const LONG_PRESS_MS = 480;
 
 type Mode = 'dig' | 'build';
@@ -1382,6 +1383,17 @@ export class GameScene extends Phaser.Scene {
     const me = w.player(this.me);
     const lines = [victory ? t('win.text') : t('lose.text'), t('win.time', { time: this.fmt(w.s.time) }), t('win.threat', { level: w.threatLevel }), t('win.nests', { count: me.stats.nests }), t('win.caches', { count: me.stats.caches })];
     let badge: string | undefined = victory ? undefined : t('lose.badge');
+    // «Последний шанс» (AUDIT: после 2 поражений подряд): счётчик в браузере игрока, сбрасывается победой.
+    if (!this.guide && !this.online) {
+      let losses = 0;
+      try {
+        losses = victory ? 0 : (Number(localStorage.getItem(LOSS_KEY)) || 0) + 1;
+        localStorage.setItem(LOSS_KEY, String(losses));
+      } catch {
+        /* ignore */
+      }
+      if (losses >= 2) lines.push(t('end.last_chance'));
+    }
     if (victory) {
       let best = Infinity;
       try {
