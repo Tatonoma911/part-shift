@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 import { hasText, t } from '../i18n';
 import { playIntro } from '../intro';
+import { openLibrary } from './library';
 import { setBackHandler } from '../platform/native';
 import { sound } from './audio';
 import { preloadComm } from './Comm';
@@ -16,7 +17,7 @@ import { drawTechOrb } from './Vitals';
  * чтобы хотели изучать это, читать, смотреть, подписываться»).
  * A short, beautiful door into the universe from the game:
  *   - the heroes as big comic figures with their bios, swipe through them, tap opens the hero's page on the site;
- *   - four comic tiles: comics, the city under the Dome, the artbook (site pages), the intro comic (plays here);
+ *   - four comic tiles: comics and the artbook (open here, game/library.ts), the city under the Dome (site page), the intro comic (plays here);
  *   - «Следите за сменой»: YouTube Shorts and Instagram (hidden until the links exist) and the universe site.
  * The stories themselves live on the site (Сайт вселенной thread), so nothing is written twice.
  * One layer: comic art + BRAND_UI plates.
@@ -42,10 +43,10 @@ export function openExternal(url: string): void {
 const HEROES = ['standard', 'patch', 'canopy', 'current', 'frostline', 'kiln', 'lineman', 'seraph', 'mason', 'sweep', 'beacon', 'hive', 'doctor', 'n73', 'demon'];
 
 const PANEL = (f: string) => new URL(`../assets/comic/panels/${f}.jpg`, import.meta.url).href;
-const TILES: { id: string; pic: string; hash?: string }[] = [
-  { id: 'comics', pic: 'city_rescue', hash: '#comics' },
+const TILES: { id: string; pic: string; hash?: string; lib?: 'comics' | 'artbook' }[] = [
+  { id: 'comics', pic: 'city_rescue', lib: 'comics' },
   { id: 'world', pic: 'dome_city', hash: '#world' },
-  { id: 'artbook', pic: 'heroes_team', hash: '#artbook' },
+  { id: 'artbook', pic: 'heroes_team', lib: 'artbook' },
   { id: 'intro', pic: 'city_sunset' },
 ];
 
@@ -249,7 +250,7 @@ export class UniverseScene extends Phaser.Scene {
     }
   }
 
-  private drawTile(x: number, y: number, w: number, h: number, tile: { id: string; pic: string; hash?: string }): void {
+  private drawTile(x: number, y: number, w: number, h: number, tile: (typeof TILES)[number]): void {
     const g = this.add.graphics();
     g.fillStyle(C.night, 0.2);
     g.fillRect(x + 6, y + 8, w, h);
@@ -270,10 +271,10 @@ export class UniverseScene extends Phaser.Scene {
       stop(ev);
       sound.play('ui_tap');
       if (tile.hash) return openExternal(`${siteBase()}${tile.hash}`);
-      // The intro comic plays right here, over this screen.
+      // Comics, the artbook and the intro comic open right here, over this screen.
       this.input.enabled = false;
       this.playing = true;
-      playIntro({ skipGate: true }).finally(() => {
+      (tile.lib ? openLibrary(tile.lib) : playIntro({ skipGate: true })).finally(() => {
         this.playing = false;
         if (this.scene.isActive()) this.input.enabled = true;
       });

@@ -365,7 +365,7 @@ export const COMICS: Comic[] = [
     series: { ru: 'Пролог', en: 'Prologue' },
     cast: { ru: 'Линейщик, мальчик-фанат', en: 'Lineman, a young fan' },
     blurb: { ru: 'Мальчик вызывает службу спасения ради автографа. Город любит своих героев, а внизу HeroOut уже выращивает им врагов.', en: 'A boy calls the rescue service just to get an autograph. The city loves its heroes, while deep below HeroOut is already growing their enemies.' },
-    pages: { ru: ['comics/prologue-ru.webp'], en: ['comics/prologue-ru.webp'] },
+    pages: { ru: ['comics/prologue-ru.webp'], en: ['comics/prologue-en.webp'] },
   },
   {
     id: 'nothing-happened',
@@ -407,7 +407,7 @@ export const COMICS: Comic[] = [
     blurb: { ru: 'Коробка домашних пончиков на смене, идеально чистый пульт и честный дележ пополам.', en: 'A box of homemade donuts on shift, a spotless console and a perfectly fair split.' },
     pages: {
       ru: [1, 2, 3, 4].map((k) => `comics/last-donut-${k}-ru.webp`),
-      en: [1, 2, 3, 4].map((k) => `comics/last-donut-${k}-ru.webp`),
+      en: [1, 2, 3, 4].map((k) => `comics/last-donut-${k}-en.webp`),
     },
   },
 ];
