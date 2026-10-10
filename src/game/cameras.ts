@@ -38,11 +38,11 @@ export class Cameras {
     this.bindInput();
   }
 
-  /** The board rectangle the view may not leave when zoomed in. */
-  setBounds(x: number, y: number, w: number, h: number): void {
+  /** The board rectangle the view may not leave when zoomed in. `grow` lets a small board (the tutorial) fill the view. */
+  setBounds(x: number, y: number, w: number, h: number, grow = false): void {
     this.bounds = { x: x - 20, y: y - 20, w: w + 40, h: h + 40 };
     const c = this.board;
-    this.fit = Math.min(1, c.width / this.bounds.w, c.height / this.bounds.h);
+    this.fit = Math.min(grow ? MAX_ZOOM : 1, c.width / this.bounds.w, c.height / this.bounds.h);
     if (this.fit < 1) this.home = { x: x + w / 2, y: y + h / 2 };
     this.zoom = this.fit;
     this.center = { ...this.home };
