@@ -71,7 +71,7 @@ export function shiftBrief(
     const tx = scene.add.text(0, 0, text, { ...TXT.body(22, INK.white, '700'), align: 'center', wordWrap: { width: Math.min(560, W - 120) } }).setOrigin(0.5);
     const g = scene.add.graphics();
     chip(g, -tx.width / 2 - 24, -tx.height / 2 - 16, tx.width + 48, tx.height + 32, C.coral, 0.96, 12);
-    toast = scene.add.container(W / 2, LANDSCAPE ? H - 70 : H - 390, [g, tx]).setDepth(depth + 2);
+    toast = scene.add.container(W / 2, LANDSCAPE ? H - 70 : 86, [g, tx]).setDepth(depth + 2);
     root.add(toast);
     const box = toast;
     scene.tweens.add({ targets: box, alpha: 0, delay: 2200, duration: 300, onComplete: () => box.destroy() });
@@ -116,6 +116,11 @@ export function shiftBrief(
     body.add(g);
     const r = Math.min(w * 0.3, h * 0.3, 80);
     body.add(portrait(scene, x + w / 2, y + 18 + r, r, e.id, 'seen'));
+    // «Заражён» chip on the portrait so the pair ours / infected reads at a glance.
+    const ib = scene.add.text(x + w / 2, y + 18 + r * 2 - 4, t('hero.infected.badge').toUpperCase(), { ...TXT.caps(INK.white), fontSize: '11px' }).setOrigin(0.5);
+    const ibg = scene.add.graphics();
+    chip(ibg, x + w / 2 - ib.width / 2 - 8, y + 18 + r * 2 - 15, ib.width + 16, 22, C.violet, 1, 6);
+    body.add([ibg, ib]);
     let cy = y + 30 + r * 2;
     const name = scene.add.text(x + w / 2, cy, t(`enemy.${e.id}.name`), TXT.num(20, INK.white)).setOrigin(0.5, 0);
     if (name.width > w - 16) name.setScale((w - 16) / name.width);
@@ -142,7 +147,7 @@ export function shiftBrief(
     }
     body.add(og);
     if (weak.length) {
-      const wt = scene.add.text(x + w / 2, cy + 30, t('squad.weak', { tech: t(`tech.${weak[0].tech}`) }), TXT.body(14, '#E8EEF0', '600')).setOrigin(0.5, 0);
+      const wt = scene.add.text(x + w / 2, cy + 30, t('squad.weak', { tech: t(`tech.${weak[0].tech}`) }), TXT.body(LANDSCAPE ? 14 : 18, '#E8EEF0', '600')).setOrigin(0.5, 0);
       if (wt.width > w - 12) wt.setScale((w - 12) / wt.width);
       body.add(wt);
     }
@@ -170,7 +175,7 @@ export function shiftBrief(
     const p = portrait(scene, x + w / 2, y + 10 + r, r, id, 'unlocked');
     if (isTaken) p.setAlpha(0.45);
     body.add(p);
-    const nm = scene.add.text(x + w / 2, y + 16 + r * 2, t(`enemy.${id}.name`), TXT.body(16, dim ? INK.dim : INK.graphite, '700')).setOrigin(0.5, 0);
+    const nm = scene.add.text(x + w / 2, y + 14 + r * 2, t(`enemy.${id}.name`), TXT.body(LANDSCAPE ? 17 : 22, dim ? INK.dim : INK.graphite, '700')).setOrigin(0.5, 0);
     if (nm.width > w - 8) nm.setScale((w - 8) / nm.width);
     body.add(nm);
     const info = scene.add.graphics();
@@ -185,10 +190,11 @@ export function shiftBrief(
     body.add(info);
     const rowY = y + h - 36;
     if (isTaken) {
+      // Under the name, never over the face (AR-22).
       const tg = scene.add.graphics();
-      chip(tg, x + 4, y + r - 8, w - 8, 26, C.coral, 0.95, 8);
+      chip(tg, x + 4, rowY - 2, w - 8, 26, C.coral, 0.95, 8);
       body.add(tg);
-      const tt = scene.add.text(x + w / 2, y + r + 5, t('squad.taken').toUpperCase(), { ...TXT.caps(INK.white), fontSize: '11px' }).setOrigin(0.5);
+      const tt = scene.add.text(x + w / 2, rowY + 11, t('squad.taken').toUpperCase(), { ...TXT.caps(INK.white), fontSize: LANDSCAPE ? '11px' : '14px' }).setOrigin(0.5);
       if (tt.width > w - 14) tt.setScale((w - 14) / tt.width);
       body.add(tt);
     } else if (isDraftHero) {
@@ -203,7 +209,7 @@ export function shiftBrief(
       stamp.setScale(Math.min(1, (w - 22) / (st.width + 12)));
       body.add(stamp);
       const pct = Math.floor(heroProgress(meta, HEROES.find((hh) => hh.id === id)!).frac * 100);
-      body.add(scene.add.text(x + w / 2, rowY, `${pct} %`, TXT.body(14, INK.dim, '700')).setOrigin(0.5, 0));
+      body.add(scene.add.text(x + w / 2, rowY - 2, `${pct} %`, TXT.body(LANDSCAPE ? 14 : 20, INK.dim, '700')).setOrigin(0.5, 0));
     } else {
       // Five sync segments.
       const lv = syncLevel(meta, id);
@@ -257,11 +263,23 @@ export function shiftBrief(
     body.add(portrait(scene, x + 18 + r, y + h / 2, r, id, 'unlocked'));
     const tx = x + 36 + r * 2;
     const tw = w - (tx - x) - 18;
-    body.add(scene.add.text(tx, y + 14, t(`enemy.${id}.name`), TXT.num(22, INK.white)));
+    const nm = scene.add.text(tx, y + 14, t(`enemy.${id}.name`), TXT.num(22, INK.white));
+    body.add(nm);
     const sub = taken.has(id) ? t('squad.taken') : isDraftHero ? t('backup.draft') : t('card.subtitle');
     const sb = scene.add.text(tx, y + 44, sub.toUpperCase(), { ...TXT.caps(isDraftHero || taken.has(id) ? '#FF9AAA' : '#7FE3F2'), fontSize: '12px' });
     if (sb.width > tw) sb.setScale(tw / sb.width);
     body.add(sb);
+    if (!taken.has(id)) {
+      // Cyan «Копия до вспышки» chip instead of a padlock (§4.6): usable, with limits.
+      const cb = scene.add.text(0, 0, t('hero.copy.badge').toUpperCase(), { ...TXT.caps('#0B1117'), fontSize: '11px' }).setOrigin(0, 0.5);
+      const cx0 = tx + nm.width + 14;
+      if (cx0 + cb.width + 16 < x + w - 14) {
+        const cbg = scene.add.graphics();
+        chip(cbg, cx0, y + 16, cb.width + 16, 24, isDraftHero ? 0xffb3bd : C.seam, 1, 6);
+        cb.setPosition(cx0 + 8, y + 28);
+        body.add([cbg, cb]);
+      } else cb.destroy();
+    }
     if (taken.has(id)) {
       body.add(scene.add.text(tx, y + 72, t('squad.taken.desc'), { ...TXT.body(16, '#E8EEF0', '500'), wordWrap: { width: tw } }));
       return;
@@ -275,7 +293,7 @@ export function shiftBrief(
     const half = (tw - 16) / 2;
     bars.forEach(([label, k], i) => {
       const bx = tx + i * (half + 16);
-      const lb = scene.add.text(bx, y + 68, label, TXT.body(14, '#E8EEF0', '600'));
+      const lb = scene.add.text(bx, y + 66, label, TXT.body(LANDSCAPE ? 14 : 18, '#E8EEF0', '600'));
       if (lb.width > half) lb.setScale(half / lb.width);
       body.add(lb);
       const bg = scene.add.graphics();
@@ -290,11 +308,11 @@ export function shiftBrief(
     const state = isDraftHero
       ? t('hero.copy.integrity', { value: Math.floor(heroProgress(meta, hero).frac * 100) })
       : t('sync.label', { value: syncLevel(meta, id) });
-    body.add(scene.add.text(tx, y + 112, state, TXT.body(14, '#B8C4C8', '600')));
+    body.add(scene.add.text(tx, y + 110, state, TXT.body(LANDSCAPE ? 14 : 18, '#B8C4C8', '600')));
     const ab = hasText(`ally.${id}.desc`) ? t(`ally.${id}.desc`) : '';
     if (ab && h >= 140) {
       const at = scene.add.text(tx, y + 134, isDraftHero ? t('card.ability_off') : ab, {
-        ...TXT.body(14, isDraftHero ? '#8A969A' : '#E8EEF0', '500'),
+        ...TXT.body(LANDSCAPE ? 14 : 17, isDraftHero ? '#8A969A' : '#E8EEF0', '500'),
         wordWrap: { width: tw },
       });
       if (at.height > h - 140) at.setScale(Math.max(0.86, (h - 140) / at.height));
@@ -349,7 +367,7 @@ export function shiftBrief(
     body.add(g);
     const pad = 36;
     const others = HEROES.map((h) => h.id);
-    const focusH = 176;
+    const focusH = 192;
 
     if (LANDSCAPE) {
       // PC: enemies in a column on the left, squad on the right.
