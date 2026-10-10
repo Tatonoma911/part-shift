@@ -3118,7 +3118,7 @@ export class World {
     if (s.players.every((p) => !p.alive)) {
       s.outcome = 'defeat';
       this.emit('defeat');
-    } else if (s.cells.some(isNestCell) && s.cells.every((c) => !isNestCell(c) || c.resolved)) {
+    } else if (!this.rules.holdVictory && s.cells.some(isNestCell) && s.cells.every((c) => !isNestCell(c) || c.resolved)) {
       s.outcome = 'victory';
       this.emit('victory');
     }

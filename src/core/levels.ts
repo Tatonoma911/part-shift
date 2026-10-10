@@ -33,6 +33,7 @@ export function createTutorialWorld(seed = 1): World {
     threatEnabled: o['config.threat.enabled'] !== false,
     bossEnabled: o['config.boss.enabled'] !== false,
     commandInvulnerable: o.commandInvulnerable === true,
+    holdVictory: true,
     relativeSites: t.commandPlacement?.relativeSites as RuleOverrides['relativeSites'],
     relativeTech: (o.nestTech as Tech) ?? 'cryo',
     nest: o.nest as RuleOverrides['nest'],
