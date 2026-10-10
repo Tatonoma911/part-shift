@@ -101,6 +101,8 @@ class SoundBoard {
   private afterBoss = false;
   private afterEnd = false;
   private ducked = false;
+  /** The guide's theme is playing; `back` is the track to return to. */
+  private lore: { back: string | null } | null = null;
   private combo = { step: 0, at: -1e9 };
   prefs: SoundPrefs = { ...DEFAULT_PREFS };
 
@@ -235,6 +237,33 @@ class SoundBoard {
    * hand over to 'menu' when they end.
    */
   playMusic(id: string): void {
+    // While the guide is open its theme plays; the game's choice waits for it to close.
+    if (this.lore) {
+      this.lore.back = id;
+      return;
+    }
+    this.switchMusic(id);
+  }
+
+  /** The guide (справочник) opened over the menu or a run: its theme crossfades in, undimmed by pause. */
+  openLore(): void {
+    if (this.lore) return;
+    this.lore = { back: this.wantMusic };
+    this.switchMusic('lore');
+    this.duck(this.ducked);
+  }
+
+  /** The guide closed: crossfade back to what was playing (or what the game asked for meanwhile). */
+  closeLore(): void {
+    const l = this.lore;
+    if (!l) return;
+    this.lore = null;
+    this.duck(this.ducked);
+    if (l.back) this.switchMusic(l.back);
+    else this.stopMusic(3);
+  }
+
+  private switchMusic(id: string): void {
     if (this.wantMusic === id && this.tracks.length) return;
     this.wantMusic = id;
     if (!this.ctx) return;
@@ -252,8 +281,12 @@ class SoundBoard {
       const fromSynced = this.runStart !== null && old.length > 0;
       let at = now + 0.1;
       if (synced && fromSynced) at = this.runStart! + Math.ceil((now + 0.1 - this.runStart!) / BAR) * BAR;
-      const stage = old.length > 0 && !(id === 'menu' || id === 'victory' || id === 'defeat');
-      const fadeIn = this.afterBoss || (id === 'menu' && this.afterEnd) ? 3 : stage ? (synced && fromSynced ? 1.5 : 3) : 0.4;
+      // Every change is a crossfade (Антон: no track ever cuts off). A victory/defeat sting keeps its
+      // attack while the old music fades under it; 92 bpm stages swap on the bar; the rest take 3 s.
+      const oneShot = !defs[0].loop;
+      const quick = synced && fromSynced;
+      const fadeIn = oneShot ? 0.25 : quick ? 1.5 : old.length || this.afterBoss || this.afterEnd ? 3 : 2;
+      const fadeOld = oneShot ? 2.5 : at + fadeIn - now;
       this.afterBoss = this.afterEnd = false;
       this.tracks = ids.map((m, i) => {
         const def = defs[i];
@@ -271,13 +304,14 @@ class SoundBoard {
           src.onended = () => {
             if (this.wantMusic !== id) return;
             this.afterEnd = true;
+            this.tracks = [];
             this.playMusic('menu');
           };
         return { id: m, src, gain, volume: def.volume };
       });
       if (!synced) this.runStart = null;
       else if (!fromSynced) this.runStart = at;
-      this.fadeOut(old, stage ? at + fadeIn - now : 0.4);
+      this.fadeOut(old, fadeOld);
       this.evictMusic(ids);
     });
   }
@@ -331,7 +365,7 @@ class SoundBoard {
 
   private musicLevel(): number {
     // Music bus default 0.5 at full slider (contracts.md, "Звук"), squared like the others.
-    return 0.5 * this.prefs.music * this.prefs.music * (this.ducked ? 0.35 : 1);
+    return 0.5 * this.prefs.music * this.prefs.music * (this.ducked && !this.lore ? 0.35 : 1);
   }
 
   private fadeOut(tracks: MusicTrack[], seconds: number): void {
@@ -351,7 +385,8 @@ class SoundBoard {
   }
 
   /** Victory and defeat duck the music to zero and stop it (sounds.json note). */
-  stopMusic(fadeSeconds = 0.6): void {
+  stopMusic(fadeSeconds = 1.5): void {
+    this.lore = null;
     this.wantMusic = null;
     this.musicToken++;
     this.fadeOut(this.tracks, fadeSeconds);
@@ -360,10 +395,9 @@ class SoundBoard {
     if (this.ducked) this.duck(false);
   }
 
-  /** Victory / defeat sting after the fade; 'menu' follows when it ends. */
+  /** Victory / defeat sting over the fading run music; 'menu' follows when it ends. */
   playEnd(victory: boolean): void {
-    this.stopMusic(0.5);
-    setTimeout(() => this.playMusic(victory ? 'victory' : 'defeat'), 550);
+    this.playMusic(victory ? 'victory' : 'defeat');
   }
 }
 

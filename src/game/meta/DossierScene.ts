@@ -43,6 +43,8 @@ export class DossierScene extends Phaser.Scene {
   }
 
   create(): void {
+    // Hero files get the guide's calm theme; the menu theme crossfades back on the way out.
+    sound.playMusic('lore');
     const W = VIEW.width;
     const g = this.add.graphics();
     g.fillGradientStyle(0xeaf5f8, 0xeaf5f8, C.sky2, C.sky2, 1);
