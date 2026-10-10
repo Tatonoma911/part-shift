@@ -538,8 +538,8 @@
    "lines": [
     {
      "key": "hero.line.sweep.1",
-     "ru": "Обнаружена грязь. Обнаружен вы. Совпадение?",
-     "en": "Dirt detected. You detected. Coincidence?"
+     "ru": "Обнаружена грязь. Это вы.",
+     "en": "Dirt detected. It's you."
     },
     {
      "key": "hero.line.sweep.2",

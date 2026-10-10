@@ -117,14 +117,14 @@ export const SCRIPT = [
   },
   { // 6
     tag: { ru: 'УРОВЕНЬ 42 // РУКОВОДСТВО', en: 'LEVEL 42 // EXECUTIVE' },
-    wide: { cols: '1fr 0.5fr', rows: '1.1fr 0.62fr', areas: '"a d" "b d"' },
-    tall: { cols: '1fr 0.55fr', rows: '1fr 0.9fr', areas: '"a a" "b d"' },
+    wide: { cols: '1fr 0.45fr', rows: '1fr 1fr', areas: '"a d" "b d"' },
+    tall: { cols: '1fr 0.45fr', rows: '1fr 1.1fr', areas: '"a a" "b d"' },
     panels: [
       { img: 'boardroom', area: 'a', kb: [1.0, 1.04, 0, 0], beats: [
         { k: 'say', who: 'exec', at: [33, 3], w: 27, tail: 'r', ru: 'Город платит нам, пока у него что-то случается.', en: 'The city pays us as long as something keeps happening.' },
         { k: 'say', who: 'boss', at: [3, 64], w: 36, tail: 't', ru: 'Значит, пусть случается почаще.', en: 'Then let it happen more often.' },
       ] },
-      { img: 'button', area: 'b', kb: [1.0, 1.05, 1, 1], fx: 'redpulse', beats: [
+      { img: 'button', area: 'b', fit: 'contain', kb: [1.0, 1.02, 0, 0], fx: 'redpulse', beats: [
         { k: 'cap', at: [4, 5], w: 90, ru: 'С тех пор кошки почему-то стали чаще залезать на деревья, а краны чаще сходить с ума.', en: 'From then on, for some reason, cats climbed trees more often and cranes went crazy more often.', sfx: 'ui_tap' },
         { k: 'cap', at: [4, 66], w: 90, ru: 'А на геле Splice HeroOut стала самой богатой компанией в городе.', en: 'And Splice gel made HeroOut the richest company in the city.' },
       ] },
@@ -203,9 +203,9 @@ export const SCRIPT = [
   { // 10
     tag: { ru: 'КАРАНТИН // ГОЛОС КОНТРОЛЯ', en: 'QUARANTINE // THE VOICE OF CONTROL' },
     wide: { cols: '0.45fr 1.55fr', rows: '1fr 1fr', areas: '"a b" "a c"' },
-    tall: { cols: '1fr', rows: '0.45fr 1fr 1fr', areas: '"a" "b" "c"' },
+    tall: { cols: '1fr', rows: '0.8fr 1fr 1fr', areas: '"a" "b" "c"' },
     panels: [
-      { img: 'tendril', area: 'a', kb: [1.0, 1.05, 0, 0], fx: 'glow', beats: [
+      { img: 'tendril', area: 'a', fit: 'contain', kb: [1.0, 1.03, 0, 0], fx: 'glow', beats: [
         { k: 'cap', at: [4, 5], w: 90, ru: 'Заражение расползается дальше, квартал за кварталом.', en: 'The infection keeps spreading, block after block.' },
       ] },
       { img: 'quarantine_city', area: 'b', fit: 'contain', kb: [1.0, 1.04, 0, 0], beats: [
@@ -220,8 +220,8 @@ export const SCRIPT = [
   },
   { // 11
     tag: { ru: 'СМЕНА 01 // ТВОЙ ХОД', en: 'SHIFT 01 // YOUR MOVE' },
-    wide: { cols: '1.1fr 0.9fr', rows: '0.6fr 1fr', areas: '"a a" "b c"' },
-    tall: { cols: '1fr', rows: '0.6fr 0.9fr 1fr', areas: '"a" "b" "c"' },
+    wide: { cols: '1.1fr 0.9fr', rows: '0.75fr 1fr', areas: '"a a" "b c"' },
+    tall: { cols: '1fr', rows: '0.75fr 0.9fr 1fr', areas: '"a" "b" "c"' },
     panels: [
       { img: 'backup_print', area: 'a', fit: 'contain', kb: [1.0, 1.04, 0, 0], beats: [
         { k: 'cap', at: [4, 4], w: 92, ru: 'Но у HeroOut остались бэкапы всех спасателей, снятые ещё до вспышки. Из них можно напечатать героев, которые пока в своём уме.', en: 'But HeroOut still has backups of every rescuer, taken before the outbreak. You can print heroes from them who are still in their right minds.' },
@@ -271,8 +271,9 @@ const CSS = `
  clip-path:polygon(10px 0,100% 0,100% calc(100% - 10px),calc(100% - 10px) 100%,0 100%,0 10px)}
 .psc-page.out{transform:translateX(-40px) scale(.97);opacity:0}
 .psc-page.in{transform:translateX(40px) scale(.97);opacity:0}
-.psc-panel{position:relative;overflow:hidden;display:flex;flex-direction:column;background:var(--graph);border:3px solid var(--graph);opacity:0;transform:scale(.94);
+.psc-panel{position:relative;overflow:hidden;display:flex;flex-direction:column;background:var(--graph);border:3px solid var(--graph);opacity:.22;transform:scale(.97);
  transition:opacity .45s ease,transform .6s cubic-bezier(.2,.9,.25,1.15),clip-path .6s ease;clip-path:inset(0 100% 0 0)}
+.psc-panel:not(.show)>*{visibility:hidden}
 .psc-panel.show{opacity:1;transform:none;clip-path:inset(0 0 0 0)}
 .psc-pic{position:relative;flex:1;min-height:0;overflow:hidden}
 .psc-band{flex:none;display:flex;flex-direction:column;gap:5px;padding:7px 8px;background:var(--graph)}
