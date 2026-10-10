@@ -1,4 +1,3 @@
-import Phaser from 'phaser';
 import { openAccountPanel } from '../account/panel';
 import { BUILDABLE, boons, buildings as buildingDefs, config } from '../core/data';
 import { cellKey } from '../core/grid';
@@ -249,6 +248,7 @@ export class GameScene extends Phaser.Scene {
   /** «Землекоп: серебро» plates from the top (ACHIEVEMENTS.md §3), one after another. */
   private medals!: MedalToasts;
   private overlay: Phaser.GameObjects.Container | null = null;
+  private buildingPanel: { id: number; card: Phaser.GameObjects.Container; armed: CardActionId | null; armedAt: number; sig: string } | null = null;
   private guideBox: { text: Phaser.GameObjects.Text; dots: Phaser.GameObjects.Graphics; g: Phaser.GameObjects.Graphics; y: number; h: number } | null = null;
 
   private paused = false;
