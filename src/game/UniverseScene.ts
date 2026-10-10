@@ -88,8 +88,11 @@ export class UniverseScene extends Phaser.Scene {
     chip(bg, pad, 34, 88, 72, C.graphite, 1, 14);
     this.add.text(pad + 44, 70, '←', TXT.num(30, INK.white)).setOrigin(0.5);
     const back = this.add.zone(pad - 8, 26, 104, 88).setOrigin(0).setInteractive({ useHandCursor: true });
+    back.on('pointerover', () => this.tweens.add({ targets: bg, alpha: 0.7, scaleX: 1.08, scaleY: 1.08, duration: 100, ease: 'Sine.Out' }));
+    back.on('pointerout', () => this.tweens.add({ targets: bg, alpha: 1, scaleX: 1, scaleY: 1, duration: 120, ease: 'Sine.Out' }));
     back.on('pointerdown', (_p: Phaser.Input.Pointer, _x: number, _y: number, ev: Ev) => {
       stop(ev);
+      this.tweens.add({ targets: bg, scaleX: 0.9, scaleY: 0.9, duration: 60, yoyo: true });
       this.leave();
     });
     this.add.text(pad + 112, 40, t('universe.kicker').toUpperCase(), TXT.caps(INK.teal));
@@ -267,8 +270,15 @@ export class UniverseScene extends Phaser.Scene {
     const cap = this.add.text(x + 12, y + h - 12, t(`universe.tile.${tile.id}`).toUpperCase(), { ...TXT.caps(INK.graphite), backgroundColor: '#FFE14D', padding: { x: 10, y: 6 } }).setOrigin(0, 1);
     if (cap.width > w - 24) cap.setScale((w - 24) / cap.width);
     const hit = this.add.zone(x, y, w, h).setOrigin(0).setInteractive({ useHandCursor: true });
+    hit.on('pointerover', () => {
+      this.tweens.add({ targets: g, alpha: 0.88, scaleX: 1.02, scaleY: 1.02, duration: 120, ease: 'Sine.Out' });
+    });
+    hit.on('pointerout', () => {
+      this.tweens.add({ targets: g, alpha: 1, scaleX: 1, scaleY: 1, duration: 150, ease: 'Sine.Out' });
+    });
     hit.on('pointerdown', (_p: Phaser.Input.Pointer, _x: number, _y: number, ev: Ev) => {
       stop(ev);
+      this.tweens.add({ targets: g, scaleX: 0.96, scaleY: 0.96, duration: 70, yoyo: true, ease: 'Sine.InOut' });
       sound.play('ui_tap');
       if (tile.hash) return openExternal(`${siteBase()}${tile.hash}`);
       // Comics, the artbook and the intro comic open right here, over this screen.
@@ -306,8 +316,15 @@ export class UniverseScene extends Phaser.Scene {
       const tl = this.add.text(bx + bw / 2, by + bh / 2, b.label, TXT.body(22, b.ink, '800')).setOrigin(0.5);
       if (tl.width > bw - 20) tl.setScale((bw - 20) / tl.width);
       const hit = this.add.zone(bx, by, bw, bh).setOrigin(0).setInteractive({ useHandCursor: true });
+      hit.on('pointerover', () => {
+        this.tweens.add({ targets: bg, alpha: 0.82, scaleX: 1.04, scaleY: 1.04, duration: 110, ease: 'Sine.Out' });
+      });
+      hit.on('pointerout', () => {
+        this.tweens.add({ targets: bg, alpha: 1, scaleX: 1, scaleY: 1, duration: 130, ease: 'Sine.Out' });
+      });
       hit.on('pointerdown', (_p: Phaser.Input.Pointer, _x: number, _y: number, ev: Ev) => {
         stop(ev);
+        this.tweens.add({ targets: bg, scaleX: 0.95, scaleY: 0.95, duration: 60, yoyo: true, ease: 'Sine.InOut' });
         sound.play('ui_tap');
         openExternal(b.url);
       });
@@ -355,8 +372,11 @@ export function universeButton(scene: Phaser.Scene, cx: number, y: number, w: nu
   shine.setMask(sm.createGeometryMask());
   scene.tweens.add({ targets: shine, x: { from: -40, to: w + 40 }, duration: 900, delay: 2600, repeat: -1, repeatDelay: 2600, ease: 'Sine.easeInOut' });
   const hit = scene.add.zone(-4, -4, w + 8, h + 8).setOrigin(0).setInteractive({ useHandCursor: true });
+  hit.on('pointerover', () => scene.tweens.add({ targets: g, alpha: 0.85, scaleX: 1.015, scaleY: 1.015, duration: 110, ease: 'Sine.Out' }));
+  hit.on('pointerout', () => scene.tweens.add({ targets: g, alpha: 1, scaleX: 1, scaleY: 1, duration: 130, ease: 'Sine.Out' }));
   hit.on('pointerdown', (_p: Phaser.Input.Pointer, _x: number, _y: number, ev: Ev) => {
     stop(ev);
+    scene.tweens.add({ targets: g, scaleX: 0.97, scaleY: 0.97, duration: 70, yoyo: true, ease: 'Sine.InOut' });
     sound.play('ui_tap');
     onTap();
   });
