@@ -1,0 +1,528 @@
+{
+ "scale": 2,
+ "cell": 52,
+ "note": "Пачка 4 (slice_gpt_b4.py): находки и тайники (70 % клетки, anchor — центр клетки) и объекты gpt_extra (anchor = (cw/2, ch − cw/4), как objects_gpt).",
+ "objects": {
+  "find_blueprint": {
+   "id": "find_blueprint",
+   "note": "обрывок чертежа (синяя бумага)",
+   "file": "objects_gpt_b4/find_blueprint.png",
+   "size": [
+    52,
+    52
+   ],
+   "anchor": [
+    26,
+    26
+   ],
+   "fill": 0.7,
+   "source": "source/incoming/gpt/155_board_finds_v2.png"
+  },
+  "find_armor": {
+   "id": "find_armor",
+   "note": "оливковый ящик с бронеплитами",
+   "file": "objects_gpt_b4/find_armor.png",
+   "size": [
+    52,
+    52
+   ],
+   "anchor": [
+    26,
+    26
+   ],
+   "fill": 0.7,
+   "source": "source/incoming/gpt/155_board_finds_v2.png"
+  },
+  "find_record": {
+   "id": "find_record",
+   "note": "запись Контроля (кассета)",
+   "file": "objects_gpt_b4/find_record.png",
+   "size": [
+    52,
+    52
+   ],
+   "anchor": [
+    26,
+    26
+   ],
+   "fill": 0.7,
+   "source": "source/incoming/gpt/155_board_finds_v2.png"
+  },
+  "cache_common": {
+   "id": "cache_common",
+   "note": "обычный тайник: белый ящик",
+   "file": "objects_gpt_b4/cache_common.png",
+   "size": [
+    52,
+    52
+   ],
+   "anchor": [
+    26,
+    26
+   ],
+   "fill": 0.7,
+   "source": "source/incoming/gpt/177_map_caches_v2.png"
+  },
+  "cache_rare": {
+   "id": "cache_rare",
+   "note": "редкий тайник: светящийся голубой куб",
+   "file": "objects_gpt_b4/cache_rare.png",
+   "size": [
+    52,
+    52
+   ],
+   "anchor": [
+    26,
+    26
+   ],
+   "fill": 0.7,
+   "source": "source/incoming/gpt/177_map_caches_v2.png"
+  },
+  "cache_control": {
+   "id": "cache_control",
+   "note": "сейф Контроля",
+   "file": "objects_gpt_b4/cache_control.png",
+   "size": [
+    52,
+    52
+   ],
+   "anchor": [
+    26,
+    26
+   ],
+   "fill": 0.7,
+   "source": "source/incoming/gpt/177_map_caches_v2.png"
+  },
+  "cache_supply": {
+   "id": "cache_supply",
+   "note": "сброс снабжения с парашютом",
+   "file": "objects_gpt_b4/cache_supply.png",
+   "size": [
+    52,
+    52
+   ],
+   "anchor": [
+    26,
+    26
+   ],
+   "fill": 0.7,
+   "source": "source/incoming/gpt/177_map_caches_v2.png"
+  },
+  "mine_toxin_hidden": {
+   "id": "mine_toxin_hidden",
+   "file": "objects_gpt_b4/mine_toxin_hidden.png",
+   "size": [
+    52,
+    40
+   ],
+   "anchor": [
+    26,
+    27
+   ],
+   "source": "source/incoming/gpt_extra/x01_mines_five_elements_four_states.png"
+  },
+  "mine_toxin_armed": {
+   "id": "mine_toxin_armed",
+   "file": "objects_gpt_b4/mine_toxin_armed.png",
+   "size": [
+    52,
+    51
+   ],
+   "anchor": [
+    26,
+    38
+   ],
+   "source": "source/incoming/gpt_extra/x01_mines_five_elements_four_states.png"
+  },
+  "mine_toxin_triggered": {
+   "id": "mine_toxin_triggered",
+   "file": "objects_gpt_b4/mine_toxin_triggered.png",
+   "size": [
+    52,
+    53
+   ],
+   "anchor": [
+    26,
+    40
+   ],
+   "source": "source/incoming/gpt_extra/x01_mines_five_elements_four_states.png"
+  },
+  "mine_toxin_spent": {
+   "id": "mine_toxin_spent",
+   "file": "objects_gpt_b4/mine_toxin_spent.png",
+   "size": [
+    52,
+    51
+   ],
+   "anchor": [
+    26,
+    38
+   ],
+   "source": "source/incoming/gpt_extra/x01_mines_five_elements_four_states.png"
+  },
+  "mine_volt_hidden": {
+   "id": "mine_volt_hidden",
+   "file": "objects_gpt_b4/mine_volt_hidden.png",
+   "size": [
+    52,
+    39
+   ],
+   "anchor": [
+    26,
+    26
+   ],
+   "source": "source/incoming/gpt_extra/x01_mines_five_elements_four_states.png"
+  },
+  "mine_volt_armed": {
+   "id": "mine_volt_armed",
+   "file": "objects_gpt_b4/mine_volt_armed.png",
+   "size": [
+    52,
+    48
+   ],
+   "anchor": [
+    26,
+    35
+   ],
+   "source": "source/incoming/gpt_extra/x01_mines_five_elements_four_states.png"
+  },
+  "mine_volt_triggered": {
+   "id": "mine_volt_triggered",
+   "file": "objects_gpt_b4/mine_volt_triggered.png",
+   "size": [
+    52,
+    50
+   ],
+   "anchor": [
+    26,
+    37
+   ],
+   "source": "source/incoming/gpt_extra/x01_mines_five_elements_four_states.png"
+  },
+  "mine_volt_spent": {
+   "id": "mine_volt_spent",
+   "file": "objects_gpt_b4/mine_volt_spent.png",
+   "size": [
+    52,
+    39
+   ],
+   "anchor": [
+    26,
+    26
+   ],
+   "source": "source/incoming/gpt_extra/x01_mines_five_elements_four_states.png"
+  },
+  "mine_fire_hidden": {
+   "id": "mine_fire_hidden",
+   "file": "objects_gpt_b4/mine_fire_hidden.png",
+   "size": [
+    52,
+    40
+   ],
+   "anchor": [
+    26,
+    27
+   ],
+   "source": "source/incoming/gpt_extra/x01_mines_five_elements_four_states.png"
+  },
+  "mine_fire_armed": {
+   "id": "mine_fire_armed",
+   "file": "objects_gpt_b4/mine_fire_armed.png",
+   "size": [
+    52,
+    48
+   ],
+   "anchor": [
+    26,
+    35
+   ],
+   "source": "source/incoming/gpt_extra/x01_mines_five_elements_four_states.png"
+  },
+  "mine_fire_triggered": {
+   "id": "mine_fire_triggered",
+   "file": "objects_gpt_b4/mine_fire_triggered.png",
+   "size": [
+    52,
+    54
+   ],
+   "anchor": [
+    26,
+    41
+   ],
+   "source": "source/incoming/gpt_extra/x01_mines_five_elements_four_states.png"
+  },
+  "mine_fire_spent": {
+   "id": "mine_fire_spent",
+   "file": "objects_gpt_b4/mine_fire_spent.png",
+   "size": [
+    52,
+    55
+   ],
+   "anchor": [
+    26,
+    42
+   ],
+   "source": "source/incoming/gpt_extra/x01_mines_five_elements_four_states.png"
+  },
+  "mine_force_hidden": {
+   "id": "mine_force_hidden",
+   "file": "objects_gpt_b4/mine_force_hidden.png",
+   "size": [
+    52,
+    40
+   ],
+   "anchor": [
+    26,
+    27
+   ],
+   "source": "source/incoming/gpt_extra/x01_mines_five_elements_four_states.png"
+  },
+  "mine_force_armed": {
+   "id": "mine_force_armed",
+   "file": "objects_gpt_b4/mine_force_armed.png",
+   "size": [
+    52,
+    50
+   ],
+   "anchor": [
+    26,
+    37
+   ],
+   "source": "source/incoming/gpt_extra/x01_mines_five_elements_four_states.png"
+  },
+  "mine_force_triggered": {
+   "id": "mine_force_triggered",
+   "file": "objects_gpt_b4/mine_force_triggered.png",
+   "size": [
+    52,
+    53
+   ],
+   "anchor": [
+    26,
+    40
+   ],
+   "source": "source/incoming/gpt_extra/x01_mines_five_elements_four_states.png"
+  },
+  "mine_force_spent": {
+   "id": "mine_force_spent",
+   "file": "objects_gpt_b4/mine_force_spent.png",
+   "size": [
+    52,
+    49
+   ],
+   "anchor": [
+    26,
+    36
+   ],
+   "source": "source/incoming/gpt_extra/x01_mines_five_elements_four_states.png"
+  },
+  "mine_ice_hidden": {
+   "id": "mine_ice_hidden",
+   "file": "objects_gpt_b4/mine_ice_hidden.png",
+   "size": [
+    52,
+    40
+   ],
+   "anchor": [
+    26,
+    27
+   ],
+   "source": "source/incoming/gpt_extra/x01_mines_five_elements_four_states.png"
+  },
+  "mine_ice_armed": {
+   "id": "mine_ice_armed",
+   "file": "objects_gpt_b4/mine_ice_armed.png",
+   "size": [
+    52,
+    49
+   ],
+   "anchor": [
+    26,
+    36
+   ],
+   "source": "source/incoming/gpt_extra/x01_mines_five_elements_four_states.png"
+  },
+  "mine_ice_triggered": {
+   "id": "mine_ice_triggered",
+   "file": "objects_gpt_b4/mine_ice_triggered.png",
+   "size": [
+    52,
+    51
+   ],
+   "anchor": [
+    26,
+    38
+   ],
+   "source": "source/incoming/gpt_extra/x01_mines_five_elements_four_states.png"
+  },
+  "mine_ice_spent": {
+   "id": "mine_ice_spent",
+   "file": "objects_gpt_b4/mine_ice_spent.png",
+   "size": [
+    52,
+    51
+   ],
+   "anchor": [
+    26,
+    38
+   ],
+   "source": "source/incoming/gpt_extra/x01_mines_five_elements_four_states.png"
+  },
+  "bonus_capsule_closed": {
+   "id": "bonus_capsule_closed",
+   "file": "objects_gpt_b4/bonus_capsule_closed.png",
+   "size": [
+    52,
+    43
+   ],
+   "anchor": [
+    26,
+    30
+   ],
+   "source": "source/incoming/gpt_extra/x02_bonus_capsule_four_states.png"
+  },
+  "bonus_capsule_opening": {
+   "id": "bonus_capsule_opening",
+   "file": "objects_gpt_b4/bonus_capsule_opening.png",
+   "size": [
+    52,
+    58
+   ],
+   "anchor": [
+    26,
+    45
+   ],
+   "source": "source/incoming/gpt_extra/x02_bonus_capsule_four_states.png"
+  },
+  "bonus_capsule_open_glow": {
+   "id": "bonus_capsule_open_glow",
+   "file": "objects_gpt_b4/bonus_capsule_open_glow.png",
+   "size": [
+    52,
+    62
+   ],
+   "anchor": [
+    26,
+    49
+   ],
+   "source": "source/incoming/gpt_extra/x02_bonus_capsule_four_states.png"
+  },
+  "bonus_capsule_empty": {
+   "id": "bonus_capsule_empty",
+   "file": "objects_gpt_b4/bonus_capsule_empty.png",
+   "size": [
+    52,
+    48
+   ],
+   "anchor": [
+    26,
+    35
+   ],
+   "source": "source/incoming/gpt_extra/x02_bonus_capsule_four_states.png"
+  },
+  "medkit_closed": {
+   "id": "medkit_closed",
+   "file": "objects_gpt_b4/medkit_closed.png",
+   "size": [
+    52,
+    31
+   ],
+   "anchor": [
+    26,
+    18
+   ],
+   "source": "source/incoming/gpt_extra/x03_medkit_four_states.png"
+  },
+  "medkit_open": {
+   "id": "medkit_open",
+   "file": "objects_gpt_b4/medkit_open.png",
+   "size": [
+    52,
+    41
+   ],
+   "anchor": [
+    26,
+    28
+   ],
+   "source": "source/incoming/gpt_extra/x03_medkit_four_states.png"
+  },
+  "medkit_use_glow": {
+   "id": "medkit_use_glow",
+   "file": "objects_gpt_b4/medkit_use_glow.png",
+   "size": [
+    52,
+    43
+   ],
+   "anchor": [
+    26,
+    30
+   ],
+   "source": "source/incoming/gpt_extra/x03_medkit_four_states.png"
+  },
+  "medkit_spent": {
+   "id": "medkit_spent",
+   "file": "objects_gpt_b4/medkit_spent.png",
+   "size": [
+    52,
+    31
+   ],
+   "anchor": [
+    26,
+    18
+   ],
+   "source": "source/incoming/gpt_extra/x03_medkit_four_states.png"
+  },
+  "build_hologram": {
+   "id": "build_hologram",
+   "file": "objects_gpt_b4/build_hologram.png",
+   "size": [
+    52,
+    52
+   ],
+   "anchor": [
+    26,
+    39
+   ],
+   "source": "source/incoming/gpt_extra/x04_build_overlays_four_states.png"
+  },
+  "build_scaffold": {
+   "id": "build_scaffold",
+   "file": "objects_gpt_b4/build_scaffold.png",
+   "size": [
+    52,
+    66
+   ],
+   "anchor": [
+    26,
+    53
+   ],
+   "source": "source/incoming/gpt_extra/x04_build_overlays_four_states.png"
+  },
+  "build_done_ring": {
+   "id": "build_done_ring",
+   "file": "objects_gpt_b4/build_done_ring.png",
+   "size": [
+    52,
+    55
+   ],
+   "anchor": [
+    26,
+    42
+   ],
+   "source": "source/incoming/gpt_extra/x04_build_overlays_four_states.png"
+  },
+  "build_collapse_dust": {
+   "id": "build_collapse_dust",
+   "file": "objects_gpt_b4/build_collapse_dust.png",
+   "size": [
+    52,
+    62
+   ],
+   "anchor": [
+    26,
+    49
+   ],
+   "source": "source/incoming/gpt_extra/x04_build_overlays_four_states.png"
+  }
+ }
+}

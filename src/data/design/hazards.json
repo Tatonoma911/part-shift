@@ -1,0 +1,26 @@
+{
+  "_doc": "Mines, bonus capsules and medkits (batch04/future, art 213–215). Defaults by Программист 2 until the game designer moves them into design/data.",
+  "mine": {
+    "fuseSeconds": 1.2,
+    "radius": 1,
+    "damage": 25,
+    "buildingDamage": 25,
+    "status": {
+      "thermo": { "burnDps": 4, "seconds": 4 },
+      "toxin": { "poisonDps": 3, "seconds": 5, "defenseMinus": 1 },
+      "volt": { "stunSeconds": 2 },
+      "cryo": { "stunSeconds": 3 },
+      "impact": { "bareSeconds": 10 }
+    }
+  },
+  "bonusCapsule": {
+    "types": {
+      "energy": { "amount": 40 },
+      "armor": { "plates": 1 },
+      "repair": { "percent": 30 },
+      "sync": { "charges": 1 },
+      "damage_resist": { "factor": 0.7, "seconds": 20 }
+    }
+  },
+  "medkit": { "radius": 1, "hpPerSecond": 3, "seconds": 10, "doctorFactor": 1.5 }
+}

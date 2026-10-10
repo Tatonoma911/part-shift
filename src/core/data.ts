@@ -10,6 +10,7 @@ import elementsJson from '../data/design/elements.json';
 import enemiesJson from '../data/design/enemies.json';
 import heroesJson from '../data/design/heroes.json';
 import mapgenJson from '../data/design/mapgen.json';
+import hazardsJson from '../data/design/hazards.json';
 import multiplayerJson from '../data/design/multiplayer.json';
 import partsJson from '../data/design/parts.json';
 import unitsJson from '../data/design/units.json';
@@ -169,6 +170,20 @@ for (const [name, table] of Object.entries({
 /** boss.selfWakeSeconds comes from the difficulty level (World.effectiveConfig fills it in). */
 export const config = configJson as unknown as Omit<typeof configJson, 'boss'> & { boss: { selfWakeSeconds: number; warningSeconds: number } };
 export const mapgen = mapgenJson;
+
+/** Mines, bonus capsules, medkits (hazards.json). */
+export interface HazardRules {
+  mine: {
+    fuseSeconds: number;
+    radius: number;
+    damage: number;
+    buildingDamage: number;
+    status: Partial<Record<Tech, { burnDps?: number; poisonDps?: number; defenseMinus?: number; seconds?: number; stunSeconds?: number; bareSeconds?: number }>>;
+  };
+  bonusCapsule: { types: Record<string, { amount?: number; plates?: number; percent?: number; charges?: number; factor?: number; seconds?: number }> };
+  medkit: { radius: number; hpPerSecond: number; seconds: number; doctorFactor: number };
+}
+export const hazards = hazardsJson as unknown as HazardRules;
 export const multiplayer = multiplayerJson;
 
 export const buildings: Record<string, BuildingDef> = Object.fromEntries(

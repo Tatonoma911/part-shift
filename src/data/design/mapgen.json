@@ -20,7 +20,10 @@
     "boss_hatch": 1,
     "blueprint": 2,
     "armor_crate": 2,
-    "lore_record": { "chance": 0.3, "max": 1 }
+    "lore_record": { "chance": 0.3, "max": 1 },
+    "mine": 3,
+    "bonus_capsule": 2,
+    "medkit": 2
   },
   "energyVein": {
     "energy": 120,

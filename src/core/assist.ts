@@ -19,6 +19,9 @@ const CHANNEL_OF: Partial<Record<Cell['content'], ClueChannel>> = {
   blueprint: 'finds',
   armor_crate: 'finds',
   lore_record: 'finds',
+  mine: 'threat',
+  bonus_capsule: 'finds',
+  medkit: 'finds',
 };
 
 /** Revealed cells that show clue numbers (plain land, or a site already dealt with). */

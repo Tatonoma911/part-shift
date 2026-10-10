@@ -82,6 +82,10 @@ const TOASTS: Record<string, { text: (e: GameEvent) => string; bad?: boolean }> 
   lore_found: { text: () => t('event.find.lore') },
   armor_crate_open: { text: (e) => (e.amount ? t('event.find.armor', { count: e.amount }) : t('event.find.armor_none')) },
   ally_limb_lost: { text: (e) => limbLine(e.text), bad: true },
+  mine_armed: { text: () => t('event.mine.armed'), bad: true },
+  mine_blast: { text: (e) => t('event.mine.blast', { element: t(`tech.${e.text}`) }), bad: true },
+  bonus_opened: { text: (e) => (e.text === 'armor' && !e.amount ? t('event.bonus.armor_none') : t(`event.bonus.${e.text}`, { amount: e.amount ?? 0 })) },
+  medkit_open: { text: () => t('event.medkit.open') },
   part_recycled: { text: (e) => t('part.recycled', { energy: e.amount ?? 0 }) },
   build_refused: { text: (e) => t(e.text ?? 'build.invalid_cell'), bad: true },
 };

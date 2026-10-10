@@ -16,7 +16,7 @@ interface Options {
   countScale?: number;
 }
 
-const SITE_KINDS: CellContent[] = ['nest', 'heavy_nest', 'hero_lair', 'boss_hatch', 'cache', 'survivor', 'blueprint', 'armor_crate', 'lore_record'];
+const SITE_KINDS: CellContent[] = ['nest', 'heavy_nest', 'hero_lair', 'boss_hatch', 'cache', 'survivor', 'blueprint', 'armor_crate', 'lore_record', 'mine', 'bonus_capsule', 'medkit'];
 
 export function generateField(s: GameState, opts: Options): void {
   const { commands } = opts;
@@ -93,6 +93,14 @@ export function generateField(s: GameState, opts: Options): void {
   for (let i = 0; i < armorCount * k; i++) set(pick(free()), 'armor_crate');
   const loreRule = mc.lore_record as { chance: number; max: number } | undefined;
   if (loreRule && rand(s) < loreRule.chance) set(pick(free()), 'lore_record');
+  // Mines (hazards.json): an element each, counted on the «Опасно» channel like nests.
+  const MINE_TECH: Tech[] = ['thermo', 'cryo', 'volt', 'toxin', 'impact'];
+  for (let i = 0; i < ((mc.mine as number | undefined) ?? 0) * k; i++) {
+    const p = set(pick(free()), 'mine');
+    if (p) cellAt(s, p.x, p.y).tech = MINE_TECH[randIntOf(s, MINE_TECH.length)];
+  }
+  for (let i = 0; i < ((mc.bonus_capsule as number | undefined) ?? 0) * k; i++) set(pick(free()), 'bonus_capsule');
+  for (let i = 0; i < ((mc.medkit as number | undefined) ?? 0) * k; i++) set(pick(free()), 'medkit');
   for (let i = 0; i < counts.energy_vein; i++) {
     const p = set(pick(free()), 'energy_vein');
     if (p) cellAt(s, p.x, p.y).stock = mapgen.energyVein.energy;
