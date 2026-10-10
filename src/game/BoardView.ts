@@ -145,7 +145,7 @@ export class BoardView {
   private readonly buildingViews = new Map<number, { spr: Phaser.GameObjects.Sprite; state: string; type: string; x: number; y: number }>();
   private readonly units = new Map<number, UnitView>();
   private readonly orbs: Phaser.GameObjects.Sprite[] = [];
-  private readonly orbViews = new Map<string, { spr: Phaser.GameObjects.Sprite; trail: number }>();
+  private readonly orbViews = new Map<string, { spr: Phaser.GameObjects.Sprite; trail: number; px?: number; py?: number }>();
   private readonly overlay: Phaser.GameObjects.Graphics;
   private readonly clueG: Phaser.GameObjects.Graphics;
   private readonly arcG: Phaser.GameObjects.Graphics;
@@ -357,8 +357,14 @@ export class BoardView {
           at('fx.energy_arrive');
           break;
         }
-        // Absorbed by the command centre: a burst on the roof and a ring at its foot.
         const p = this.center(e.x, e.y);
+        if (animSets.fx_energy2) {
+          // Sheet 175: the clot flies into a ring on the roof, a flash, rings spread out.
+          const a = sc.add.sprite(p.x, p.y - 24, 'fx_energy2').setScale(0.75).setDepth(D.top - 0.4);
+          a.play('fx_energy2.absorb').once('animationcomplete', () => a.destroy());
+          break;
+        }
+        // Absorbed by the command centre: a burst on the roof and a ring at its foot.
         const burst = sc.add.sprite(p.x, p.y - 30, 'fx_energy').setScale(0.7).setDepth(D.top - 0.4);
         burst.play('fx_energy.arrive_burst').once('animationcomplete', () => burst.destroy());
         const ring = sc.add.sprite(p.x, p.y + 6, 'fx_energy').setScale(0.7).setDepth(D.building + 0.5);
@@ -1473,6 +1479,9 @@ export class BoardView {
       });
       return;
     }
+    // fx_energy2 (sheet 175): a comet with its own drawn tail, turned along the flight; fx_energy (071/075): orb + sparks.
+    const E = animSets.fx_energy2 ? 'fx_energy2' : 'fx_energy';
+    const comet = E === 'fx_energy2';
     const now = this.scene.time.now;
     const seen = new Set<string>();
     const dup = new Map<string, number>();
@@ -1486,11 +1495,11 @@ export class BoardView {
       seen.add(key);
       let v = this.orbViews.get(key);
       if (!v) {
-        v = { spr: this.scene.add.sprite(0, 0, 'fx_energy').setDepth(D.top - 0.4).play('fx_energy.fly'), trail: now };
+        v = { spr: this.scene.add.sprite(0, 0, E).setDepth(D.top - 0.4).play(`${E}.fly`), trail: now };
         this.orbViews.set(key, v);
         const b = this.center(x0, y0);
-        const f = this.scene.add.sprite(b.x, b.y - 10, 'fx_energy').setScale(0.55).setDepth(D.top - 0.4);
-        f.play('fx_energy.spawn').once('animationcomplete', () => f.destroy());
+        const f = this.scene.add.sprite(b.x, b.y - 10, E).setScale(0.55).setDepth(D.top - 0.4);
+        f.play(comet ? `${E}.release` : `${E}.spawn`).once('animationcomplete', () => f.destroy());
       }
       const cmd = this.world.building(this.world.s.players[o.owner]?.command);
       const total = cmd ? Math.hypot(cmd.x - x0, cmd.y - y0) : 0;
@@ -1501,12 +1510,17 @@ export class BoardView {
       const size = 0.8 + Math.min(0.6, o.amount / 60);
       const x = p.x;
       const y = p.y - 10 - lift;
-      if (now - v.trail > 70) {
+      if (!comet && now - v.trail > 70) {
         v.trail = now;
         const s = this.scene.add.sprite(x, y, 'fx_energy').setScale(0.22 * size).setDepth(D.top - 0.45);
         s.play('fx_energy.trail').once('animationcomplete', () => s.destroy());
       }
-      v.spr.setPosition(x, y).setScale(0.38 * size);
+      if (comet && v.px !== undefined && v.py !== undefined && Math.hypot(x - v.px, y - v.py) > 0.5) {
+        v.spr.setRotation(Math.atan2(y - v.py, x - v.px));
+      }
+      v.px = x;
+      v.py = y;
+      v.spr.setPosition(x, y).setScale((comet ? 0.5 : 0.38) * size);
     }
     for (const [key, v] of this.orbViews) {
       if (seen.has(key)) continue;
