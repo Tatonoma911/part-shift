@@ -168,7 +168,16 @@ export interface SiteDef {
 }
 
 /** Tables from rules v0.4 on (residents fight, heroes as enemies); later minor versions only add fields. */
-const MIN_VERSION = 0.4;
+const MIN_VERSION = [0, 4];
+/** Compares "major.minor" as parts: "0.10" is newer than "0.9", which a float compare gets backwards. */
+const versionAtLeast = (v: string, min: number[]) => {
+  const parts = v.split('.').map(Number);
+  for (let i = 0; i < min.length; i++) {
+    const p = parts[i] ?? 0;
+    if (p !== min[i]) return p > min[i];
+  }
+  return true;
+};
 for (const [name, table] of Object.entries({
   buildingsJson,
   configJson,
@@ -182,7 +191,7 @@ for (const [name, table] of Object.entries({
   unitsJson,
 })) {
   const v = (table as { version?: string }).version;
-  if (!v || !(Number(v) >= MIN_VERSION)) throw new Error(`${name}: unsupported table version ${v}`);
+  if (!v || !versionAtLeast(v, MIN_VERSION)) throw new Error(`${name}: unsupported table version ${v}`);
 }
 
 /** boss.selfWakeSeconds comes from the difficulty level (World.effectiveConfig fills it in). */
