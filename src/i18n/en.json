@@ -485,5 +485,6 @@
   "results.stars.no_losses": "Every hero came back",
   "results.stars.team": "Everyone hit the target",
   "campaign.next_shift": "Next shift",
-  "campaign.closed": "SHIFT CLOSED"
+  "campaign.closed": "SHIFT CLOSED",
+  "hud.nests_left": "Nests: {n}"
 }

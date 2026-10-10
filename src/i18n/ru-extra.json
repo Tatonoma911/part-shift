@@ -359,5 +359,6 @@
   "results.stars.no_losses": "Все герои вернулись",
   "results.stars.team": "Каждый вложился в цель",
   "campaign.next_shift": "Следующая смена",
-  "campaign.closed": "СМЕНА ЗАКРЫТА"
+  "campaign.closed": "СМЕНА ЗАКРЫТА",
+  "hud.nests_left": "Гнёзд: {n}"
 }

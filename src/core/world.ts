@@ -112,6 +112,8 @@ export const HERO_ABILITY: Record<string, { every: number; range: number; amount
 };
 
 const isSiteCell = (c: Cell) => c.content === 'nest' || c.content === 'heavy_nest' || c.content === 'hero_lair' || c.content === 'boss_hatch';
+/** Nests only — hero lairs and boss hatches are optional objectives, not shift-end blockers. */
+const isNestCell = (c: Cell) => c.content === 'nest' || c.content === 'heavy_nest';
 const isEnemy = (u: Unit) => u.owner < 0;
 /** Allies are heroes at a fraction of their enemy strength; down, they return to the center after a while. */
 const ALLY = heroRules.allyRules;
@@ -3101,7 +3103,7 @@ export class World {
     if (s.players.every((p) => !p.alive)) {
       s.outcome = 'defeat';
       this.emit('defeat');
-    } else if (s.cells.some(isSiteCell) && s.cells.every((c) => !isSiteCell(c) || c.resolved)) {
+    } else if (s.cells.some(isNestCell) && s.cells.every((c) => !isNestCell(c) || c.resolved)) {
       s.outcome = 'victory';
       this.emit('victory');
     }
