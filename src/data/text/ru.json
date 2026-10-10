@@ -1,5 +1,5 @@
 {
-  "_meta.version": "0.35",
+  "_meta.version": "0.36",
   "_meta.date": "2026-10-10",
   "_meta.note": "Русский оригинал строк MVP, сверено с design/MVP_RULES.md, ONBOARDING.md и ELEMENTS.md 0.3. Ключи плоские, плейсхолдеры в фигурных скобках, множественное число через суффиксы .one/.few/.many. Формат описан в text/README.md",
   "game.title": "Part Shift",
@@ -340,6 +340,10 @@
   "build.requires.schools2": "Нужно 2 Школы спасателей",
   "build.max": "Больше не построить: максимум {max}",
   "build.edge_only": "Только на краю своей земли",
+  "build.station.digs": "Быстро копает: {zone}",
+  "build.station.digs_none": "Копает всё одинаково, без ускорения",
+  "build.station.strong": "Сильнее всего против: {tech}",
+  "build.station.useful": "Пригодится: рядом {zone}",
   "rotation.title": "Ротация конечностей",
   "rotation.move": "Перенести",
   "rotation.swap": "Обменять",
@@ -1628,5 +1632,15 @@
   "call.party.b": "Сослаться на смену",
   "call.party.a_result": "Корпоратив удался. Начальство спело. Герои вернулись злые.",
   "call.party.b_result": "Ваше отсутствие отмечено в личном деле. Красным.",
-  "call.unavailable": "Не хватает Энергии"
+  "call.unavailable": "Не хватает Энергии",
+  "zone.thermo": "горящие кварталы",
+  "zone.cryo": "ледяные кварталы",
+  "zone.volt": "искрящие кварталы",
+  "zone.toxin": "кварталы в ядовитом тумане",
+  "zone.impact": "кварталы в завалах",
+  "zone.short.thermo": "пожар",
+  "zone.short.cryo": "лёд",
+  "zone.short.volt": "искры",
+  "zone.short.toxin": "туман",
+  "zone.short.impact": "завалы"
 }

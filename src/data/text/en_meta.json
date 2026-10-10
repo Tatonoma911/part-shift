@@ -459,6 +459,10 @@
   "build.requires.schools2": "Needs 2 Rescue Schools",
   "build.max": "Can't build more: max {max}",
   "build.edge_only": "Edge of your land only",
+  "build.station.digs": "Digs fast: {zone}",
+  "build.station.digs_none": "Digs everything at the same speed",
+  "build.station.strong": "Strongest against: {tech}",
+  "build.station.useful": "Handy here: {zone} nearby",
   "rotation.title": "Limb Rotation",
   "rotation.move": "Move",
   "rotation.swap": "Swap",
@@ -1066,5 +1070,15 @@
   "call.party.b": "I'm on shift",
   "call.party.a_result": "The party was a success. Management sang. The heroes came back angry.",
   "call.party.b_result": "Your absence has been noted in your file. In red.",
-  "call.unavailable": "Not enough Energy"
+  "call.unavailable": "Not enough Energy",
+  "zone.thermo": "burning blocks",
+  "zone.cryo": "frozen blocks",
+  "zone.volt": "sparking blocks",
+  "zone.toxin": "blocks in toxic fog",
+  "zone.impact": "blocks under rubble",
+  "zone.short.thermo": "fire",
+  "zone.short.cryo": "ice",
+  "zone.short.volt": "sparks",
+  "zone.short.toxin": "fog",
+  "zone.short.impact": "rubble"
 }
