@@ -2,7 +2,6 @@ import Phaser from 'phaser';
 import { account } from '../account/cloud';
 import { openAccountPanel } from '../account/panel';
 import { config } from '../core/data';
-import type { AssistMode } from '../core/state';
 import { lang, setLang, t } from '../i18n';
 import { introSeen, playIntro } from '../intro';
 import { analytics, askAnalyticsConsent, closeConsent } from '../analytics';
@@ -16,8 +15,8 @@ import type { GameStart } from './GameScene';
 import { C, INK, LANDSCAPE, VIEW } from './layout';
 import { menuIcon, type MenuIconId } from './menuIcons';
 import { preloadMetaArt } from './meta/art';
-import { loadMeta, pickAllies } from './meta/store';
-import { allySelect } from './meta/AllySelect';
+import { loadMeta, pickAllies, rollDistrict } from './meta/store';
+import { shiftBrief } from './meta/ShiftBrief';
 import { metaPreview } from './meta/preview';
 import { clearSlot, lastSlot, loadSettings, loadSlot, saveSettings, SLOTS } from './saves';
 import { tutorialDone } from './Tutorial';
@@ -322,17 +321,7 @@ export class MenuScene extends Phaser.Scene {
         saveSettings({ ...st, lang: next });
         this.scene.restart();
       });
-      const modes: AssistMode[] = ['full', 'scanner', 'off'];
-      // Short name on the button, the current mode in the sub-line (AR-10: the long label did not fit).
-      button(
-        t('settings.assist'),
-        () => {
-          saveSettings({ ...st, assist: modes[(modes.indexOf(st.assist) + 1) % modes.length] });
-          this.show('settings');
-        },
-        false,
-        t(`assist.mode.${st.assist}.short`),
-      );
+      // v0.7 (MVP_RULES §3.1а): no assist modes, the board is read by sensors only.
       button(t('settings.comfort'), () => this.show('comfort'));
       button(`${t('analytics.setting')}: ${t(analytics.consent === 'granted' ? 'settings.on' : 'settings.off')}`, () => {
         analytics.setConsent(analytics.consent !== 'granted');
@@ -404,16 +393,18 @@ export class MenuScene extends Phaser.Scene {
 
   private play(start: GameStart): void {
     closeConsent();
-    // A new shift with heroes back on the team: pick who comes along first (META.md, allySelection).
+    // Before each shift: show «Сводка смены» (MVP_RULES §4.5) to pick the squad.
     const meta = loadMeta();
-    if (start.fresh && !start.tutorial && meta.unlocked.length && !this.allyUi) {
-      this.allyUi = allySelect(
+    if (start.fresh && !start.tutorial && !this.allyUi) {
+      const enemies = rollDistrict(meta);
+      this.allyUi = shiftBrief(
         this,
         meta,
-        (ids) => {
-          pickAllies(meta, ids);
+        enemies,
+        (squad) => {
+          pickAllies(meta, squad);
           this.allyUi = null;
-          this.scene.start('game', { ...start, allies: ids });
+          this.scene.start('game', { ...start, allies: squad });
         },
         () => {
           this.allyUi?.destroy();

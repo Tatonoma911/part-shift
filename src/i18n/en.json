@@ -411,5 +411,20 @@
   "dossier.trophy.damage": "{value} damage",
   "dossier.trophy.hp": "{value} health",
   "dossier.trophy.defense": "{value} defense",
-  "dossier.trophy.speed": "{value} speed"
+  "dossier.trophy.speed": "{value} speed",
+  "hud.label.heroes": "Heroes",
+  "hud.label.rescued": "Rescued",
+  "cell.mark.confirm": "Your mark: «{mark}». Tap again to remove it and open the block.",
+  "cell.mark.danger": "Danger",
+  "cell.mark.unsure": "Not sure",
+  "cell.mark.hint": "Hold a closed block to mark it \"Danger\" or \"Not sure\". Swipes skip marked blocks.",
+  "cell.sensor": "Nearby: {list}",
+  "cell.sensor.nest.one": "{count} nest",
+  "cell.sensor.nest.few": "{count} nests",
+  "cell.sensor.nest.many": "{count} nests",
+  "cell.sensor.find.one": "{count} find",
+  "cell.sensor.find.few": "{count} finds",
+  "cell.sensor.find.many": "{count} finds",
+  "cell.sensor.boss": "the call target's lair",
+  "cell.sensor.clear": "Nearby: nothing"
 }

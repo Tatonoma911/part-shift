@@ -8,7 +8,7 @@ export type Command =
   /** force: the player confirmed digging a cell the scanner knows is dangerous. */
   | { type: 'queueDig'; x: number; y: number; force?: boolean }
   | { type: 'cancelDig'; x: number; y: number }
-  | { type: 'toggleMark'; x: number; y: number }
+  | { type: 'toggleMark'; x: number; y: number; clear?: boolean }
   | { type: 'build'; building: string; x: number; y: number }
   | { type: 'setRecruit'; building: number; on: boolean }
   /** Target: "u:<unit id>" for an enemy, "s:<x>,<y>" for an opened nest. */

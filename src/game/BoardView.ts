@@ -5,11 +5,12 @@ import type { Building, Unit } from '../core/state';
 import type { GameEvent, World } from '../core/world';
 import { animSets, BUILDING_ANCHOR, originOf } from './assets';
 import { sound } from './audio';
-import { C, CELL, CHANNEL, STEP, TECH_COLOR } from './layout';
+import { C, CELL, STEP, TECH_COLOR } from './layout';
 import { buzz, comfort } from './comfort';
 import { Quarantine, type RevealKind } from './Quarantine';
 import { Bars, drawWeakOrbs, weaknessesOf, type Weakness } from './Vitals';
-import { glyph, TXT } from './ui';
+import { glyph } from './ui';
+import { drawMark, drawSensor, sensorTexts, type MarkKind } from './Sensor';
 
 const CHANNELS = ['finds', 'threat', 'demon'] as const;
 const GROUND = ['ground_0', 'ground_1', 'ground_0', 'ground_grass_0', 'ground_1', 'ground_grass_1', 'ground_0', 'ground_grass_2'];
@@ -456,7 +457,7 @@ export class BoardView {
 
         if (!c.revealed) {
           this.setClues(i, x, y, null);
-          this.drawClosed(og, x, y, px, py, known.get(cellKey(x, y)), risk?.get(i), me.queue.includes(cellKey(x, y)), me.autoQueue.includes(cellKey(x, y)), c.marked === true, now);
+          this.drawClosed(og, x, y, px, py, known.get(cellKey(x, y)), risk?.get(i), me.queue.includes(cellKey(x, y)), me.autoQueue.includes(cellKey(x, y)), c.marked ? (c.markKind ?? 'danger') : null, now);
           continue;
         }
         if (w.started && w.inTerritory(this.me, x, y) && c.building === undefined) {
@@ -523,7 +524,7 @@ export class BoardView {
     risk: 'threat' | 'demon' | undefined,
     queued: boolean,
     auto: boolean,
-    marked: boolean,
+    marked: MarkKind | null,
     now: number,
   ): void {
     const cx = px + CELL / 2;
@@ -535,13 +536,6 @@ export class BoardView {
       g.lineStyle(3, col, 1);
       g.strokeRect(px + 2, py + 2, CELL - 4, CELL - 4);
       glyph(g, kn, cx, cy, 13, kn === 'threat' ? C.coralInk : C.violet);
-    } else if (kn === 'safe') {
-      g.fillStyle(C.green, 0.16);
-      g.fillRect(px, py, CELL, CELL);
-      g.lineStyle(6, 0x0b1117, 0.5);
-      this.check(g, cx, cy + 1);
-      g.lineStyle(5, C.green, 1);
-      this.check(g, cx, cy);
     } else if (risk) {
       const col = risk === 'threat' ? C.coral : C.violet;
       g.fillStyle(col, 0.14);
@@ -563,22 +557,7 @@ export class BoardView {
         g.fillPoints([new Phaser.Math.Vector2(cx, cy - 7), new Phaser.Math.Vector2(cx + 7, cy), new Phaser.Math.Vector2(cx, cy + 7), new Phaser.Math.Vector2(cx - 7, cy)], true);
       }
     }
-    if (marked) {
-      g.fillStyle(0x0b1117, 0.6);
-      g.fillRect(cx - 9, cy - 15, 4, 32);
-      g.fillStyle(0xffffff, 1);
-      g.fillRect(cx - 10, cy - 16, 4, 32);
-      g.fillStyle(C.coral, 1);
-      g.fillTriangle(cx - 6, cy - 16, cx + 14, cy - 8, cx - 6, cy);
-    }
-  }
-
-  private check(g: Phaser.GameObjects.Graphics, cx: number, cy: number): void {
-    g.beginPath();
-    g.moveTo(cx - 11, cy);
-    g.lineTo(cx - 3, cy + 8);
-    g.lineTo(cx + 12, cy - 9);
-    g.strokePath();
+    if (marked) drawMark(g, cx, cy, marked);
   }
 
   /** One dash of a square's perimeter, from distance a to b (clockwise from top-left). */
@@ -712,7 +691,7 @@ export class BoardView {
 
   // ---------------------------------------------------------------- clues
 
-  /** One channel: a big number with its glyph; several: small numbers in fixed corners (UI_SPEC §3.1). */
+  /** HeroOut sensor sign with up to three windows: beacon, target, box (MVP_RULES §3.1а, Sensor.ts). */
   private setClues(i: number, x: number, y: number, clues: Record<(typeof CHANNELS)[number], number> | null): void {
     let texts = this.clueTexts.get(i);
     if (!clues || (!clues.finds && !clues.threat && !clues.demon)) {
@@ -720,30 +699,11 @@ export class BoardView {
       return;
     }
     if (!texts) {
-      texts = CHANNELS.map((ch) =>
-        this.scene.add
-          .text(0, 0, '', { ...TXT.num(30, CHANNEL[ch].color), stroke: '#ffffff', strokeThickness: 6 })
-          .setOrigin(0.5)
-          .setDepth(D.clue),
-      );
+      texts = sensorTexts(this.scene, D.clue + 0.2);
       this.clueTexts.set(i, texts);
     }
-    const active = CHANNELS.filter((ch) => clues[ch] > 0);
     const p = this.center(x, y);
-    const g = this.clueG;
-    CHANNELS.forEach((ch, k) => {
-      const t = texts![k];
-      const n = clues[ch];
-      if (!n) return void t.setVisible(false);
-      t.setVisible(true).setText(String(n));
-      if (active.length === 1) {
-        t.setFontSize(30).setPosition(p.x - 5, p.y + 1);
-        glyph(g, ch, p.x + 15, p.y - 11, 6, CHANNEL[ch].num);
-      } else {
-        const pos = ch === 'finds' ? [-13, -11] : ch === 'threat' ? [13, -11] : [0, 13];
-        t.setFontSize(19).setPosition(p.x + pos[0], p.y + pos[1]);
-      }
-    });
+    drawSensor(this.clueG, texts, p.x, p.y, clues);
   }
 
   // -------------------------------------------------------------- buildings
@@ -973,10 +933,12 @@ export class BoardView {
         else if (u.kind === 'hero' && !u.target && set.anims.tic) anim = 'tic';
         if (anim === 'dig' && v.anim !== 'dig' && u.owner === this.me) sound.play('dig_start');
         v.anim = anim;
-        v.spr.play(`${v.set}.${anim}`, true);
+        // Ally sheets may not have every resident action yet; fall back gracefully.
+        const playAnim = set.anims[anim] ? anim : ({ walk_back: 'walk', dig: 'walk', build: 'idle', flee: 'walk' }[anim] ?? 'idle');
+        v.spr.play(`${v.set}.${playAnim}`, true);
         // Runs carry the distance one cycle covers; match it to the unit's real speed so feet don't slide.
-        const stride = set.anims[anim]?.pxPerCycle;
-        const def = set.anims[anim];
+        const stride = set.anims[playAnim]?.pxPerCycle;
+        const def = set.anims[playAnim];
         v.spr.anims.timeScale = stride && def ? Phaser.Math.Clamp((w.stats(u).speed * CELL) / ((stride * def.fps) / def.frames.length), 0.5, 2) : 1;
       }
       v.spr.setPosition(fx, fy).setDepth(D.unit + fy / 4000);

@@ -39,6 +39,8 @@ export interface Cell {
   building?: number;
   /** Player's "danger here" flag. */
   marked?: boolean;
+  /** The player's own mark (MVP_RULES §3.1а): «Опасно» or «Не уверен». Set together with `marked`. */
+  markKind?: 'danger' | 'unsure';
   /** The player confirmed digging this known danger ("Да, вскрыть"): opening it is deliberate. */
   deliberate?: boolean;
   /** Seconds left of steam-burnt ground. */

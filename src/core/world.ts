@@ -450,7 +450,14 @@ export class World {
         if (!inBounds(s, cmd.x, cmd.y)) return bad();
         const c = this.cell(cmd.x, cmd.y);
         if (c.revealed) return bad();
-        c.marked = !c.marked;
+        // Long press cycles: none → «Опасно» → «Не уверен» → none (MVP_RULES §3.1а).
+        if (cmd.clear || c.markKind === 'unsure') {
+          c.marked = false;
+          c.markKind = undefined;
+        } else {
+          c.marked = true;
+          c.markKind = c.markKind === 'danger' ? 'unsure' : 'danger';
+        }
         if (c.marked) {
           const k = cellKey(cmd.x, cmd.y);
           for (const pl of s.players) {
@@ -682,6 +689,7 @@ export class World {
     this.rev++;
     c.revealed = true;
     c.marked = false;
+    c.markKind = undefined;
     const k = cellKey(x, y);
     for (const p of s.players) {
       p.queue = p.queue.filter((q) => q !== k);
