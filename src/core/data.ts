@@ -98,6 +98,8 @@ export interface BuildingDef {
 
   autoAttack?: { damage: number; attackSeconds: number; range: number; tech?: string };
   healAura?: { radius: number; hpPerSecond: number };
+  /** Relay: +N to our hero cap, up to +2 in total over the difficulty cap (buildings.json relay). */
+  heroCapAdd?: number;
 }
 
 export interface UnitStats {

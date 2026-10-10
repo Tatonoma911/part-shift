@@ -54,6 +54,8 @@ import type { AssistMode, Building, Cell, ClueChannel, GameState, PartInstance, 
 
 export const STEP = 0.05;
 
+/** Most the relays can add to the hero cap (buildings.json relay: up to +2). */
+const RELAY_CAP_MAX = 2;
 /** How long a capsule peek shows the sensors (buildings.json watchtower.peek.showSeconds). */
 const CAPSULE_PEEK_SECONDS = 20;
 
@@ -369,7 +371,15 @@ export class World {
 
   /** Residents a player may have at once (config.population.cap + survivors). */
   residentCap(playerId: number): number {
-    return this.cfg.population.cap + this.player(playerId).capBonus;
+    return this.cfg.population.cap + this.player(playerId).capBonus + this.relayCapBonus(playerId);
+  }
+
+  /** Relays raise the hero cap by heroCapAdd each, at most +2 over the difficulty cap (buildings.json relay). */
+  private relayCapBonus(playerId: number): number {
+    const add = this.s.buildings
+      .filter((b) => b.owner === playerId && b.complete)
+      .reduce((n, b) => n + (buildingDefs[b.type].heroCapAdd ?? 0), 0);
+    return Math.min(RELAY_CAP_MAX, add);
   }
 
   /** School training level of a player's residents, 0..trainingLevelsMax. */
