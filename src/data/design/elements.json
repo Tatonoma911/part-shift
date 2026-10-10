@@ -4,19 +4,19 @@
   "techs": [
     {
       "id": "thermo",
-      "name_ru": "Термо",
+      "name_ru": "Огонь",
       "color": "#FF8A3D",
       "status": "burn"
     },
     {
       "id": "cryo",
-      "name_ru": "Криогель",
+      "name_ru": "Лёд",
       "color": "#3DD6FF",
       "status": "chill"
     },
     {
       "id": "volt",
-      "name_ru": "Ток",
+      "name_ru": "Молния",
       "color": "#FFE14D",
       "status": "shock"
     },
@@ -117,7 +117,7 @@
   "reactions": [
     {
       "id": "thermoshock",
-      "name_ru": "Термошок",
+      "name_ru": "Паровой взрыв",
       "onTargetStatus": "burn",
       "hitTech": "cryo",
       "effect": {
@@ -127,7 +127,7 @@
     },
     {
       "id": "conductive_chain",
-      "name_ru": "Проводящая цепь",
+      "name_ru": "Цепная молния",
       "onTargetStatus": "chill",
       "hitTech": "volt",
       "effect": {
@@ -136,7 +136,7 @@
     },
     {
       "id": "shell_break",
-      "name_ru": "Срыв оболочки",
+      "name_ru": "Пробитая броня",
       "onTargetStatus": "burn",
       "hitTech": "impact",
       "effect": {
@@ -155,7 +155,7 @@
     },
     {
       "id": "neuro_fail",
-      "name_ru": "Нейросбой",
+      "name_ru": "Замыкание",
       "onTargetStatus": "poison",
       "hitTech": "volt",
       "effect": {
@@ -163,5 +163,6 @@
       }
     }
   ],
-  "_reactionsSource": "COMBAT_INTERACTIONS_V0 / lore bible §3 (canon reactions)"
+  "_reactionsSource": "COMBAT_INTERACTIONS_V0 / lore bible §3 (canon reactions)",
+  "_names": "[Антон 2026-10-10 10:33] простые слова; ids не менялись; экранные имена — text/ru.json"
 }

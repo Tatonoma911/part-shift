@@ -29,10 +29,10 @@ export const SCRIPT = [
     tall: { cols: '1fr', rows: '1fr 0.42fr 1fr', areas: '"a" "b" "c"' },
     panels: [
       { img: 'city_sunset', area: 'a', kb: [1.0, 1.05, 1, 0], beats: [
-        { k: 'cap', at: [3, 5], w: 50, ru: 'Lumen City. Город будущего у моря.', en: 'Lumen City. A city of the future by the sea.' },
+        { k: 'cap', at: [3, 5], w: 50, ru: 'Это Lumen City. Город будущего у самого моря, как и обещали в рекламе.', en: 'This is Lumen City. A city of the future right by the sea, just like the ads promised.' },
       ] },
       { img: 'dome_city', area: 'b', kb: [1.0, 1.04, -1, 0], beats: [
-        { k: 'cap', at: [3, 8], w: 74, ru: 'Всё здесь работает на голубой Энергии. Даже небо: над городом стоит Купол.', en: 'Everything here runs on blue Energy. Even the sky: the city lives under a Dome.' },
+        { k: 'cap', at: [3, 8], w: 74, ru: 'Здесь всё работает на голубой Энергии. Даже небо: над городом построили Купол, чтобы погода не мешала жить.', en: 'Everything here runs on blue Energy. Even the sky: they built a Dome over the city so the weather wouldn’t get in the way.' },
       ] },
       { img: 'summer', area: 'c', kb: [1.03, 1.0, 0, 0], beats: [
         { k: 'ad', at: [5, 4], w: 90, ru: 'Купол Lumen. Небо, которое не протекает.', en: 'Lumen Dome. The sky that never leaks.' },
@@ -46,18 +46,18 @@ export const SCRIPT = [
     tall: { cols: '1fr 1fr', rows: '0.7fr 0.8fr 1fr', areas: '"a a" "d d" "b c"' },
     panels: [
       { art: 'log', area: 'a', beats: [
-        { k: 'cap', at: [4, 80], w: 92, ru: 'В большом городе всегда что-то случается.', en: 'In a big city, something is always happening.' },
+        { k: 'cap', at: [4, 80], w: 92, ru: 'В большом городе каждый день что-нибудь случается.', en: 'In a big city, something happens every single day.' },
       ] },
       { img: 'crane_kiln', area: 'd', fit: 'contain', kb: [1.0, 1.03, 0, 0], beats: [
-        { k: 'cap', at: [3, 4], w: 60, ru: 'Кран сошёл с ума. Килн его переубедил.', en: 'A crane went crazy. Kiln talked it out of it.' },
-        { k: 'say', who: 'lineman', at: [58, 58], w: 40, tail: 'l', ru: 'Хот-доги целы!', en: 'The hot dogs are safe!' },
+        { k: 'cap', at: [3, 4], w: 60, ru: 'Сегодня, например, строительный кран решил, что он карусель. Килну пришлось с ним серьёзно поговорить.', en: 'Today, for example, a construction crane decided it was a merry-go-round. Kiln had to have a serious talk with it.' },
+        { k: 'say', who: 'lineman', at: [58, 58], w: 40, tail: 'l', ru: 'Без паники, хот-доги я спас!', en: 'Don’t panic, I saved the hot dogs!' },
       ] },
       { img: 'geyser', area: 'b', kb: [1.0, 1.04, 0, 0], beats: [
-        { k: 'cap', at: [4, 4], w: 92, ru: 'Люк решил стать фонтаном.', en: 'A manhole decided to be a fountain.' },
+        { k: 'cap', at: [4, 4], w: 92, ru: 'Потом на Солнечной улице прорвало люк, и он минут десять изображал фонтан.', en: 'Then a manhole burst on Sunny Street and spent ten minutes pretending to be a fountain.' },
       ] },
       { img: 'frost_ice', area: 'c', kb: [1.0, 1.04, 0, 0], beats: [
-        { k: 'cap', at: [4, 4], w: 92, ru: 'Фростлайн заморозила гейзер.', en: 'Frostline froze the geyser.' },
-        { k: 'cap', at: [30, 80], w: 66, ru: 'Гейзер был против.', en: 'The geyser disagreed.' },
+        { k: 'cap', at: [4, 4], w: 92, ru: 'Фростлайн его просто заморозила.', en: 'Frostline simply froze it.' },
+        { k: 'cap', at: [30, 80], w: 66, ru: 'Получилась ледяная скульптура. Мэр потом сказал, что это современное искусство.', en: 'It turned into an ice sculpture. The mayor later called it modern art.' },
       ] },
     ],
   },
@@ -67,17 +67,17 @@ export const SCRIPT = [
     tall: { cols: '1fr 1fr', rows: '0.42fr 1fr 1fr', areas: '"a a" "b c" "d e"' },
     panels: [
       { img: 'crowd_top', area: 'a', kb: [1.0, 1.04, 0, 0], beats: [
-        { k: 'cap', at: [3, 8], w: 64, ru: 'На вызов едут спасатели HeroOut. Не супергерои, а городская служба, как пожарные.', en: 'HeroOut rescuers answer the call. Not superheroes: a city service, like firefighters.' },
+        { k: 'cap', at: [3, 8], w: 64, ru: 'На такие вызовы выезжают спасатели HeroOut. Это не супергерои, а обычная городская служба, как пожарные. Просто костюмы у них покруче.', en: 'HeroOut rescuers answer calls like these. They’re not superheroes, just a city service, like firefighters. Their suits are just cooler.' },
       ] },
       { img: 'lineman_kid', area: 'b', kb: [1.0, 1.04, 0, 0], beats: [
-        { k: 'say', who: 'lineman', at: [8, 64], w: 84, tail: 't', ru: 'Держись. Я тебя поймал.', en: 'Hold on. I’ve got you.' },
+        { k: 'say', who: 'lineman', at: [8, 64], w: 84, tail: 't', ru: 'Держись крепче, я тебя поймал. Всё, ты в безопасности.', en: 'Hold on tight, I’ve got you. There, you’re safe.' },
       ] },
       { img: 'frost_fire', area: 'c', kb: [1.0, 1.04, 0, 0], fx: 'embers', beats: [] },
       { img: 'kiln_fire', area: 'd', kb: [1.0, 1.04, 0, 0], fx: 'embers', beats: [
         { k: 'say', who: 'kiln', at: [6, 64], w: 88, tail: 't', ru: 'Осторожно. Вы горячая штучка.', en: 'Careful. You’re a hot one.' },
       ] },
       { img: 'seraph_fly', area: 'e', kb: [1.0, 1.04, 0, 0], beats: [
-        { k: 'say', who: 'seraph', at: [8, 70], w: 84, tail: 't', ru: 'Пострадавших нет!', en: 'No casualties!' },
+        { k: 'say', who: 'seraph', at: [8, 70], w: 84, tail: 't', ru: 'Все живы! Даже кот!', en: 'Everyone’s alive! Even the cat!' },
       ] },
     ],
   },
@@ -87,11 +87,11 @@ export const SCRIPT = [
     tall: { cols: '1fr 1fr', rows: '1fr', areas: '"a b"' },
     panels: [
       { img: 'news_serious', area: 'a', kb: [1.0, 1.04, 0, 0], beats: [
-        { k: 'say', who: 'anchor', at: [4, 4], w: 92, tail: 'b', ru: 'Срочные новости. В нашем прекрасном городе сегодня…', en: 'Breaking news. Today in our beautiful city…' },
+        { k: 'say', who: 'anchor', at: [4, 72], w: 92, tail: 't', ru: 'Срочные новости. В нашем прекрасном городе сегодня…', en: 'Breaking news. Today in our beautiful city…' },
       ] },
       { img: 'news_smile', area: 'b', kb: [1.0, 1.04, 0, 0], beats: [
-        { k: 'say', who: 'anchor', at: [4, 4], w: 92, tail: 'b', ru: '…ничего не произошло.', en: '…nothing happened.' },
-        { k: 'cap', at: [4, 78], w: 92, ru: 'Герои отдыхают. Город работает. Пока.', en: 'The heroes are resting. The city is working. For now.' },
+        { k: 'say', who: 'anchor', at: [4, 72], w: 92, tail: 't', ru: '…ничего не произошло.', en: '…nothing happened.' },
+        { k: 'cap', at: [4, 78], w: 92, ru: 'В такие дни спасатели HeroOut просто пили кофе на крыше. Это были хорошие дни. Их было немного.', en: 'On days like that, HeroOut rescuers just drank coffee on the roof. Those were good days. There weren’t many of them.' },
       ] },
     ],
   },
@@ -101,16 +101,16 @@ export const SCRIPT = [
     tall: { cols: '1fr 1fr', rows: '0.8fr 0.9fr 1fr', areas: '"a a" "b d" "c d"' },
     panels: [
       { img: 'lab_team', area: 'a', fit: 'contain', kb: [1.0, 1.03, 0, 0], beats: [
-        { k: 'cap', at: [3, 80], w: 70, ru: 'Работа опасная. Спасатели получали травмы и теряли руки и ноги.', en: 'The job was dangerous. Rescuers got hurt and lost arms and legs.' },
+        { k: 'cap', at: [3, 80], w: 70, ru: 'Работа у спасателей опасная. Они получали ожоги и переломы, а некоторые теряли руки и ноги.', en: 'Rescue work is dangerous. They got burns and broken bones, and some of them lost arms and legs.' },
       ] },
       { img: 'clinic', area: 'b', kb: [1.0, 1.04, 0, 0], beats: [
         { k: 'cap', at: [3, 4], w: 80, ru: 'Сначала были протезы. Хорошие. Но железо не чувствует, как дочка держит за руку.', en: 'First there were prosthetics. Good ones. But metal can’t feel a daughter holding your hand.' },
       ] },
       { img: 'leg_tank', area: 'c', kb: [1.0, 1.04, 0, 0], fx: 'glow', beats: [
-        { k: 'cap', at: [3, 4], w: 80, ru: 'Без магии: биоткань, гель и нейроинтерфейс. Хоть руку, которая не горит, хоть ногу, которая не мёрзнет.', en: 'No magic: bio-tissue, gel and a neural interface. An arm that won’t burn, a leg that won’t freeze.' },
+        { k: 'cap', at: [3, 4], w: 80, ru: 'Никакой магии: биоткань, гель и нейроинтерфейс. Можно было получить руку, которая не горит в огне, или ногу, которая не мёрзнет во льду.', en: 'No magic: bio-tissue, gel and a neural interface. You could get an arm that doesn’t burn in a fire, or a leg that doesn’t freeze in ice.' },
       ] },
       { img: 'gel_capsule', area: 'd', kb: [1.0, 1.05, 0, 0], fx: 'glow', beats: [
-        { k: 'cap', at: [5, 4], w: 90, ru: 'Тогда HeroOut создала гель Splice. Он заживлял раны и отращивал потерянные конечности.', en: 'So HeroOut created Splice gel. It healed wounds and regrew lost limbs.' },
+        { k: 'cap', at: [5, 4], w: 90, ru: 'Тогда HeroOut придумала гель Splice. Он заживлял раны и отращивал потерянные руки и ноги.', en: 'That’s when HeroOut came up with Splice gel. It healed wounds and regrew lost arms and legs.' },
         { k: 'ad', at: [5, 70], w: 90, ru: 'Потеряли руку? Не теряйте надежду! Гель Splice: отрастёт к понедельнику.', en: 'Lost an arm? Don’t lose hope! Splice gel: regrown by Monday.' },
       ] },
     ],
@@ -121,15 +121,15 @@ export const SCRIPT = [
     tall: { cols: '1fr 0.55fr', rows: '1fr 0.9fr', areas: '"a a" "b d"' },
     panels: [
       { img: 'boardroom', area: 'a', kb: [1.0, 1.04, 0, 0], beats: [
-        { k: 'say', who: 'exec', at: [30, 6], w: 40, tail: 'r', ru: 'Город платит, пока у него что-то случается.', en: 'The city pays as long as something keeps happening.' },
-        { k: 'say', who: 'boss', at: [56, 58], w: 40, tail: 'l', ru: 'Значит, пусть случается почаще.', en: 'Then let it happen more often.' },
+        { k: 'say', who: 'exec', at: [33, 3], w: 27, tail: 'r', ru: 'Город платит нам, пока у него что-то случается.', en: 'The city pays us as long as something keeps happening.' },
+        { k: 'say', who: 'boss', at: [3, 64], w: 36, tail: 't', ru: 'Значит, пусть случается почаще.', en: 'Then let it happen more often.' },
       ] },
       { img: 'button', area: 'b', kb: [1.0, 1.05, 1, 1], fx: 'redpulse', beats: [
-        { k: 'cap', at: [4, 5], w: 90, ru: 'С тех пор кошки чаще залезали на деревья, а краны чаще сходили с ума.', en: 'From then on, cats climbed trees more often, and cranes went crazy more often.', sfx: 'ui_tap' },
-        { k: 'cap', at: [4, 66], w: 90, ru: 'А гель Splice сделал HeroOut самой богатой корпорацией города.', en: 'And Splice gel made HeroOut the richest corporation in the city.' },
+        { k: 'cap', at: [4, 5], w: 90, ru: 'С тех пор кошки почему-то стали чаще залезать на деревья, а краны чаще сходить с ума.', en: 'From then on, for some reason, cats climbed trees more often and cranes went crazy more often.', sfx: 'ui_tap' },
+        { k: 'cap', at: [4, 66], w: 90, ru: 'А на геле Splice HeroOut стала самой богатой компанией в городе.', en: 'And Splice gel made HeroOut the richest company in the city.' },
       ] },
       { img: 'tower_cutaway', area: 'd', kb: [1.0, 1.06, 0, 1], beats: [
-        { k: 'cap', at: [4, 4], w: 92, ru: 'Гель варят глубоко под башней.', en: 'The gel is brewed deep beneath the tower.' },
+        { k: 'cap', at: [4, 4], w: 92, ru: 'Гель варили глубоко под башней HeroOut, на минус сорок втором этаже.', en: 'The gel was brewed deep under the HeroOut tower, on floor minus forty-two.' },
       ] },
     ],
   },
@@ -140,18 +140,18 @@ export const SCRIPT = [
     tall: { cols: '1fr 1fr', rows: '0.6fr 1fr 0.8fr', areas: '"a a" "v d" "v c"' },
     panels: [
       { img: 'factory', area: 'a', kb: [1.0, 1.04, 0, 0], beats: [
-        { k: 'cap', at: [3, 5], w: 62, ru: 'Под башней гель не только варили. Из него собирали.', en: 'Beneath the tower the gel wasn’t just brewed. It was assembled.' },
-        { k: 'cap', at: [3, 70], w: 62, ru: 'Лучшие части лучших спасателей. Четыре руки, хвост-бур. Один образец.', en: 'The best parts of the best rescuers. Four arms, a drill tail. One specimen.' },
+        { k: 'cap', at: [3, 5], w: 62, ru: 'Но под башней гель не только варили. Из него собирали людей.', en: 'But under the tower they didn’t just brew the gel. They built people out of it.' },
+        { k: 'cap', at: [3, 70], w: 62, ru: 'Брали лучшие части лучших спасателей: четыре руки, хвост-бур. Получился один образец.', en: 'They took the best parts of the best rescuers: four arms, a drill tail. They ended up with one specimen.' },
       ] },
       { img: 'demon_vat', area: 'v', kb: [1.0, 1.05, 0, 1], fx: 'glow', beats: [
-        { k: 'cap', at: [4, 4], w: 92, ru: 'Продукт №1: Демон. Спасатель, который не устаёт, не спорит и не берёт отпуск.', en: 'Product No. 1: the Demon. A rescuer who never tires, never argues and never takes a day off.', sfx: 'demon_awake' },
+        { k: 'cap', at: [4, 4], w: 92, ru: 'Его назвали «Продукт №1: Демон». Спасатель, который не устаёт, не спорит и не просит отпуск.', en: 'They called it “Product No. 1: the Demon”. A rescuer who never gets tired, never argues and never asks for time off.', sfx: 'demon_awake' },
         { k: 'ad', at: [4, 78], w: 92, ru: 'Демон. Скоро на каждом вызове.', en: 'The Demon. Coming soon to every call.' },
       ] },
       { img: 'demon_face', area: 'd', kb: [1.0, 1.06, 0, 0], beats: [
-        { k: 'cap', at: [4, 5], w: 90, ru: 'Он ещё не проснулся.', en: 'He hasn’t woken up yet.' },
+        { k: 'cap', at: [4, 5], w: 90, ru: 'Пока он спал, всё шло по плану.', en: 'While he slept, everything went according to plan.' },
       ] },
       { img: 'glass_crack', area: 'c', fit: 'cover', kb: [1.0, 1.0, 0, 0], glow: 'glass_crack_glow', beats: [
-        { k: 'cap', at: [3, 6], w: 80, ru: 'Пока однажды его капсула не треснула.', en: 'Until one day, his capsule cracked.', fx: 'crackglow', sfx: 'nest_open' },
+        { k: 'cap', at: [3, 6], w: 80, ru: 'А потом его капсула треснула.', en: 'And then his capsule cracked.', fx: 'crackglow', sfx: 'nest_open' },
       ] },
     ],
   },
@@ -166,7 +166,7 @@ export const SCRIPT = [
         { k: 'ctrl', at: [4, 5], w: 74, ru: 'Запущен протокол EVERYONE IS ON CALL. Сохраняйте спокойствие.', en: 'Protocol EVERYONE IS ON CALL is now active. Please remain calm.', sfx: 'threat_level_up' },
       ] },
       { img: 'gel_burst', area: 'c', kb: [1.0, 1.05, 0, 0], fx: 'alarm', beats: [
-        { k: 'cap', at: [3, 5], w: 60, ru: 'Гель вырвался в реактор и в сеть спасения. И начал заражать людей.', en: 'The gel burst into the reactor and the rescue network. And it began infecting people.' },
+        { k: 'cap', at: [3, 5], w: 60, ru: 'Гель прорвался в реактор, а оттуда в сеть спасения по всему городу. И начал заражать людей.', en: 'The gel broke into the reactor, and from there into the rescue network across the whole city. And it started infecting people.' },
       ] },
     ],
   },
@@ -176,27 +176,27 @@ export const SCRIPT = [
     tall: { cols: '1fr', rows: '0.5fr 0.5fr 1fr', areas: '"a" "b" "c"' },
     panels: [
       { img: 'heroes_before', area: 'a', fit: 'contain', kb: [1.0, 1.02, 0, 0], beats: [
-        { k: 'cap', at: [3, 4], w: 60, ru: 'Было: лучшие спасатели города.', en: 'Before: the best rescuers in the city.' },
+        { k: 'cap', at: [3, 4], w: 60, ru: 'Ещё вчера это были лучшие спасатели города.', en: 'Just yesterday, these were the best rescuers in the city.' },
       ] },
       { img: 'heroes_after', area: 'b', fit: 'contain', kb: [1.0, 1.02, 0, 0], fx: 'alarm', beats: [
-        { k: 'cap', at: [3, 4], w: 70, ru: 'Стало: чужие руки, чужие ноги. Заражённые сходили с ума. Герои тоже.', en: 'After: someone else’s arms, someone else’s legs. The infected lost their minds. So did the heroes.', sfx: 'threat_level_up' },
+        { k: 'cap', at: [3, 4], w: 70, ru: 'Сегодня у них чужие руки и чужие ноги. Заражённые сходили с ума один за другим. Герои тоже.', en: 'Today they have someone else’s arms and someone else’s legs. The infected lost their minds one after another. So did the heroes.', sfx: 'threat_level_up' },
       ] },
       { art: 'dossier', area: 'c', beats: [
-        { k: 'cap', at: [3, 3], w: 94, ru: 'Килн, Линейщик, Фростлайн, Серафим носятся по городу.', en: 'Kiln, Lineman, Frostline and Seraph roam the city.', fx: 'stamp' },
-        { k: 'cap', at: [3, 86], w: 94, ru: 'Они всё ещё спасают. Только теперь от их помощи приходится бежать.', en: 'They still rescue people. Only now, people run from their help.' },
+        { k: 'cap', at: [3, 3], w: 94, ru: 'Килн, Линейщик, Фростлайн и Серафим теперь носятся по городу.', en: 'Kiln, Lineman, Frostline and Seraph now tear around the city.', fx: 'stamp' },
+        { k: 'cap', at: [3, 86], w: 94, ru: 'Они до сих пор всех спасают. Просто теперь от их помощи приходится убегать.', en: 'They still rescue everyone. It’s just that now people have to run from their help.' },
       ] },
     ],
   },
   { // 9
     tag: { ru: 'ГЕРОИ ВНЕ СМЕНЫ // ИХ МНОГО', en: 'HEROES OFF THE LEASH // THERE ARE MANY' },
-    wide: { cols: '1fr', rows: '0.7fr 1.3fr', areas: '"a" "b"' },
-    tall: { cols: '1fr', rows: '0.5fr 1fr', areas: '"a" "b"' },
+    wide: { cols: '1fr', rows: '0.42fr 1.58fr', areas: '"a" "b"' },
+    tall: { cols: '1fr', rows: '0.45fr 1fr', areas: '"a" "b"' },
     panels: [
       { img: 'heroes_action', area: 'a', fit: 'contain', kb: [1.0, 1.04, 0, 0], fx: 'alarm', beats: [
         { k: 'cap', at: [3, 5], w: 70, ru: 'Килн выносит людей из домов, где нет пожара. Фростлайн тушит всё, что тёплое. Серафим лечит тех, кто не болен. Демон уводит всех под землю, «в безопасность».', en: 'Kiln carries people out of houses that aren’t on fire. Frostline puts out anything warm. Seraph heals people who aren’t sick. The Demon takes everyone underground, “to safety”.', sfx: 'demon_awake' },
       ] },
-      { img: 'mad_crowd', area: 'b', kb: [1.0, 1.06, 0, 0], beats: [
-        { k: 'cap', at: [4, 80], w: 60, ru: 'Их больше десятка. И все на смене.', en: 'There are more than a dozen of them. And they’re all on shift.' },
+      { img: 'mad_crowd', area: 'b', fit: 'contain', kb: [1.0, 1.02, 0, 0], beats: [
+        { k: 'cap', at: [4, 80], w: 60, ru: 'Таких героев в городе больше десятка. И все они на смене.', en: 'There are more than a dozen heroes like that in the city. And every one of them is on shift.' },
       ] },
     ],
   },
@@ -206,10 +206,10 @@ export const SCRIPT = [
     tall: { cols: '1fr', rows: '0.8fr 1.2fr', areas: '"a" "b"' },
     panels: [
       { img: 'tendril', area: 'a', kb: [1.0, 1.05, 0, 0], fx: 'glow', beats: [
-        { k: 'cap', at: [4, 5], w: 90, ru: 'Заражение ползёт дальше, квартал за кварталом.', en: 'The infection crawls on, block after block.' },
+        { k: 'cap', at: [4, 5], w: 90, ru: 'Заражение расползается дальше, квартал за кварталом.', en: 'The infection keeps spreading, block after block.' },
       ] },
       { img: 'city_sunset', area: 'b', kb: [1.05, 1.0, 0, 0], fx: 'hex', beats: [
-        { k: 'cap', at: [4, 5], w: 60, ru: 'Купол стал карантином. Город заперли вместе с заразой.', en: 'The Dome became a quarantine. The city was locked in with the infection.' },
+        { k: 'cap', at: [4, 5], w: 60, ru: 'Купол превратился в карантин. Город заперли вместе с заразой.', en: 'The Dome turned into a quarantine. The city got locked in with the infection.' },
         { k: 'ctrl', at: [6, 56], w: 80, ru: 'Уважаемые жители! Вы являетесь имуществом HeroOut.', en: 'Dear residents! You are the property of HeroOut.' },
         { k: 'ctrl', at: [6, 56], w: 80, ru: 'Пожалуйста, пройдите на склад.', en: 'Please proceed to the warehouse.', replace: true },
         { k: 'ctrl', at: [6, 56], w: 80, ru: 'Склад работает круглосуточно. Очередь на склад тоже является заботой о вас.', en: 'The warehouse is open 24/7. The queue for the warehouse is also part of our care.', replace: true },
@@ -222,12 +222,12 @@ export const SCRIPT = [
     tall: { cols: '1fr', rows: '1fr 1fr', areas: '"a" "b"' },
     panels: [
       { img: 'resident_arm', area: 'a', pos: '30% 50%', kb: [1.0, 1.05, 0, 0], beats: [
-        { k: 'cap', at: [4, 4], w: 92, ru: 'Но у каждой чужой руки есть сила.', en: 'But every stolen arm has a power.' },
-        { k: 'cap', at: [4, 72], w: 70, ru: 'Житель побеждает заражённого и забирает его руку или ногу. А с ней и его силу.', en: 'A resident beats an infected one and takes their arm or leg. And their power with it.' },
+        { k: 'cap', at: [4, 4], w: 92, ru: 'Но у HeroOut остались бэкапы всех спасателей, снятые ещё до вспышки. Из них можно напечатать героев, которые пока в своём уме.', en: 'But HeroOut still has backups of every rescuer, taken before the outbreak. You can print heroes from them who are still in their right minds.' },
+        { k: 'cap', at: [4, 72], w: 70, ru: 'Наши герои побеждают заражённых и забирают их руки и ноги. А вместе с ними и силу.', en: 'Our heroes beat the infected and take their arms and legs. And their power along with them.' },
       ] },
-      { img: 'command_center', area: 'b', kb: [1.0, 1.05, 1, 0], beats: [
-        { k: 'cap', at: [4, 5], w: 70, ru: 'Ты командир последнего Командного центра.', en: 'You command the last Command Center.' },
-        { k: 'cap', at: [4, 74], w: 70, ru: 'Открывай кварталы. Строй дома. Верни город людям.', en: 'Open the blocks. Build homes. Give the city back to its people.' },
+      { img: 'command_center', area: 'b', fit: 'contain', kb: [1.0, 1.03, 0, 0], beats: [
+        { k: 'cap', at: [4, 5], w: 70, ru: 'Из всех штабов HeroOut на связи остался один. Твой.', en: 'Out of every HeroOut headquarters, only one is still answering. Yours.' },
+        { k: 'cap', at: [4, 74], w: 70, ru: 'Открывай кварталы, печатай героев и верни город людям.', en: 'Open the blocks, print your heroes and give the city back to its people.' },
       ] },
     ],
   },

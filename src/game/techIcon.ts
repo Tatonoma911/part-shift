@@ -4,7 +4,7 @@ import elementsJson from '../data/design/elements.json';
 /**
  * Element orb shared by every place that names an element (ui/UI_SPEC.md §3.5):
  * a circle in the element colour from design/data/elements.json with a dark
- * shape inside, so it reads without colour too. Термо ▲, Криогель ✱, Ток ⚡,
+ * shape inside, so it reads without colour too. Огонь ▲, Лёд ✱, Молния ⚡,
  * Токсин ●, Удар ■. A strong weakness (×1.5) gets a thick white ring.
  */
 const techs = (elementsJson as unknown as { techs: { id: string; color: string }[] }).techs;

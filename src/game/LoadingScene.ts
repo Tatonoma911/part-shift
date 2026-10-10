@@ -91,7 +91,7 @@ export class LoadingScene extends Phaser.Scene {
   }
 
   create(): void {
-    this.startedAt = this.time.now;
+    this.startedAt = performance.now();
     for (const k of this.textures.getTextureKeys()) if (k.startsWith('tile.') || k.startsWith('ally_')) this.textures.get(k).setFilter(Phaser.Textures.FilterMode.NEAREST);
     document.getElementById('boot')?.classList.add('gone');
     setTimeout(() => document.getElementById('boot')?.remove(), 600);
@@ -125,8 +125,18 @@ export class LoadingScene extends Phaser.Scene {
     this.load.start();
   }
 
-  update(_time: number, delta: number): void {
+  private lastReal = 0;
+
+  /** Tests and deep links (?seed=, ?tutorial=, ?fast=1) don't wait for the screen. */
+  private fast = /[?&](seed|tutorial|fast)=/.test(location.search);
+
+  update(_time: number, frameDelta: number): void {
+    // Real elapsed time: on a slow device Phaser smooths the frame delta, which would make the bar crawl.
+    const real = performance.now();
+    const delta = this.lastReal ? Math.min(250, real - this.lastReal) : frameDelta;
+    this.lastReal = real;
     // Bar eases toward the loader's value so it never jumps, but always moves at least a bit, so it can't crawl at the end.
+    if (this.fast && this.loaded) this.shown = 1;
     this.shown = Math.min(this.target, this.shown + Math.max((this.target - this.shown) * Math.min(1, delta / 180), delta / 1200));
     this.drawBar(this.time.now);
     const step = this.loaded && this.shown >= 0.98 ? -1 : Math.min(STEPS - 1, Math.floor(this.shown * STEPS));
@@ -139,8 +149,7 @@ export class LoadingScene extends Phaser.Scene {
       img.x -= dx;
       if (img.x + TILE <= img.getData('x0')) img.x += this.streetW;
     }
-    const fast = /[?&](seed|tutorial|fast)=/.test(location.search);
-    if (this.loaded && !this.leaving && this.shown >= 0.999 && (fast || this.time.now - this.startedAt >= MIN_MS)) this.leave();
+    if (this.loaded && !this.leaving && this.shown >= 0.999 && (this.fast || performance.now() - this.startedAt >= MIN_MS)) this.leave();
   }
 
   private leave(): void {
