@@ -325,8 +325,8 @@ export interface GameState {
   tempo?: { points: number; level: number; stagnant: boolean; lastProgress?: number };
   /** True while the current raid wave was called early (callRaidEarly command); cleared when the wave ends. */
   raidCalledEarly?: boolean;
-  /** Active boss call, or null if none. id = heroes.json id of the call target; fork = random 0–9 choice index. */
-  controlCall?: { id: string; fork?: number } | null;
+  /** Active boss call, or null if none. options[0]=refuse, options[1]=comply. fork set after player chooses. */
+  controlCall?: { id: string; options?: { cost: number; effect: 'refuse' | 'comply' }[]; fork?: number } | null;
   rules?: RuleOverrides;
   /** Present only in online matches. */
   match?: MatchInfo;
