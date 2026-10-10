@@ -74,6 +74,8 @@ export interface BuildingDef {
   };
   spawnPoint?: boolean;
   trainingLevel?: number;
+  /** Hero tiers this building spawns when construction completes (MVP_RULES §4.1b). */
+  heroBirthTiers?: number[];
   autoAttack?: { damage: number; attackSeconds: number; range: number; tech?: string };
   healAura?: { radius: number; hpPerSecond: number };
 }

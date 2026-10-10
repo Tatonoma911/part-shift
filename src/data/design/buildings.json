@@ -13,6 +13,7 @@
       "territoryRadius": 2,
       "isKeep": true,
       "spawnPoint": true,
+      "heroBirthTiers": [1],
       "autoAttack": {
         "damage": 8,
         "attackSeconds": 1.2,
@@ -35,6 +36,7 @@
       "hp": 100,
       "defense": 0,
       "spawnPoint": true,
+      "heroBirthTiers": [2],
       "shelter": {
         "capacity": 3,
         "residentsInsideTakeNoDamage": true
@@ -88,6 +90,7 @@
       "hp": 100,
       "defense": 0,
       "territoryRadius": 2,
+      "heroBirthTiers": [3, 4],
       "trainingLevel": 1,
       "_note": "each school (max 3) raises the training level of ALL residents by 1 (config.school.perLevel)"
     },
