@@ -8,6 +8,7 @@ import { buildingPic, heroName, stationPrice, techOf } from './BuildMenu';
 import { C, INK, LANDSCAPE } from './layout';
 import { drawTechOrb } from './Vitals';
 import { chip, plate, TXT } from './ui';
+import { heroesInReach, swapCommand } from './trophyActions';
 
 /**
  * Building card on tap (Антон 10.10 10:40; Геймдизайнер: BUILDINGS.md §6–8, buildings.json v0.9).
@@ -20,7 +21,18 @@ import { chip, plate, TXT } from './ui';
  * Texts: building.card.*, building.boost.*, building.demolish.* (Сценарист, ru.json 0.30).
  */
 
-export type CardActionId = 'upgrade' | 'demolish' | 'rebuild' | 'cancel' | `boost:${string}` | `coat:${string}`;
+export type CardActionId = 'upgrade' | 'demolish' | 'rebuild' | 'cancel' | 'recolor' | 'swap' | `boost:${string}` | `coat:${string}` | `recolor:${string}`;
+
+/** A trophy row: the forge's recolor or the rotation centre's swap. */
+export interface TrophyRow {
+  id: 'recolor' | 'swap';
+  name: string;
+  desc: string;
+  energy: number;
+  cd: number;
+  enabled: boolean;
+  reason: string;
+}
 
 export interface BoostRow {
   id: string;
@@ -49,6 +61,8 @@ export interface BuildingInfo {
   upgrade: { label: string; next: string; enabled: boolean; reason: string } | null;
   upgradingLine: string;
   boosts: BoostRow[];
+  /** Forge recolor and rotation swap rows (buildings.json forge.recolor, rotation_center.swap). */
+  trophies: TrophyRow[];
   demolish: { refund: number; enabled: boolean; reason: string; lowHp: boolean } | null;
   rebuild: { cost: number; enabled: boolean; reason: string } | null;
   cancel: { refund: number } | null;
@@ -168,6 +182,7 @@ export function buildingInfo(world: World, raw: Building, me: number): BuildingI
     upgrade: null,
     upgradingLine: '',
     boosts: [],
+    trophies: [],
     demolish: null,
     rebuild: null,
     cancel: null,
@@ -234,6 +249,26 @@ export function buildingInfo(world: World, raw: Building, me: number): BuildingI
     else if (r.id === 'train_star' && near.length && near.every((u) => (u.stars ?? 0) >= MAX_STARS)) reason = t('building.card.disabled.max_stars');
     const key = r.textKey ?? `building.boost.${r.id}`;
     info.boosts.push({ id: r.id, name: txt(`${key}.name`) || r.name_ru || r.id, desc: txt(`${key}.desc`), energy: r.energy, cd, enabled: !reason, reason });
+  }
+  // Trophies (forge recolor, rotation swap): a row each, only where the building has the action.
+  const dRecolor = buildingDefs[b.type]?.recolor;
+  if (dRecolor) {
+    const cd = Math.ceil(b.recolorCooldown ?? 0);
+    const reach = heroesInReach(world, b, me, dRecolor.radius);
+    let reason = '';
+    if (cd > 0) reason = t('building.card.disabled.cooldown', { time: cd });
+    else if (dRecolor.energyCost > energy) reason = short(dRecolor.energyCost);
+    else if (!reach.some((u) => Object.keys(u.parts).length > 0)) reason = t('building.card.disabled.no_trophy_near');
+    info.trophies.push({ id: 'recolor', name: txt('building.trophy.recolor.name') || 'Перекраска', desc: txt('building.trophy.recolor.desc'), energy: dRecolor.energyCost, cd, enabled: !reason, reason });
+  }
+  const dSwap = buildingDefs[b.type]?.swap;
+  if (dSwap) {
+    const cd = Math.ceil(b.swapCooldown ?? 0);
+    let reason = '';
+    if (cd > 0) reason = t('building.card.disabled.cooldown', { time: cd });
+    else if (dSwap.energyCost > energy) reason = short(dSwap.energyCost);
+    else if (!swapCommand(world, b, me)) reason = t('building.card.disabled.no_trophy_pair');
+    info.trophies.push({ id: 'swap', name: txt('building.trophy.swap.name') || 'Ротация трофеев', desc: txt('building.trophy.swap.desc'), energy: dSwap.energyCost, cd, enabled: !reason, reason });
   }
   // Demolish (§8): never the Command Center; half of what was put in, times the HP left.
   if (!DEMOLISH.forbidden.includes(b.type)) {
@@ -435,6 +470,54 @@ export function buildingCard(scene: Phaser.Scene, box: Box, info: BuildingInfo, 
             oh.on('pointerdown', (_p: Phaser.Input.Pointer, _x: number, _y: number, ev: Ev) => {
               stop(ev);
               act(`coat:${tech}`);
+            });
+            body.add(oh);
+            body.add(scene.add.text(ox, y + 66, t(`tech.${tech}`), TXT.body(15, INK.dim, '700')).setOrigin(0.5, 0));
+          });
+          y += 96;
+        }
+      }
+    }
+      // Trophies: the forge and the rotation centre.
+    if (info.trophies.length) {
+      y += 6;
+      body.add(scene.add.text(x + pad, y, t('building.card.trophy').toUpperCase(), TXT.caps(INK.amber)));
+      y += 30;
+      const btnW = LANDSCAPE ? 190 : 200;
+      for (const r of info.trophies) {
+        const top = y;
+        const textW = inner - btnW - 16;
+        const nm = scene.add.text(x + pad, y, r.name, { ...TXT.body(fs(21), INK.graphite, '800'), wordWrap: { width: textW } });
+        body.add(nm);
+        y += nm.height + 2;
+        line(r.enabled ? r.desc : r.reason, r.enabled ? INK.dim : INK.coral, 17, '500', x + pad, textW);
+        const rowH = Math.max(76, y - top);
+        const bx = x + w - pad - btnW;
+        const gg = scene.add.graphics();
+        chip(gg, bx, top, btnW, 76, r.enabled ? C.amber : 0xe3e8ea, 1, 14, r.enabled ? undefined : { color: 0xc6d4d9, width: 3 });
+        const priceText = r.cd > 0 ? `${r.cd} с` : r.energy > 0 ? `${r.energy} ⚡` : '0 ⚡';
+        const pt = scene.add.text(bx + btnW / 2, top + 38, priceText, TXT.num(fs(24), r.enabled ? INK.white : INK.dim)).setOrigin(0.5);
+        const hit = scene.add.zone(bx, top, btnW, 76).setOrigin(0).setInteractive({ useHandCursor: true });
+        hit.on('pointerdown', (_p: Phaser.Input.Pointer, _x: number, _y: number, ev: Ev) => {
+          stop(ev);
+          act(r.id);
+        });
+        body.add([gg, pt, hit]);
+        y = top + rowH + 10;
+        // The forge asks which element the trophy takes; the current one is not offered.
+        if (armed === 'recolor' && r.id === 'recolor') {
+          line(t('building.trophy.recolor.pick'), INK.graphite, 19, '700');
+          const techs = ['thermo', 'cryo', 'volt', 'toxin', 'impact'];
+          const og = scene.add.graphics();
+          body.add(og);
+          const step = inner / techs.length;
+          techs.forEach((tech, k) => {
+            const ox = x + pad + step * k + step / 2;
+            drawTechOrb(og, tech, ox, y + 30, 26);
+            const oh = scene.add.zone(ox - step / 2, y, step, 64).setOrigin(0).setInteractive({ useHandCursor: true });
+            oh.on('pointerdown', (_p: Phaser.Input.Pointer, _x: number, _y: number, ev: Ev) => {
+              stop(ev);
+              act(`recolor:${tech}`);
             });
             body.add(oh);
             body.add(scene.add.text(ox, y + 66, t(`tech.${tech}`), TXT.body(15, INK.dim, '700')).setOrigin(0.5, 0));
