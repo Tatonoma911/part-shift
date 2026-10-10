@@ -18,6 +18,10 @@ export interface MetaSave {
   records: Record<string, { bestSeconds?: number; bestScore?: number; bestEnergy?: number }>;
   daily?: { date: string; bestScore: number; streak: number };
   tutorialDone?: boolean;
+  /** Blueprint fragments collected across runs; key = blueprint site id (future: building ids). */
+  blueprintFragments?: Record<string, number>;
+  /** Lore record ids collected across runs. */
+  loreRecords?: string[];
 }
 
 export interface Rank {
@@ -67,7 +71,7 @@ export const STARTERS = OUR.starterRoster ?? [];
 export const FEMALE = new Set(['seraph', 'frostline', 'beacon', 'canopy']);
 
 export function emptyMeta(): MetaSave {
-  return { version: 1, stats: {}, unlocked: [], seenHeroes: [], allyChoice: [], records: {} };
+  return { version: 1, stats: {}, unlocked: [], seenHeroes: [], allyChoice: [...STARTERS], records: {}, blueprintFragments: {}, loreRecords: [] };
 }
 
 export function loadMeta(): MetaSave {
