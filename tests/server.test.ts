@@ -45,10 +45,17 @@ describe('match server', () => {
     expect(a.world!.apply({ type: 'queueDig', x: c.x + 2, y: c.y, force: true }, a.me).ok).toBe(true);
     await until(() => b.world!.s.players[0].queue.length + Number(b.world!.cell(c.x + 2, c.y).revealed) > 0);
     // Both clients see the same match.
+    // Capture both cell arrays atomically inside the until() ok-callback so no
+    // pump timer can fire between the two reads and skew the comparison.
     await new Promise((r) => setTimeout(r, 300));
-    const at = Math.min(a.world!.lastTick, b.world!.lastTick);
-    await until(() => a.world!.lastTick >= at && b.world!.lastTick >= at);
-    expect(a.world!.s.cells).toEqual(b.world!.s.cells);
+    let aCells: unknown, bCells: unknown;
+    await until(() => {
+      if (a.world!.lastTick !== b.world!.lastTick) return false;
+      aCells = structuredClone(a.world!.s.cells);
+      bCells = structuredClone(b.world!.s.cells);
+      return true;
+    });
+    expect(aCells).toEqual(bCells);
 
     a.leave();
     await until(() => b.world!.s.players[0].alive === false);
