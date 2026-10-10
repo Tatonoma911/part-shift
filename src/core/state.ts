@@ -142,6 +142,10 @@ export interface Unit {
   armorPlates?: number;
   /** Ally: limbs torn off on knockout (MVP_RULES §4.1а). 'arm' = -20% damage, 'leg' = -25% speed each. */
   lostLimbs?: ('arm' | 'leg')[];
+  /** Hero star tier (0 = base, 1–3 = upgraded via meta). */
+  stars?: number;
+  /** Super-charge meter 0–100; full charge triggers the hero's super ability. */
+  superCharge?: number;
   /** Seconds until the hero's ability fires again. */
   abilityCd?: number;
   /** Demon special attack state. */
@@ -298,8 +302,26 @@ export interface GameState {
   outcome: Outcome;
   /** difficulty.json level id. */
   difficulty: string;
-  /** Game time of the next raid (MVP_RULES §9.7). */
+  /** Game time of the next raid (MVP_RULES §9.7). @deprecated use raid.nextIn */
   raidAt?: number;
+  /**
+   * Raid status: read-only view for the UI.
+   * nextIn  = seconds until the next raid wave fires (0 while active).
+   * active  = a raid wave is currently in progress.
+   * techs   = element types of raiders in the current wave.
+   * callEarlyEnergy = energy cost to call a raid early.
+   * canCallEarly    = player has enough energy and the clock is ready.
+   */
+  raid?: { nextIn: number; active: boolean; techs: Tech[]; callEarlyEnergy: number; canCallEarly: boolean };
+  /**
+   * Tempo: how well the shift is going (score system for difficulty scaling).
+   * points   = accumulated tempo points (digs, clears, rescues).
+   * level    = 0–3 difficulty tier derived from points.
+   * stagnant = true when no progress was made in the last config.tempo.stagnantSeconds.
+   */
+  tempo?: { points: number; level: number; stagnant: boolean };
+  /** Active boss call, or null if none. id = heroes.json id of the call target. */
+  controlCall?: { id: string } | null;
   rules?: RuleOverrides;
   /** Present only in online matches. */
   match?: MatchInfo;

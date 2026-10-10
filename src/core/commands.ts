@@ -13,8 +13,10 @@ export type Command =
   | { type: 'setRecruit'; building: number; on: boolean }
   /** Upgrade a completed building to the next level (buildings.json levels[]). */
   | { type: 'upgradeBuilding'; building: number }
-  /** Boost: temporarily accelerate a building's effect (buildings.json boost). */
-  | { type: 'boostBuilding'; building: number }
+  /** Boost a building using a hero ability (buildings.json boost). */
+  | { type: 'heroBoost'; building: number }
+  /** Cancel a building under construction; refunds full cost. */
+  | { type: 'cancelBuild'; building: number }
   /** Demolish: remove the building, refund demolishRefund fraction of energy spent. */
   | { type: 'demolish'; building: number }
   /** Rebuild ruined building on its ruin for half price. */
@@ -25,7 +27,11 @@ export type Command =
   /** Spend a scanner charge (assist mode "scanner"). */
   | { type: 'scan' }
   /** Take one card of the open cache offer (boons.json). */
-  | { type: 'pickBoon'; id: string };
+  | { type: 'pickBoon'; id: string }
+  /** Answer the boss call: engage the call target immediately. */
+  | { type: 'answerCall' }
+  /** Call a raid now (spends callEarlyEnergy from GameState.raid). */
+  | { type: 'callRaidEarly' };
 
 /** Why a command was refused; the keys match the writer's texts (text/ru.json). */
 export type RefuseReason =
@@ -44,6 +50,11 @@ export type RefuseReason =
   | 'building.demolish.not_enough_energy'
   | 'building.rebuild.not_ruined'
   | 'building.rebuild.not_enough_energy'
+  | 'building.cancel.complete'
+  | 'building.cancel.not_enough_energy'
+  | 'raid.not_ready'
+  | 'raid.not_enough_energy'
+  | 'call.no_active'
   | 'cell.dig_unreachable'
   | 'assist.known_danger'
   | 'assist.no_charges'
