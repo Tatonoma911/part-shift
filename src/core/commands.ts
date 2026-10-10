@@ -9,6 +9,8 @@ export type Command =
   | { type: 'queueDig'; x: number; y: number; force?: boolean }
   | { type: 'cancelDig'; x: number; y: number }
   | { type: 'toggleMark'; x: number; y: number; clear?: boolean }
+  /** Аккорд: a tapped clue whose «Опасно» marks match its number digs the other free neighbours. */
+  | { type: 'chord'; x: number; y: number }
   | { type: 'useMedkit'; x: number; y: number }
   | { type: 'build'; building: string; x: number; y: number; hero?: string }
   | { type: 'setRecruit'; building: number; on: boolean }
@@ -44,6 +46,7 @@ export type RefuseReason =
   | 'build.cell_occupied'
   | 'build.enemies_near'
   | 'build.unreachable'
+  | 'chord.not_ready'
   | 'building.upgrade.max_level'
   | 'building.upgrade.not_complete'
   | 'building.upgrade.not_enough_energy'

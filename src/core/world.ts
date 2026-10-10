@@ -43,6 +43,7 @@ import {
   civilianRules,
   CIVILIANS_PER_SITE_DEFAULT,
   controlEvents,
+  controlSchedule,
 } from './data';
 import { cellAt, cellKey, cheb, dist, inBounds, neighbors, parseKey, walkableForEnemy, walkableForPlayer } from './grid';
 import { generateField } from './mapgen';
@@ -522,6 +523,25 @@ export class World {
         this.emit('medkit_use', { x: cmd.x, y: cmd.y, owner: playerId });
         return ok;
       }
+      case 'chord': {
+        // Аккорд (campaign alwaysOn «chord»): a revealed clue whose «Опасно» marks match its number digs the rest of its free neighbours.
+        if (!inBounds(s, cmd.x, cmd.y)) return bad('chord.not_ready');
+        const c = this.cell(cmd.x, cmd.y);
+        const threat = this.clues(cmd.x, cmd.y).threat;
+        if (!c.revealed || threat <= 0) return bad('chord.not_ready');
+        const ns = neighbors(s, cmd.x, cmd.y);
+        const marks = ns.filter((n) => this.cell(n.x, n.y).markKind === 'danger').length;
+        if (marks !== threat) return bad('chord.not_ready');
+        let queued = 0;
+        for (const n of ns) {
+          const nc = this.cell(n.x, n.y);
+          if (nc.revealed || nc.marked) continue;
+          if (this.apply({ type: 'queueDig', x: n.x, y: n.y }, playerId).ok) queued++;
+        }
+        if (!queued) return bad('chord.not_ready');
+        this.emit('chord', { x: cmd.x, y: cmd.y, owner: playerId, amount: queued });
+        return ok;
+      }
       case 'toggleMark': {
         if (!inBounds(s, cmd.x, cmd.y)) return bad();
         const c = this.cell(cmd.x, cmd.y);
@@ -837,6 +857,7 @@ export class World {
     this.heroClock();
     this.bossClock();
     this.raidClock();
+    this.callClock();
     this.assistTimers(dt);
     this.population(dt);
     for (const u of [...s.units]) {
@@ -1732,7 +1753,7 @@ export class World {
     // Boss call: keep fork index if already set (from answerCall).
     if (s.boss.awake && !s.boss.dead) {
       if (!s.controlCall) s.controlCall = { id: s.boss.hero };
-    } else {
+    } else if (!s.controlCall?.scheduled) {
       s.controlCall = null;
     }
 
@@ -3208,7 +3229,46 @@ export class World {
     if (civ > 0) this.loseCivilians(p, civ, 'call');
     const sooner = num('nextRaidSooner');
     if (sooner > 0 && this.s.raidAt !== undefined) this.s.raidAt -= sooner;
+    const cmdPct = num('commandHpPercent');
+    if (cmdPct) {
+      for (const b of this.s.buildings) if (b.owner === p.id && b.type === 'command' && b.hp > 0) b.hp = Math.max(1, Math.round(b.hp * (1 + cmdPct / 100)));
+    }
+    const randPct = num('randomBuildingHpPercent');
+    if (randPct) {
+      const hit = this.s.buildings.filter((b) => b.owner === p.id && b.type !== 'command' && b.complete && !b.ruined && b.hp > 0);
+      if (hit.length) {
+        const b = hit[randIntOf(this.s, hit.length)];
+        b.hp = Math.max(1, Math.round(b.hp * (1 + randPct / 100)));
+      }
+    }
     return true;
+  }
+
+  /**
+   * Контроль calls during a run (events.json, campaign features.controlCalls): `perRun` calls, the first after
+   * `firstAtSeconds`, then every `gapSeconds`. Never during a raid or the call target, and never with two players
+   * (online votes are not built yet). An event is offered only when every effect it has is implemented here.
+   */
+  private callClock(): void {
+    const s = this.s;
+    if (!this.rules.controlCalls || s.players.length !== 1 || s.controlCall || (s.boss.awake && !s.boss.dead)) return;
+    if (s.raid?.active) return;
+    const between = (range: number[]) => range[0] + Math.floor(rand(s) * (range[1] - range[0] + 1));
+    const cfg = controlSchedule;
+    s.callPlan ??= { nextAt: s.time + between(cfg.firstAtSeconds), left: between(cfg.perRun), used: [] };
+    const plan = s.callPlan;
+    if (plan.left <= 0 || s.time < plan.nextAt) return;
+    const offer = Object.keys(controlEvents).filter((id) => !plan.used.includes(id) && callEffectsSupported(controlEvents[id]) && this.callAvailable(id, 0));
+    if (!offer.length) {
+      plan.nextAt = s.time + 30;
+      return;
+    }
+    const id = offer[randIntOf(s, offer.length)];
+    plan.used.push(id);
+    plan.left--;
+    plan.nextAt = s.time + between(cfg.gapSeconds);
+    s.controlCall = { id, scheduled: true };
+    this.emit('call_incoming', { owner: 0, text: id });
   }
 
   /** Whether a Контроль call may be offered to this player (events.json requires; unmet → the event is skipped). */
@@ -3224,6 +3284,14 @@ export class World {
   private emit(type: string, data: Omit<GameEvent, 'type'> = {}): void {
     this.events.push({ type, ...data });
   }
+}
+
+/** Effects applyCallEffect and the campaign can carry out today; events with others stay out of the draw. */
+const CALL_EFFECTS = new Set(['energy', 'civiliansFromBalance', 'civiliansLose', 'nextRaidSooner', 'commandHpPercent', 'randomBuildingHpPercent']);
+const CALL_REQUIRES = new Set(['civiliansOnBalance']);
+function callEffectsSupported(ev: { a?: Record<string, unknown>; b?: Record<string, unknown>; requires?: Record<string, unknown> }): boolean {
+  const keysOk = (o?: Record<string, unknown>) => Object.keys(o ?? {}).every((k) => CALL_EFFECTS.has(k));
+  return keysOk(ev.a) && keysOk(ev.b) && Object.keys(ev.requires ?? {}).every((k) => CALL_REQUIRES.has(k));
 }
 
 function isTech(t: string): t is Tech {
