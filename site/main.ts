@@ -294,8 +294,9 @@ function worldView(): string {
 
   <section class="section" style="padding-top:0"><div class="wrap split">
     <div class="stack">
-      ${head(R('ТЕХНОЛОГИИ // УРОН', 'TECH // DAMAGE'), R('Пять технологий и их реакции', 'Five technologies and their reactions'), R('Каждый адаптант несёт одну технологию. Её и отдаёт победителю: убил ледяного — получил ледяную руку.', 'Every adaptant carries one technology and hands it to whoever wins: defeat an ice one, get an ice arm.'))}
-      <div class="techs">${TECH.map((t) => `<div class="tech slab"><i style="--dot:${t.color}"></i><h3>${lang === 'ru' ? t.ru : t.en}</h3></div>`).join('')}</div>
+      ${head(R('СТИХИИ // УРОН', 'ELEMENTS // DAMAGE'), R('Пять стихий и их реакции', 'Five elements and their reactions'), R('Каждый адаптант несёт одну стихию. Её и отдаёт победителю: убил ледяного — получил ледяную руку.', 'Every adaptant carries one element and hands it to whoever wins: defeat an ice one, get an ice arm.'))}
+      <p class="caps">${R('МОЛНИЯ БЬЁТ ЛЁД · ЛЁД БЬЁТ ОГОНЬ · ОГОНЬ БЬЁТ ТОКСИН · ТОКСИН БЬЁТ УДАР · УДАР БЬЁТ МОЛНИЮ', 'LIGHTNING BEATS ICE · ICE BEATS FIRE · FIRE BEATS TOXIN · TOXIN BEATS IMPACT · IMPACT BEATS LIGHTNING')}</p>
+      <div class="techs">${TECH.map((t) => `<div class="tech slab"><i style="--dot:${t.color}"></i><h3>${lang === 'ru' ? t.ru : t.en}${t.old ? ` <small>(${tr(t.old)})</small>` : ''}</h3><p>${tr(t.desc)}</p></div>`).join('')}</div>
     </div>
     <div class="stack">
       <div class="slab" style="padding:8px 18px"><div class="table-scroll"><table class="reactions"><tbody>
@@ -422,7 +423,7 @@ function villainsView(): string {
 
   <section class="section" style="padding-top:0"><div class="wrap">
     ${head(R('ПОЛЕ // ВРАГИ', 'BOARD // ENEMIES'), R('Адаптанты', 'Adaptants'), R('Обычные горожане, заражённые гелем. Одна часть тела переросла под стихию. Слабые, но их много, и гнездятся они в закрытых кварталах.', 'Ordinary citizens infected by the gel. One body part overgrew for an element. Weak but numerous, nesting in closed blocks.'))}
-    <figure class="adaptants slab"><img src="${img('adaptants-sheet.webp')}" alt="" loading="lazy"><figcaption>${[['ТЕРМО', 'THERMO', 'Рука-радиатор, пар'], ['КРИО', 'CRYO', 'Ледяная нога'], ['ТОК', 'VOLT', 'Рука из кабелей'], ['ТЯЖЁЛЫЙ', 'HEAVY', 'Поршневые ноги']].map(([ru, en, d]) => `<span><b class="caps">${R(ru, en)}</b>${R(d, ({ 'Рука-радиатор, пар': 'Radiator arm, steam', 'Ледяная нога': 'Ice leg', 'Рука из кабелей': 'Cable arm', 'Поршневые ноги': 'Piston legs' } as Record<string, string>)[d])}</span>`).join('')}</figcaption></figure>
+    <figure class="adaptants slab"><img src="${img('adaptants-sheet.webp')}" alt="" loading="lazy"><figcaption>${[['ОГОНЬ', 'FIRE', 'Рука-радиатор, пар'], ['ЛЁД', 'ICE', 'Ледяная нога'], ['МОЛНИЯ', 'LIGHTNING', 'Рука из кабелей'], ['ТЯЖЁЛЫЙ', 'HEAVY', 'Поршневые ноги']].map(([ru, en, d]) => `<span><b class="caps">${R(ru, en)}</b>${R(d, ({ 'Рука-радиатор, пар': 'Radiator arm, steam', 'Ледяная нога': 'Ice leg', 'Рука из кабелей': 'Cable arm', 'Поршневые ноги': 'Piston legs' } as Record<string, string>)[d])}</span>`).join('')}</figcaption></figure>
   </div></section>
 
   <section class="section band"><div class="wrap">
