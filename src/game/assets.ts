@@ -71,9 +71,9 @@ export function originOf(set: string): [number, number] {
   return [a.anchor[0] / a.frameSize[0], a.anchor[1] / a.frameSize[1]];
 }
 
-/** Anchor of the static building sprites — [anchorX, anchorY, width, height] in px (buildings_gpt_big.json @x2: buildings ~1.4× a cell, command center 2 cells wide). */
+/** Anchor of the static building sprites — [anchorX, anchorY, width, height] in px (buildings_gpt_big.json @x2: buildings ~1.4× a cell, command center ~3 cells wide — the biggest). */
 export const BUILDING_ANCHOR: Record<string, [number, number, number, number]> = {
-  command: [52, 150, 104, 176],
+  command: [80, 128, 160, 168],
   home: [36, 94, 72, 112],
   reactor: [36, 94, 72, 112],
   cooler: [36, 94, 72, 112],
