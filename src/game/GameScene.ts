@@ -352,7 +352,8 @@ export class GameScene extends Phaser.Scene {
     const frame = this.add.graphics().setDepth(0.5);
     brackets(frame, bx - 10, by - 10, bw + 20, bh + 20);
     this.board = new BoardView(this, this.world, bx, by, this.me);
-    this.cams.setBounds(bx, by, bw, bh);
+    // The tutorial's 8×10 board is small: let it zoom up to fill the view (AR-36).
+    this.cams.setBounds(bx, by, bw, bh, !!this.guide && !LANDSCAPE);
     // Online fields are bigger than the screen: start at the normal cell size over our own center.
     const home = this.online ? this.world.building(this.world.player(this.me).command) : undefined;
     if (home) this.cams.focus(bx + home.x * STEP + CELL / 2, by + home.y * STEP + CELL / 2, 1);
