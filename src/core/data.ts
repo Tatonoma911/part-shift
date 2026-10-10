@@ -73,7 +73,14 @@ export interface BuildingDef {
     stacks?: boolean;
     healAmount?: number;
     healEverySeconds?: number;
+    /** Jammer (buildings.json): targets in range move and attack slower. */
+    moveSpeedFactor?: number;
+    attackSpeedFactor?: number;
   };
+  /** Outpost: our heroes in range gain defense. */
+  heroAura?: { radius: number; defenseAdd: number };
+  /** Repair building: our buildings in range regain HP over time. */
+  repair?: { radius: number; hpPerSecond: number };
   spawnPoint?: boolean;
   trainingLevel?: number;
   /** Hero tiers this building spawns when construction completes (MVP_RULES §4.1b). */
