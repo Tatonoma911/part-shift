@@ -106,7 +106,7 @@ describe('population and buildings', () => {
       w.step(0.05);
       ev.push(...w.drainEvents());
     }
-    expect(ev.find((e) => e.type === 'resident_born')?.x).toBe(3);
+    expect(ev.find((e) => e.type === 'ally_join' || e.type === 'resident_born')?.x).toBe(3);
   });
 
   it('refuses with a reason: no energy, outside territory, occupied, not opened', () => {

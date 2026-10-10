@@ -963,7 +963,7 @@ export class BoardView {
       v.windup = windup;
       if (!v.oneShot) {
         let anim = 'idle';
-        if (u.kind === 'resident') {
+        if (u.kind === 'resident' || u.kind === 'ally') {
           if (moved) anim = dy < -Math.abs(dx) * 0.6 ? 'walk_back' : 'walk';
           else if ((u.task.type === 'dig' || u.task.type === 'harvest') && u.path.length === 0) anim = 'dig';
           else if (u.task.type === 'build' && u.path.length === 0) anim = 'build';
