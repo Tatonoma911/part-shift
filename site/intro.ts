@@ -6,7 +6,8 @@ import type { Lang } from './content';
  * Loaded on demand, so the site only fetches its panels when someone presses play.
  */
 const files = import.meta.glob('../src/assets/comic/**/*.{jpg,png}', { eager: true, query: '?url', import: 'default' }) as Record<string, string>;
-const audio = import.meta.glob('../src/assets/audio/**/*.mp3', { eager: true, query: '?url', import: 'default' }) as Record<string, string>;
+// Only the sounds the comic asks for (its music and the sfx named in its script).
+const audio = import.meta.glob(['../src/assets/audio/music/menu.mp3', '../src/assets/audio/sfx/{ui_tap,demon_awake,nest_open,threat_level_up}.mp3'], { eager: true, query: '?url', import: 'default' }) as Record<string, string>;
 
 export function playStory(lang: Lang): Promise<{ skipped: boolean }> {
   const assets: Record<string, string> = {};
