@@ -39,9 +39,10 @@ jobs:
         with:
           name: part-shift-debug-apk
           path: part-shift-debug.apk
-      # A fixed download link for the phone: Releases -> "Android test build".
+      # Publishing the test build is manual (Actions -> Android APK -> Run workflow), until the game is ready for phones.
+      # Every push still builds the APK and keeps it as a workflow artifact.
       - uses: softprops/action-gh-release@v2
-        if: github.ref == 'refs/heads/main'
+        if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main'
         with:
           tag_name: android-debug
           name: Android test build
