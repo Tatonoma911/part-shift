@@ -2910,8 +2910,11 @@ export class World {
     const pool = this.rules.allies !== undefined ? this.rules.allies : Object.keys(heroDefs);
     const alive = new Set(this.s.units.filter((u) => u.owner === p.id && u.kind === 'ally' && u.hp > 0).map((u) => u.hero));
     const waiting = new Set(Object.keys(p.allyBack ?? {}));
-    const id = pool.find((hid) => !alive.has(hid) && !waiting.has(hid) && (!tiers || tiers.includes(heroDefs[hid]?.tier ?? 0)));
+    // A knocked-out squad hero is reborn first, at the building that births it, instead of a fresh hero.
+    const fit = (hid: string) => !alive.has(hid) && (!tiers || tiers.includes(heroDefs[hid]?.tier ?? 0));
+    const id = pool.find((hid) => waiting.has(hid) && fit(hid)) ?? pool.find((hid) => !waiting.has(hid) && fit(hid));
     if (!id) return null;
+    if (waiting.has(id)) delete p.allyBack![id];
     const h = heroDefs[id];
     if (!h) return null;
     const e = h.enemy;
