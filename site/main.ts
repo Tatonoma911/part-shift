@@ -1,5 +1,5 @@
 import './style.css';
-import { APK_URL, supportBlock, wireSupport } from './support';
+import { androidSoon, supportBlock, wireSupport } from './support';
 import { ADS, ARCHIVE, ARTBOOK, BARKS, COMICS, DISTRICTS, HEROES, img, REACTIONS, TECH, UI, type Hero, type L, type Lang } from './content';
 
 /**
@@ -69,7 +69,7 @@ function drawer(): string {
   return `<div class="drawer" id="drawer" hidden><div class="drawer-panel">
     <div class="drawer-head"><span class="wordmark">PART<b>SHIFT</b></span><button class="icon-btn" id="drawer-close" aria-label="${u('close')}">${ICON.close}</button></div>
     ${items}
-    <a class="item" href="${APK_URL}" rel="noopener">${R('Скачать для Android', 'Download for Android')}<span class="caps">APK</span></a>
+    <span class="item soon" aria-disabled="true">Android<span class="caps">${R('В РАЗРАБОТКЕ', 'IN DEVELOPMENT')}</span></span>
     <a class="item" href="#support">${R('Донат автору', 'Tip the author')}<span class="caps">☕</span></a>
     <div class="row" style="margin-top:18px;justify-content:space-between">${langSwitch()}<a class="btn btn-primary" href="${playHref()}">${ICON.play}${u('play')}</a></div>
   </div></div>`;
@@ -79,7 +79,7 @@ function footer(): string {
   return `<footer><div class="wrap">
     <span class="wordmark">PART<b>SHIFT</b></span>
     <span>${R('Lumen City. Всегда на смене. Игра бесплатная, мир вымышленный.', 'Lumen City. Always on call. The game is free, the world is fiction.')}</span>
-    <div class="row"><a class="btn btn-ghost" href="${APK_URL}" rel="noopener">${R('Скачать для Android', 'Download for Android')}</a><a class="btn btn-ghost" href="#support">☕ ${R('Донат автору', 'Tip the author')}</a><a class="btn btn-ghost" href="${playHref()}">${ICON.play}${u('playFree')}</a></div>
+    <div class="row">${androidSoon(lang)}<a class="btn btn-ghost" href="#support">☕ ${R('Донат автору', 'Tip the author')}</a><a class="btn btn-ghost" href="${playHref()}">${ICON.play}${u('playFree')}</a></div>
   </div></footer>`;
 }
 
@@ -110,7 +110,7 @@ function home(): string {
         'Гель Splice свёл с ума спасателей Lumen City, и теперь они спасают всех так, что приходится убегать. Открывай кварталы, печатай своих героев и забирай у заражённых их руки, ноги и силу.',
         'Splice gel drove Lumen City’s rescuers mad, and now they rescue everyone so hard that people run. Open blocks, print your own heroes and take the infected’s arms, legs and power.',
       )}</p>
-      <div class="row"><a class="btn btn-primary btn-lg" href="${playHref()}">${ICON.play}${u('playFree')}</a><a class="btn btn-ghost btn-lg" href="${APK_URL}" rel="noopener">${R('Скачать для Android', 'Download for Android')}</a><a class="btn btn-ghost btn-lg" href="#story" data-scroll="story">${R('Узнать историю', 'Read the story')}</a></div>
+      <div class="row"><a class="btn btn-primary btn-lg" href="${playHref()}">${ICON.play}${u('playFree')}</a>${androidSoon(lang, 'btn-lg')}<a class="btn btn-ghost btn-lg" href="#story" data-scroll="story">${R('Узнать историю', 'Read the story')}</a></div>
     </div></div>
   </section>
 
@@ -158,11 +158,11 @@ function home(): string {
 
   <section class="section"><div class="wrap">
     ${head(R('КОМИКСЫ // ДО СИРЕН', 'COMICS // BEFORE THE SIRENS'), R('Обычные проблемы. Профессиональная громкость.', 'Ordinary problems. Professional volume.'))}
-    <div class="comics">${COMICS.slice(0, 4).map(comicCard).join('')}</div>
+    <div class="comics">${storyCard()}${COMICS.slice(0, 3).map(comicCard).join('')}</div>
   </div></section>
 
   <section class="section" id="support" style="padding-top:0"><div class="wrap">
-    ${head(R('СКАЧАТЬ // ПОДДЕРЖАТЬ', 'DOWNLOAD // SUPPORT'), R('Игра на телефоне и кофе автору', 'The game on your phone, and a coffee for the author'))}
+    ${head(R('ТЕЛЕФОН // ПОДДЕРЖАТЬ', 'PHONE // SUPPORT'), R('Скоро на телефоне, а пока кофе автору', 'Coming to phones, and a coffee for the author'))}
     ${supportBlock(lang)}
   </div></section>
 
@@ -439,10 +439,17 @@ function comicCard(c: (typeof COMICS)[number]): string {
   </a>`;
 }
 
+function storyCard(): string {
+  return `<button class="comic-card slab story-card" data-story="1">
+    <div class="cover"><img src="${img('comics/intro-cover.webp')}" alt="" loading="lazy"><span class="play-badge">${ICON.play}</span></div>
+    <div class="meta"><span class="caps">${R('ПРОЛОГ ИГРЫ // 12 СТРАНИЦ, СО ЗВУКОМ', 'GAME PROLOGUE // 12 PAGES, WITH SOUND')}</span><h3>${R('Как всё началось', 'How it all began')}</h3><p>${R('Купол, голубая Энергия, гель Splice и 42-й этаж, где решили, что пусть случается почаще. Тот самый комикс, с которого начинается игра.', 'The Dome, blue Energy, Splice gel and floor 42, where someone decided it should happen more often. The comic the game opens with.')}</p></div>
+  </button>`;
+}
+
 function comicsView(): string {
   return `<section class="section"><div class="wrap">
     ${head(R('ЧИТАТЬ // КОМИКСЫ', 'READ // COMICS'), R('Комиксы', 'Comics'), R('«До сирен» — истории Lumen City до аварии: обычные городские проблемы, которые решают необычные спасатели.', '“Before the Sirens” is about Lumen City before the accident: ordinary city problems solved by extraordinary rescuers.'))}
-    <div class="comics">${COMICS.map(comicCard).join('')}</div>
+    <div class="comics">${storyCard()}${COMICS.map(comicCard).join('')}</div>
   </div></section>`;
 }
 
@@ -540,6 +547,7 @@ app.addEventListener('click', (ev) => {
   if (t.closest('#drawer-close') || t.id === 'drawer') return void (document.getElementById('drawer')!.hidden = true);
   if (t.closest('#drawer a')) document.getElementById('drawer')!.hidden = true;
   // «Узнать историю» just scrolls the home page down to the canon block instead of opening a new page.
+  if (t.closest('[data-story]')) return void import('./intro').then((m) => m.playStory(lang));
   const jump = t.closest<HTMLAnchorElement>('a[data-scroll]');
   if (jump) {
     ev.preventDefault();

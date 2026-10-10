@@ -542,3 +542,10 @@ footer .wrap { display: flex; gap: 18px; justify-content: space-between; flex-wr
 .moods { grid-template-columns: repeat(5, minmax(0, 1fr)); }
 @media (max-width: 480px) { .moods { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
 #story, #support { scroll-margin-top: 64px; }
+/* «Как всё началось»: the intro comic plays over the site. */
+.story-card { all: unset; cursor: pointer; display: grid; grid-template-rows: auto 1fr; box-sizing: border-box; transition: transform 0.18s; }
+.story-card:hover { transform: translateY(-3px); }
+.story-card .cover { position: relative; }
+.play-badge { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); width: 76px; height: 76px; display: grid; place-items: center; background: var(--teal); color: #fff; box-shadow: 0 8px 28px rgba(0, 0, 0, .35); }
+.play-badge svg { width: 30px; height: 30px; }
+.soon { cursor: default; opacity: .7; border-style: dashed; } .soon:hover { transform: none; }

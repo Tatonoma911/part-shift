@@ -122,6 +122,8 @@ def main():
     webp(f'{INC}/site_support_jar.png', 'support-jar', 900)
     B04 = f'{PF}/art/batch04_final/generated'
     webp(f'{B04}/202_comic_11_control_warehouse.png', 'control-warehouse', 1600)
+    # Cover of «Как всё началось», the intro comic the site plays (site/intro.ts).
+    webp(f'{PF}/comic/assets/panels/city_sunset.jpg', 'comics/intro-cover', 900, (0.2, 0, 0.8, 1))
     for lang in ('ru', 'en'):
         webp(f'{INC}/site_comic_cat_record-{lang}.png', f'comics/cat-record-{lang}', 1054)
     os.makedirs(os.path.join(OUT, 'portraits'), exist_ok=True)

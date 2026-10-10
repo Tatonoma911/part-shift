@@ -8,19 +8,25 @@ import { img, type Lang } from './content';
  */
 
 /** Current Android build. Switches to the release APK when the game is done (team/release.md). */
+// Антон 10.10: the site shows Android as «в разработке» until the release; the link stays for when it opens.
 export const APK_URL = 'https://github.com/Tatonoma911/part-shift/releases/download/android-debug/part-shift-debug.apk';
 
 const fmt = (n: number) => n.toLocaleString('ru-RU');
+
+/** The Android button while the app is in development: a disabled chip instead of the APK link. */
+export function androidSoon(lang: Lang, size = ''): string {
+  return `<span class="btn btn-ghost ${size} soon" aria-disabled="true">${lang === 'ru' ? 'Android: в разработке, ожидайте' : 'Android: in development, stay tuned'}</span>`;
+}
 
 export function supportBlock(lang: Lang): string {
   const R = (ru: string, en: string) => (lang === 'ru' ? ru : en);
   return `<div class="support">
     <div class="slab support-card">
       <span class="caps">${R('ТЕЛЕФОН // ANDROID', 'PHONE // ANDROID')}</span>
-      <h3>${R('Скачать для Android', 'Download for Android')}</h3>
-      <p>${R('Файл APK: скачай и открой на телефоне. Если Android спросит, разреши установку из этого источника.', 'An APK file: download it and open it on your phone. If Android asks, allow installs from this source.')}</p>
-      <a class="btn btn-primary btn-lg" href="${APK_URL}" rel="noopener">${R('Скачать APK', 'Download APK')}</a>
-      <p class="dim">${R('Пока это тестовая сборка. iPhone позже, через App Store: Apple не разрешает ставить игры в обход магазина.', 'This is a test build for now. iPhone comes later through the App Store: Apple doesn’t allow installs outside its store.')}</p>
+      <h3>${R('Версия для Android', 'Android version')}</h3>
+      <p>${R('Приложение ещё в разработке. Ожидайте: а пока в игру можно играть прямо в браузере телефона.', 'The app is still in development. Stay tuned: meanwhile you can play right in your phone’s browser.')}</p>
+      ${androidSoon(lang, 'btn-lg')}
+      <p class="dim">${R('iPhone позже, через App Store: Apple не разрешает ставить игры в обход магазина.', 'iPhone comes later through the App Store: Apple doesn’t allow installs outside its store.')}</p>
     </div>
     <div class="slab support-card">
       <img class="jar" src="${img('support-jar.webp')}" alt="${R('Серафим и Патч с банкой «На смену»', 'Seraph and Patch with an “On shift” tip jar')}" loading="lazy">

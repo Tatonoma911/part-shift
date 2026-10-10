@@ -233,8 +233,7 @@ export class MenuScene extends Phaser.Scene {
       const acc = account.view;
       const accSub = acc.status === 'disabled' ? t('menu.soon') : acc.status === 'signed' ? acc.name || acc.email : undefined;
       button(t('menu.account'), () => openAccountPanel(), false, accSub);
-      this.socialRow(c, x0 + 32, y, w - 64);
-      y += (LANDSCAPE ? 76 : 92) + 16;
+      y += this.socialRow(c, x0 + 32, y, w - 64) + 16;
     } else if (page === 'slots') {
       c.add(this.add.text(cx, y + 6, t('menu.slots').toUpperCase(), TXT.caps()).setOrigin(0.5));
       y += 44;
@@ -374,40 +373,53 @@ export class MenuScene extends Phaser.Scene {
     });
   }
 
-  /** Ranking · Invite · Feedback · Coffee (the coffee chip is gold: supporting the author is one tap away). */
-  private socialRow(c: Phaser.GameObjects.Container, x: number, y: number, w: number): void {
-    const h = LANDSCAPE ? 76 : 92;
-    // Brand icons, not system emoji (AR-21): emoji look different on every phone.
-    const items: [MenuIconId, string, () => void, boolean][] = [
-      ['leaderboard', t('social.menu.board'), () => openBoard({ playDaily: () => this.playDaily() }), false],
-      ['invite', t('social.menu.invite'), () => invite('menu'), false],
-      ['feedback', t('social.menu.feedback'), () => openFeedback('menu'), false],
-      ['coffee', t('social.menu.coffee'), () => openDonate('menu'), true],
-    ];
-    const gap = 10;
-    // The gold coffee chip is two units wide: its label is a whole phrase on two lines beside the icon.
-    const unit = (w - gap * (items.length - 1)) / (items.length + 1);
-    let bx = x;
-    items.forEach(([icon, label, act, gold]) => {
-      const bw = gold ? unit * 2 : unit;
-      const g = this.add.graphics();
-      chip(g, bx, y, bw, h, gold ? C.amber : C.graphite, gold ? 1 : 0.08, 14);
-      const size = LANDSCAPE ? 32 : 40;
-      const ic = gold ? menuIcon(this, bx + 14 + size / 2, y + h / 2, size, icon) : menuIcon(this, bx + bw / 2, y + h * 0.34, size, icon);
-      const tx = gold
-        ? this.add.text(bx + 14 + size + 8 + (bw - size - 36) / 2, y + h / 2, label, { ...TXT.body(LANDSCAPE ? 18 : 21, INK.graphite, '800'), align: 'center', lineSpacing: -2 }).setOrigin(0.5)
-        : this.add.text(bx + bw / 2, y + h * 0.74, label, TXT.body(LANDSCAPE ? 17 : 19, INK.graphite, '700')).setOrigin(0.5);
-      const room = gold ? bw - size - 36 : bw - 10;
-      if (tx.width > room || tx.height > h - 8) tx.setScale(Math.min(room / tx.width, (h - 8) / tx.height));
-      const hit = this.add.zone(bx, y, bw, h).setOrigin(0).setInteractive({ useHandCursor: true });
+  /**
+   * «Купить разработчику кофе» as one big gold button (Антон 10.10: four equal chips made its long label unreadable),
+   * then Ranking · Invite · Feedback as a slim row of quiet chips under it. Returns the height it took.
+   */
+  private socialRow(c: Phaser.GameObjects.Container, x: number, y: number, w: number): number {
+    const tap = (bx: number, by: number, bw: number, bh: number, act: () => void) => {
+      const hit = this.add.zone(bx, by, bw, bh).setOrigin(0).setInteractive({ useHandCursor: true });
       hit.on('pointerdown', (_p: Phaser.Input.Pointer, _x: number, _y: number, ev: Ev) => {
         ev.stopPropagation();
         sound.play('ui_tap');
         act();
       });
-      c.add([g, ...ic, tx, hit]);
-      bx += bw + gap;
+      return hit;
+    };
+    // The coffee button: full width, gold, icon and the whole phrase on one line.
+    const ch = LANDSCAPE ? 80 : 96;
+    const g = this.add.graphics();
+    chip(g, x, y, w, ch, C.amber, 1, 16);
+    const size = LANDSCAPE ? 40 : 48;
+    const label = t('social.menu.coffee').replace(/\n/g, ' ');
+    const tx = this.add.text(x + w / 2 + size / 2 + 6, y + ch / 2, label, TXT.body(LANDSCAPE ? 28 : 32, INK.graphite, '800')).setOrigin(0.5);
+    const room = w - size - 64;
+    if (tx.width > room) tx.setScale(room / tx.width);
+    const ic = menuIcon(this, tx.x - (tx.width * tx.scaleX) / 2 - 14 - size / 2, y + ch / 2, size, 'coffee');
+    c.add([g, ...ic, tx, tap(x, y, w, ch, () => openDonate('menu'))]);
+    // The other three: quieter outline chips, icon beside a short label.
+    const items: [MenuIconId, string, () => void][] = [
+      ['leaderboard', t('social.menu.board'), () => openBoard({ playDaily: () => this.playDaily() })],
+      ['invite', t('social.menu.invite'), () => invite('menu')],
+      ['feedback', t('social.menu.feedback'), () => openFeedback('menu')],
+    ];
+    const gap = 10;
+    const sy = y + ch + 12;
+    const sh = LANDSCAPE ? 60 : 72;
+    const bw = (w - gap * (items.length - 1)) / items.length;
+    items.forEach(([icon, text, act], k) => {
+      const bx = x + k * (bw + gap);
+      const sg = this.add.graphics();
+      chip(sg, bx, sy, bw, sh, C.graphite, 0.08, 12);
+      const isz = LANDSCAPE ? 28 : 34;
+      const st = this.add.text(bx + bw / 2 + isz / 2 + 4, sy + sh / 2, text, TXT.body(LANDSCAPE ? 21 : 25, INK.graphite, '800')).setOrigin(0.5);
+      const r = bw - isz - 28;
+      if (st.width > r) st.setScale(r / st.width);
+      const sic = menuIcon(this, st.x - (st.width * st.scaleX) / 2 - 8 - isz / 2, sy + sh / 2, isz, icon);
+      c.add([sg, ...sic, st, tap(bx, sy, bw, sh, act)]);
     });
+    return ch + 12 + sh;
   }
 
   /** City of the day: one map for everybody; slot 4 keeps today's run, a new day starts fresh. */
