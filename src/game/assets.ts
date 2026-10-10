@@ -34,10 +34,11 @@ function keyOf(path: string): string | null {
   return `${singular[dir]}.${name.replace('@2x', '')}`;
 }
 
-export function preloadArt(scene: Phaser.Scene): void {
+/** Queues the art; `only` picks a subset (the loading screen takes its few pictures first). Loaded keys are skipped. */
+export function preloadArt(scene: Phaser.Scene, only?: (key: string) => boolean): void {
   for (const [path, url] of Object.entries(urls)) {
     const key = keyOf(path);
-    if (!key) continue;
+    if (!key || (only && !only(key)) || scene.textures.exists(key)) continue;
     const set = animSets[key];
     if (set) scene.load.spritesheet(key, url, { frameWidth: set.frameSize[0], frameHeight: set.frameSize[1] });
     else scene.load.image(key, url);

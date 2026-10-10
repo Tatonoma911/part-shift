@@ -14,8 +14,17 @@ const html = `<title>Part Shift</title>
   :root { --bg: #dfeef3; color-scheme: light; }
   html, body { height: 100%; margin: 0; background: var(--bg); overflow: hidden; }
   #app { width: 100%; height: 100%; touch-action: none; user-select: none; -webkit-user-select: none; }
+  /* Splash until the game's loading screen is up (LoadingScene removes #boot). */
+  #boot { position: fixed; inset: 0; z-index: 5; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 28px; background: linear-gradient(#eaf5f8, #c9e2ea); transition: opacity 0.4s; }
+  #boot.gone { opacity: 0; pointer-events: none; }
+  #boot .logo { font: 900 clamp(40px, 11vw, 72px)/1 Unbounded, "Golos Text", system-ui, sans-serif; }
+  #boot b { color: #10171c; font-weight: 900; }
+  #boot i { color: #007e89; font-style: normal; }
+  #boot .tape { width: min(60vw, 360px); height: 16px; border: 3px solid #10171c; background: repeating-linear-gradient(120deg, #e8a33a 0 12px, #10171c 12px 24px); animation: tape 0.8s linear infinite; }
+  @keyframes tape { to { background-position: 27.7px 0; } }
 </style>
 <div id="app"></div>
+<div id="boot"><div class="logo"><b>PART</b><i>SHIFT</i></div><div class="tape"></div></div>
 <script type="module" src="./files/${js}"></script>
 `;
 rmSync('artifact', { recursive: true, force: true });
