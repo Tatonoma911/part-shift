@@ -23,6 +23,7 @@
     "@colyseus/sdk": "^0.18.5",
     "@colyseus/ws-transport": "^0.18.4",
     "firebase": "12.19.0",
+    "peerjs": "^1.5.5",
     "phaser": "3.90.0"
   },
   "devDependencies": {

@@ -5,7 +5,7 @@
  */
 import type { AssistMode, MatchMode } from '../core/state';
 import { t } from '../i18n';
-import { OnlineSession } from './online';
+import { PeerSession as OnlineSession } from './peer';
 import type { LobbyInfo } from './protocol';
 
 const NAME_KEY = 'partshift.online.name';
