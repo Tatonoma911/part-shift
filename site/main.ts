@@ -226,7 +226,8 @@ function heroView(id: string): string {
     <div class="dossier" style="margin-top:20px">
       <div class="dossier-art">
         <div class="frame slab">${main}</div>
-        ${h.art ? `<div class="slab" style="padding:14px;display:flex;gap:14px;align-items:center"><img src="${img(h.px)}" alt="" style="height:96px;width:auto;image-rendering:pixelated"><span class="caps">${R('ПИКСЕЛЬ-СПРАЙТ', 'PIXEL SPRITE')}</span></div>` : ''}
+        <div class="slab moods">${(['', '_smile', '_talk'] as const).map((m, k) => `<figure><img src="${img(`portraits/${h.id === 's01' ? 'standard' : h.id}${m}.webp`)}" alt="" loading="lazy" onerror="this.parentElement.remove()"><figcaption class="caps">${[R('НА СМЕНЕ', 'ON SHIFT'), R('УЛЫБКА', 'SMILE'), R('ГОВОРИТ', 'TALKING')][k]}</figcaption></figure>`).join('')}
+          <figure><img class="px" src="${img(h.px)}" alt=""><figcaption class="caps">${R('НА ПОЛЕ', 'ON THE BOARD')}</figcaption></figure></div>
       </div>
       <div class="stack">
         <span class="chip"><i style="--dot:${h.color}"></i>${tr(h.hud)}</span>
@@ -366,7 +367,8 @@ function villainsView(): string {
     </div>
     <div class="grid">${mad.map(madTile).join('')}</div>
 
-    <div class="villain" style="margin-top:56px">
+    <figure class="billboard slab" style="margin-top:56px"><img src="${img('control-billboard.webp')}" alt="${esc(R('Маска Контроля на билборде HeroOut', 'Control’s mask on a HeroOut billboard'))}" loading="lazy"><figcaption><span class="caps">HERO | OUT</span><b>${R('Всегда на смене.', 'Always on call.')}</b><span>${R('Даже когда вас об этом не просили.', 'Even when you didn’t ask.')}</span></figcaption></figure>
+    <div class="villain">
       <div class="art slab">
         <svg class="control-face" viewBox="0 0 200 200" role="img" aria-label="${R('Маска Контроля', 'Control’s mask')}">
           <defs><linearGradient id="cm" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset="1" stop-color="#dfe8eb"/></linearGradient></defs>
@@ -416,6 +418,11 @@ function villainsView(): string {
         <p>${R('В игре это шкала «Угроза»: каждые две минуты враги становятся сильнее. Контроль не даёт Ядро заглушить, потому что оно тоже имущество компании.', 'In the game it’s the Threat ring: every two minutes the enemies get stronger. Control won’t let anyone shut it down, because it’s company property too.')}</p>
       </div>
     </div>
+  </div></section>
+
+  <section class="section" style="padding-top:0"><div class="wrap">
+    ${head(R('ПОЛЕ // ВРАГИ', 'BOARD // ENEMIES'), R('Адаптанты', 'Adaptants'), R('Обычные горожане, заражённые гелем. Одна часть тела переросла под стихию. Слабые, но их много, и гнездятся они в закрытых кварталах.', 'Ordinary citizens infected by the gel. One body part overgrew for an element. Weak but numerous, nesting in closed blocks.'))}
+    <figure class="adaptants slab"><img src="${img('adaptants-sheet.webp')}" alt="" loading="lazy"><figcaption>${[['ТЕРМО', 'THERMO', 'Рука-радиатор, пар'], ['КРИО', 'CRYO', 'Ледяная нога'], ['ТОК', 'VOLT', 'Рука из кабелей'], ['ТЯЖЁЛЫЙ', 'HEAVY', 'Поршневые ноги']].map(([ru, en, d]) => `<span><b class="caps">${R(ru, en)}</b>${R(d, ({ 'Рука-радиатор, пар': 'Radiator arm, steam', 'Ледяная нога': 'Ice leg', 'Рука из кабелей': 'Cable arm', 'Поршневые ноги': 'Piston legs' } as Record<string, string>)[d])}</span>`).join('')}</figcaption></figure>
   </div></section>
 
   <section class="section band"><div class="wrap">

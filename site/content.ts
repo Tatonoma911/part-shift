@@ -160,6 +160,7 @@ export const HEROES: Hero[] = [
     group: 'canon',
     color: '#F2E3B3',
     px: 'px/seraph.png',
+    art: 'card-seraph.webp',
     extra: [{ src: 'sprites-01.webp', cap: { ru: 'Пиксель-спрайты канона: Серафим справа внизу', en: 'Canon pixel sprites: Seraph bottom right' } }],
     role: { ru: 'Высотная аэроспасательница и целительница. Добирается до крыш, верхних этажей и самолётов, стабилизирует раненых.', en: 'High-altitude aerial rescuer and healer. Reaches roofs, upper floors and aircraft and stabilises the wounded.' },
     before: { ru: 'Говорит тише, когда все кричат. Разговаривает с нимб-дроном как с толковым младшим коллегой и благодарит его после каждой смены.', en: 'Speaks more quietly when everyone else shouts. Talks to her halo-drone like a capable junior colleague and thanks it after every shift.' },

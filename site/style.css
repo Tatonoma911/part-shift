@@ -496,3 +496,23 @@ footer .wrap { display: flex; gap: 18px; justify-content: space-between; flex-wr
 .twin p { margin: 0; }
 .twin .dim { color: var(--dim); font-size: 14px; }
 .twin blockquote { margin: 0; font: 700 18px/1.35 var(--display); }
+
+/* Hero moods (comic portraits) + pixel sprite. */
+.moods { padding: 14px; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; align-items: end; }
+.moods figure { margin: 0; display: grid; gap: 6px; justify-items: center; }
+.moods img { width: 100%; aspect-ratio: 1; object-fit: cover; background: var(--paper2); }
+.moods img.px { object-fit: contain; image-rendering: pixelated; background: none; }
+.moods figcaption { font-size: 10px; color: var(--dim); }
+
+/* Control billboard with the slogan laid over the empty screen side. */
+.billboard { position: relative; margin: 0 0 40px; overflow: hidden; }
+.billboard img { width: 100%; display: block; }
+.billboard figcaption { position: absolute; right: 4%; bottom: 8%; max-width: 46%; display: grid; gap: 4px; padding: 14px 18px; background: rgba(11, 17, 23, 0.82); color: #fff; }
+.billboard figcaption .caps { color: var(--seam); }
+.billboard figcaption b { font: 800 clamp(18px, 2.6vw, 34px)/1.1 var(--display); }
+.billboard figcaption span:last-child { font-size: clamp(12px, 1.3vw, 16px); color: #cfe0e6; }
+@media (max-width: 600px) { .billboard figcaption { position: static; max-width: none; } }
+.adaptants { margin: 0; overflow: hidden; }
+.adaptants img { width: 100%; display: block; }
+.adaptants figcaption { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; padding: 14px 16px; text-align: center; font-size: 13px; }
+.adaptants figcaption span { display: grid; gap: 2px; }
