@@ -12,7 +12,8 @@ import { sound } from './audio';
 import { C, CELL, STEP, TECH_COLOR } from './layout';
 import { buzz, comfort } from './comfort';
 import { Quarantine, type RevealKind } from './Quarantine';
-import { Bars, drawWeakOrbs, weaknessesOf, type Weakness } from './Vitals';
+import { Bars, cellFastTech, cellElement, drawCellOrb, drawHeroExtras, drawWeakOrbs, weaknessesOf, type Weakness } from './Vitals';
+import { paintZones } from './BuildingFeel';
 import { glyph } from './ui';
 import { drawMark, drawSensor, sensorTexts, type MarkKind } from './Sensor';
 
@@ -53,6 +54,15 @@ export interface ViewState {
   showTerritory?: boolean;
   /** Bouncing arrow over the nearest free liberated cell. */
   pointTo?: { x: number; y: number } | null;
+  /** Building whose card is open: its zone is drawn bright (BuildingFeel.ts). */
+  selectedBuilding?: number | null;
+  /** Ghost's hero (station zones take the hero's element colour). */
+  ghostHero?: string;
+}
+
+/** Elements a unit hits with from its arm parts (parts.json / heroes.json drops `tech`). */
+export function armTechs(u: Unit): string[] {
+  return [u.parts?.arm_left, u.parts?.arm_right].map((p) => (p ? partDefs[p.id]?.tech : undefined)).filter((t): t is string => !!t);
 }
 
 function hash(x: number, y: number): number {
@@ -92,6 +102,10 @@ function hitOf(tech: string | undefined): string {
  * Reads World only; input and HUD live in GameScene.
  */
 export class BoardView {
+  /** Elements our living heroes hit with: a closed block's orb glows when it is among them (GameScene fills it). */
+  squadTechs = new Set<string>();
+  /** Cached per world: does the map carry zone elements on plain cells? (see isZoned) */
+  private zonedFor: { world: World; zoned: boolean } | null = null;
   readonly bx: number;
   readonly by: number;
   readonly width: number;
@@ -533,6 +547,7 @@ export class BoardView {
     const flicker = 0.8 + 0.12 * Math.sin(now / 900);
     this.quarantine.update(now);
     const veinFull = mapgen.energyVein.energy;
+    const zoned = this.isZoned();
 
     for (let y = 0; y < s.height; y++) {
       for (let x = 0; x < s.width; x++) {
@@ -622,6 +637,11 @@ export class BoardView {
           // A capsule peek shows the closed cell's own sensor for a while (MVP_RULES §5.2).
           this.setClues(i, x, y, c.peekUntil !== undefined && s.time < c.peekUntil ? w.clues(x, y) : null);
           this.drawClosed(og, x, y, px, py, known.get(cellKey(x, y)), risk?.get(i), me.queue.includes(cellKey(x, y)), me.autoQueue.includes(cellKey(x, y)), c.marked ? (c.markKind ?? 'danger') : null, now);
+          // One orb in the corner: the element that digs this block fast; it glows when the squad has it (MVP_RULES §3.4).
+          if (zoned) {
+            const fast = cellFastTech(c);
+            if (fast) drawCellOrb(cg, px + CELL - 9, py + 9, fast, this.squadTechs.has(fast), now);
+          }
           continue;
         }
         if (w.started && w.inTerritory(this.me, x, y) && c.building === undefined) {
@@ -645,6 +665,8 @@ export class BoardView {
         this.setClues(i, x, y, clueCell && c.building === undefined ? w.clues(x, y) : null);
       }
     }
+    // Where each building acts (BUILDINGS §9.1): faint always, bright for the tapped one and the ghost.
+    if (w.started) paintZones(og, w, this.me, this.bx, this.by, view.selectedBuilding ?? null, view.ghost && view.buildType ? { type: view.buildType, x: view.ghost.x, y: view.ghost.y, hero: view.ghostHero } : null);
     this.drawSpotlight(og, view, now);
     this.drawPointTo(view, now);
     this.updateBuildings(now);
@@ -652,6 +674,21 @@ export class BoardView {
     this.updateUnits();
     this.updateOrbs();
     this.drawArcs();
+  }
+
+  /**
+   * Element orbs on closed blocks are drawn only on a zoned map. Today only nests, mines and lairs carry `tech`;
+   * plain cells get one when the zone generator lands. Drawing orbs where `tech` happens to exist would show
+   * players exactly where the nests and mines hide, so without zones no orb is drawn at all.
+   */
+  private isZoned(): boolean {
+    const w = this.world;
+    if (!w.started) return false;
+    if (this.zonedFor?.world !== w) {
+      const zoned = w.s.cells.some((c) => (c.content === 'ground' || c.content === 'rubble' || c.content === 'energy_vein') && !!cellElement(c));
+      this.zonedFor = { world: w, zoned };
+    }
+    return this.zonedFor.zoned;
   }
 
   /** Red / violet glow on closed blocks next to a visible number (UI_SPEC §3.2 p.2). */
@@ -1281,10 +1318,21 @@ export class BoardView {
       const enemy = u.owner < 0;
       if (enemy || u.hp < st.hp || u.target !== undefined) this.vitals.draw(g, `u:${u.id}`, fx - 24, top - 12, 48, u.hp / st.hp, enemy ? 'enemy' : 'ally', this.scene.time.now);
       if (enemy) drawWeakOrbs(g, fx, top - 32, this.weakOf(u));
-      // Arm-element orb over our heroes and allies: shows which element this unit attacks with.
-      else if ((u.kind === 'ally' || u.kind === 'resident') && u.hero) {
-        const tech = heroDefs[u.hero]?.tech;
-        if (tech && tech !== 'kinetic') drawWeakOrbs(g, fx, top - 32, [{ tech: tech as Weakness['tech'], strong: false }], 1);
+      else {
+        // Arm-element orb over our heroes and allies: shows which element this unit attacks with.
+        if ((u.kind === 'ally' || u.kind === 'resident') && u.hero) {
+          const tech = heroDefs[u.hero]?.tech;
+          if (tech && tech !== 'kinetic') drawWeakOrbs(g, fx, top - 32, [{ tech: tech as Weakness['tech'], strong: false }], 1);
+        }
+        if (u.owner === this.me) {
+          // Our hero: arm elements left of the bar, training stars above, super-strike charge under (MVP_RULES §3.4, §17.5).
+          const live = u as typeof u & { stars?: number; superCharge?: number };
+          const arms = armTechs(u);
+          const shown = u.hp < st.hp || u.target !== undefined;
+          const extra = !!live.stars || (live.superCharge ?? 0) > 0;
+          if (!shown && extra) this.vitals.draw(g, `u:${u.id}`, fx - 24, top - 12, 48, u.hp / st.hp, 'ally', this.scene.time.now);
+          if (shown || extra) drawHeroExtras(g, fx - 24, top - 12, 48, { arms, stars: live.stars, superFrac: live.superCharge, feetX: fx, feetY: fy, now: this.scene.time.now });
+        }
       }
       if (order === `u:${u.id}`) {
         g.lineStyle(3, C.coral, 1);

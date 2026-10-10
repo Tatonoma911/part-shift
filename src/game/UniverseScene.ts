@@ -98,19 +98,22 @@ export class UniverseScene extends Phaser.Scene {
 
     // Heroes: a swipe strip of big comic figures.
     const top = lead.y + lead.height + 48;
-    // PC: the strip gives way when the lead wraps, so the tiles and «Следите за сменой» stay on screen.
-    const stripH = LANDSCAPE ? Phaser.Math.Clamp(H - top - (16 + 130 + 18 + 10 + 84 + 24), 340, 440) : 640;
-    this.cardW = LANDSCAPE ? 250 : 320;
-    this.drawHeroes(pad, top, W - pad * 2, stripH);
-    // Tiles.
-    const ty = top + stripH + (LANDSCAPE ? 16 : 44);
+    // Tiles and the follow plate keep their size; the hero strip takes what is left (a long lead must not push them off screen,
+    // or the follow button gets zero height and hovering it throws hitAreaCallback errors).
     const cols = LANDSCAPE ? 4 : 2;
     const gap = 18;
     const tw = (W - pad * 2 - gap * (cols - 1)) / cols;
     const th = LANDSCAPE ? 130 : 190;
+    const rows = Math.ceil(TILES.length / cols);
+    const below = (LANDSCAPE ? 16 : 44) + rows * (th + gap) + 10 + (LANDSCAPE ? 84 : 150) + 24;
+    const stripH = Math.min(LANDSCAPE ? 440 : 640, H - top - below);
+    this.cardW = LANDSCAPE ? Math.round(250 * Math.min(1, stripH / 440)) : 320;
+    this.drawHeroes(pad, top, W - pad * 2, stripH);
+    // Tiles.
+    const ty = top + stripH + (LANDSCAPE ? 16 : 44);
     TILES.forEach((tile, k) => this.drawTile(pad + (k % cols) * (tw + gap), ty + Math.floor(k / cols) * (th + gap), tw, th, tile));
     // Follow.
-    const fy = ty + Math.ceil(TILES.length / cols) * (th + gap) + 10;
+    const fy = ty + rows * (th + gap) + 10;
     this.drawFollow(pad, fy, W - pad * 2, H - fy - 24);
 
     setBackHandler(() => {

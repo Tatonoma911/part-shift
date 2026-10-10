@@ -1124,5 +1124,19 @@
   "universe.follow": "Follow the shift",
   "universe.follow.youtube": "YouTube Shorts",
   "universe.follow.instagram": "Instagram Reels",
-  "universe.site": "Universe website"
+  "universe.site": "Universe website",
+  "raid.now": "RAID!",
+  "call.vote_hint": "Everyone votes. The host breaks a tie.",
+  "call.waiting": "Waiting on {n} more",
+  "call.cost.nextRaidSooner": "raid {n} s sooner",
+  "call.cost.commandHpPercent": "Command Center: −{n}% integrity",
+  "call.cost.randomHeroAwaySeconds": "a hero leaves for {n} s",
+  "call.cost.civiliansLose": "citizens: −{n}",
+  "call.cost.scoreBonus": "shift points: +{n}",
+  "call.cost.nextRaidExtraEnemies": "raid enemies: +{n}",
+  "call.cost.reactorsOffSeconds": "reactors off for {n} s",
+  "call.cost.nextBuildingCostFactor": "next building {n}% cheaper",
+  "call.cost.returnsWithStar": "comes back with a training star",
+  "settings.reset_all": "Erase all progress",
+  "settings.wipe.step3.button": "Erase"
 }
