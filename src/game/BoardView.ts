@@ -1,4 +1,3 @@
-import Phaser from 'phaser';
 import { buildings as buildingDefs, config, heroes as heroDefs, mapgen, parts as partDefs } from '../core/data';
 import { cellKey } from '../core/grid';
 import type { Building, Cell, Unit } from '../core/state';
@@ -90,8 +89,6 @@ const ZONE_DECOR: Record<string, { anim: string; tint?: number; alpha?: number }
   thermo: { anim: 'fx.heat_haze', tint: 0xff7a3a, alpha: 0.95 },
   toxin: { anim: 'fx.heat_haze', tint: 0x7dff5a, alpha: 0.8 },
 };
-/** Strength of the zone colour wash on closed blocks (bright colours need less). */
-const ZONE_WASH: Record<string, number> = { cryo: 0.16, volt: 0.12, impact: 0.14, thermo: 0.16, toxin: 0.16 };
 const CIVILIANS = ['civilian_office', 'civilian_courier', 'civilian_granny'];
 /** Game slot ids → the short names the limb-mask sets use in `slots`. */
 /** Find contents → drawn icon (blueprint fragment, armor plates, Control record). */
