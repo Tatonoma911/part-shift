@@ -2226,6 +2226,18 @@ export class World {
     this.emit(fromHero ? 'hero_part_taken' : 'part_attached', { x: u.x, y: u.y, owner: u.owner, unit: u.id, text: part.id });
   }
 
+  /** A stump regrows after `seconds` in a medcenter's heal aura: the limb's stats come back (the reverse of tearLimb). */
+  private regrowLimb(u: Unit, seconds: number, dt: number): void {
+    u.regrowTimer = (u.regrowTimer ?? 0) + dt;
+    if (u.regrowTimer < seconds) return;
+    u.regrowTimer = undefined;
+    const slot = u.lostLimbs![0];
+    u.lostLimbs!.splice(0, 1);
+    if (!u.lostLimbs!.length) u.lostLimbs = undefined;
+    u.base = slot === 'arm' ? { ...u.base, damage: Math.round(u.base.damage / 0.8) } : { ...u.base, speed: Math.round((u.base.speed / 0.75) * 10) / 10 };
+    this.emit('limb_regrown', { x: u.x, y: u.y, owner: u.owner, unit: u.id, text: `${u.hero ?? u.kind}:${slot}` });
+  }
+
   private effects(u: Unit, dt: number): void {
     if (u.stun) u.stun = Math.max(0, u.stun - dt) || undefined;
     if (u.bare) u.bare = Math.max(0, u.bare - dt) || undefined;
@@ -3041,8 +3053,12 @@ export class World {
       if (!b.complete) continue;
       if (def.healAura) {
         for (const u of s.units) {
-          if (u.owner !== b.owner || u.hp <= 0 || cheb(Math.round(u.x), Math.round(u.y), b.x, b.y) > def.healAura.radius) continue;
+          if (u.owner !== b.owner || u.hp <= 0 || cheb(Math.round(u.x), Math.round(u.y), b.x, b.y) > def.healAura.radius) {
+            if (u.regrowTimer) u.regrowTimer = undefined; // the regrowth needs a continuous stay
+            continue;
+          }
           u.hp = Math.min(this.maxHp(u), u.hp + def.healAura.hpPerSecond * dt);
+          if (def.regrowLimbSeconds && u.kind === 'ally' && u.lostLimbs?.length) this.regrowLimb(u, def.regrowLimbSeconds, dt);
         }
       }
       const a = def.autoAttack;
