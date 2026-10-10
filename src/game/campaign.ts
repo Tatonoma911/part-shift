@@ -59,11 +59,9 @@ export function getCampaignWorld(n: number): ShiftWorldOptions {
   };
 }
 
-/** Debrief after a won shift (CAMPAIGN.md §6): the writer's text for the first, a middle or the final shift. */
+/** Debrief after a won shift (CAMPAIGN.md §6): the writer's text for shift n (campaign.debrief.N). */
 export function districtText(n: number): string {
-  if (n === 1) return t('campaign.debrief.first');
-  if (n === CAMPAIGN_TOTAL) return t('campaign.debrief.final');
-  return t('campaign.debrief.mid');
+  return t(`campaign.debrief.${n}`);
 }
 
 /** The reward line for shift n from campaign.json (shifts[].reward), or '' when none. */
