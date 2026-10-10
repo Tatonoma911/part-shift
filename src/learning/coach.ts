@@ -16,17 +16,26 @@ export interface CoachOptions {
  * match (first nest opened, first trophy, threat level 1, …). A clip, two
  * lines of text, «Понятно» and a link into the guide.
  */
+let activeClose: (() => void) | null = null;
+
+/** Closes the card on screen, if any (the match ended under it). */
+export function closeCoach(): void {
+  activeClose?.();
+}
+
 export function showCoach(topic: string, opts: CoachOptions = {}): boolean {
   const c = COACH[topic];
   if (!c) return false;
   progress.markCoach(topic);
   let player: ClipPlayer | null = null;
   const close = () => {
+    activeClose = null;
     player?.destroy();
     wrap.remove();
     document.removeEventListener('keydown', onKey, true);
     opts.onClose?.();
   };
+  activeClose = close;
   const onKey = (e: KeyboardEvent) => {
     if (e.key === 'Escape' || e.key === 'Enter' || e.key === ' ') {
       e.preventDefault();

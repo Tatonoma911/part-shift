@@ -12,7 +12,7 @@ import { RunTally } from './meta/record';
 import { showResults } from './meta/ResultsScreen';
 import { boonPoolFor, loadMeta, pickAllies, roster } from './meta/store';
 import { pickBoon } from './meta/BoonPick';
-import { learning, openGuide, setLearningHooks } from './learn';
+import { closeCoach, learning, openGuide, setLearningHooks } from './learn';
 import { volumeHeight, volumeSliders } from './volume';
 import { BoardView } from './BoardView';
 import { Comm } from './Comm';
@@ -63,14 +63,13 @@ export interface GameStart {
 }
 type Ev = Phaser.Types.Input.EventData;
 
-/** Dig / Build buttons at the bottom of the dock (§7.3): one geometry for drawing and highlighting. */
+/** «Строить» button at the bottom of the dock (§7.3): full dock width, no «Копать» — tapping a closed cell digs automatically. */
 function dockButtons() {
   const pad = 22;
   const btnH = 76;
-  const btnGap = 12;
-  const btnW = (DOCK.w - pad * 2 - btnGap) / 2;
+  const btnW = DOCK.w - pad * 2;
   const btnY = DOCK.y + DOCK.h - btnH - 10;
-  return { pad, btnW, btnH, btnY, digX: DOCK.x + pad, buildX: DOCK.x + pad + btnW + btnGap };
+  return { pad, btnW, btnH, btnY, buildX: DOCK.x + pad };
 }
 
 /** Medal tiers earned mid-run, waiting for the HUD (not part of the core's rules). */
@@ -239,7 +238,7 @@ export class GameScene extends Phaser.Scene {
     head: { text: Phaser.GameObjects.Text; cancel: Phaser.GameObjects.Container };
     panes: Record<Mode, Phaser.GameObjects.Container>;
     /** Dig / Build mode buttons at the bottom of the dock (§7.3). */
-    modeBtns: { dig: Phaser.GameObjects.Graphics; build: Phaser.GameObjects.Graphics };
+    modeBtns: { build: Phaser.GameObjects.Graphics };
     queue: Phaser.GameObjects.Text;
     cards: { id: string; g: Phaser.GameObjects.Graphics; cost: Phaser.GameObjects.Text; x: number; y: number; w: number; h: number }[];
   };
@@ -326,7 +325,7 @@ export class GameScene extends Phaser.Scene {
         : saved
           ? new World({ state: saved })
           : campaignOpts
-            ? new World({ seed: st.seed || Math.floor(Math.random() * 1e9), assist, rules: { ...rules, counts: { nests: campaignOpts.nestCount, mine: campaignOpts.mineCount, bossHatch: campaignOpts.bossHatchCount, lairTotal: campaignOpts.lairTotal, bonusCapsule: campaignOpts.bonusCapsuleCount, medkit: campaignOpts.medkitCount, survivor: campaignOpts.survivorCount }, raids: campaignOpts.raids, difficulty: campaignOpts.factors }, difficulty: campaignOpts.difficulty, width: campaignOpts.width, height: campaignOpts.height })
+            ? new World({ seed: st.seed || Math.floor(Math.random() * 1e9), assist, rules: { ...rules, counts: { nests: campaignOpts.nestCount, mine: campaignOpts.mineCount, bossHatch: campaignOpts.bossHatchCount, lairTotal: campaignOpts.lairTotal, bonusCapsule: campaignOpts.bonusCapsuleCount, medkit: campaignOpts.medkitCount, survivor: campaignOpts.survivorCount }, raids: campaignOpts.raids, difficulty: campaignOpts.factors, cellElements: campaignOpts.cellElements }, difficulty: campaignOpts.difficulty, width: campaignOpts.width, height: campaignOpts.height })
             : new World({ seed: st.seed || Math.floor(Math.random() * 1e9), assist, rules, difficulty: st.difficulty });
     if (this.online) this.watchOnline(this.online);
     else if (!this.guide) {
@@ -398,7 +397,7 @@ export class GameScene extends Phaser.Scene {
     this.music.start();
     this.setMode('dig');
     // The tutorial teaches by itself; coach cards and the guide come with free play.
-    setLearningHooks({ pause: () => (this.overlayPaused = true), resume: () => (this.overlayPaused = false), busy: () => this.inFight() });
+    setLearningHooks({ pause: () => (this.overlayPaused = true), resume: () => (this.overlayPaused = false), busy: () => this.inFight() || this.ended });
     this.events.once('shutdown', () => setLearningHooks(null));
     if (this.start.shiftN && !this.guide && !this.online) this.showShiftCard(this.start.shiftN);
   }
@@ -957,17 +956,9 @@ export class GameScene extends Phaser.Scene {
   private createDock(): void {
     const g = this.add.graphics().setDepth(20);
     plate(g, DOCK.x, DOCK.y, DOCK.w, DOCK.h, 28);
-    // §7.3: two big mode buttons at the bottom of the dock (≥48 px).
-    const { pad, btnW, btnH, btnY, digX, buildX } = dockButtons();
-    // Dig button (§7.3: large, in thumb zone, ≥48 px).
-    const digBg = this.add.graphics().setDepth(20);
-    const digBx = digX;
-    chip(digBg, digBx, btnY, btnW, btnH, C.cobalt, 1, 14);
-    this.add.image(digBx + 40, btnY + btnH / 2, 'icon.dig').setScale(1.6).setDepth(20).setTintFill(0xffffff);
-    this.add.text(digBx + 72, btnY + btnH / 2, t('hud.mode_dig'), TXT.body(26, INK.white, '700')).setOrigin(0, 0.5).setDepth(20);
-    const digHit = this.add.zone(digBx, btnY, btnW, btnH).setOrigin(0).setDepth(20).setInteractive({ useHandCursor: true });
-    digHit.on('pointerdown', stop(() => { this.setGhost(null); this.setMode('dig'); }));
-    // Build button.
+    // §7.3: single «Строить» button at the bottom of the dock — «Копать» removed (Антон 2026-10-10).
+    const { pad, btnW, btnH, btnY, buildX } = dockButtons();
+    // Build button — full dock width.
     const buildBg = this.add.graphics().setDepth(20);
     const buildBx = buildX;
     chip(buildBg, buildBx, btnY, btnW, btnH, C.graphite, 1, 14);
@@ -1040,7 +1031,7 @@ export class GameScene extends Phaser.Scene {
     const build = this.add.container(0, 0).setDepth(20);
     const cards: { id: string; g: Phaser.GameObjects.Graphics; cost: Phaser.GameObjects.Text; x: number; y: number; w: number; h: number }[] = [];
 
-    this.dock = { head: { text: headText, cancel }, panes: { dig, build }, queue, cards, modeBtns: { dig: digBg, build: buildBg } };
+    this.dock = { head: { text: headText, cancel }, panes: { dig, build }, queue, cards, modeBtns: { build: buildBg } };
 
     this.drawer = new BuildDrawer(this, DOCK, UI_DEPTH + 10, {
       pick: (o: BuildOption) => this.pickBuilding(o),
@@ -1063,12 +1054,11 @@ export class GameScene extends Phaser.Scene {
     this.refreshModeBtns(mode === 'build');
   }
 
-  /** Highlights the active mode button in the dock (§7.3). */
+  /** Highlights the «Строить» button in the dock (§7.3). */
   private refreshModeBtns(buildActive: boolean): void {
     if (!this.dock?.modeBtns) return;
-    const { dig: db, build: bb } = this.dock.modeBtns;
-    const { btnW, btnH, btnY, digX, buildX } = dockButtons();
-    db.clear(); chip(db, digX, btnY, btnW, btnH, buildActive ? C.graphite : C.cobalt, 1, 14);
+    const { build: bb } = this.dock.modeBtns;
+    const { btnW, btnH, btnY, buildX } = dockButtons();
     bb.clear(); chip(bb, buildX, btnY, btnW, btnH, buildActive ? C.cobalt : C.graphite, 1, 14);
   }
 
@@ -1359,6 +1349,7 @@ export class GameScene extends Phaser.Scene {
   private showEnd(victory: boolean): void {
     if (this.ended) return;
     this.ended = true;
+    closeCoach();
     this.trackEnd(victory ? 'victory' : 'defeat');
     if (!this.guide) clearSlot(this.slot);
     const shiftN = this.start.shiftN;

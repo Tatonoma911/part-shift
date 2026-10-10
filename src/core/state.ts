@@ -294,6 +294,8 @@ export interface RuleOverrides {
   counts?: { mine?: number; survivor?: number; nests?: number; bossHatch?: number; lairTotal?: number; bonusCapsule?: number; medkit?: number };
   /** Campaign shift difficulty factors (campaign.json overrides), over the difficulty level. */
   difficulty?: { enemyHpFactor?: number; enemyDamageFactor?: number; startEnergy?: number };
+  /** Elemental zones on the board (campaign features.cellElements); undefined = on. */
+  cellElements?: boolean;
   /** Raid timing for this shift (campaign.json features.raids): overrides the difficulty table. */
   raids?: { enabled: boolean; firstAfterSeconds?: number; everySeconds?: number; size?: number; maxSize?: number };
 }

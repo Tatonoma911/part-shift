@@ -53,11 +53,12 @@ export interface ShiftWorldOptions {
   survivorCount?: number;
   raids: { enabled: boolean; firstAfterSeconds?: number; everySeconds?: number; size?: number; maxSize?: number };
   factors: { enemyHpFactor?: number; enemyDamageFactor?: number; startEnergy?: number };
+  cellElements: boolean;
 }
 
 export function getCampaignWorld(n: number): ShiftWorldOptions {
   const shift = CAMPAIGN.shifts.find((s) => s.n === n);
-  if (!shift) return { width: 9, height: 11, difficulty: 'intern', nestCount: 2, bossHatchCount: 0, raids: { enabled: false }, factors: {} };
+  if (!shift) return { width: 9, height: 11, difficulty: 'intern', nestCount: 2, bossHatchCount: 0, raids: { enabled: false }, factors: {}, cellElements: false };
   const ovr = shift.overrides as Record<string, unknown>;
   const counts = (ovr['mapgen.counts'] as Record<string, number> | undefined) ?? {};
   const features = shift.features as Record<string, boolean>;
@@ -86,6 +87,7 @@ export function getCampaignWorld(n: number): ShiftWorldOptions {
     survivorCount: counts.survivor !== undefined ? counts.survivor : undefined,
     raids,
     factors,
+    cellElements: !!features.cellElements,
   };
 }
 
