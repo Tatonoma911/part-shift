@@ -2,6 +2,7 @@ import Phaser from 'phaser';
 import { account } from './account/cloud';
 import { watchAccountConflicts } from './account/panel';
 import { GameScene } from './game/GameScene';
+import { LoadingScene } from './game/LoadingScene';
 import { MenuScene } from './game/MenuScene';
 import { DossierScene } from './game/meta/DossierScene';
 import { applyPalette } from './game/comfort';
@@ -31,7 +32,8 @@ Promise.all([fontsReady(), account.boot()]).then(() => {
     height: VIEW.height,
     scale: { mode: Phaser.Scale.FIT, autoCenter: Phaser.Scale.CENTER_BOTH },
     input: { activePointers: 2 },
-    scene: [MenuScene, GameScene, DossierScene],
+    // The loading screen goes first: it loads the art and hands over to the menu.
+    scene: [LoadingScene, MenuScene, GameScene, DossierScene],
   });
   account.markLive();
   bootSocial();

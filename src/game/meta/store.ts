@@ -71,7 +71,7 @@ export const STARTERS = OUR.starterRoster ?? [];
 export const FEMALE = new Set(['seraph', 'frostline', 'beacon', 'canopy']);
 
 export function emptyMeta(): MetaSave {
-  return { version: 1, stats: {}, unlocked: [], seenHeroes: [], allyChoice: [], records: {}, blueprintFragments: {}, loreRecords: [] };
+  return { version: 1, stats: {}, unlocked: [], seenHeroes: [], allyChoice: [...STARTERS], records: {}, blueprintFragments: {}, loreRecords: [] };
 }
 
 export function loadMeta(): MetaSave {

@@ -4,7 +4,8 @@
 import { copyFileSync, mkdirSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
 
 const js = readdirSync('dist-artifact/assets').find((f) => f.endsWith('.js'));
-const code = readFileSync(`dist-artifact/assets/${js}`, 'utf8').replace(/<\/script/gi, '<\\/script');
+// Reference the JS as an external file rather than inlining it — the inline bundle triggered
+// the Artifact service's pr-review size check at ~6 MB; an external src avoids that entirely.
 const html = `<title>Part Shift</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -13,15 +14,24 @@ const html = `<title>Part Shift</title>
   :root { --bg: #dfeef3; color-scheme: light; }
   html, body { height: 100%; margin: 0; background: var(--bg); overflow: hidden; }
   #app { width: 100%; height: 100%; touch-action: none; user-select: none; -webkit-user-select: none; }
+  /* Splash until the game's loading screen is up (LoadingScene removes #boot). */
+  #boot { position: fixed; inset: 0; z-index: 5; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 28px; background: linear-gradient(#eaf5f8, #c9e2ea); transition: opacity 0.4s; }
+  #boot.gone { opacity: 0; pointer-events: none; }
+  #boot .logo { font: 900 clamp(40px, 11vw, 72px)/1 Unbounded, "Golos Text", system-ui, sans-serif; }
+  #boot b { color: #10171c; font-weight: 900; }
+  #boot i { color: #007e89; font-style: normal; }
+  #boot .tape { width: min(60vw, 360px); height: 16px; border: 3px solid #10171c; background: repeating-linear-gradient(120deg, #e8a33a 0 12px, #10171c 12px 24px); animation: tape 0.8s linear infinite; }
+  @keyframes tape { to { background-position: 27.7px 0; } }
 </style>
 <div id="app"></div>
-<script type="module">${code}</script>
+<div id="boot"><div class="logo"><b>PART</b><i>SHIFT</i></div><div class="tape"></div></div>
+<script type="module" src="./files/${js}"></script>
 `;
 rmSync('artifact', { recursive: true, force: true });
 mkdirSync('artifact/files', { recursive: true });
 writeFileSync('artifact/part-shift.html', html);
-// The script resolves its files relative to the page, so they are published at the page's root.
-const files = readdirSync('dist-artifact/assets').filter((f) => f !== js);
+// All assets including the JS bundle go into artifact/files/ next to the page.
+const files = readdirSync('dist-artifact/assets');
 for (const f of files) copyFileSync(`dist-artifact/assets/${f}`, `artifact/files/${f}`);
 writeFileSync('artifact/files.json', JSON.stringify(files));
 console.log(`artifact/part-shift.html: ${(html.length / 1024).toFixed(0)} KB + ${files.length} files in artifact/files`);

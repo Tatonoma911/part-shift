@@ -6,7 +6,7 @@ import { lang, setLang, t } from '../i18n';
 import { introSeen, playIntro } from '../intro';
 import { analytics, askAnalyticsConsent, closeConsent } from '../analytics';
 import { canVibrate, comfort, PALETTES, setComfort, TEXT_SCALES } from './comfort';
-import { learning, learningLang, setLearningHooks } from './learn';
+import { learning, learningLang, openGuide, setLearningHooks } from './learn';
 import { volumeHeight, volumeSliders } from './volume';
 import { createArt, preloadArt } from './assets';
 import { preloadComm } from './Comm';
@@ -50,16 +50,10 @@ export class MenuScene extends Phaser.Scene {
   }
 
   preload(): void {
+    // The loading screen (LoadingScene) has loaded everything already; these only catch what it missed.
     preloadArt(this);
     preloadMetaArt(this);
     preloadComm(this);
-    const bar = this.add.graphics();
-    this.load.on('progress', (v: number) => {
-      bar.clear();
-      bar.fillStyle(C.teal, 1);
-      bar.fillRect(VIEW.width * 0.2, VIEW.height / 2, VIEW.width * 0.6 * v, 10);
-    });
-    this.load.once('complete', () => bar.destroy());
   }
 
   create(): void {
@@ -229,7 +223,7 @@ export class MenuScene extends Phaser.Scene {
       // Meta progress: returned heroes, stats, records, rank (design/META.md §6).
       button(t('dossier.title'), () => this.scene.start('dossier'));
       if (last || tutorialDone()) button(t('menu.tutorial'), () => this.play({ tutorial: true }));
-      button(t('menu.guide'), () => learning().openGuide());
+      button(t('menu.guide'), () => openGuide());
       button(t('menu.settings'), () => this.show('settings'));
       button(t('menu.story'), () => this.story(true));
       const acc = account.view;
@@ -336,9 +330,13 @@ export class MenuScene extends Phaser.Scene {
     }
     const h = y - top + 24;
     plate(bg, x0, top, w, h, 28);
-    // Keep the panel on screen when it grows (settings has six rows).
-    const overflow = top + h + 24 - VIEW.height;
-    if (overflow > 0) c.y = -overflow;
+    // A panel taller than the screen shrinks to fit below its top edge (landscape is only 900 high), never scrolls off.
+    const room = VIEW.height - 24 - top;
+    if (h > room) {
+      const s = room / h;
+      c.setScale(s);
+      c.setPosition(cx * (1 - s), top * (1 - s));
+    }
   }
 
   /** Online screen over the menu (src/net/lobby.ts); the match opens the board. */
@@ -365,14 +363,20 @@ export class MenuScene extends Phaser.Scene {
       ['coffee', t('social.menu.coffee'), () => openDonate('menu'), true],
     ];
     const gap = 10;
-    const bw = (w - gap * (items.length - 1)) / items.length;
-    items.forEach(([icon, label, act, gold], i) => {
-      const bx = x + i * (bw + gap);
+    // The gold coffee chip is two units wide: its label is a whole phrase on two lines beside the icon.
+    const unit = (w - gap * (items.length - 1)) / (items.length + 1);
+    let bx = x;
+    items.forEach(([icon, label, act, gold]) => {
+      const bw = gold ? unit * 2 : unit;
       const g = this.add.graphics();
       chip(g, bx, y, bw, h, gold ? C.amber : C.graphite, gold ? 1 : 0.08, 14);
-      const ic = menuIcon(this, bx + bw / 2, y + h * 0.34, LANDSCAPE ? 32 : 40, icon);
-      const tx = this.add.text(bx + bw / 2, y + h * 0.74, label, TXT.body(LANDSCAPE ? 17 : 19, INK.graphite, '700')).setOrigin(0.5);
-      if (tx.width > bw - 10) tx.setScale((bw - 10) / tx.width);
+      const size = LANDSCAPE ? 32 : 40;
+      const ic = gold ? menuIcon(this, bx + 14 + size / 2, y + h / 2, size, icon) : menuIcon(this, bx + bw / 2, y + h * 0.34, size, icon);
+      const tx = gold
+        ? this.add.text(bx + 14 + size + 8 + (bw - size - 36) / 2, y + h / 2, label, { ...TXT.body(LANDSCAPE ? 18 : 21, INK.graphite, '800'), align: 'center', lineSpacing: -2 }).setOrigin(0.5)
+        : this.add.text(bx + bw / 2, y + h * 0.74, label, TXT.body(LANDSCAPE ? 17 : 19, INK.graphite, '700')).setOrigin(0.5);
+      const room = gold ? bw - size - 36 : bw - 10;
+      if (tx.width > room || tx.height > h - 8) tx.setScale(Math.min(room / tx.width, (h - 8) / tx.height));
       const hit = this.add.zone(bx, y, bw, h).setOrigin(0).setInteractive({ useHandCursor: true });
       hit.on('pointerdown', (_p: Phaser.Input.Pointer, _x: number, _y: number, ev: Ev) => {
         ev.stopPropagation();
@@ -380,6 +384,7 @@ export class MenuScene extends Phaser.Scene {
         act();
       });
       c.add([g, ...ic, tx, hit]);
+      bx += bw + gap;
     });
   }
 

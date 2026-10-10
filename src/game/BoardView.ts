@@ -1,9 +1,13 @@
 import Phaser from 'phaser';
-import { buildings as buildingDefs, config, mapgen, parts as partDefs } from '../core/data';
+import { buildings as buildingDefs, config, heroes as heroDefs, mapgen, parts as partDefs } from '../core/data';
 import { cellKey } from '../core/grid';
 import type { Building, Unit } from '../core/state';
 import type { GameEvent, World } from '../core/world';
 import { animSets, BUILDING_ANCHOR, originOf } from './assets';
+import nestsJson from '../assets/art/nests_gpt/nests_gpt.json';
+
+/** Per-element nest buildings (GPT 131/150): size and plate-centre anchor, 1:1 with the board. */
+const NEST_ART = (nestsJson as unknown as { nests: Record<string, { size: [number, number]; anchor: [number, number] }> }).nests;
 import { sound } from './audio';
 import { C, CELL, STEP, TECH_COLOR } from './layout';
 import { buzz, comfort } from './comfort';
@@ -60,6 +64,22 @@ function hash(x: number, y: number): number {
 const RESIDENT_COMBAT_SET = 'defender';
 /** Starter heroes (MVP_RULES §4) whose drawn sheets stand in for workers until v0.7 spawns real heroes. */
 const STARTER_LOOKS = ['standard', 'patch', 'canopy', 'current'];
+/** block_fx / lair_fx are drawn at 2× (a block is ~104 px wide in the frame). */
+const FX2 = 0.5;
+const BLOCK_EL = ['thermo', 'cryo', 'volt', 'impact', 'toxin'];
+const DECOR_EL = ['cryo', 'volt', 'impact'];
+const CIVILIANS = ['civilian_office', 'civilian_courier', 'civilian_granny'];
+/** Game slot ids → the short names the limb-mask sets use in `slots`. */
+const SLOT_SHORT: Record<string, string> = { arm_left: 'arm_l', arm_right: 'arm_r', leg_left: 'leg_l', leg_right: 'leg_r', tail: 'tail', wings: 'wings' };
+
+function elementOf(tech: string | undefined, pool = BLOCK_EL): string {
+  if (tech === 'demon') return tech;
+  return tech && pool.includes(tech) ? tech : 'impact';
+}
+
+function hitOf(tech: string | undefined): string {
+  return tech === 'thermo' ? 'hit_thermo' : tech === 'cryo' ? 'hit_cryo' : tech === 'volt' || tech === 'toxin' ? 'hit_volt' : 'hit_impact';
+}
 
 /**
  * Draws the board from the artist's tiles and the animator's sheets.
@@ -79,10 +99,19 @@ export class BoardView {
   /** Pulsing glow over nests that are still alive (nest_live, AR-05). */
   private readonly nestGlow = new Map<number, Phaser.GameObjects.Sprite>();
   private readonly sites = new Map<string, Phaser.GameObjects.Sprite>();
+  /** The nest's own building in its element (nests_gpt), standing on the open cell. */
+  private readonly nestArt = new Map<number, Phaser.GameObjects.Image>();
+  /** Animated decor over some closed blocks (block_fx loop_*). */
+  private readonly decor = new Map<number, Phaser.GameObjects.Sprite>();
+  /** Live portal over each open nest / hero lair (lair_fx), keyed by site key. */
+  private readonly lairs = new Map<string, { spr: Phaser.GameObjects.Sprite; el: string; busy: boolean; dead: boolean }>();
+  /** Trophy limbs drawn over our heroes (ally_*_limbs masks), per unit then per slot. */
+  private readonly trophies = new Map<number, Map<string, Phaser.GameObjects.Sprite>>();
   private readonly clueTexts = new Map<number, Phaser.GameObjects.Text[]>();
   private readonly buildingViews = new Map<number, { spr: Phaser.GameObjects.Sprite; state: string; type: string; x: number; y: number }>();
   private readonly units = new Map<number, UnitView>();
   private readonly orbs: Phaser.GameObjects.Sprite[] = [];
+  private readonly orbViews = new Map<string, { spr: Phaser.GameObjects.Sprite; trail: number }>();
   private readonly overlay: Phaser.GameObjects.Graphics;
   private readonly clueG: Phaser.GameObjects.Graphics;
   private readonly arcG: Phaser.GameObjects.Graphics;
@@ -276,6 +305,7 @@ export class BoardView {
         const kind: RevealKind =
           content === 'cache' ? 'cache' : content === 'survivor' ? 'survivor' : content === 'nest' || content === 'heavy_nest' ? 'nest' : content === 'boss_hatch' || content === 'hero_lair' ? 'hatch' : 'safe';
         this.quarantine.reveal(e.x, e.y, `closed_${hash(e.x, e.y) % 4}`, kind);
+        this.openBlock(e.x, e.y);
         const i = e.y * this.world.s.width + e.x;
         const t = this.tiles[i];
         t.setScale(0.55).setPosition(t.x + CELL * 0.225, t.y + CELL * 0.225);
@@ -288,9 +318,19 @@ export class BoardView {
       case 'resident_born':
         at('fx.resident_born');
         break;
-      case 'energy_orb_arrive':
-        at('fx.energy_arrive');
+      case 'energy_orb_arrive': {
+        if (!animSets.fx_energy) {
+          at('fx.energy_arrive');
+          break;
+        }
+        // Absorbed by the command centre: a burst on the roof and a ring at its foot.
+        const p = this.center(e.x, e.y);
+        const burst = sc.add.sprite(p.x, p.y - 30, 'fx_energy').setScale(0.7).setDepth(D.top - 0.4);
+        burst.play('fx_energy.arrive_burst').once('animationcomplete', () => burst.destroy());
+        const ring = sc.add.sprite(p.x, p.y + 6, 'fx_energy').setScale(0.7).setDepth(D.building + 0.5);
+        ring.play('fx_energy.arrive_ring').once('animationcomplete', () => ring.destroy());
         break;
+      }
       case 'center_hit':
         this.shake(100, 0.002);
         buzz(30);
@@ -362,7 +402,80 @@ export class BoardView {
       case 'part_recycled':
         this.fxAtCell('energy_arrive', e.x, e.y, 1.2);
         break;
+      case 'survivor_joined':
+        this.rescueRun(e.x, e.y, e.owner ?? this.me);
+        break;
+      case 'enemy_spawn': {
+        const from = e.unit !== undefined ? this.world.unit(e.unit)?.nest : undefined;
+        if (from) this.releaseFrom(from);
+        break;
+      }
     }
+    if (e.type === 'hero_spawn') this.releaseFrom(cellKey(Math.round(e.x), Math.round(e.y)));
+  }
+
+  /** The block caves in by its element (block_fx open_*), then fades off the freshly revealed tile. */
+  private openBlock(x: number, y: number): void {
+    const c = this.world.cell(x, y);
+    const el = c.tech ? elementOf(c.tech) : BLOCK_EL[hash(x, y) % BLOCK_EL.length];
+    const key = `block_fx.open_${el}`;
+    if (!this.scene.anims.exists(key)) return;
+    const p = this.center(x, y);
+    const s = this.scene.add.sprite(p.x, p.y + CELL / 2, 'block_fx').setOrigin(...originOf('block_fx')).setScale(FX2).setDepth(D.site + 0.7);
+    s.play(key).once('animationcomplete', () => this.scene.tweens.add({ targets: s, alpha: 0, duration: 220, onComplete: () => s.destroy() }));
+  }
+
+  /** A rescued townsperson waves for help, runs to our command centre and cheers there (civilian_* sheets). */
+  private rescueRun(x: number, y: number, owner: number): void {
+    const kinds = CIVILIANS.filter((k) => animSets[k]);
+    if (!kinds.length) return;
+    const set = kinds[hash(x, y) % kinds.length];
+    const p = this.center(x, y);
+    const fy = p.y - CELL / 2 + FEET;
+    const spr = this.scene.add.sprite(p.x, fy, set).setOrigin(...originOf(set)).setDepth(D.unit + fy / 4000).play(`${set}.help`);
+    const fade = (delay: number) => this.scene.tweens.add({ targets: spr, alpha: 0, delay, duration: 300, onComplete: () => spr.destroy() });
+    const cmd = this.world.s.buildings.find((b) => b.owner === owner && b.type === 'command');
+    if (!cmd) return void fade(1500);
+    const c = this.center(cmd.x, cmd.y);
+    const dx = c.x - p.x;
+    const dy = c.y - CELL / 2 + FEET - fy;
+    const dist = Math.hypot(dx, dy);
+    // Stop just short of the building, on the side the runner comes from.
+    const stop = dist > 1 ? Math.min(1, (CELL * 0.6) / dist) : 0;
+    const tx = c.x - dx * stop;
+    const ty = fy + dy * (1 - stop);
+    this.scene.time.delayedCall(1100, () => {
+      if (!spr.active) return;
+      const up = dy < -Math.abs(dx) * 0.6 && animSets[set].anims.run_up;
+      spr.play(`${set}.${up ? 'run_up' : 'run'}`).setFlipX(!up && dx < 0);
+      this.scene.tweens.add({
+        targets: spr,
+        x: tx,
+        y: ty,
+        duration: Math.max(400, (dist / 120) * 1000),
+        onUpdate: () => spr.setDepth(D.unit + spr.y / 4000),
+        onComplete: () => {
+          spr.play(`${set}.cheer`).setFlipX(false);
+          if (this.scene.anims.exists('block_fx.rescued')) {
+            const f = this.scene.add.sprite(c.x, c.y + CELL / 2, 'block_fx').setOrigin(...originOf('block_fx')).setScale(FX2).setDepth(D.top - 0.4);
+            f.play('block_fx.rescued').once('animationcomplete', () => f.destroy());
+          }
+          fade(1200);
+        },
+      });
+    });
+  }
+
+  /** The lair's portal flares as it lets an enemy out, then goes back to idling. */
+  private releaseFrom(siteKey: string): void {
+    const l = this.lairs.get(siteKey);
+    const key = l && `lair_fx.release_${l.el}`;
+    if (!l || l.busy || !key || !this.scene.anims.exists(key)) return;
+    l.busy = true;
+    l.spr.play(key).once('animationcomplete', () => {
+      l.busy = false;
+      if (l.spr.active) l.spr.play(`lair_fx.idle_${l.el}`);
+    });
   }
 
   /** Shake only the board camera; HUD and dock stay still. */
@@ -431,14 +544,8 @@ export class BoardView {
             case 'nest':
             case 'heavy_nest': {
               const dead = c.resolved || w.site(x, y)?.destroyed;
-              const tech = c.tech;
-              // Use elemental nest sprite when art exists (nests_gpt/).
-              const nestGptKey = tech ? `nest_gpt.nest_${tech}_0${dead ? '_cleared' : ''}` : null;
-              if (nestGptKey && this.scene.textures.exists(nestGptKey)) {
-                key = nestGptKey;
-              } else {
-                key = (c.content === 'nest' ? 'nest' : 'nest_heavy') + (dead ? '_dead' : '');
-              }
+              // With the element's own nest building drawn on top, the cell itself is plain ground.
+              key = this.nestKey(x, y, !!dead) ? GROUND[h % 8] : (c.content === 'nest' ? 'nest' : 'nest_heavy') + (dead ? '_dead' : '');
               break;
             }
             case 'boss_hatch':
@@ -475,6 +582,9 @@ export class BoardView {
         glow?.setVisible(living);
         this.updateHot(i, c.hot ?? 0, px, py, now);
         this.updateSite(x, y);
+        this.updateDecor(i, c.revealed, px, py, h);
+        this.updateNestArt(i, x, y);
+        this.updateLair(x, y);
 
         if (!c.revealed) {
           this.setClues(i, x, y, null);
@@ -689,7 +799,7 @@ export class BoardView {
     let spr = this.sites.get(k);
     const dead = c.resolved || site?.destroyed;
     if (!spr) {
-      if (dead) return;
+      if (dead || (set !== 'demon_hatch' && this.nestKey(x, y, false))) return;
       spr = this.scene.add.sprite(this.bx + x * STEP, this.by + y * STEP, set).setOrigin(0).setDepth(D.site);
       this.sites.set(k, spr);
       if (set === 'demon_hatch') spr.setFrame(0);
@@ -707,6 +817,77 @@ export class BoardView {
     if (dead && spr.getData('dead') !== true) {
       spr.setData('dead', true);
       spr.play(`${set}.destroy`).once('animationcomplete', () => spr!.setVisible(false));
+    }
+  }
+
+  /** Texture of this nest's element building (variant by cell), or its burnt-out shell once destroyed. */
+  private nestKey(x: number, y: number, dead: boolean): string | null {
+    const el = elementOf(this.world.cell(x, y).tech);
+    const id = dead ? `nest_${el}_0_cleared` : `nest_${el}_${hash(x, y) % 3}`;
+    return NEST_ART[id] && this.scene.textures.exists(`nest_gpt.${id}`) ? id : null;
+  }
+
+  private updateNestArt(i: number, x: number, y: number): void {
+    const w = this.world;
+    const c = w.cell(x, y);
+    if (!c.revealed || (c.content !== 'nest' && c.content !== 'heavy_nest')) return;
+    const id = this.nestKey(x, y, !!(c.resolved || w.site(x, y)?.destroyed));
+    if (!id) return;
+    let img = this.nestArt.get(i);
+    if (img?.getData('id') === id) return;
+    const a = NEST_ART[id];
+    const p = this.center(x, y);
+    img ??= this.scene.add.image(p.x, p.y, `nest_gpt.${id}`).setDepth(D.site + 0.5);
+    img.setTexture(`nest_gpt.${id}`).setOrigin(a.anchor[0] / a.size[0], a.anchor[1] / a.size[1]).setScale(c.content === 'heavy_nest' ? 1.2 : 1).setData('id', id);
+    this.nestArt.set(i, img);
+  }
+
+  /** Every seventh-ish closed block carries a live hazard: ice, arcing wires or smoke (block_fx loop_*). */
+  private updateDecor(i: number, revealed: boolean, px: number, py: number, h: number): void {
+    const spr = this.decor.get(i);
+    if (revealed) {
+      if (spr) {
+        spr.destroy();
+        this.decor.delete(i);
+      }
+      return;
+    }
+    if (spr || (h >>> 4) % 7 !== 3) return;
+    const key = `block_fx.loop_${DECOR_EL[(h >>> 8) % DECOR_EL.length]}`;
+    if (!this.scene.anims.exists(key)) return;
+    const s = this.scene.add.sprite(px + CELL / 2, py + CELL, 'block_fx').setOrigin(...originOf('block_fx')).setScale(FX2).setDepth(D.film + 0.5).setAlpha(0.9);
+    s.play({ key, startFrame: h % 6 });
+    this.decor.set(i, s);
+  }
+
+  /** Live portal over an open nest or hero lair: idles, flares on release (releaseFrom), collapses when destroyed. */
+  private updateLair(x: number, y: number): void {
+    const w = this.world;
+    const c = w.cell(x, y);
+    if (!c.revealed || (c.content !== 'nest' && c.content !== 'heavy_nest' && c.content !== 'hero_lair')) return;
+    const k = cellKey(x, y);
+    const dead = c.resolved || w.site(x, y)?.destroyed;
+    let l = this.lairs.get(k);
+    if (!l) {
+      if (dead || !w.site(x, y)) return;
+      const el = elementOf(c.content === 'hero_lair' ? heroDefs[c.hero!]?.tech : c.tech, [...BLOCK_EL]);
+      if (!this.scene.anims.exists(`lair_fx.idle_${el}`)) return;
+      const p = this.center(x, y);
+      const spr = this.scene.add
+        .sprite(p.x, p.y + CELL * 0.4, 'lair_fx')
+        .setOrigin(...originOf('lair_fx'))
+        .setScale(c.content === 'heavy_nest' ? FX2 * 1.25 : FX2)
+        .setDepth(D.site + 0.35);
+      spr.play({ key: `lair_fx.idle_${el}`, startFrame: hash(x, y) % 5 });
+      l = { spr, el, busy: false, dead: false };
+      this.lairs.set(k, l);
+      return;
+    }
+    if (dead && !l.dead) {
+      const spr = l.spr;
+      l.dead = true;
+      l.busy = true;
+      spr.play(`lair_fx.destroy_${l.el}`).once('animationcomplete', () => this.scene.tweens.add({ targets: spr, alpha: 0, delay: 400, duration: 500, onComplete: () => spr.destroy() }));
     }
   }
 
@@ -748,9 +929,14 @@ export class BoardView {
       this.buildingViews.delete(id);
       const lost = this.lost.find((e) => e.x === v.x && e.y === v.y);
       const sheet = `bld_${v.type}`;
+      const ruin = `bldg.${v.type}_destroyed`;
       if (lost && animSets[sheet]) {
         v.spr.setOrigin(...originOf(sheet)).play(`${sheet}.destroy`);
         this.scene.tweens.add({ targets: v.spr, alpha: 0, delay: 1400, duration: 600, onComplete: () => v.spr.destroy() });
+      } else if (lost && this.scene.textures.exists(ruin)) {
+        v.spr.stop();
+        v.spr.setTexture(ruin).clearTint().setAlpha(1);
+        this.scene.tweens.add({ targets: v.spr, alpha: 0, delay: 1800, duration: 700, onComplete: () => v.spr.destroy() });
       } else v.spr.destroy();
     }
     this.lost = [];
@@ -761,16 +947,18 @@ export class BoardView {
     const sheet = `bld_${b.type}`;
     const hasSheet = animSets[sheet] !== undefined;
     const spr = v.spr;
+    // Drawn still states (buildings_gpt) for buildings without an animated sheet.
+    const still = (s: string) => (this.scene.textures.exists(`bldg.${b.type}_${s}`) ? `bldg.${b.type}_${s}` : null);
     let state: string;
     if (!b.complete) state = 'construct';
-    else if (b.hp < def.hp / 2 && hasSheet) state = 'damaged';
+    else if (b.hp < def.hp / 2 && (hasSheet || still('damaged'))) state = 'damaged';
     else if (b.type === 'reactor') state = 'working';
     else state = 'idle';
     if (state !== v.state) {
       v.state = state;
       spr.stop();
       if (state === 'idle' || !hasSheet) {
-        spr.setTexture(`building.${b.type}`);
+        spr.setTexture((state === 'construct' && still('construction')) || (state === 'damaged' && still('damaged')) || `building.${b.type}`);
         const a = BUILDING_ANCHOR[b.type] ?? [36, 78, 72, 96];
         spr.setOrigin(a[0] / a[2], a[1] / a[3]);
       } else {
@@ -971,9 +1159,10 @@ export class BoardView {
 
       const st = w.stats(u);
       const top = fy - (u.kind === 'hero' ? (v.spr.scaleX > 1 ? 104 : 74) : u.kind === 'heavy_adaptant' ? 70 : 54);
-      // Trophy parts: a colored pip per slot until the artist's overlays exist.
-      Object.values(u.parts).forEach((part, k) => {
-        if (!part) return;
+      // Trophy parts: drawn limbs tinted by element where the animator made masks, else a coloured pip per slot.
+      const masked = this.updateTrophies(u, v);
+      Object.entries(u.parts).forEach(([slot, part], k) => {
+        if (!part || masked.has(slot)) return;
         g.fillStyle(0x0b1117, 1);
         g.fillCircle(fx - 14 + k * 9, top + 2, 5);
         g.fillStyle(TECH_COLOR[partDefs[part.id]?.tech] ?? 0xffffff, 1);
@@ -993,6 +1182,8 @@ export class BoardView {
       if (alive.has(id)) continue;
       this.units.delete(id);
       v.ring?.destroy();
+      this.trophies.get(id)?.forEach((s) => s.destroy());
+      this.trophies.delete(id);
       if (animSets[v.set].anims.death) {
         v.spr.anims.timeScale = 1;
         v.spr.play(`${v.set}.death`).once('animationcomplete', () => v.spr.destroy());
@@ -1012,6 +1203,58 @@ export class BoardView {
     }
   }
 
+  /**
+   * A second sprite per trophy slot plays the same frame from the hero's limb-mask set (`<set>_limbs`,
+   * anims `<anim>@<mask slot>`), tinted with the trophy's element; hit/death/knockout have no masks, so it hides.
+   * Returns the slots drawn this way.
+   */
+  private updateTrophies(u: Unit, v: UnitView): Set<string> {
+    const done = new Set<string>();
+    const limbsKey = `${v.set}_limbs`;
+    const ls = animSets[limbsKey] as (typeof animSets)[string] & { slots?: Record<string, string> };
+    let mine = this.trophies.get(u.id);
+    if (!ls?.slots) return done;
+    const cur = v.spr.anims.currentAnim;
+    const anim = cur ? cur.key.slice(v.set.length + 1) : 'idle';
+    const idx = (v.spr.anims.currentFrame?.index ?? 1) - 1;
+    for (const [slot, part] of Object.entries(u.parts)) {
+      const mask = part && ls.slots[SLOT_SHORT[slot]];
+      if (!mask) continue;
+      done.add(slot);
+      mine ??= new Map();
+      this.trophies.set(u.id, mine);
+      let s = mine.get(slot);
+      if (!s) {
+        s = this.scene.add.sprite(0, 0, limbsKey);
+        mine.set(slot, s);
+      }
+      const a = ls.anims[`${anim}@${mask}`];
+      if (!a || !v.spr.visible) {
+        s.setVisible(false);
+        continue;
+      }
+      const tech = partDefs[part!.id]?.tech;
+      s.setVisible(true)
+        .setFrame(a.frames[Math.min(idx, a.frames.length - 1)])
+        .setOrigin(v.spr.originX, v.spr.originY)
+        .setPosition(v.spr.x, v.spr.y)
+        .setScale(v.spr.scaleX, v.spr.scaleY)
+        .setFlipX(v.spr.flipX)
+        .setDepth(v.spr.depth + 0.00005)
+        .setTint(TECH_COLOR[tech] ?? 0xffffff)
+        .setAlpha(0.9);
+      if (Math.random() < 0.02) this.fx(hitOf(tech), v.spr.x + (Math.random() - 0.5) * 24, v.spr.y - v.spr.displayHeight * 0.45, 0.35);
+    }
+    if (mine) {
+      for (const [slot, s] of mine) {
+        if (done.has(slot)) continue;
+        s.destroy();
+        mine.delete(slot);
+      }
+    }
+    return done;
+  }
+
   private drawWindup(g: Phaser.GameObjects.Graphics, u: Unit): void {
     const b = u.blast!;
     const from = this.center(u.x, u.y);
@@ -1020,15 +1263,63 @@ export class BoardView {
     g.lineBetween(from.x, from.y, to.x, to.y);
   }
 
+  /**
+   * Energy orbs: drawn frames only (fx_energy, sheets 071/075). A flash where the orb is born, the orb flies to the
+   * command centre on an arc and leaves sparks behind; the ring and burst on arrival play in onEvent.
+   * Orbs are matched by where they were born (online snapshots may replace the objects).
+   */
   private updateOrbs(): void {
     const orbs = this.world.s.orbs;
-    while (this.orbs.length < orbs.length) this.orbs.push(this.scene.add.sprite(0, 0, 'fx').setDepth(D.unit + 1).play('fx.energy_orb'));
-    this.orbs.forEach((spr, k) => {
-      const o = orbs[k];
-      if (!o) return void spr.setVisible(false);
+    if (!animSets.fx_energy) {
+      while (this.orbs.length < orbs.length) this.orbs.push(this.scene.add.sprite(0, 0, 'fx').setDepth(D.unit + 1).play('fx.energy_orb'));
+      this.orbs.forEach((spr, k) => {
+        const o = orbs[k];
+        if (!o) return void spr.setVisible(false);
+        const p = this.center(o.x, o.y);
+        spr.setVisible(true).setPosition(p.x, p.y - 8).setScale(0.8 + Math.min(0.6, o.amount / 60));
+      });
+      return;
+    }
+    const now = this.scene.time.now;
+    const seen = new Set<string>();
+    const dup = new Map<string, number>();
+    for (const o of orbs) {
+      const x0 = o.x0 ?? o.x;
+      const y0 = o.y0 ?? o.y;
+      const base = `${o.owner}:${x0.toFixed(2)}:${y0.toFixed(2)}:${o.amount}`;
+      const n = dup.get(base) ?? 0;
+      dup.set(base, n + 1);
+      const key = `${base}#${n}`;
+      seen.add(key);
+      let v = this.orbViews.get(key);
+      if (!v) {
+        v = { spr: this.scene.add.sprite(0, 0, 'fx_energy').setDepth(D.top - 0.4).play('fx_energy.fly'), trail: now };
+        this.orbViews.set(key, v);
+        const b = this.center(x0, y0);
+        const f = this.scene.add.sprite(b.x, b.y - 10, 'fx_energy').setScale(0.55).setDepth(D.top - 0.4);
+        f.play('fx_energy.spawn').once('animationcomplete', () => f.destroy());
+      }
+      const cmd = this.world.building(this.world.s.players[o.owner]?.command);
+      const total = cmd ? Math.hypot(cmd.x - x0, cmd.y - y0) : 0;
+      const left = cmd ? Math.hypot(cmd.x - o.x, cmd.y - o.y) : 0;
+      const t = total > 0 ? Phaser.Math.Clamp(1 - left / total, 0, 1) : 1;
+      const lift = Math.min(CELL * 2.2, total * STEP * 0.35) * Math.sin(Math.PI * t);
       const p = this.center(o.x, o.y);
-      spr.setVisible(true).setPosition(p.x, p.y - 8).setScale(0.8 + Math.min(0.6, o.amount / 60));
-    });
+      const size = 0.8 + Math.min(0.6, o.amount / 60);
+      const x = p.x;
+      const y = p.y - 10 - lift;
+      if (now - v.trail > 70) {
+        v.trail = now;
+        const s = this.scene.add.sprite(x, y, 'fx_energy').setScale(0.22 * size).setDepth(D.top - 0.45);
+        s.play('fx_energy.trail').once('animationcomplete', () => s.destroy());
+      }
+      v.spr.setPosition(x, y).setScale(0.38 * size);
+    }
+    for (const [key, v] of this.orbViews) {
+      if (seen.has(key)) continue;
+      v.spr.destroy();
+      this.orbViews.delete(key);
+    }
   }
 
   /** Big work arc almost the size of the cell, running down clockwise (UI_SPEC §3). */

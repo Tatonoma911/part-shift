@@ -22,6 +22,8 @@ interface MusicDef {
   volume: number;
   loop: boolean;
   loopSeconds: number;
+  /** 92 bpm stage track: switches on a bar line of the running 92 bpm music (MUSIC.md). */
+  barSync?: boolean;
 }
 
 interface MusicTrack {
@@ -93,12 +95,14 @@ class SoundBoard {
   private tracks: MusicTrack[] = [];
   private wantMusic: string | null = null;
   private musicToken = 0;
-  /** AudioContext time the run layers started (bar grid for the demon entry). */
+  /** AudioContext time the bar grid of the running 92 bpm music started (run layers and barSync stages). */
   private runStart: number | null = null;
   private layerTarget: Record<string, number> = { run_calm: 1, run_heroes: 0, run_danger: 0 };
   private afterBoss = false;
   private afterEnd = false;
   private ducked = false;
+  /** The guide's theme is playing; `back` is the track to return to. */
+  private lore: { back: string | null } | null = null;
   private combo = { step: 0, at: -1e9 };
   prefs: SoundPrefs = { ...DEFAULT_PREFS };
 
@@ -227,10 +231,39 @@ class SoundBoard {
 
   /**
    * Music per audio/MUSIC.md. 'run' starts the three run_* layers in sync
-   * (gains follow setLayers); 'demon' crossfades in on the next bar; one-shot
-   * tracks (victory, defeat) hand over to 'menu' when they end.
+   * (gains follow setLayers); a barSync stage (demon, raid, hero_hunt,
+   * last_stand) crossfades in on the next bar of the running 92 bpm music;
+   * the slow ambients crossfade over 3 s; one-shot tracks (victory, defeat)
+   * hand over to 'menu' when they end.
    */
   playMusic(id: string): void {
+    // While the guide is open its theme plays; the game's choice waits for it to close.
+    if (this.lore) {
+      this.lore.back = id;
+      return;
+    }
+    this.switchMusic(id);
+  }
+
+  /** The guide (справочник) opened over the menu or a run: its theme crossfades in, undimmed by pause. */
+  openLore(): void {
+    if (this.lore) return;
+    this.lore = { back: this.wantMusic };
+    this.switchMusic('lore');
+    this.duck(this.ducked);
+  }
+
+  /** The guide closed: crossfade back to what was playing (or what the game asked for meanwhile). */
+  closeLore(): void {
+    const l = this.lore;
+    if (!l) return;
+    this.lore = null;
+    this.duck(this.ducked);
+    if (l.back) this.switchMusic(l.back);
+    else this.stopMusic(3);
+  }
+
+  private switchMusic(id: string): void {
     if (this.wantMusic === id && this.tracks.length) return;
     this.wantMusic = id;
     if (!this.ctx) return;
@@ -243,10 +276,17 @@ class SoundBoard {
       if (token !== this.musicToken || this.wantMusic !== id || bufs.some((b) => !b)) return;
       const old = this.tracks;
       const now = ctx.currentTime;
-      // Demon enters on a bar line of the running layers (same tempo, MUSIC.md).
+      // 92 bpm tracks enter on a bar line of the running 92 bpm music (MUSIC.md).
+      const synced = id === 'run' || !!defs[0].barSync;
+      const fromSynced = this.runStart !== null && old.length > 0;
       let at = now + 0.1;
-      if (id === 'demon' && this.runStart !== null) at = this.runStart + Math.ceil((now + 0.1 - this.runStart) / BAR) * BAR;
-      const fadeIn = id === 'run' && this.afterBoss ? 3 : id === 'menu' && this.afterEnd ? 3 : id === 'demon' ? 1.5 : 0.4;
+      if (synced && fromSynced) at = this.runStart! + Math.ceil((now + 0.1 - this.runStart!) / BAR) * BAR;
+      // Every change is a crossfade (Антон: no track ever cuts off). A victory/defeat sting keeps its
+      // attack while the old music fades under it; 92 bpm stages swap on the bar; the rest take 3 s.
+      const oneShot = !defs[0].loop;
+      const quick = synced && fromSynced;
+      const fadeIn = oneShot ? 0.25 : quick ? 1.5 : old.length || this.afterBoss || this.afterEnd ? 3 : 2;
+      const fadeOld = oneShot ? 2.5 : at + fadeIn - now;
       this.afterBoss = this.afterEnd = false;
       this.tracks = ids.map((m, i) => {
         const def = defs[i];
@@ -264,13 +304,30 @@ class SoundBoard {
           src.onended = () => {
             if (this.wantMusic !== id) return;
             this.afterEnd = true;
+            this.tracks = [];
             this.playMusic('menu');
           };
         return { id: m, src, gain, volume: def.volume };
       });
-      this.runStart = id === 'run' ? at : this.runStart;
-      this.fadeOut(old, id === 'demon' ? at + 1.5 - now : 0.4);
+      if (!synced) this.runStart = null;
+      else if (!fromSynced) this.runStart = at;
+      this.fadeOut(old, fadeOld);
+      this.evictMusic(ids);
     });
+  }
+
+  /**
+   * Stage tracks are about a minute of decoded stereo each (~20 MB): keep the
+   * run layers and what is playing, let the rest be decoded again when needed.
+   */
+  private evictMusic(keep: string[]): void {
+    const files = new Set([...RUN_LAYERS, ...keep].flatMap((m) => MUSIC[m]?.files ?? []));
+    for (const def of Object.values(MUSIC))
+      for (const f of def.files)
+        if (!files.has(f)) {
+          this.buffers.delete(f);
+          this.loading.delete(f);
+        }
   }
 
   /** run_heroes / run_danger targets (0..1); ramps up in 1.5 s, down in 4 s. */
@@ -288,14 +345,11 @@ class SoundBoard {
     }
   }
 
-  /** The call target fell: demon fades in 3 s and the run layers come back. */
+  /** The call target fell: the demon fades out over 3 s into the calm "after the storm" track. */
   bossDown(): void {
     if (this.wantMusic !== 'demon') return;
     this.afterBoss = true;
-    this.fadeOut(this.tracks, 3);
-    this.tracks = [];
-    this.runStart = null;
-    this.playMusic('run');
+    this.playMusic('aftermath');
   }
 
   /** Pause ducks the music bus to 35 % instead of silencing it. */
@@ -311,7 +365,7 @@ class SoundBoard {
 
   private musicLevel(): number {
     // Music bus default 0.5 at full slider (contracts.md, "Звук"), squared like the others.
-    return 0.5 * this.prefs.music * this.prefs.music * (this.ducked ? 0.35 : 1);
+    return 0.5 * this.prefs.music * this.prefs.music * (this.ducked && !this.lore ? 0.35 : 1);
   }
 
   private fadeOut(tracks: MusicTrack[], seconds: number): void {
@@ -331,7 +385,8 @@ class SoundBoard {
   }
 
   /** Victory and defeat duck the music to zero and stop it (sounds.json note). */
-  stopMusic(fadeSeconds = 0.6): void {
+  stopMusic(fadeSeconds = 1.5): void {
+    this.lore = null;
     this.wantMusic = null;
     this.musicToken++;
     this.fadeOut(this.tracks, fadeSeconds);
@@ -340,10 +395,9 @@ class SoundBoard {
     if (this.ducked) this.duck(false);
   }
 
-  /** Victory / defeat sting after the fade; 'menu' follows when it ends. */
+  /** Victory / defeat sting over the fading run music; 'menu' follows when it ends. */
   playEnd(victory: boolean): void {
-    this.stopMusic(0.5);
-    setTimeout(() => this.playMusic(victory ? 'victory' : 'defeat'), 550);
+    this.playMusic(victory ? 'victory' : 'defeat');
   }
 }
 

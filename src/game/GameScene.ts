@@ -10,9 +10,9 @@ import { SoundDirector } from './soundDirector';
 import { Voice } from './voice';
 import { RunTally } from './meta/record';
 import { showResults } from './meta/ResultsScreen';
-import { boonPoolFor, loadMeta, pickAllies } from './meta/store';
+import { boonPoolFor, loadMeta, pickAllies, roster } from './meta/store';
 import { pickBoon } from './meta/BoonPick';
-import { learning, setLearningHooks } from './learn';
+import { learning, openGuide, setLearningHooks } from './learn';
 import { volumeHeight, volumeSliders } from './volume';
 import { BoardView } from './BoardView';
 import { Comm } from './Comm';
@@ -160,6 +160,8 @@ export class GameScene extends Phaser.Scene {
     goal: Phaser.GameObjects.Text;
     goalBg: Phaser.GameObjects.Graphics;
     shiftLabel: Phaser.GameObjects.Text;
+    buildBtn: Phaser.GameObjects.Container;
+    buildBtnBg: Phaser.GameObjects.Graphics;
   };
   private shownEnergy = 0;
   /** Townsfolk who reached the command centre this shift (event `civilian_rescued`). */
@@ -237,7 +239,7 @@ export class GameScene extends Phaser.Scene {
     // Free play: residents dig only where the player sends them, nothing is queued for them at the start.
     // Caches offer 1 of 3 bonuses from the pool the player's HeroOut rank has opened (META.md §3, §8).
     const meta = loadMeta();
-    const allies = (st.allies ?? meta.allyChoice).filter((id) => meta.unlocked.includes(id));
+    const allies = (st.allies ?? meta.allyChoice).filter((id) => roster(meta).includes(id));
     const rules = { config: { 'dig.autoQueueZeroNeighbors': false }, boonPool: boonPoolFor(meta), allies };
     this.world = this.online?.world
       ? this.online.world
@@ -368,7 +370,7 @@ export class GameScene extends Phaser.Scene {
   private restart(): void {
     if (this.world.s.outcome === 'playing') this.trackEnd('restart');
     if (!this.guide) clearSlot(this.slot);
-    sound.stopMusic(0.2);
+    // No stop: the next run's music crossfades from this one.
     // The city of the day and a friend's challenge replay the same map; free play gets a new one.
     const st = this.start;
     this.scene.restart({ slot: this.slot, fresh: true, tutorial: st.tutorial, seed: st.daily || st.challenge ? this.world.s.seed : undefined, daily: st.daily, challenge: st.challenge });
@@ -378,7 +380,7 @@ export class GameScene extends Phaser.Scene {
     if (this.world.s.outcome === 'playing') analytics.track(this.guide ? 'tutorial_leave' : 'match_leave', this.matchParams());
     this.save();
     this.online?.leave();
-    sound.stopMusic(0.3);
+    // The menu theme crossfades in over the run music.
     this.scene.start('menu');
   }
 
@@ -389,7 +391,7 @@ export class GameScene extends Phaser.Scene {
       ['−', () => this.cams.zoomBy(1 / 1.3)],
       ['⟲', () => this.cams.reset()],
       // Field guide (Learning thread).
-      ['?', () => learning().openGuide()],
+      ['?', () => openGuide()],
     ];
     // QA-019: in portrait the board fills the full width, so vertical buttons on the
     // right would cover board cells. Instead place them horizontally in the gap between
@@ -666,6 +668,20 @@ export class GameScene extends Phaser.Scene {
     const residents = stat(px + (LANDSCAPE ? 244 : 300), t('hud.label.heroes'), 'icon.shield', INK.graphite);
     const squad = stat(px + (LANDSCAPE ? 390 : 456), t('hud.label.rescued'), 'icon.resident', INK.teal);
 
+    // «Строить» button: opens the building catalog (MVP_RULES, memory BUILD BUTTON).
+    const bx = HUD.x + HUD.w - 156;
+    const bw = 78;
+    const bh = 80;
+    const buildBtnBg = this.add.graphics().setDepth(20);
+    chip(buildBtnBg, bx, midY - bh / 2, bw, bh, C.graphite, 1, 12);
+    const buildBtnTx = this.add.text(bx + bw / 2, midY, t('hud.mode_build'), TXT.body(18, INK.white, '700')).setOrigin(0.5).setDepth(20);
+    const buildBtnHit = this.add.zone(bx, midY - bh / 2, bw, bh).setOrigin(0).setDepth(20).setInteractive({ useHandCursor: true });
+    buildBtnHit.on('pointerdown', stop(() => {
+      if (this.mode === 'build') this.setGhost(null);
+      else { this.setGhost(null); this.setMode('build'); }
+    }));
+    const buildBtn = this.add.container(0, 0, [buildBtnBg, buildBtnTx, buildBtnHit]).setDepth(20);
+
     // Threat ring: empties over secondsPerLevel, then the level goes up (UI_SPEC §2.1).
     const rx = HUD.x + HUD.w - 66;
     const ring = this.add.graphics();
@@ -676,7 +692,7 @@ export class GameScene extends Phaser.Scene {
     const shiftLabel = this.add.text(HUD.x + 8, GOAL.y + 22, t('hud.shift_label').toUpperCase(), TXT.caps()).setOrigin(0, 0.5).setDepth(20);
     const goalBg = this.add.graphics().setDepth(20);
     const goal = this.add.text(HUD.x + HUD.w - 24, GOAL.y + 22, '', TXT.body(23, INK.white, '700')).setOrigin(1, 0.5).setDepth(20);
-    this.hud = { energy, residents, squad, threat, ring, ringBox, goal, goalBg, shiftLabel };
+    this.hud = { energy, residents, squad, threat, ring, ringBox, goal, goalBg, shiftLabel, buildBtn, buildBtnBg };
   }
 
   private updateHud(deltaMs: number): void {
@@ -825,7 +841,7 @@ export class GameScene extends Phaser.Scene {
     this.dock = { head: { text: headText, cancel }, panes: { dig, build }, queue, cards };
   }
 
-  /** 'build' while a liberated block is chosen (ghost shown), otherwise 'dig'. */
+  /** 'build' switches the dock to the build catalog; 'dig' restores normal digging view. */
   private setMode(mode: Mode): void {
     if (mode === 'dig' && this.ghost) {
       this.ghost = null;
@@ -837,6 +853,11 @@ export class GameScene extends Phaser.Scene {
     this.dock.head.cancel.setVisible(mode === 'build');
     this.dock.head.text.setText(t(mode === 'build' ? 'dock.build_here' : this.tutorialWantsBuild() ? 'dock.build_tutorial' : 'dock.hint'));
     for (const [m, pane] of Object.entries(this.dock.panes)) pane.setVisible(m === mode);
+    // Build button highlights while the catalog is open.
+    if (this.hud?.buildBtnBg) {
+      this.hud.buildBtnBg.clear();
+      chip(this.hud.buildBtnBg, HUD.x + HUD.w - 156, HUD.y + HUD.h / 2 - 40, 78, 80, mode === 'build' ? C.cobalt : C.graphite, 1, 12);
+    }
   }
 
   private tutorialWantsBuild(): boolean {
@@ -973,7 +994,7 @@ export class GameScene extends Phaser.Scene {
           label: t('menu.guide'),
           act: () => {
             this.setPaused(false);
-            learning().openGuide();
+            openGuide();
           },
         },
         { label: t('pause.account'), act: () => openAccountPanel() },
@@ -1043,7 +1064,7 @@ export class GameScene extends Phaser.Scene {
           label: t('menu.guide'),
           act: () => {
             this.setPaused(false);
-            learning().openGuide();
+            openGuide();
           },
         },
         { label: t('online.pause.leave'), act: () => this.toMenu() },
@@ -1073,10 +1094,9 @@ export class GameScene extends Phaser.Scene {
 
   private endOnline(): void {
     const s = this.world.s;
-    sound.stopMusic();
     const ffa = s.match?.mode === 'ffa';
     const won = s.outcome === 'victory' && (!ffa || s.match?.winner === this.me);
-    sound.play(won ? 'victory' : 'defeat');
+    sound.playEnd(won);
     this.showOnlineEnd(won, this.watching);
   }
 
@@ -1117,7 +1137,6 @@ export class GameScene extends Phaser.Scene {
       this.overlay = showResults(this, view, {
         again: () => this.restart(),
         dossier: () => {
-          sound.stopMusic(0.3);
           this.scene.start('dossier');
         },
         menu: () => this.toMenu(),
