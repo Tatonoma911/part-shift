@@ -268,7 +268,7 @@
   "social.menu.board": "Ranking",
   "social.menu.invite": "Invite",
   "social.menu.feedback": "Feedback",
-  "social.menu.coffee": "Coffee",
+  "social.menu.coffee": "Buy the dev\na coffee",
   "social.hero_week": "Hero of the week: {name} · {score}",
   "social.close": "Close",
   "social.default_name": "Property #",
@@ -424,5 +424,18 @@
   "cell.sensor.find.few": "{count} finds",
   "cell.sensor.find.many": "{count} finds",
   "cell.sensor.boss": "the call target's lair",
-  "cell.sensor.clear": "Nearby: nothing"
+  "cell.sensor.clear": "Nearby: nothing",
+  "loading.label.tip": "Tip",
+  "loading.label.fact": "Fact",
+  "loading.label.control": "Control",
+  "loading.camera": "Camera 14 · Dome Avenue",
+  "loading.step.1": "Inflating the dome…",
+  "loading.step.2": "Counting residents. And their limbs…",
+  "loading.step.3": "Looking for the warehouse keys…",
+  "loading.step.4": "Charging the blue Energy…",
+  "loading.step.5": "Waking the heroes on duty…",
+  "loading.step.6": "Taping off the quarantine…",
+  "loading.step.7": "Clearing the rescue with legal…",
+  "loading.step.8": "Cancelling the rescuers' weekend…",
+  "loading.ready": "Shift ready. Move out!"
 }

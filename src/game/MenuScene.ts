@@ -50,16 +50,10 @@ export class MenuScene extends Phaser.Scene {
   }
 
   preload(): void {
+    // The loading screen (LoadingScene) has loaded everything already; these only catch what it missed.
     preloadArt(this);
     preloadMetaArt(this);
     preloadComm(this);
-    const bar = this.add.graphics();
-    this.load.on('progress', (v: number) => {
-      bar.clear();
-      bar.fillStyle(C.teal, 1);
-      bar.fillRect(VIEW.width * 0.2, VIEW.height / 2, VIEW.width * 0.6 * v, 10);
-    });
-    this.load.once('complete', () => bar.destroy());
   }
 
   create(): void {
@@ -369,14 +363,20 @@ export class MenuScene extends Phaser.Scene {
       ['coffee', t('social.menu.coffee'), () => openDonate('menu'), true],
     ];
     const gap = 10;
-    const bw = (w - gap * (items.length - 1)) / items.length;
-    items.forEach(([icon, label, act, gold], i) => {
-      const bx = x + i * (bw + gap);
+    // The gold coffee chip is two units wide: its label is a whole phrase on two lines beside the icon.
+    const unit = (w - gap * (items.length - 1)) / (items.length + 1);
+    let bx = x;
+    items.forEach(([icon, label, act, gold]) => {
+      const bw = gold ? unit * 2 : unit;
       const g = this.add.graphics();
       chip(g, bx, y, bw, h, gold ? C.amber : C.graphite, gold ? 1 : 0.08, 14);
-      const ic = menuIcon(this, bx + bw / 2, y + h * 0.34, LANDSCAPE ? 32 : 40, icon);
-      const tx = this.add.text(bx + bw / 2, y + h * 0.74, label, TXT.body(LANDSCAPE ? 17 : 19, INK.graphite, '700')).setOrigin(0.5);
-      if (tx.width > bw - 10) tx.setScale((bw - 10) / tx.width);
+      const size = LANDSCAPE ? 32 : 40;
+      const ic = gold ? menuIcon(this, bx + 14 + size / 2, y + h / 2, size, icon) : menuIcon(this, bx + bw / 2, y + h * 0.34, size, icon);
+      const tx = gold
+        ? this.add.text(bx + 14 + size + 8 + (bw - size - 36) / 2, y + h / 2, label, { ...TXT.body(LANDSCAPE ? 18 : 21, INK.graphite, '800'), align: 'center', lineSpacing: -2 }).setOrigin(0.5)
+        : this.add.text(bx + bw / 2, y + h * 0.74, label, TXT.body(LANDSCAPE ? 17 : 19, INK.graphite, '700')).setOrigin(0.5);
+      const room = gold ? bw - size - 36 : bw - 10;
+      if (tx.width > room || tx.height > h - 8) tx.setScale(Math.min(room / tx.width, (h - 8) / tx.height));
       const hit = this.add.zone(bx, y, bw, h).setOrigin(0).setInteractive({ useHandCursor: true });
       hit.on('pointerdown', (_p: Phaser.Input.Pointer, _x: number, _y: number, ev: Ev) => {
         ev.stopPropagation();
@@ -384,6 +384,7 @@ export class MenuScene extends Phaser.Scene {
         act();
       });
       c.add([g, ...ic, tx, hit]);
+      bx += bw + gap;
     });
   }
 

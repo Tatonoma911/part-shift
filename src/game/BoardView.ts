@@ -4,6 +4,10 @@ import { cellKey } from '../core/grid';
 import type { Building, Unit } from '../core/state';
 import type { GameEvent, World } from '../core/world';
 import { animSets, BUILDING_ANCHOR, originOf } from './assets';
+import nestsJson from '../assets/art/nests_gpt/nests_gpt.json';
+
+/** Per-element nest buildings (GPT 131/150): size and plate-centre anchor, 1:1 with the board. */
+const NEST_ART = (nestsJson as unknown as { nests: Record<string, { size: [number, number]; anchor: [number, number] }> }).nests;
 import { sound } from './audio';
 import { C, CELL, STEP, TECH_COLOR } from './layout';
 import { buzz, comfort } from './comfort';
@@ -95,6 +99,8 @@ export class BoardView {
   /** Pulsing glow over nests that are still alive (nest_live, AR-05). */
   private readonly nestGlow = new Map<number, Phaser.GameObjects.Sprite>();
   private readonly sites = new Map<string, Phaser.GameObjects.Sprite>();
+  /** The nest's own building in its element (nests_gpt), standing on the open cell. */
+  private readonly nestArt = new Map<number, Phaser.GameObjects.Image>();
   /** Animated decor over some closed blocks (block_fx loop_*). */
   private readonly decor = new Map<number, Phaser.GameObjects.Sprite>();
   /** Live portal over each open nest / hero lair (lair_fx), keyed by site key. */
@@ -538,14 +544,8 @@ export class BoardView {
             case 'nest':
             case 'heavy_nest': {
               const dead = c.resolved || w.site(x, y)?.destroyed;
-              const tech = c.tech;
-              // Use elemental nest sprite when art exists (nests_gpt/).
-              const nestGptKey = tech ? `nest_gpt.nest_${tech}_0${dead ? '_cleared' : ''}` : null;
-              if (nestGptKey && this.scene.textures.exists(nestGptKey)) {
-                key = nestGptKey;
-              } else {
-                key = (c.content === 'nest' ? 'nest' : 'nest_heavy') + (dead ? '_dead' : '');
-              }
+              // With the element's own nest building drawn on top, the cell itself is plain ground.
+              key = this.nestKey(x, y, !!dead) ? GROUND[h % 8] : (c.content === 'nest' ? 'nest' : 'nest_heavy') + (dead ? '_dead' : '');
               break;
             }
             case 'boss_hatch':
@@ -583,6 +583,7 @@ export class BoardView {
         this.updateHot(i, c.hot ?? 0, px, py, now);
         this.updateSite(x, y);
         this.updateDecor(i, c.revealed, px, py, h);
+        this.updateNestArt(i, x, y);
         this.updateLair(x, y);
 
         if (!c.revealed) {
@@ -798,7 +799,7 @@ export class BoardView {
     let spr = this.sites.get(k);
     const dead = c.resolved || site?.destroyed;
     if (!spr) {
-      if (dead) return;
+      if (dead || (set !== 'demon_hatch' && this.nestKey(x, y, false))) return;
       spr = this.scene.add.sprite(this.bx + x * STEP, this.by + y * STEP, set).setOrigin(0).setDepth(D.site);
       this.sites.set(k, spr);
       if (set === 'demon_hatch') spr.setFrame(0);
@@ -817,6 +818,28 @@ export class BoardView {
       spr.setData('dead', true);
       spr.play(`${set}.destroy`).once('animationcomplete', () => spr!.setVisible(false));
     }
+  }
+
+  /** Texture of this nest's element building (variant by cell), or its burnt-out shell once destroyed. */
+  private nestKey(x: number, y: number, dead: boolean): string | null {
+    const el = elementOf(this.world.cell(x, y).tech);
+    const id = dead ? `nest_${el}_0_cleared` : `nest_${el}_${hash(x, y) % 3}`;
+    return NEST_ART[id] && this.scene.textures.exists(`nest_gpt.${id}`) ? id : null;
+  }
+
+  private updateNestArt(i: number, x: number, y: number): void {
+    const w = this.world;
+    const c = w.cell(x, y);
+    if (!c.revealed || (c.content !== 'nest' && c.content !== 'heavy_nest')) return;
+    const id = this.nestKey(x, y, !!(c.resolved || w.site(x, y)?.destroyed));
+    if (!id) return;
+    let img = this.nestArt.get(i);
+    if (img?.getData('id') === id) return;
+    const a = NEST_ART[id];
+    const p = this.center(x, y);
+    img ??= this.scene.add.image(p.x, p.y, `nest_gpt.${id}`).setDepth(D.site + 0.5);
+    img.setTexture(`nest_gpt.${id}`).setOrigin(a.anchor[0] / a.size[0], a.anchor[1] / a.size[1]).setScale(c.content === 'heavy_nest' ? 1.2 : 1).setData('id', id);
+    this.nestArt.set(i, img);
   }
 
   /** Every seventh-ish closed block carries a live hazard: ice, arcing wires or smoke (block_fx loop_*). */
@@ -906,9 +929,14 @@ export class BoardView {
       this.buildingViews.delete(id);
       const lost = this.lost.find((e) => e.x === v.x && e.y === v.y);
       const sheet = `bld_${v.type}`;
+      const ruin = `bldg.${v.type}_destroyed`;
       if (lost && animSets[sheet]) {
         v.spr.setOrigin(...originOf(sheet)).play(`${sheet}.destroy`);
         this.scene.tweens.add({ targets: v.spr, alpha: 0, delay: 1400, duration: 600, onComplete: () => v.spr.destroy() });
+      } else if (lost && this.scene.textures.exists(ruin)) {
+        v.spr.stop();
+        v.spr.setTexture(ruin).clearTint().setAlpha(1);
+        this.scene.tweens.add({ targets: v.spr, alpha: 0, delay: 1800, duration: 700, onComplete: () => v.spr.destroy() });
       } else v.spr.destroy();
     }
     this.lost = [];
@@ -919,16 +947,18 @@ export class BoardView {
     const sheet = `bld_${b.type}`;
     const hasSheet = animSets[sheet] !== undefined;
     const spr = v.spr;
+    // Drawn still states (buildings_gpt) for buildings without an animated sheet.
+    const still = (s: string) => (this.scene.textures.exists(`bldg.${b.type}_${s}`) ? `bldg.${b.type}_${s}` : null);
     let state: string;
     if (!b.complete) state = 'construct';
-    else if (b.hp < def.hp / 2 && hasSheet) state = 'damaged';
+    else if (b.hp < def.hp / 2 && (hasSheet || still('damaged'))) state = 'damaged';
     else if (b.type === 'reactor') state = 'working';
     else state = 'idle';
     if (state !== v.state) {
       v.state = state;
       spr.stop();
       if (state === 'idle' || !hasSheet) {
-        spr.setTexture(`building.${b.type}`);
+        spr.setTexture((state === 'construct' && still('construction')) || (state === 'damaged' && still('damaged')) || `building.${b.type}`);
         const a = BUILDING_ANCHOR[b.type] ?? [36, 78, 72, 96];
         spr.setOrigin(a[0] / a[2], a[1] / a[3]);
       } else {
