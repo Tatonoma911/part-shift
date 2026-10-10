@@ -58,6 +58,14 @@ const H = () => VIEW.height;
 
 export function showResults(scene: Phaser.Scene, v: ResultsView, act: ResultsActions, depth = 40): Phaser.GameObjects.Container {
   const root = scene.add.container(0, 0).setDepth(depth);
+  // A returned hero's card waits until the player leaves the results, so it never covers the score (QA: results text hidden).
+  let pendingHero = v.unlocked;
+  const leave = (then: () => void) => {
+    if (!pendingHero) return then();
+    const id = pendingHero;
+    pendingHero = undefined;
+    heroReturned(scene, id, act, depth + 1, then);
+  };
   let speed = calmFx() ? 4 : 1;
   const tweens: Phaser.Tweens.Tween[] = [];
   let timer: Phaser.Time.TimerEvent | undefined;
@@ -313,9 +321,9 @@ export function showResults(scene: Phaser.Scene, v: ResultsView, act: ResultsAct
   reveal([ctl], (at += 260), 6);
   y += ctl.height + 34;
   const btns = [
-    ...button(scene, pad, y, iw, 100, t('results.again'), act.again, true, 31),
-    ...button(scene, pad, y + 116, iw / 2 - 8, 84, t('results.dossier'), act.dossier),
-    ...button(scene, pad + iw / 2 + 8, y + 116, iw / 2 - 8, 84, t('results.menu'), act.menu),
+    ...button(scene, pad, y, iw, 100, t('results.again'), () => leave(act.again), true, 31),
+    ...button(scene, pad, y + 116, iw / 2 - 8, 84, t('results.dossier'), () => leave(act.dossier)),
+    ...button(scene, pad + iw / 2 + 8, y + 116, iw / 2 - 8, 84, t('results.menu'), () => leave(act.menu)),
   ];
   const extra = act.extra ?? [];
   extra.forEach((b, i) => {
@@ -354,7 +362,6 @@ export function showResults(scene: Phaser.Scene, v: ResultsView, act: ResultsAct
     while (i < steps.length && steps[i].at <= last) steps[i++].run();
     if (i >= steps.length) {
       timer = undefined;
-      if (v.unlocked) scene.time.delayedCall(900 / speed, () => root.active && heroReturned(scene, v.unlocked!, act, depth + 1));
       return;
     }
     const wait = steps[i].at - last;
@@ -367,7 +374,7 @@ export function showResults(scene: Phaser.Scene, v: ResultsView, act: ResultsAct
 }
 
 /** Full-screen card when a hero comes back (META.md §5 step 5). */
-export function heroReturned(scene: Phaser.Scene, id: string, act: Pick<ResultsActions, 'takeNext'>, depth = 41): Phaser.GameObjects.Container {
+export function heroReturned(scene: Phaser.Scene, id: string, act: Pick<ResultsActions, 'takeNext'>, depth = 41, then?: () => void): Phaser.GameObjects.Container {
   const root = scene.add.container(0, 0).setDepth(depth);
   root.add(shade(scene, W(), H(), 0.8));
   const cx = W() / 2;
@@ -406,7 +413,7 @@ export function heroReturned(scene: Phaser.Scene, id: string, act: Pick<ResultsA
     : undefined;
   if (line) y += line.height + 24;
   const close = () => {
-    scene.tweens.add({ targets: root, alpha: 0, duration: 200, onComplete: () => root.destroy() });
+    scene.tweens.add({ targets: root, alpha: 0, duration: 200, onComplete: () => { root.destroy(); then?.(); } });
   };
   const btns = [
     ...button(scene, 40, y, pw - 80, 96, t('results.take_next'), () => {
