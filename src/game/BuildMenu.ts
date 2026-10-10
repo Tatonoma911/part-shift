@@ -15,7 +15,7 @@ import { chip, plate, TXT } from './ui';
  * Building the city the way mobile strategies do it (Clash of Clans, Kingdom Rush,
  * Bad North; Антон 10.10: «понятно, приятно и знакомо по играм жанра»):
  *   1. a big «Строить» button in the dock;
- *   2. it slides up a catalog: tabs by group and a swipeable row of cards
+ *   2. it slides up a catalog: one vertical grid of every building, with a scrollable list
  *      (picture, price in Energy, land it frees, and why it is closed: blueprint 2/4,
  *      «нужна Школа», «построено 2/2», not enough Energy);
  *   3. picking a card puts a ghost of the building on the board: green where it can stand,
@@ -297,29 +297,38 @@ interface Box {
 }
 
 /**
- * The catalog sheet: header (title, Energy, ✕) and one vertical list of every building in a grid.
- * The list scrolls up and down (drag or mouse wheel). Cards redraw live while it is open (Energy grows).
+ * The catalog sheet: header (title, Energy, ✕) and one vertical grid of every building.
+ * Drag or mouse wheel scrolls the list. Cards redraw live while it is open (Energy grows).
  */
 export class BuildDrawer {
   private root: Phaser.GameObjects.Container | null = null;
   private strip: Phaser.GameObjects.Container | null = null;
+  private cols = 3;
+  private gap = 10;
   private cards: { o: BuildOption; c: Phaser.GameObjects.Container; x: number; y: number }[] = [];
   private energyText: Phaser.GameObjects.Text | null = null;
   private scroll = 0;
   private maxScroll = 0;
-  private stripY = 0;
   private sig = '';
   private highlight: string[] = [];
   private selected: string | null = null;
-  private cardW = 0;
-  private cardH = 0;
+  readonly cardW: number;
+  readonly cardH: number;
 
   constructor(
     private scene: Phaser.Scene,
     private box: Box,
     private depth: number,
     private on: { pick: (o: BuildOption) => void; close: () => void },
-  ) {}
+  ) {
+    this.cols = LANDSCAPE ? 4 : 3;
+    this.gap = 10;
+    const sw = box.w - 52;
+    this.cardW = Math.floor((sw - this.gap * (this.cols - 1)) / this.cols);
+    // Show ~2 full rows + peek of a third so the user sees there is more to scroll.
+    const sh = box.h - 196;
+    this.cardH = Math.floor((sh - this.gap * 2) / 2.5);
+  }
 
   get isOpen(): boolean {
     return this.root !== null;
@@ -358,35 +367,38 @@ export class BuildDrawer {
       this.on.close();
     });
     root.add([cg, ct, chit]);
-    // The list: a grid of cards, every building in one vertical scroll (no tabs).
-    const sy = y + 118;
+    // Card row.
+    const sy = y + 152;
     const sx = x + pad;
     const sw = w - pad * 2;
-    const vh = h - 118 - 56;
-    const cols = LANDSCAPE ? 3 : 2;
-    const gap = 14;
-    this.cardW = Math.floor((sw - gap * (cols - 1)) / cols);
-    this.cardH = Math.round(this.cardW * (LANDSCAPE ? 1.05 : 1.22));
-    this.stripY = sy;
     const strip = s.add.container(sx, sy);
     this.strip = strip;
     root.add(strip);
     const mask = s.make.graphics({}, false);
-    mask.fillRect(sx - 2, sy, sw + 4, vh);
+    mask.fillRect(sx - 2, sy - 6, sw + 4, (this.box.h - 196) + 14);
     strip.setMask(mask.createGeometryMask());
     this.cards = [];
-    options.forEach((o, i) => {
-      const cx = (i % cols) * (this.cardW + gap);
-      const cy = Math.floor(i / cols) * (this.cardH + gap);
+    let col = 0;
+    let row = 0;
+    let lastGroup: BuildGroup | null = null;
+    for (const o of options) {
+      // New group always starts on a fresh row.
+      if (lastGroup !== null && o.group !== lastGroup && col > 0) { row++; col = 0; }
+      lastGroup = o.group;
+      const cx = col * (this.cardW + this.gap);
+      const cy = row * (this.cardH + this.gap);
       const c = s.add.container(cx, cy);
       strip.add(c);
       this.cards.push({ o, c, x: cx, y: cy });
-    });
-    const rows = Math.ceil(options.length / cols);
-    this.maxScroll = Math.max(0, rows * (this.cardH + gap) - gap - vh);
+      col++;
+      if (col >= this.cols) { col = 0; row++; }
+    }
+    const totalRows = row + (col > 0 ? 1 : 0);
+    const totalH = totalRows * (this.cardH + this.gap) - this.gap;
+    this.maxScroll = Math.max(0, totalH - (this.box.h - 196));
     this.drawCards(options);
-    // Drag or wheel scrolls the list; a tap without a drag picks the card under the finger.
-    const zone = s.add.zone(sx, sy, sw, vh).setOrigin(0).setInteractive({ useHandCursor: true });
+    // Swipe and tap on the row: a drag scrolls, a tap without a drag picks the card under the finger.
+    const zone = s.add.zone(sx, sy, sw, this.box.h - 196).setOrigin(0).setInteractive({ useHandCursor: true });
     let downY = 0;
     let startScroll = 0;
     let dragged = false;
@@ -403,20 +415,20 @@ export class BuildDrawer {
     });
     zone.on('pointerup', (_p: Phaser.Input.Pointer, lx: number, ly: number) => {
       if (dragged) return;
-      const at = ly + this.scroll;
-      const hit = this.cards.find((c) => lx >= c.x && lx <= c.x + this.cardW && at >= c.y && at <= c.y + this.cardH);
+      const atY = ly + this.scroll;
+      const hit = this.cards.find((c) => lx >= c.x && lx <= c.x + this.cardW && atY >= c.y && atY <= c.y + this.cardH);
       if (hit) this.on.pick(hit.o);
     });
-    zone.on('wheel', (_p: Phaser.Input.Pointer, dx: number, dy: number, _dz: number, ev: Phaser.Types.Input.EventData) => {
+    zone.on('wheel', (_p: Phaser.Input.Pointer, _dx: number, dy: number, _dz: number, ev: Phaser.Types.Input.EventData) => {
       ev.stopPropagation();
-      this.scrollTo(this.scroll + (Math.abs(dy) > Math.abs(dx) ? dy : dx));
+      this.scrollTo(this.scroll + dy);
     });
     root.add(zone);
-    // Hint under the list.
+    // Hint under the row.
     root.add(s.add.text(x + w / 2, y + h - 22, t('build.drawer.hint'), TXT.body(LANDSCAPE ? 17 : 19, INK.dim, '500')).setOrigin(0.5));
     // Open on the highlighted card (tutorial) or the selected one.
     const focus = this.cards.find((c) => highlight.includes(c.o.id)) ?? this.cards.find((c) => c.o.key === selected);
-    if (focus) this.scrollTo(focus.y - gap);
+    if (focus) this.scrollTo(focus.y - ((this.box.h - 196) - this.cardH) / 2);
     this.setEnergy(energy);
     root.setY(40).setAlpha(0);
     s.tweens.add({ targets: root, y: 0, alpha: 1, duration: 180, ease: 'Cubic.easeOut' });
@@ -452,8 +464,9 @@ export class BuildDrawer {
     const to = Phaser.Math.Clamp(v, 0, this.maxScroll);
     this.scroll = to;
     if (!this.strip) return;
-    if (ease) this.scene.tweens.add({ targets: this.strip, y: this.stripY - to, duration: 220, ease: 'Cubic.easeOut' });
-    else this.strip.y = this.stripY - to;
+    const sy = this.box.y + 152;
+    if (ease) this.scene.tweens.add({ targets: this.strip, y: sy - to, duration: 220, ease: 'Cubic.easeOut' });
+    else this.strip.y = sy - to;
   }
 
   private drawCards(options: BuildOption[]): void {
