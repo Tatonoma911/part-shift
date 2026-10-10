@@ -1441,5 +1441,6 @@
       "loopSeconds": 54.8571,
       "barSync": false
     }
-  }
+  },
+  "musicRules": "audio/MUSIC.md"
 }
