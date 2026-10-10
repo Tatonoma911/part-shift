@@ -32,6 +32,85 @@
         "building construction",
         "ruins rebuild"
       ]
+    },
+    "cellDurability": {
+      "_doc": "[Антон 2026-10-10 10:43] копка = урон по прочности клетки; у клеток стихия, слабость и сопротивление. MVP_RULES §3.4",
+      "cellHp": 90,
+      "cellHpSafeRadius": 60,
+      "cellHpByDistance": {
+        "from": 8,
+        "addPer3Cells": 10,
+        "max": 120
+      },
+      "digPowerPerSecondByTier": {
+        "1": 10,
+        "2": 11.25,
+        "3": 12.9,
+        "4": 15
+      },
+      "tickSeconds": 1.0,
+      "multipliers": {
+        "weak": 1.6,
+        "reverse": 0.8,
+        "resist": 0.35,
+        "kineticOnElementCell": 0.75,
+        "onSafeCell": 1.0
+      },
+      "cellWeakTo": {
+        "_doc": "= elements.json beats: клетку быстро копают две стихии, которые бьют её стихию",
+        "cryo": [
+          "thermo",
+          "volt"
+        ],
+        "thermo": [
+          "toxin",
+          "impact"
+        ],
+        "volt": [
+          "thermo",
+          "impact"
+        ],
+        "toxin": [
+          "cryo",
+          "volt"
+        ],
+        "impact": [
+          "cryo",
+          "toxin"
+        ]
+      },
+      "cellResists": "its own element",
+      "armTierBonus": 0.1,
+      "_armTierBonus": "each trophy arm adds +10% dig power per tier when that arm is used",
+      "armChoice": "each tick the hero digs with its own arm, a trophy arm, or kinetic (both arms stumps / draft backup) — whichever gives the highest multiplier for this cell",
+      "multiWorker": "total = sum(each hero's power × its multiplier) × crowd; crowd = (1 + 0.75×(n−1)) / n → 1, 0.875, 0.833 (old 9 / 5.1 / 3.6 s kept for same-element workers)",
+      "examples_tier1_9s_base": {
+        "weak": "5.6 s",
+        "neutral": "9 s",
+        "kinetic": "12 s",
+        "resist": "25.7 s",
+        "note": "ледяной квартал быстро копает Огонь"
+      },
+      "heroPick": "when the player queues a cell, the free hero with the best score goes: score = power×multiplier / (1 + distance/6). idleJoin uses the same score",
+      "hitFeedback": "each tick the ring drops by a chunk and a damage number pops in the element's colour; weak hit = bigger number + «Уязвим!», resisted = grey number + «Стойко»",
+      "notApplied": [
+        "statuses",
+        "reactions",
+        "rubble",
+        "energy_vein",
+        "buildings",
+        "ruins"
+      ],
+      "byDifficulty": {
+        "intern": {
+          "resist": 0.5
+        },
+        "shift": {},
+        "crunch": {
+          "resist": 0.3,
+          "kineticOnElementCell": 0.65
+        }
+      }
     }
   },
   "territory": {
@@ -49,7 +128,13 @@
   "combat": {
     "damageFormula": "max(minDamage, attackerDamage - targetDefense)",
     "minDamage": 1,
-    "residentFleeRadius": 2
+    "residentFleeRadius": 2,
+    "damageNumbers": {
+      "_doc": "[Антон 14:47] всплывающие цифры урона цвета стихии",
+      "event": "every hit emits {targetId, amount (rounded int, after multipliers and defense), element (attack tech or kinetic), hitType: weak|neutral|resist|super|reaction|mine|status}",
+      "show": "number pops over target 0.6 s; colour = elements.json techs[].color; weak hit: bigger + «!», resist: smaller grey-tinted, super: «БАМ» size; status ticks (burn/poison) small; heals green «+N»",
+      "aggregate": "hits on the same target within 0.15 s merge into one number"
+    }
   },
   "threat": {
     "secondsPerLevel": 120,
@@ -239,7 +324,12 @@
   "tempo": {
     "_doc": "progress score that drives stagnation and difficulty scaling",
     "stagnantSeconds": 45,
-    "levelThresholds": [0, 25, 60, 120],
+    "levelThresholds": [
+      0,
+      25,
+      60,
+      120
+    ],
     "points": {
       "dig": 1,
       "cache": 5,

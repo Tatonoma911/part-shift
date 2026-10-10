@@ -52,7 +52,10 @@ export const STEP = 0.05;
 /** How long a capsule peek shows the sensors (buildings.json watchtower.peek.showSeconds). */
 const CAPSULE_PEEK_SECONDS = 20;
 
-export type GameEvent = { type: string; x?: number; y?: number; amount?: number; owner?: number; text?: string; unit?: number; fork?: number; wave?: boolean };
+export type GameEvent = { type: string; x?: number; y?: number; amount?: number; owner?: number; text?: string; unit?: number; fork?: number; wave?: boolean;
+  /** Damage-numbers UI (ДИ patch ui/code/damage-numbers/): */
+  tech?: string; mult?: number; victim?: number; kind?: 'weak' | 'neutral' | 'resist' | 'super' | 'reaction' | 'mine' | 'status'; dot?: boolean;
+};
 
 export interface WorldOptions {
   seed: number;
@@ -385,22 +388,18 @@ export class World {
     return { tech: u.attackTech ?? 'kinetic', tier };
   }
 
-  // Dig weakness: §3.4 — cryo weakens thermo, thermo weakens cryo, volt→impact, toxin→volt, impact→toxin
-  private static readonly DIG_WEAKNESS: Partial<Record<Tech, Tech>> = {
-    cryo: 'thermo', thermo: 'cryo', volt: 'impact', toxin: 'volt', impact: 'toxin',
-  };
-
   /** Speed multiplier for digging a cell with this element (§3.4). Picks the best arm tech. */
   private digSpeedOf(u: Unit, cellElement: Tech | undefined): number {
     if (!cellElement) return u.kind === 'resident' ? 0.75 : 1.0;
-    const weakness = World.DIG_WEAKNESS[cellElement];
+    const cellWeakTo = ((this.cfg.dig.cellDurability as unknown) as { cellWeakTo?: Record<string, string[]> }).cellWeakTo ?? {};
+    const weaknesses: string[] = cellWeakTo[cellElement] ?? [];
     let best = 0.75; // bare hand
     for (const slot of ['arm_right', 'arm_left'] as SlotId[]) {
       const p = u.parts[slot];
       if (!p) continue;
       const tech = partDefs[p.id].tech as AttackTech;
       if (!isTech(tech)) continue;
-      const mul = tech === weakness ? 1.6 : tech === cellElement ? 0.35 : 1.0;
+      const mul = weaknesses.includes(tech) ? 1.6 : tech === cellElement ? 0.35 : 1.0;
       if (mul > best) best = mul;
     }
     return best;
@@ -1825,7 +1824,8 @@ export class World {
         (status === 'burn' && !!v.burn) || (status === 'chill' && (!!v.slow || (v.chill ?? 0) > 0)) || (status === 'poison' && !!v.poison);
       reaction = elements.reactions.find((r) => r.hitTech === tech && has(r.onTargetStatus))?.id;
     }
-    let mul = this.resistOf(v, tech) * factor;
+    const baseResist = this.resistOf(v, tech);
+    let mul = baseResist * factor;
     // Досье на цель (boons.json weak_spot): residents hit the call target harder.
     if (attacker.owner >= 0 && v.kind === 'hero' && v.hero === this.s.boss.hero) mul *= this.boonFactor(attacker.owner, 'weak_spot');
     if (reaction === 'thermoshock') {
@@ -1834,11 +1834,15 @@ export class World {
     }
     const dmg = Math.max(this.cfg.combat.minDamage, st.damage * mul - this.stats(v).defense);
     this.damage(v, dmg, attacker);
-    this.emit('hit', { x: v.x, y: v.y, text: tech, unit: attacker.id, amount: Math.round(dmg) });
-    if (reaction) this.emit('reaction', { x: v.x, y: v.y, text: reaction, owner: attacker.owner });
+    const kind = reaction ? 'reaction' : baseResist >= 1.5 ? 'weak' : baseResist <= 0.8 ? 'resist' : 'neutral';
+    this.emit('hit', { x: v.x, y: v.y, tech, unit: attacker.id, victim: v.owner, amount: Math.round(dmg), mult: Math.round(baseResist * 100) / 100, kind });
+    if (reaction) this.emit('reaction', { x: v.x, y: v.y, text: reaction, tech });
     if (!primary || v.hp <= 0) return;
     const heal = Object.values(attacker.parts).reduce((n, p) => n + (p ? partTier(p.id, p.tier).healSelfOnHit ?? 0 : 0), 0);
-    if (heal) attacker.hp = Math.min(this.maxHp(attacker), attacker.hp + heal);
+    if (heal) {
+      attacker.hp = Math.min(this.maxHp(attacker), attacker.hp + heal);
+      this.emit('heal', { x: attacker.x, y: attacker.y, amount: Math.round(heal), unit: attacker.id });
+    }
     this.applyStatus(attacker, v, tech, tier, reaction);
     for (const part of Object.values(attacker.parts)) {
       if (!part) continue;
@@ -2790,7 +2794,11 @@ export class World {
           for (const e of foes(Number(a.radius))) e.slow = { percent: Math.max(e.slow?.percent ?? 0, Number(a.slowPercent)), left: Math.max(e.slow?.left ?? 0, 0.5) };
           break;
         case 'healAura':
-          if (fire) for (const r of friends(Number(a.radius))) r.hp = Math.min(this.maxHp(r), r.hp + Number(a.healAmount));
+          if (fire) for (const r of friends(Number(a.radius))) {
+            const before = r.hp;
+            r.hp = Math.min(this.maxHp(r), r.hp + Number(a.healAmount));
+            if (r.hp > before) this.emit('heal', { x: r.x, y: r.y, amount: Math.round(r.hp - before), unit: r.id });
+          }
           break;
         case 'cleanseAura':
           if (fire) for (const r of friends(Number(a.radius))) [r.burn, r.poison, r.slow, r.chill] = [undefined, undefined, undefined, 0];
