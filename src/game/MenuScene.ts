@@ -2,7 +2,6 @@ import Phaser from 'phaser';
 import { account } from '../account/cloud';
 import { openAccountPanel } from '../account/panel';
 import { config } from '../core/data';
-import type { AssistMode } from '../core/state';
 import { lang, setLang, t } from '../i18n';
 import { introSeen, playIntro } from '../intro';
 import { analytics, askAnalyticsConsent, closeConsent } from '../analytics';
@@ -312,17 +311,7 @@ export class MenuScene extends Phaser.Scene {
         saveSettings({ ...st, lang: next });
         this.scene.restart();
       });
-      const modes: AssistMode[] = ['full', 'scanner', 'off'];
-      // Short name on the button, the current mode in the sub-line (AR-10: the long label did not fit).
-      button(
-        t('settings.assist'),
-        () => {
-          saveSettings({ ...st, assist: modes[(modes.indexOf(st.assist) + 1) % modes.length] });
-          this.show('settings');
-        },
-        false,
-        t(`assist.mode.${st.assist}.short`),
-      );
+      // v0.7 (MVP_RULES §3.1а): no assist modes, the board is read by sensors only.
       button(t('settings.comfort'), () => this.show('comfort'));
       button(`${t('analytics.setting')}: ${t(analytics.consent === 'granted' ? 'settings.on' : 'settings.off')}`, () => {
         analytics.setConsent(analytics.consent !== 'granted');

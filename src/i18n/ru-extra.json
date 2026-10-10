@@ -200,5 +200,20 @@
   "dossier.trophy.damage": "{value} урона",
   "dossier.trophy.hp": "{value} здоровья",
   "dossier.trophy.defense": "{value} защиты",
-  "dossier.trophy.speed": "{value} скорости"
+  "dossier.trophy.speed": "{value} скорости",
+  "hud.label.heroes": "Герои",
+  "hud.label.rescued": "Спасено",
+  "cell.mark.confirm": "Ваша метка «{mark}». Нажмите ещё раз, чтобы снять её и вскрыть квартал.",
+  "cell.mark.danger": "Опасно",
+  "cell.mark.unsure": "Не уверен",
+  "cell.mark.hint": "Удерживайте закрытый квартал, чтобы поставить метку «Опасно» или «Не уверен». Свайп пропускает отмеченные кварталы.",
+  "cell.sensor": "Рядом: {list}",
+  "cell.sensor.nest.one": "{count} гнездо",
+  "cell.sensor.nest.few": "{count} гнезда",
+  "cell.sensor.nest.many": "{count} гнёзд",
+  "cell.sensor.find.one": "{count} находка",
+  "cell.sensor.find.few": "{count} находки",
+  "cell.sensor.find.many": "{count} находок",
+  "cell.sensor.boss": "убежище цели вызова",
+  "cell.sensor.clear": "Рядом: ничего"
 }
