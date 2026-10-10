@@ -15,6 +15,7 @@ import type { GameStart } from './GameScene';
 import { C, INK, LANDSCAPE, VIEW } from './layout';
 import { menuIcon, type MenuIconId } from './menuIcons';
 import { preloadMetaArt } from './meta/art';
+import { bestStars, modeIcon, type ModeId } from './meta/Awards';
 import { loadMeta, pickAllies, rollDistrict } from './meta/store';
 import { shiftBrief } from './meta/ShiftBrief';
 import { metaPreview } from './meta/preview';
@@ -185,7 +186,8 @@ export class MenuScene extends Phaser.Scene {
     const bg = this.add.graphics();
     c.add(bg);
     let y = top + 40;
-    const button = (label: string, act: (() => void) | null, primary = false, sub?: string) => {
+    // `mode`: the art 173 icon on the left (Срочный вызов = flag, Общий = swords, Обучение = brain); `stars`: best rating on the right.
+    const button = (label: string, act: (() => void) | null, primary = false, sub?: string, mode?: ModeId, stars?: number) => {
       // Landscape is short: slimmer rows so settings fit without scrolling.
       const h = sub ? 110 : LANDSCAPE ? 76 : 92;
       const g = this.add.graphics();
@@ -197,9 +199,13 @@ export class MenuScene extends Phaser.Scene {
       const color = primary ? INK.white : act ? INK.graphite : INK.dim;
       const tx = this.add.text(cx, y + (sub ? 38 : h / 2), label, TXT.body(29, color, '700')).setOrigin(0.5);
       // A label never touches the button edges (ART_REVIEW AR-10): shrink it to fit, larger text sizes included.
-      const room = w - 64 - 56;
+      // With an icon or stars at the sides, the label keeps clear of both.
+      const side = mode || stars !== undefined ? 2 * (stars !== undefined ? 110 : 76) : 0;
+      const room = w - 64 - 56 - side;
       if (tx.width > room) tx.setScale(room / tx.width);
       c.add([g, tx]);
+      if (mode) c.add(modeIcon(this, x0 + 32 + 46, y + h / 2, Math.min(64, h - 24), mode).setAlpha(act ? 1 : 0.5));
+      if (stars !== undefined) bestStars(this, c, x0 + w - 32 - 20 - 3 * 28 - 4, y + h / 2, 28, stars);
       if (sub) {
         const st = this.add.text(cx, y + 78, sub, TXT.body(21, primary ? '#D9F3F8' : INK.dim, '500')).setOrigin(0.5);
         if (st.width > room) st.setScale(room / st.width);
@@ -231,12 +237,14 @@ export class MenuScene extends Phaser.Scene {
         button(t('menu.continue'), () => this.play({ slot: last }), true, `${t('menu.slot', { n: last })} · ${this.fmt(s.time)}`);
       }
       // F-06: until the tutorial is done, «Новая смена» is the tutorial (it has its own «Пропустить»).
-      if (!tutorialDone()) button(t('menu.new_run'), () => this.play({ tutorial: true }), !last);
-      else button(t('menu.new_run'), () => this.show('slots'), !last);
-      button(t('online.menu'), onlineAvailable() ? () => this.online() : null, false, onlineAvailable() ? t('online.menu_sub') : t('menu.soon'));
+      // Otherwise it is the urgent call, with its best rating over the difficulties (ACHIEVEMENTS.md §6).
+      const callStars = Math.max(0, ...Object.entries(loadMeta().records).filter(([k]) => k.startsWith('call.')).map(([, r]) => r.bestStars ?? 0));
+      if (!tutorialDone()) button(t('menu.new_run'), () => this.play({ tutorial: true }), !last, undefined, 'call');
+      else button(t('menu.new_run'), () => this.show('slots'), !last, undefined, 'call', callStars);
+      button(t('online.menu'), onlineAvailable() ? () => this.online() : null, false, onlineAvailable() ? t('online.menu_sub') : t('menu.soon'), 'coop');
       // Meta progress: returned heroes, stats, records, rank (design/META.md §6).
       button(t('dossier.title'), () => this.scene.start('dossier'));
-      if (last || tutorialDone()) button(t('menu.tutorial'), () => this.play({ tutorial: true }));
+      if (last || tutorialDone()) button(t('menu.tutorial'), () => this.play({ tutorial: true }), false, undefined, 'tutorial');
       button(t('menu.guide'), () => openGuide());
       button(t('menu.settings'), () => this.show('settings'));
       const acc = account.view;

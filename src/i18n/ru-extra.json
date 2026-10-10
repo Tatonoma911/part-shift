@@ -347,5 +347,15 @@
   "zone.short.volt": "Молния",
   "zone.short.toxin": "Токсин",
   "zone.short.impact": "Удар",
-  "call.seconds_left": "{n} с"
+  "call.seconds_left": "{n} с",
+  "results.score.stars": "Звёзды смены: +{value}",
+  "results.medals.points": "+{value} к званию",
+  "settings.wipe.item.medals": "медали и награды",
+  "medal.showcase_add": "Поставить в витрину",
+  "medal.showcase_remove": "Убрать из витрины",
+  "medal.showcase_full": "Витрина полна: сначала уберите медаль",
+  "results.stars.win": "Вызов закрыт",
+  "results.stars.fast": "Успели до срока",
+  "results.stars.no_losses": "Все герои вернулись",
+  "results.stars.team": "Каждый вложился в цель"
 }
