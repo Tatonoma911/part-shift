@@ -243,7 +243,6 @@
   "event.hero_defeated": "Hero stopped: {hero}",
   "mode.call.goal": "Call: stop {hero}",
   "cell.near.boss.one": "Next to this block: the call target's hideout",
-  "enemy.standard.name": "Standard",
   "enemy.patch.name": "Patch",
   "enemy.canopy.name": "Canopy",
   "enemy.current.name": "Current",

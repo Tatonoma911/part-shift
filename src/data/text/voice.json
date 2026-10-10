@@ -208,12 +208,6 @@
    "event": "hero_spawn",
    "channel": "hero",
    "poolByHero": {
-    "standard": [
-     "hero.line.standard.1",
-     "hero.line.standard.2",
-     "hero.line.standard.3",
-     "hero.line.standard.4"
-    ],
     "patch": [
      "hero.line.patch.1",
      "hero.line.patch.2",
@@ -306,12 +300,6 @@
    "everySeconds": 15,
    "chance": 0.5,
    "poolByHero": {
-    "standard": [
-     "hero.line.standard.1",
-     "hero.line.standard.2",
-     "hero.line.standard.3",
-     "hero.line.standard.4"
-    ],
     "patch": [
      "hero.line.patch.1",
      "hero.line.patch.2",
@@ -566,10 +554,6 @@
    "everySeconds": 30,
    "chance": 0.4,
    "poolByHero": {
-    "standard": [
-     "ally.line.standard.1",
-     "ally.line.standard.2"
-    ],
     "patch": [
      "ally.line.patch.1",
      "ally.line.patch.2"
