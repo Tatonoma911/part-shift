@@ -481,12 +481,82 @@ export class World {
         const cost = this.buildCost(cmd.building, cmd.x, cmd.y);
         p.energy -= cost;
         const nb = this.addBuilding(playerId, cmd.building, cmd.x, cmd.y, false);
+        nb.spent = cost;
+        nb.level = 1;
+        if (cmd.hero) nb.hero = cmd.hero;
         if (this.cell(cmd.x, cmd.y).ruin) {
           nb.rebuild = true;
           this.cell(cmd.x, cmd.y).ruin = undefined;
           this.rev++;
         }
         this.emit('build_place', { x: cmd.x, y: cmd.y, owner: playerId, text: cmd.building });
+        return ok;
+      }
+      case 'upgradeBuilding': {
+        const b = this.s.buildings.find((x) => x.id === cmd.building && x.owner === playerId);
+        if (!b || !b.complete || b.ruined) return bad('building.upgrade.not_complete');
+        const def = buildingDefs[b.type];
+        const maxLv = 1 + (def.levels?.length ?? 0);
+        const lv = b.level ?? 1;
+        if (lv >= maxLv) return bad('building.upgrade.max_level');
+        if (this.s.units.some((u) => isEnemy(u) && cheb(Math.round(u.x), Math.round(u.y), b.x, b.y) <= 2)) return bad('building.upgrade.enemies_near');
+        const upgCost = def.levels?.[lv - 1]?.cost ?? def.cost * lv;
+        if (p.energy < upgCost) return bad('building.upgrade.not_enough_energy');
+        p.energy -= upgCost;
+        b.level = lv + 1;
+        b.spent = (b.spent ?? def.cost) + upgCost;
+        this.emit('upgrade_chime', { x: b.x, y: b.y, owner: playerId, text: b.type });
+        this.emit('building_upgraded', { x: b.x, y: b.y, owner: playerId, text: String(b.level) });
+        return ok;
+      }
+      case 'boostBuilding': {
+        const b = this.s.buildings.find((x) => x.id === cmd.building && x.owner === playerId);
+        if (!b || !b.complete || b.ruined) return bad('invalid');
+        if ((b.boostCooldown ?? 0) > 0) return bad('building.boost.on_cooldown');
+        const def = buildingDefs[b.type];
+        const boostCost = def.boost?.cost ?? 30;
+        if (p.energy < boostCost) return bad('building.boost.not_enough_energy');
+        p.energy -= boostCost;
+        b.boostCooldown = def.boost?.cooldown ?? 60;
+        this.emit('aura_pulse', { x: b.x, y: b.y, owner: playerId, text: b.type });
+        this.emit('building_boosted', { x: b.x, y: b.y, owner: playerId, text: b.type });
+        return ok;
+      }
+      case 'demolish': {
+        const b = this.s.buildings.find((x) => x.id === cmd.building && x.owner === playerId);
+        if (!b) return bad('invalid');
+        const def = buildingDefs[b.type];
+        if (def.isKeep) return bad('building.demolish.forbidden');
+        const refundFrac = def.demolishRefund ?? 0.5;
+        const refund = Math.floor((b.spent ?? def.cost) * refundFrac);
+        if (p.energy + refund < 0) return bad('building.demolish.not_enough_energy');
+        // Remove units that were building this structure.
+        for (const u of this.s.units) if (u.task.type === 'build' && u.task.building === b.id) this.setTask(u, { type: 'idle' });
+        this.s.buildings = this.s.buildings.filter((x) => x !== b);
+        this.cell(b.x, b.y).building = undefined;
+        if (b.complete) this.cell(b.x, b.y).ruin = b.type;
+        p.energy += refund;
+        this.rev++;
+        this.emit('building_demolished', { x: b.x, y: b.y, owner: playerId, text: b.type });
+        return ok;
+      }
+      case 'rebuild': {
+        const rb = this.s.buildings.find((x) => x.id === cmd.building && x.owner === playerId && x.ruined);
+        if (!rb) return bad('building.rebuild.not_ruined');
+        const def = buildingDefs[rb.type];
+        const rebuildCost = Math.ceil(def.cost * 0.5);
+        if (p.energy < rebuildCost) return bad('building.rebuild.not_enough_energy');
+        p.energy -= rebuildCost;
+        rb.ruined = false;
+        rb.hp = Math.max(1, def.hp * 0.25);
+        rb.built = 0;
+        rb.complete = false;
+        rb.rebuild = true;
+        rb.spent = (rb.spent ?? def.cost) + rebuildCost;
+        this.cell(rb.x, rb.y).building = rb.id;
+        this.cell(rb.x, rb.y).ruin = undefined;
+        this.rev++;
+        this.emit('build_place', { x: rb.x, y: rb.y, owner: playerId, text: rb.type });
         return ok;
       }
       case 'attack': {
@@ -2464,12 +2534,16 @@ export class World {
     const s = this.s;
     s.units = s.units.filter((u) => u.hp > 0);
     for (const b of [...s.buildings]) {
-      if (b.hp > 0) continue;
-      s.buildings = s.buildings.filter((o) => o !== b);
-      this.cell(b.x, b.y).building = undefined;
+      if (b.hp > 0 || b.ruined) continue;
+      // Leaves ruins: keep the building record marked ruined (so UI can rebuild by id).
       if (b.type !== 'command' && b.complete && buildingDamage.ruins.leavesRuins) {
+        b.ruined = true;
+        this.cell(b.x, b.y).building = undefined;
         this.cell(b.x, b.y).ruin = b.type;
         this.emit('ruins', { x: b.x, y: b.y, owner: b.owner, text: b.type });
+      } else {
+        s.buildings = s.buildings.filter((o) => o !== b);
+        this.cell(b.x, b.y).building = undefined;
       }
       this.rev++;
       for (const u of s.units) if (u.task.type === 'build' && u.task.building === b.id) this.setTask(u, { type: 'idle' });

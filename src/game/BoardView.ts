@@ -1208,7 +1208,12 @@ export class BoardView {
       // Health bar: enemies always, our units when hurt or fighting; weakness orbs above enemies (UI_SPEC §3.5).
       const enemy = u.owner < 0;
       if (enemy || u.hp < st.hp || u.target !== undefined) this.vitals.draw(g, `u:${u.id}`, fx - 24, top - 12, 48, u.hp / st.hp, enemy ? 'enemy' : 'ally', this.scene.time.now);
-      if (enemy) drawWeakOrbs(g, fx, top - 30, this.weakOf(u));
+      if (enemy) drawWeakOrbs(g, fx, top - 32, this.weakOf(u));
+      // Arm-element orb over our heroes and allies: shows which element this unit attacks with.
+      else if ((u.kind === 'ally' || u.kind === 'resident') && u.hero) {
+        const tech = heroDefs[u.hero]?.tech;
+        if (tech && tech !== 'kinetic') drawWeakOrbs(g, fx, top - 32, [{ tech: tech as Weakness['tech'], strong: false }], 1);
+      }
       if (order === `u:${u.id}`) {
         g.lineStyle(3, C.coral, 1);
         g.strokeEllipse(fx, fy - 2, 46, 18);
