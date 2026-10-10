@@ -1,6 +1,6 @@
 import './style.css';
 import { APK_URL, supportBlock, wireSupport } from './support';
-import { ADS, ARTBOOK, BARKS, COMICS, DISTRICTS, HEROES, img, REACTIONS, TECH, UI, type Hero, type L, type Lang } from './content';
+import { ADS, ARCHIVE, ARTBOOK, BARKS, COMICS, DISTRICTS, HEROES, img, REACTIONS, TECH, UI, type Hero, type L, type Lang } from './content';
 
 /**
  * The PARTSHIFT universe site: one page, views switched by plain hash tokens
@@ -428,6 +428,11 @@ function villainsView(): string {
   <section class="section band"><div class="wrap">
     ${head(R('ФАСАДЫ // РЕКЛАМА HEROOUT', 'BILLBOARDS // HEROOUT ADS'), R('Всегда на смене', 'Always on call'), R('Реклама до сих пор висит по всему городу. Мелкий шрифт прилагается.', 'The ads still hang all over the city. Fine print included.'))}
     <div class="grid">${ADS.map(([ru, en]) => `<div class="step" style="background:#142028"><span class="caps" style="color:var(--seam)">HERO | OUT</span><p style="font:700 18px/1.35 var(--display);color:#fff;margin:8px 0 0">${R(ru, en)}</p></div>`).join('')}</div>
+  </div></section>
+
+  <section class="section" id="archive" style="scroll-margin-top:80px"><div class="wrap">
+    ${head(R('УТЕЧКА // ЗАПИСИ КОНТРОЛЯ', 'LEAK // CONTROL RECORDS'), R('Архив HeroOut', 'HeroOut Archive'), R('Внутренние документы компании. В игре они выпадают находкой «Запись Контроля» и собираются в Досье, во вкладке «Архив».', 'Internal company documents. In the game they drop as a “Control Record” find and collect in the Dossier, under the Archive tab.'))}
+    <div class="archive">${ARCHIVE.map((a, i) => `<article class="record slab"><header><span class="caps">${R('ЗАПИСЬ', 'RECORD')} № ${String(i + 1).padStart(3, '0')}</span><span class="caps from">${tr(a.from)}</span></header><h3>${tr(a.title)}</h3><p>${tr(a.text)}</p><span class="stamp caps">${R('СЕКРЕТНО', 'CLASSIFIED')}</span></article>`).join('')}</div>
   </div></section>`;
 }
 
@@ -496,6 +501,8 @@ function route(): { view: string; active: string; anchor?: string } {
       return { view: comicsView(), active: 'comics' };
     case 'support':
       return { view: home(), active: 'home', anchor: 'support' };
+    case 'archive':
+      return { view: villainsView(), active: 'villains', anchor: 'archive' };
     default:
       return { view: home(), active: 'home' };
   }
