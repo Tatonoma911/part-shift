@@ -61,4 +61,16 @@ describe('second-row buildings (buildings.json)', () => {
     expect(cmd.hp).toBeGreaterThan(10);
     expect(cmd.hp).toBeLessThanOrEqual(buildingDefs.command.hp);
   });
+
+  it('each finished relay adds one to the hero cap, at most +2 over the difficulty cap', () => {
+    const w = handWorld(['.......', '.......', '......n']);
+    w.apply({ type: 'placeCommand', x: 0, y: 1 });
+    const base = w.residentCap(0);
+    inner(w).addBuilding(0, 'relay', 2, 0, true);
+    expect(w.residentCap(0)).toBe(base + buildingDefs.relay.heroCapAdd!);
+    inner(w).addBuilding(0, 'relay', 4, 0, true);
+    expect(w.residentCap(0)).toBe(base + 2);
+    inner(w).addBuilding(0, 'relay', 5, 0, false);
+    expect(w.residentCap(0)).toBe(base + 2);
+  });
 });
