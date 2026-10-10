@@ -1,4 +1,4 @@
-import{y,D as d,a as c,b as p,c as f}from"./config-BuGjUh31.js";const b="https://github.com/Tatonoma911/part-shift/releases/download/android-debug/part-shift-debug.apk",u=e=>e.toLocaleString("ru-RU");function A(e){const r=(o,n)=>e==="ru"?o:n;return`<div class="support">
+import{y,D as d,a as c,b as p,c as f}from"./config-1PPRaKKn.js";const b="https://github.com/Tatonoma911/part-shift/releases/download/android-debug/part-shift-debug.apk",u=e=>e.toLocaleString("ru-RU");function A(e){const r=(o,n)=>e==="ru"?o:n;return`<div class="support">
     <div class="slab support-card">
       <span class="caps">${r("ТЕЛЕФОН // ANDROID","PHONE // ANDROID")}</span>
       <h3>${r("Скачать для Android","Download for Android")}</h3>
