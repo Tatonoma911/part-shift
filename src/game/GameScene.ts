@@ -987,7 +987,7 @@ export class GameScene extends Phaser.Scene {
     const w = this.world;
     const me = w.player(ME);
     const lines = [victory ? t('win.text') : t('lose.text'), t('win.time', { time: this.fmt(w.s.time) }), t('win.threat', { level: w.threatLevel }), t('win.nests', { count: me.stats.nests }), t('win.caches', { count: me.stats.caches })];
-    let badge: string | undefined;
+    let badge: string | undefined = victory ? undefined : t('lose.badge');
     if (victory) {
       let best = Infinity;
       try {
