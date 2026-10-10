@@ -21,6 +21,7 @@ import { shiftBrief } from './meta/ShiftBrief';
 import { metaPreview } from './meta/preview';
 import { clearSlot, lastSlot, loadSettings, loadSlot, saveSettings, SLOTS } from './saves';
 import { tutorialDone } from './Tutorial';
+import { getFirstUncleared } from './campaign';
 import { setBackHandler } from '../platform/native';
 import { closeOnlineScreen, openOnlineScreen, onlineScreenOpen } from '../net/lobby';
 // P2P is always available (no server required)
@@ -240,7 +241,7 @@ export class MenuScene extends Phaser.Scene {
       // Otherwise it is the urgent call, with its best rating over the difficulties (ACHIEVEMENTS.md §6).
       const callStars = Math.max(0, ...Object.entries(loadMeta().records).filter(([k]) => k.startsWith('call.')).map(([, r]) => r.bestStars ?? 0));
       if (!tutorialDone()) button(t('menu.new_run'), () => this.play({ tutorial: true }), !last, undefined, 'call');
-      else button(t('menu.new_run'), () => this.show('slots'), !last, undefined, 'call', callStars);
+      else button(t('menu.new_run'), () => this.play({ slot: 0, fresh: true, shiftN: getFirstUncleared() }), !last, undefined, 'call', callStars);
       button(t('online.menu'), onlineAvailable() ? () => this.online() : null, false, onlineAvailable() ? t('online.menu_sub') : t('menu.soon'), 'coop');
       // Meta progress: returned heroes, stats, records, rank (design/META.md §6).
       button(t('dossier.title'), () => this.scene.start('dossier'));

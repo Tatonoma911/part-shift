@@ -483,5 +483,7 @@
   "results.stars.win": "Call closed",
   "results.stars.fast": "Beat the clock",
   "results.stars.no_losses": "Every hero came back",
-  "results.stars.team": "Everyone hit the target"
+  "results.stars.team": "Everyone hit the target",
+  "campaign.next_shift": "Next shift",
+  "campaign.closed": "SHIFT CLOSED"
 }

@@ -764,7 +764,7 @@ export class World {
   placeCommands(list: { player: number; x: number; y: number }[]): void {
     const s = this.s;
     if (!s.generated) {
-      const nests = s.players.length > 1 ? 6 * s.players.length : undefined;
+      const nests = s.players.length > 1 ? 6 * s.players.length : this.rules.counts?.nests;
       const gen = { commands: list, nests, mines: this.rules.counts?.mine, survivors: this.rules.counts?.survivor };
       generateField(s, gen);
       this.genAttempts = 1;

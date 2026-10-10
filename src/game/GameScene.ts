@@ -32,6 +32,7 @@ import { techOf } from './Vitals';
 import { armTechs } from './BoardView';
 import eventsJson from '../data/design/events.json';
 import { setBackHandler } from '../platform/native';
+import { CAMPAIGN_TOTAL, districtText, getCampaignWorld, markShiftCleared } from './campaign';
 import type { PeerSession as OnlineSession } from '../net/peer';
 import { challengeUrl, closeSocial, displayName, openBoard, openDonate, profile, rankOf, recordRun, resultCard, share, shouldNudge, socialOpen, type RecordedRun } from '../social';
 
@@ -56,6 +57,8 @@ export interface GameStart {
   challenge?: { score: number; name: string };
   /** Heroes taken on this shift as allies; defaults to the last choice (meta allyChoice). */
   allies?: string[];
+  /** Campaign shift number (1–12). When set, board size, difficulty and nest count come from campaign.json. */
+  shiftN?: number;
 }
 type Ev = Phaser.Types.Input.EventData;
 
@@ -312,13 +315,16 @@ export class GameScene extends Phaser.Scene {
     const meta = loadMeta();
     const allies = (st.allies ?? meta.allyChoice).filter((id) => roster(meta).includes(id));
     const rules = { config: { 'dig.autoQueueZeroNeighbors': false }, boonPool: boonPoolFor(meta), allies };
+    const campaignOpts = st.shiftN ? getCampaignWorld(st.shiftN) : null;
     this.world = this.online?.world
       ? this.online.world
       : this.guide
         ? this.guide.world
         : saved
           ? new World({ state: saved })
-          : new World({ seed: st.seed || Math.floor(Math.random() * 1e9), assist, rules, difficulty: st.difficulty });
+          : campaignOpts
+            ? new World({ seed: st.seed || Math.floor(Math.random() * 1e9), assist, rules: { ...rules, counts: { nests: campaignOpts.nestCount } }, difficulty: campaignOpts.difficulty, width: campaignOpts.width, height: campaignOpts.height })
+            : new World({ seed: st.seed || Math.floor(Math.random() * 1e9), assist, rules, difficulty: st.difficulty });
     if (this.online) this.watchOnline(this.online);
     else if (!this.guide) {
       if (!saved) clearSlot(this.slot);
@@ -1312,6 +1318,31 @@ export class GameScene extends Phaser.Scene {
     this.ended = true;
     this.trackEnd(victory ? 'victory' : 'defeat');
     if (!this.guide) clearSlot(this.slot);
+    const shiftN = this.start.shiftN;
+    // Campaign victory: flash "СМЕНА ЗАКРЫТА" for 1.5 s, then show the results sheet.
+    if (victory && shiftN) {
+      const stars = this.tally?.stars(this.world, true, 'call', false).stars ?? 0;
+      markShiftCleared(shiftN, stars);
+      const flash = this.add.container(0, 0).setDepth(UI_DEPTH + 10);
+      flash.add(this.add.rectangle(0, 0, VIEW.width, VIEW.height, 0x060d14, 0.82).setOrigin(0));
+      flash.add(
+        this.add
+          .text(VIEW.width / 2, VIEW.height / 2, t('campaign.closed'), { ...TXT.caps('#e8f4ff'), fontSize: '36px' })
+          .setOrigin(0.5)
+          .setAlpha(0),
+      );
+      const label = flash.list[1] as Phaser.GameObjects.Text;
+      this.tweens.add({ targets: label, alpha: 1, duration: 300, ease: 'Power2' });
+      this.time.delayedCall(1500, () => {
+        flash.destroy();
+        this.showEndSheet(victory, shiftN);
+      });
+      return;
+    }
+    this.showEndSheet(victory, undefined);
+  }
+
+  private showEndSheet(victory: boolean, shiftN: number | undefined): void {
     const w = this.world;
     const me = w.player(this.me);
     const lines = [victory ? t('win.text') : t('lose.text'), t('win.time', { time: this.fmt(w.s.time) }), t('win.threat', { level: w.threatLevel }), t('win.nests', { count: me.stats.nests }), t('win.caches', { count: me.stats.caches })];
@@ -1337,6 +1368,8 @@ export class GameScene extends Phaser.Scene {
       if (ch) lines.splice(2, 0, t(rec.score > ch.score ? 'end.challenge_won' : 'end.challenge_lost', { name: ch.name, mine: rec.score, theirs: ch.score }));
       if (shouldNudge()) lines.push(t('donate.nudge'));
     }
+    // Campaign victory: add district debrief text.
+    if (victory && shiftN) lines.push(districtText(shiftN));
     // Free play: "Итоги смены" with the meta progress (design/META.md §5); the tutorial keeps the plain sheet.
     if (this.tally) {
       const { view } = this.tally.commit(w, victory ? 'win' : 'lose', 'call', { daily: this.start.daily, coop: !!this.online });
@@ -1365,6 +1398,11 @@ export class GameScene extends Phaser.Scene {
           if (place && tx.active) tx.setText(t('end.board_place', { place }));
         }),
     };
+    // Campaign: primary button is "Следующая смена"; shift 12 leads back to menu.
+    const nextShiftAction =
+      victory && shiftN && shiftN < CAMPAIGN_TOTAL
+        ? () => this.scene.start('game', { slot: this.start.slot ?? 0, fresh: true, shiftN: shiftN + 1 } as typeof this.start)
+        : null;
     this.overlay?.destroy();
     this.overlay = this.sheet({
       // Comic illustration when the artist's screen is in (style per layer); until then the Command Center sprite, grey on a loss.
@@ -1375,7 +1413,9 @@ export class GameScene extends Phaser.Scene {
       title: victory ? t('win.title') : t('lose.title'),
       lines,
       actions: [
-        { label: victory ? t('win.again') : t('lose.again'), act: () => this.restart(), primary: true },
+        ...(nextShiftAction
+          ? [{ label: t('campaign.next_shift'), act: nextShiftAction, primary: true }]
+          : [{ label: victory ? t('win.again') : t('lose.again'), act: () => this.restart(), primary: true }]),
         ...(rec ? [{ label: t('end.share'), act: () => void this.shareShot(), half: true }, boardBtn] : []),
         { label: t('end.coffee'), act: () => openDonate(victory ? 'win' : 'lose'), half: true, gold: true },
         { label: t('menu.quit_to_menu'), act: () => this.toMenu(), half: true },
