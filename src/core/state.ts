@@ -197,6 +197,8 @@ export interface Player {
   boonOffer?: { ids: string[]; at: number };
   /** Allies down, waiting to come back at the center: hero id → game time it returns. */
   allyBack?: Record<string, number>;
+  /** What a knocked-out ally comes back with (MVP_RULES §4.1а): kept trophies, stumps, armor plates. */
+  allyScars?: Record<string, { parts: Unit['parts']; lostLimbs: ('arm' | 'leg')[]; armorPlates: number }>;
   /** Ally passive timers (heroes.json ally.everySeconds): hero id → seconds left. */
   allyTimers?: Record<string, number>;
   stats: { nests: number; caches: number; heroes: string[]; energy: number; lost: number; parts: number; blueprints: number; loreRecords: number };

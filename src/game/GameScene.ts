@@ -52,6 +52,9 @@ export interface GameStart {
 }
 type Ev = Phaser.Types.Input.EventData;
 
+/** «Строить» in the HUD, left of the threat ring: width, height, left edge from the HUD's right side. */
+const BUILD_BTN = { w: 72, h: 84, right: 176 };
+
 /** Events that become a toast (writer's text keys); `bad` ones are coral. */
 const TOASTS: Record<string, { text: (e: GameEvent) => string; bad?: boolean }> = {
   nest_open: { text: () => t('event.nest_opened'), bad: true },
@@ -75,9 +78,17 @@ const TOASTS: Record<string, { text: (e: GameEvent) => string; bad?: boolean }> 
   nest_destroyed: { text: (e) => t('event.nest_destroyed', { energy: e.amount ?? 0 }) },
   building_lost: { text: (e) => t('event.building_lost', { building: t(`building.${e.text}.name`) }), bad: true },
   part_attached: { text: (e) => t('trophy.module_acquired', { part: t(`part.${e.text}.label`) }) },
+  ally_limb_lost: { text: (e) => limbLine(e.text), bad: true },
   part_recycled: { text: (e) => t('part.recycled', { energy: e.amount ?? 0 }) },
   build_refused: { text: (e) => t(e.text ?? 'build.invalid_cell'), bad: true },
 };
+
+/** Knockout tore off a trophy or a limb (MVP_RULES §4.1а); event text is `hero:slot`. */
+function limbLine(text = ''): string {
+  const [hero, slot] = text.split(':');
+  const kind = slot === 'arm' || slot === 'leg' ? slot : 'trophy';
+  return t(`event.limb_lost.${kind}`, { hero: heroName(hero) });
+}
 
 /** Screen name of a hero (writer's text), e.g. «Килн». */
 const FEMALE_HEROES = new Set(['seraph', 'frostline', 'canopy', 'beacon']);
@@ -652,40 +663,41 @@ export class GameScene extends Phaser.Scene {
     const midY = HUD.y + HUD.h / 2;
     // Pause: dark square.
     const px = HUD.x + 18;
-    chip(g, px, midY - 42, 84, 84, C.graphite, 1, 14);
-    this.add.image(px + 42, midY, 'icon.pause').setScale(1.5).setDepth(20).setTintFill(0xffffff);
-    const pauseHit = this.add.zone(px, midY - 42, 84, 84).setOrigin(0).setDepth(20).setInteractive({ useHandCursor: true });
+    chip(g, px, midY - 42, 72, 84, C.graphite, 1, 14);
+    this.add.image(px + 36, midY, 'icon.pause').setScale(1.5).setDepth(20).setTintFill(0xffffff);
+    const pauseHit = this.add.zone(px, midY - 42, 72, 84).setOrigin(0).setDepth(20).setInteractive({ useHandCursor: true });
     pauseHit.on('pointerdown', stop(() => this.setPaused(!this.paused)));
 
     const stat = (x: number, label: string, icon: string, color: string) => {
       this.add.text(x, midY - 26, label.toUpperCase(), { ...TXT.caps(), ...(LANDSCAPE ? { fontSize: '14px', letterSpacing: 1.2 } : {}) }).setOrigin(0, 0.5).setDepth(20);
       this.add.image(x + 14, midY + 18, icon).setScale(1.25).setDepth(20);
-      return this.add.text(x + 34, midY + 18, '', TXT.num(36, color)).setOrigin(0, 0.5).setDepth(20);
+      return this.add.text(x + 34, midY + 18, '', TXT.num(32, color)).setOrigin(0, 0.5).setDepth(20);
     };
-    const energy = stat(px + 112, t('hud.label.energy'), 'icon.energy', INK.cobalt);
-    // The landscape HUD is narrower: tighten the columns so the threat ring stays clear.
+    const energy = stat(px + 100, t('hud.label.energy'), 'icon.energy', INK.cobalt);
+    // The landscape HUD is narrower: tighten the columns so the «Строить» button and the threat ring stay clear.
     // v0.7: no residents. Our heroes with their limit, and townsfolk brought to the centre (§4.4).
-    const residents = stat(px + (LANDSCAPE ? 244 : 300), t('hud.label.heroes'), 'icon.shield', INK.graphite);
-    const squad = stat(px + (LANDSCAPE ? 390 : 456), t('hud.label.rescued'), 'icon.resident', INK.teal);
+    const residents = stat(px + (LANDSCAPE ? 214 : 262), t('hud.label.heroes'), 'icon.shield', INK.graphite);
+    const squad = stat(px + (LANDSCAPE ? 362 : 418), t('hud.label.rescued'), 'icon.resident', INK.teal);
 
     // «Строить» button: opens the building catalog (MVP_RULES, memory BUILD BUTTON).
-    const bx = HUD.x + HUD.w - 156;
-    const bw = 78;
-    const bh = 80;
+    const bx = HUD.x + HUD.w - BUILD_BTN.right;
+    const bw = BUILD_BTN.w;
+    const bh = BUILD_BTN.h;
     const buildBtnBg = this.add.graphics().setDepth(20);
     chip(buildBtnBg, bx, midY - bh / 2, bw, bh, C.graphite, 1, 12);
-    const buildBtnTx = this.add.text(bx + bw / 2, midY, t('hud.mode_build'), TXT.body(18, INK.white, '700')).setOrigin(0.5).setDepth(20);
+    const buildIcon = this.add.image(bx + bw / 2, midY - 14, 'icon.build').setScale(1.4).setDepth(20).setTintFill(0xffffff);
+    const buildBtnTx = this.add.text(bx + bw / 2, midY + 22, t('hud.mode_build'), TXT.body(15, INK.white, '700')).setOrigin(0.5).setDepth(20);
     const buildBtnHit = this.add.zone(bx, midY - bh / 2, bw, bh).setOrigin(0).setDepth(20).setInteractive({ useHandCursor: true });
     buildBtnHit.on('pointerdown', stop(() => {
       if (this.mode === 'build') this.setGhost(null);
       else { this.setGhost(null); this.setMode('build'); }
     }));
-    const buildBtn = this.add.container(0, 0, [buildBtnBg, buildBtnTx, buildBtnHit]).setDepth(20);
+    const buildBtn = this.add.container(0, 0, [buildBtnBg, buildIcon, buildBtnTx, buildBtnHit]).setDepth(20);
 
     // Threat ring: empties over secondsPerLevel, then the level goes up (UI_SPEC §2.1).
-    const rx = HUD.x + HUD.w - 66;
+    const rx = HUD.x + HUD.w - 54;
     const ring = this.add.graphics();
-    const threat = this.add.text(0, 2, '', TXT.num(34, INK.white)).setOrigin(0.5);
+    const threat = this.add.text(0, 2, '', TXT.num(30, INK.white)).setOrigin(0.5);
     const ringBox = this.add.container(rx, midY, [ring, threat]).setDepth(20);
 
     // Goal line under the HUD.
@@ -715,12 +727,12 @@ export class GameScene extends Phaser.Scene {
     g.clear();
     const col = w.s.boss.awake ? C.violet : C.coral;
     g.fillStyle(col, 1);
-    g.fillCircle(0, 0, 30);
-    g.lineStyle(9, 0xdbe6ea, 1);
-    g.strokeCircle(0, 0, 42);
-    g.lineStyle(9, w.s.boss.awake ? C.violet : C.amber, 1);
+    g.fillCircle(0, 0, 28);
+    g.lineStyle(8, 0xdbe6ea, 1);
+    g.strokeCircle(0, 0, 38);
+    g.lineStyle(8, w.s.boss.awake ? C.violet : C.amber, 1);
     g.beginPath();
-    g.arc(0, 0, 42, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * Math.max(0.001, 1 - w.threatProgress), false);
+    g.arc(0, 0, 38, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * Math.max(0.001, 1 - w.threatProgress), false);
     g.strokePath();
     this.hud.threat.setText(String(level));
 
@@ -856,7 +868,7 @@ export class GameScene extends Phaser.Scene {
     // Build button highlights while the catalog is open.
     if (this.hud?.buildBtnBg) {
       this.hud.buildBtnBg.clear();
-      chip(this.hud.buildBtnBg, HUD.x + HUD.w - 156, HUD.y + HUD.h / 2 - 40, 78, 80, mode === 'build' ? C.cobalt : C.graphite, 1, 12);
+      chip(this.hud.buildBtnBg, HUD.x + HUD.w - BUILD_BTN.right, HUD.y + HUD.h / 2 - BUILD_BTN.h / 2, BUILD_BTN.w, BUILD_BTN.h, mode === 'build' ? C.cobalt : C.graphite, 1, 12);
     }
   }
 

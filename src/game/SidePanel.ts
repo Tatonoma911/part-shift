@@ -51,7 +51,7 @@ export class SidePanel {
     for (let k = 0; k < 3; k++) {
       this.log.push(
         scene.add
-          .text(x + 50, y + 172 + k * 34, '', { fontFamily: FONT, fontStyle: '500', fontSize: '18px', color: INK.graphite, fixedWidth: w - 84 })
+          .text(x + 50, y + 172 + k * 34, '', { fontFamily: FONT, fontStyle: '500', fontSize: '18px', color: INK.graphite })
           .setDepth(21),
       );
     }
@@ -134,7 +134,14 @@ export class SidePanel {
     g.fillRect(GUIDE.x + 34, this.y + 154, GUIDE.w - 68, 2);
     this.log.forEach((tx, k) => {
       const line = this.lines[k] ?? '';
-      tx.setText(line.length > 64 ? `${line.slice(0, 62)}…` : line).setAlpha(1 - k * 0.28);
+      // Cut at a word so the line fits the panel, with an ellipsis.
+      const maxW = GUIDE.w - 84;
+      tx.setText(line);
+      for (let words = line.split(' '); tx.width > maxW && words.length > 1; ) {
+        words = words.slice(0, -1);
+        tx.setText(`${words.join(' ').replace(/[,:;.—-]+$/, '')}…`);
+      }
+      tx.setAlpha(1 - k * 0.28);
       if (line) {
         g.fillStyle(C.seam, 1 - k * 0.28);
         g.fillCircle(GUIDE.x + 38, this.y + 183 + k * 34, 4);

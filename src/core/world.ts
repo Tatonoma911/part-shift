@@ -1484,15 +1484,19 @@ export class World {
         v.armorPlates -= lost;
         v.base = { ...v.base, defense: Math.max(0, v.base.defense - lost * armorPlateDef.defenseAdd) };
       }
-      // Limb torn off on knockout (MVP_RULES §4.1а): arm first (-20% damage), then leg (-25% speed).
-      const prevLimbs = v.lostLimbs ?? [];
-      if (prevLimbs.length < 4) {
-        const slot: 'arm' | 'leg' = prevLimbs.filter(l => l === 'arm').length < 2 ? 'arm' : 'leg';
-        v.lostLimbs = [...prevLimbs, slot];
-        if (slot === 'arm') v.base = { ...v.base, damage: Math.max(1, Math.round(v.base.damage * 0.8)) };
-        else v.base = { ...v.base, speed: Math.max(0.5, Math.round(v.base.speed * 0.75 * 10) / 10) };
-        this.emit('ally_limb_lost', { x: v.x, y: v.y, owner: v.owner, unit: v.id, text: slot });
+      // Knockout tears off one limb (MVP_RULES §4.1а): a trophy first, else the hero's own (arm -20% damage, leg -25% speed).
+      const parts = { ...v.parts };
+      const lostLimbs = [...(v.lostLimbs ?? [])];
+      const trophy = (Object.keys(parts) as SlotId[]).find((sl) => parts[sl]);
+      if (trophy) {
+        delete parts[trophy];
+        this.emit('ally_limb_lost', { x: v.x, y: v.y, owner: v.owner, unit: v.id, text: `${v.hero}:${trophy}` });
+      } else if (lostLimbs.length < 4) {
+        const slot: 'arm' | 'leg' = lostLimbs.filter((l) => l === 'arm').length < 2 ? 'arm' : 'leg';
+        lostLimbs.push(slot);
+        this.emit('ally_limb_lost', { x: v.x, y: v.y, owner: v.owner, unit: v.id, text: `${v.hero}:${slot}` });
       }
+      (p.allyScars ??= {})[v.hero!] = { parts, lostLimbs, armorPlates: v.armorPlates ?? 0 };
       this.emit('ally_down', { x: v.x, y: v.y, owner: v.owner, unit: v.id, text: v.hero });
       return;
     }
@@ -1569,6 +1573,13 @@ export class World {
     }
     const before = this.stats(u).hp;
     u.parts[slot] = { ...part };
+    // A part on a stumped slot type replaces the lost limb.
+    const stump = u.lostLimbs?.indexOf(kind as 'arm' | 'leg') ?? -1;
+    if (stump >= 0) {
+      u.lostLimbs!.splice(stump, 1);
+      if (!u.lostLimbs!.length) u.lostLimbs = undefined;
+      u.base = kind === 'arm' ? { ...u.base, damage: Math.round(u.base.damage / 0.8) } : { ...u.base, speed: Math.round((u.base.speed / 0.75) * 10) / 10 };
+    }
     u.hp += Math.max(0, this.stats(u).hp - before);
     this.s.players[u.owner].stats.parts++;
     this.emit(fromHero ? 'hero_part_taken' : 'part_attached', { x: u.x, y: u.y, owner: u.owner, unit: u.id, text: part.id });
@@ -2194,8 +2205,27 @@ export class World {
     });
     u.hero = id;
     u.attackTech = e.attackTech;
+    this.applyScars(p, u);
     this.emit('ally_join', { x: cmd.x, y: cmd.y, owner: p.id, unit: u.id, text: id });
     return u;
+  }
+
+  /** A returning ally keeps its trophies, stumps and plates (MVP_RULES §4.1а). */
+  private applyScars(p: Player, u: Unit): void {
+    const sc = p.allyScars?.[u.hero!];
+    if (!sc) return;
+    u.parts = { ...sc.parts };
+    u.lostLimbs = sc.lostLimbs.length ? [...sc.lostLimbs] : undefined;
+    u.armorPlates = sc.armorPlates || undefined;
+    const arms = sc.lostLimbs.filter((l) => l === 'arm').length;
+    const legs = sc.lostLimbs.length - arms;
+    u.base = {
+      ...u.base,
+      damage: Math.max(1, Math.round(u.base.damage * 0.8 ** arms)),
+      speed: Math.max(0.5, Math.round(u.base.speed * 0.75 ** legs * 10) / 10),
+      defense: u.base.defense + sc.armorPlates * armorPlateDef.defenseAdd,
+    };
+    u.hp = this.maxHp(u);
   }
 
   /** Spawns the next available hero from the squad pool (rules.allies) at (x,y).

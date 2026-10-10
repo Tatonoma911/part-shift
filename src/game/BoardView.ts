@@ -1168,6 +1168,18 @@ export class BoardView {
         g.fillStyle(TECH_COLOR[partDefs[part.id]?.tech] ?? 0xffffff, 1);
         g.fillCircle(fx - 14 + k * 9, top + 2, 3.5);
       });
+      // Stumps (MVP_RULES §4.1а): a grey cap with Splice gel, after the trophy pips.
+      // Drawn above the sprite's head: the board graphics sit under the units.
+      const capY = Math.min(top + 2, fy - v.spr.displayHeight * v.spr.originY - 6);
+      (u.lostLimbs ?? []).forEach((_, k) => {
+        const px = fx + 14 - k * 11;
+        g.fillStyle(0x0b1117, 1);
+        g.fillCircle(px, capY, 6);
+        g.fillStyle(0x8a9399, 1);
+        g.fillCircle(px, capY, 4.5);
+        g.fillStyle(0x5fd6ff, 1);
+        g.fillCircle(px, capY, 2.2);
+      });
       // Health bar: enemies always, our units when hurt or fighting; weakness orbs above enemies (UI_SPEC §3.5).
       const enemy = u.owner < 0;
       if (enemy || u.hp < st.hp || u.target !== undefined) this.vitals.draw(g, `u:${u.id}`, fx - 24, top - 12, 48, u.hp / st.hp, enemy ? 'enemy' : 'ally', this.scene.time.now);
@@ -1217,9 +1229,15 @@ export class BoardView {
     const cur = v.spr.anims.currentAnim;
     const anim = cur ? cur.key.slice(v.set.length + 1) : 'idle';
     const idx = (v.spr.anims.currentFrame?.index ?? 1) - 1;
+    // Trophies tinted by element. Stumps wait for their drawn frames (batch 04, 159–163); until then a pip shows them.
+    const draw: { slot: string; mask: string; tint: number; tech?: string }[] = [];
     for (const [slot, part] of Object.entries(u.parts)) {
       const mask = part && ls.slots[SLOT_SHORT[slot]];
       if (!mask) continue;
+      const tech = partDefs[part!.id]?.tech;
+      draw.push({ slot, mask, tint: TECH_COLOR[tech] ?? 0xffffff, tech });
+    }
+    for (const { slot, mask, tint, tech } of draw) {
       done.add(slot);
       mine ??= new Map();
       this.trophies.set(u.id, mine);
@@ -1233,7 +1251,6 @@ export class BoardView {
         s.setVisible(false);
         continue;
       }
-      const tech = partDefs[part!.id]?.tech;
       s.setVisible(true)
         .setFrame(a.frames[Math.min(idx, a.frames.length - 1)])
         .setOrigin(v.spr.originX, v.spr.originY)
@@ -1241,7 +1258,7 @@ export class BoardView {
         .setScale(v.spr.scaleX, v.spr.scaleY)
         .setFlipX(v.spr.flipX)
         .setDepth(v.spr.depth + 0.00005)
-        .setTint(TECH_COLOR[tech] ?? 0xffffff)
+        .setTint(tint)
         .setAlpha(0.9);
       if (Math.random() < 0.02) this.fx(hitOf(tech), v.spr.x + (Math.random() - 0.5) * 24, v.spr.y - v.spr.displayHeight * 0.45, 0.35);
     }
