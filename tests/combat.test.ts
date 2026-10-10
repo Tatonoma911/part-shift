@@ -199,7 +199,7 @@ describe('heroes and the call target', () => {
     expect(w.s.units.some((u) => u.hero === 'kiln')).toBe(true);
   });
 
-  it('the call target wakes by itself after a warning, and beating it then cooling the ground wins', () => {
+  it('the call target wakes by itself after a warning, and beating it wins (MVP §11: hot ground no longer blocks)', () => {
     const w = squad(['..............', '..............', '..............', '.............D'], 1);
     w.s.time = w.cfg.boss.selfWakeSeconds - w.cfg.boss.warningSeconds - 0.01;
     w.step(0.05);
@@ -213,10 +213,8 @@ describe('heroes and the call target', () => {
     const r = residents(w)[0];
     internals(w).hit(r, `u:${demon.id}`);
     expect(w.s.boss.dead).toBe(true);
-    w.cell(5, 2).hot = 1;
+    // Victory fires as soon as all site cells are resolved — hot ground no longer delays it.
     w.step(0.05);
-    expect(w.s.outcome).toBe('playing'); // ground still hot
-    run(w, 1.2);
     expect(w.s.outcome).toBe('victory');
     expect(Object.values(r.parts).map((p) => p!.id)).toEqual(expect.arrayContaining(['demon_arm', 'drill_tail']));
   });
