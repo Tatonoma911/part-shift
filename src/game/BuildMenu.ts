@@ -325,9 +325,9 @@ export class BuildDrawer {
     this.gap = 10;
     const sw = box.w - 52;
     this.cardW = Math.floor((sw - this.gap * (this.cols - 1)) / this.cols);
-    // Show ~2 full rows + peek of a third so the user sees there is more to scroll.
     const sh = box.h - 196;
-    this.cardH = Math.floor((sh - this.gap * 2) / 2.5);
+    // AR-35: ≥190px so picH ≥ 86px and the building sprite fills ≥64px (was 153px → 33px pic).
+    this.cardH = Math.max(190, Math.floor((sh - this.gap * 2) / 2.5));
   }
 
   get isOpen(): boolean {
