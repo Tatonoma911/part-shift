@@ -619,7 +619,8 @@ export class BoardView {
         this.updateObject(i, c, px, py, now);
 
         if (!c.revealed) {
-          this.setClues(i, x, y, null);
+          // A capsule peek shows the closed cell's own sensor for a while (MVP_RULES §5.2).
+          this.setClues(i, x, y, c.peekUntil !== undefined && s.time < c.peekUntil ? w.clues(x, y) : null);
           this.drawClosed(og, x, y, px, py, known.get(cellKey(x, y)), risk?.get(i), me.queue.includes(cellKey(x, y)), me.autoQueue.includes(cellKey(x, y)), c.marked ? (c.markKind ?? 'danger') : null, now);
           continue;
         }

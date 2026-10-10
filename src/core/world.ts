@@ -49,6 +49,9 @@ import type { AssistMode, Building, Cell, ClueChannel, GameState, PartInstance, 
 
 export const STEP = 0.05;
 
+/** How long a capsule peek shows the sensors (buildings.json watchtower.peek.showSeconds). */
+const CAPSULE_PEEK_SECONDS = 20;
+
 export type GameEvent = { type: string; x?: number; y?: number; amount?: number; owner?: number; text?: string; unit?: number };
 
 export interface WorldOptions {
@@ -776,14 +779,14 @@ export class World {
       amount = b.buildingsHealPercent;
     }
     if (b.peekCharges) {
-      // A 3×3 peek around the capsule: every hidden danger there gets an «Опасно» mark.
+      // A Watchtower-style peek (buildings.json watchtower.peek): the sensors of the closed 3×3 around the capsule
+      // show for a while without digging. Nothing gets marked: the player decides (MVP_RULES §3.1а).
       for (let dy = -1; dy <= 1; dy++) {
         for (let dx = -1; dx <= 1; dx++) {
           if (!inBounds(s, x + dx, y + dy)) continue;
           const n = this.cell(x + dx, y + dy);
-          if (n.revealed || n.marked || CHANNEL_OF[n.content] !== 'threat' && CHANNEL_OF[n.content] !== 'demon') continue;
-          n.marked = true;
-          n.markKind = 'danger';
+          if (n.revealed) continue;
+          n.peekUntil = s.time + CAPSULE_PEEK_SECONDS;
           amount++;
         }
       }
