@@ -1302,6 +1302,7 @@
   "campaign.done": "All 12 shifts complete. Free shift, Crunch, Daily Call and Lunch Break Call are now open. Control is surprised.",
   "campaign.new_label": "New this shift",
   "campaign.reward": "Reward: {reward}",
+  "campaign.next_district": "Next district: {name}",
   "goal.destroy_nests": "Destroy the nests: {cur}/{max}",
   "goal.defeat_hero": "Find and defeat: {name}",
   "goal.find_target": "Call target: {name}. Find the lair.",

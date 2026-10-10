@@ -1862,6 +1862,7 @@
   "campaign.done": "Все 12 смен пройдены. Открыты свободная смена, «Аврал», «Вызов дня» и «Обеденный вызов». Контроль удивлён.",
   "campaign.new_label": "Новое в смене",
   "campaign.reward": "Награда: {reward}",
+  "campaign.next_district": "Следующий район: {name}",
   "goal.destroy_nests": "Уничтожьте гнёзда: {cur}/{max}",
   "goal.defeat_hero": "Найдите и победите: {name}",
   "goal.find_target": "Цель вызова: {name}. Найдите убежище.",

@@ -1397,6 +1397,7 @@ export class GameScene extends Phaser.Scene {
     // Campaign victory: add district debrief text.
     if (victory && shiftN) {
       lines.push(districtText(shiftN));
+      if (shiftN < CAMPAIGN_TOTAL) lines.push(t('campaign.next_district', { name: t(`campaign.shift.${shiftN + 1}.title`) }));
       const reward = shiftReward(shiftN);
       if (reward) lines.push(t('campaign.reward', { reward }));
     }
