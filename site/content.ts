@@ -365,7 +365,7 @@ export const COMICS: Comic[] = [
     series: { ru: 'Пролог', en: 'Prologue' },
     cast: { ru: 'Линейщик, мальчик-фанат', en: 'Lineman, a young fan' },
     blurb: { ru: 'Мальчик вызывает службу спасения ради автографа. Город любит своих героев, а внизу HeroOut уже выращивает им врагов.', en: 'A boy calls the rescue service just to get an autograph. The city loves its heroes, while deep below HeroOut is already growing their enemies.' },
-    pages: { ru: ['comics/prologue-ru.webp'], en: ['comics/prologue-en.webp'] },
+    pages: { ru: ['comics/prologue-1-ru.webp', 'comics/prologue-2-ru.webp'], en: ['comics/prologue-1-en.webp', 'comics/prologue-2-en.webp'] },
   },
   {
     id: 'nothing-happened',
@@ -391,6 +391,15 @@ export const COMICS: Comic[] = [
     blurb: { ru: 'Банка мёда на 900 000 калорий и электрик, который отвечает за другую энергию.', en: 'A 900,000-calorie jar of honey and an electrician who handles the other kind of power.' },
     pages: { ru: ['comics/two-kinds-ru.webp'], en: ['comics/two-kinds-en.webp'] },
   },
+  {
+    id: 'seven-seconds',
+    title: { ru: 'Семь секунд', en: 'Seven Seconds' },
+    series: { ru: 'До сирен', en: 'Before the Sirens' },
+    cast: { ru: 'Каменщик, уличный повар', en: 'Mason, a street cook' },
+    blurb: { ru: 'Тяжёлый кран падает на хот-дожную холодную цепь. Семь секунд между краном и дружиной.', en: 'A heavy crane falls toward a food cart’s cold chain. Seven seconds between the crane and a friendship.' },
+    pages: { ru: ['comics/seven-seconds-ru.webp'], en: ['comics/seven-seconds-en.webp'] },
+  },
+
   {
     id: 'cat-record',
     title: { ru: 'О кошке', en: 'About the Cat' },
@@ -425,6 +434,7 @@ export const ARTBOOK: { id: string; title: L; note: L; shots: Shot[] }[] = [
     note: { ru: 'Спасатели Lumen City до аварии. С этих листов начинается каждый новый рисунок.', en: 'Lumen City’s rescuers before the accident. Every new drawing starts from these sheets.' },
     shots: [
       { src: 'key-art.webp', cap: { ru: 'Команда HeroOut на развалинах после первой смены', en: 'The HeroOut team on the rubble after the first shift' } },
+      { src: 'all-on-shift.webp', cap: { ru: 'Вся команда на смене', en: 'The whole squad on shift' } },
       { src: 'scene-1-sunline-beach.webp', cap: { ru: 'Sunline Beach: выходной, который стал новостью', en: 'Sunline Beach: a day off that became the news' } },
       { src: 'scene-2-pressure-ice.webp', cap: { ru: 'Лёд против давления', en: 'Ice versus pressure' } },
       { src: 'scene-3-hive-terrace.webp', cap: { ru: 'Пасека на крыше Glassline', en: 'A rooftop apiary in Glassline' } },
@@ -433,8 +443,8 @@ export const ARTBOOK: { id: string; title: L; note: L; shots: Shot[] }[] = [
   {
     id: 'cards',
     title: { ru: 'Карточки героев', en: 'Hero cards' },
-    note: { ru: 'Концепт-листы: полный рост, портрет, палитра и рабочий инструмент. Цвет у каждого героя — его функция.', en: 'Concept sheets: full body, portrait, palette and working tool. Each hero’s colour is their function.' },
-    shots: ['kiln', 'lineman', 'frostline', 'current', 'mason', 'beacon', 'canopy', 'sweep', 'patch', 'hive'].map((id) => ({
+    note: { ru: 'Концепт-листы: полный рост, портрет, палитра и рабочий инструмент. Цвет у каждого героя — его функция. Имена на карточках — рабочие названия, не утверждённый канон.', en: 'Concept sheets: full body, portrait, palette and working tool. Each hero’s colour is their function. Names shown are working titles, not confirmed canon.' },
+    shots: ['kiln', 'lineman', 'frostline', 'seraph', 'current', 'mason', 'beacon', 'canopy', 'sweep', 'patch', 'hive'].map((id) => ({
       src: `card-${id}.webp`,
       cap: { ru: HEROES.find((h) => h.id === id)!.name.ru, en: HEROES.find((h) => h.id === id)!.name.en },
     })),
@@ -449,6 +459,7 @@ export const ARTBOOK: { id: string; title: L; note: L; shots: Shot[] }[] = [
       { src: 'dossier-s01.webp', cap: { ru: 'S-01 // капсульное шасси', en: 'S-01 // capsule chassis' } },
       { src: 'doctor-arm.webp', cap: { ru: 'Доктор с рукой Килна', en: 'The Doctor wearing Kiln’s arm' } },
       { src: 'demon-sheet.webp', cap: { ru: 'Демон: четыре руки и буровой хвост', en: 'Demon: four arms and a drill tail' } },
+      { src: 'adaptants-sheet.webp', cap: { ru: 'Адаптанты: листы всех пяти элементов', en: 'Adaptants: character sheets for all five elements' } },
     ],
   },
   {
@@ -459,7 +470,21 @@ export const ARTBOOK: { id: string; title: L; note: L; shots: Shot[] }[] = [
       { src: 'city-life.webp', cap: { ru: 'Жизнь города: фанаты героев, уличный повар, гражданский микрореактор', en: 'City life: hero fans, a street chef, a civil microreactor' } },
       { src: 'buildings-sheet.webp', cap: { ru: '12 утверждённых зданий', en: 'The 12 approved buildings' } },
       { src: 'world-locations.webp', cap: { ru: 'Локации: Skyline и Underground', en: 'Locations: Skyline and Underground' } },
+      { src: 'world-dome.webp', cap: { ru: 'Купол Lumen City', en: 'The Lumen Dome' } },
       { src: 'style-compass.webp', cap: { ru: 'Визуальный компас HeroOut', en: 'HeroOut visual compass' } },
+      { src: 'emblem.webp', cap: { ru: 'Эмблема HeroOut', en: 'HeroOut emblem' } },
+    ],
+  },
+  {
+    id: 'control',
+    title: { ru: 'Записи Контроля', en: 'Control Records' },
+    note: { ru: 'Архив и инфраструктура Контроля — компании, которая управляет всем, включая вас.', en: 'The archive and infrastructure of Control — the company that manages everything, including you.' },
+    shots: [
+      { src: 'archive-desk.webp', cap: { ru: 'Архив Контроля: всё учтено', en: 'Control\u2019s archive: everything on record' } },
+      { src: 'floor42.webp', cap: { ru: '42-й этаж: штаб Контроля', en: 'Floor 42: Control headquarters' } },
+      { src: 'control-billboard.webp', cap: { ru: 'Рекламный щит HeroOut', en: 'HeroOut billboard' } },
+      { src: 'control-warehouse.webp', cap: { ru: 'Склад Контроля', en: 'Control warehouse' } },
+      { src: 'splice-heart.webp', cap: { ru: 'Гель Splice: анатомия заражения', en: 'Splice gel: anatomy of an infection' } },
     ],
   },
   {

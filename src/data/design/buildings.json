@@ -1,5 +1,5 @@
 {
-  "version": "0.9",
+  "version": "0.10",
   "buildings": [
     {
       "id": "command",
@@ -20,8 +20,9 @@
         "tech": "kinetic"
       },
       "healAura": {
-        "radius": 1,
-        "hpPerSecond": 5
+        "radius": 2,
+        "hpPerSecond": 3,
+        "_v03": "[Антон 2026-10-10 21:25] лечит как Медцентр: 3 HP/с в радиусе 2; было 5 HP/с радиус 1"
       },
       "_b2": "was 80 HP, no attack: one early nest ended the run",
       "births": {
@@ -212,13 +213,10 @@
       "buildSeconds": 10,
       "hp": 250,
       "defense": 0,
-      "aura": {
+      "healAura": {
         "radius": 2,
-        "targets": [
-          "our_hero"
-        ],
-        "healAmount": 10,
-        "healEverySeconds": 2
+        "hpPerSecond": 3,
+        "_v03": "[Антон 2026-10-10 21:25] лечит как Командный центр: 3 HP/с в радиусе 2; было 10 HP каждые 2 с"
       },
       "territoryRadius": 2,
       "regrowLimbSeconds": 60,

@@ -1,3 +1,5 @@
+import type { SlotId } from './data';
+
 /**
  * Everything a player can do, as plain data. Input code and the multiplayer
  * server both go through World.apply(), so a command can be sent over the
@@ -18,6 +20,8 @@ export type Command =
   | { type: 'upgradeBuilding'; building: number }
   /** Boost a building using a hero ability (buildings.json boost). */
   | { type: 'heroBoost'; building: number }
+  | { type: 'recolorTrophy'; building: number; unit: number; slot: SlotId; tech: string }
+  | { type: 'swapTrophy'; building: number; from: number; fromSlot: SlotId; to: number; toSlot: SlotId }
   /** Cancel a building under construction; refunds full cost. */
   | { type: 'cancelBuild'; building: number }
   /** Demolish: remove the building, refund demolishRefund fraction of energy spent. */
@@ -41,6 +45,14 @@ export type Command =
 
 /** Why a command was refused; the keys match the writer's texts (text/ru.json). */
 export type RefuseReason =
+  | 'trophy.invalid'
+  | 'trophy.out_of_range'
+  | 'trophy.on_cooldown'
+  | 'trophy.not_enough_energy'
+  | 'trophy.same_element'
+  | 'trophy.slot_mismatch'
+  | 'trophy.max_reached'
+  | 'dig.unreachable'
   | 'build.not_enough_energy'
   | 'build.invalid_cell'
   | 'build.cell_occupied'

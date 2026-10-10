@@ -41,9 +41,9 @@
         }
       },
       "heroDamageMaxHpFraction": {
-        "intern": 0.5,
-        "shift": 0.7,
-        "crunch": 0.8
+        "intern": 0.2,
+        "shift": 0.3,
+        "crunch": 0.35
       },
       "neverKillsAlone": true,
       "leavesMinHp": 1,

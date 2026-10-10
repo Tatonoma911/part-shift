@@ -29,6 +29,8 @@ import { BuildDrawer, buildOptions, type BuildOption } from './BuildMenu';
 import { buzz } from './comfort';
 import { drawLamp, drawMark, type Channel } from './Sensor';
 import { controlCall, RaidTimer, TempoMeter, type CallCard } from './Pulse';
+import { buildingCard, buildingInfo, DEMOLISH_CONFIRM_MS, type CardActionId } from './BuildingCard';
+import { recolorCommand, swapCommand } from './trophyActions';
 import { techOf } from './Vitals';
 import { armTechs } from './BoardView';
 import eventsJson from '../data/design/events.json';
@@ -38,6 +40,7 @@ import type { PeerSession as OnlineSession } from '../net/peer';
 import { challengeUrl, closeSocial, displayName, openBoard, openDonate, profile, rankOf, recordRun, resultCard, share, shouldNudge, socialOpen, type RecordedRun } from '../social';
 
 const BEST_KEY = 'partshift.best.v1';
+const LOSS_KEY = 'partshift.losses.v1';
 const LONG_PRESS_MS = 480;
 
 type Mode = 'dig' | 'build';
@@ -346,7 +349,8 @@ export class GameScene extends Phaser.Scene {
     const frame = this.add.graphics().setDepth(0.5);
     brackets(frame, bx - 10, by - 10, bw + 20, bh + 20);
     this.board = new BoardView(this, this.world, bx, by, this.me);
-    this.cams.setBounds(bx, by, bw, bh);
+    // The tutorial's 8×10 board is small: let it zoom up to fill the view (AR-36).
+    this.cams.setBounds(bx, by, bw, bh, !!this.guide && !LANDSCAPE);
     // Online fields are bigger than the screen: start at the normal cell size over our own center.
     const home = this.online ? this.world.building(this.world.player(this.me).command) : undefined;
     if (home) this.cams.focus(bx + home.x * STEP + CELL / 2, by + home.y * STEP + CELL / 2, 1);
@@ -1082,6 +1086,62 @@ export class GameScene extends Phaser.Scene {
     this.refreshModeBtns(this.mode === 'build');
   }
 
+  /** Shows the card of one of our buildings (upgrade, boost, demolish, rebuild, cancel). */
+  private openBuildingCard(id: number, armed: CardActionId | null = null, armedAt = 0): void {
+    const w = this.world;
+    const b = w.s.buildings.find((x) => x.id === id && x.owner === this.me);
+    if (!b) return this.closeBuildingCard();
+    if (this.drawer?.isOpen) this.closeCatalog();
+    this.buildingPanel?.card.destroy();
+    const info = buildingInfo(w, b, this.me);
+    const card = buildingCard(this, DOCK, info, UI_DEPTH + 10, armed, (a) => this.buildingAct(id, a), () => this.closeBuildingCard(), 900);
+    this.buildingPanel = { id, card, armed, armedAt, sig: JSON.stringify(info) };
+  }
+
+  private closeBuildingCard(): void {
+    this.buildingPanel?.card.destroy();
+    this.buildingPanel = null;
+  }
+
+  /** A card button: demolish takes a second tap within DEMOLISH_CONFIRM_MS, the rest apply at once. */
+  private buildingAct(id: number, a: CardActionId): void {
+    if (a === 'demolish') {
+      if (this.buildingPanel?.armed !== 'demolish') {
+        const stamp = this.time.now;
+        this.openBuildingCard(id, 'demolish', stamp);
+        this.time.delayedCall(DEMOLISH_CONFIRM_MS, () => {
+          if (this.buildingPanel?.id === id && this.buildingPanel.armedAt === stamp) this.openBuildingCard(id);
+        });
+        return;
+      }
+    }
+    // The forge picks an element first (the card's orbs); the rotation centre swaps at once.
+    if (a === 'recolor') return this.openBuildingCard(id, 'recolor');
+    const bld = this.world.s.buildings.find((x) => x.id === id);
+    const cmd =
+      a === 'upgrade' ? { type: 'upgradeBuilding', building: id }
+      : a === 'demolish' ? { type: 'demolish', building: id }
+      : a === 'rebuild' ? { type: 'rebuild', building: id }
+      : a === 'cancel' ? { type: 'cancelBuild', building: id }
+      : a.startsWith('boost:') ? { type: 'heroBoost', building: id }
+      : a.startsWith('recolor:') && bld ? recolorCommand(this.world, bld, this.me, a.slice('recolor:'.length))
+      : a === 'swap' && bld ? swapCommand(this.world, bld, this.me)
+      : null;
+    if (!cmd) {
+      this.say(t('trophy.invalid'), 2800, true);
+      return this.openBuildingCard(id);
+    }
+    const r = this.world.apply(cmd as never, this.me);
+    if (!r.ok) {
+      this.say(t(r.reason), 2800, true);
+      this.openBuildingCard(id);
+      return;
+    }
+    if (a === 'demolish') this.closeBuildingCard();
+    else this.openBuildingCard(id);
+  }
+
+
   /** Called when the player picks a building from the catalog drawer. */
   private pickBuilding(o: BuildOption): void {
     this.buildType = o.id;
@@ -1382,6 +1442,17 @@ export class GameScene extends Phaser.Scene {
     const me = w.player(this.me);
     const lines = [victory ? t('win.text') : t('lose.text'), t('win.time', { time: this.fmt(w.s.time) }), t('win.threat', { level: w.threatLevel }), t('win.nests', { count: me.stats.nests }), t('win.caches', { count: me.stats.caches })];
     let badge: string | undefined = victory ? undefined : t('lose.badge');
+    // «Последний шанс» (AUDIT: после 2 поражений подряд): счётчик в браузере игрока, сбрасывается победой.
+    if (!this.guide && !this.online) {
+      let losses = 0;
+      try {
+        losses = victory ? 0 : (Number(localStorage.getItem(LOSS_KEY)) || 0) + 1;
+        localStorage.setItem(LOSS_KEY, String(losses));
+      } catch {
+        /* ignore */
+      }
+      if (losses >= 2) lines.push(t('end.last_chance'));
+    }
     if (victory) {
       let best = Infinity;
       try {
@@ -1799,6 +1870,7 @@ export class GameScene extends Phaser.Scene {
     const own = w.player(this.me).queue.includes(k);
     const r = !c.revealed && !own ? w.apply({ type: 'queueDig', x, y }, this.me) : null;
     if (r?.ok) this.guide?.notify('queued');
+    if (r && !r.ok && r.reason === 'dig.unreachable') this.say(t('dig.unreachable'), 3000, true);
     if (r && !r.ok && r.reason === 'assist.known_danger') {
       this.confirmCell = k;
       this.say(t(w.visibleKnowledge(this.me).get(k) === 'demon' ? 'cell.confirm_demon.hint' : 'cell.confirm_nest.hint'), 4000, true);

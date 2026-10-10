@@ -15,7 +15,7 @@ import { chip, plate, TXT } from './ui';
  * Building the city the way mobile strategies do it (Clash of Clans, Kingdom Rush,
  * Bad North; Антон 10.10: «понятно, приятно и знакомо по играм жанра»):
  *   1. a big «Строить» button in the dock;
- *   2. it slides up a catalog: tabs by group and a swipeable row of cards
+ *   2. it slides up a catalog: one vertical grid of every building, with a scrollable list
  *      (picture, price in Energy, land it frees, and why it is closed: blueprint 2/4,
  *      «нужна Школа», «построено 2/2», not enough Energy);
  *   3. picking a card puts a ghost of the building on the board: green where it can stand,
@@ -297,8 +297,8 @@ interface Box {
 }
 
 /**
- * The catalog sheet: header (title, Energy, ✕), group tabs, a swipeable row of cards.
- * Mouse wheel scrolls the row on PC. Cards redraw live while it is open (Energy grows).
+ * The catalog sheet: header (title, Energy, ✕) and one vertical grid of every building.
+ * Drag or mouse wheel scrolls the list. Cards redraw live while it is open (Energy grows).
  */
 export class BuildDrawer {
   private root: Phaser.GameObjects.Container | null = null;
@@ -513,7 +513,6 @@ export class BuildDrawer {
       card.c.removeAll(true);
       drawCard(this.scene, card.c, o, this.cardW, this.cardH, this.highlight.includes(o.id), o.key === this.selected);
     }
-    this.drawTabs();
   }
 }
 

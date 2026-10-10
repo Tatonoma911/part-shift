@@ -73,7 +73,14 @@ export interface BuildingDef {
     stacks?: boolean;
     healAmount?: number;
     healEverySeconds?: number;
+    /** Jammer (buildings.json): targets in range move and attack slower. */
+    moveSpeedFactor?: number;
+    attackSpeedFactor?: number;
   };
+  /** Outpost: our heroes in range gain defense. */
+  heroAura?: { radius: number; defenseAdd: number };
+  /** Repair building: our buildings in range regain HP over time. */
+  repair?: { radius: number; hpPerSecond: number };
   spawnPoint?: boolean;
   trainingLevel?: number;
   /** Hero tiers this building spawns when construction completes (MVP_RULES §4.1b). */
@@ -91,6 +98,17 @@ export interface BuildingDef {
 
   autoAttack?: { damage: number; attackSeconds: number; range: number; tech?: string };
   healAura?: { radius: number; hpPerSecond: number };
+  /** Relay: +N to our hero cap, up to +2 in total over the difficulty cap (buildings.json relay). */
+  heroCapAdd?: number;
+  /** Medcenter: a hero standing in its heal aura regrows one lost limb after this many seconds. */
+  regrowLimbSeconds?: number;
+  /** Archive: squad heroes come back this much faster (rebirth timer ×), and this run's hero unlock progress counts ×. */
+  birthTimeFactor?: number;
+  unlockProgressFactorThisRun?: number;
+  /** Forge: change one trophy's element; strength and slot stay (buildings.json forge.recolor). */
+  recolor?: { radius: number; cooldownSeconds: number; energyCost: number };
+  /** Rotation centre: move or swap trophies between our heroes in range (buildings.json rotation_center.swap). */
+  swap?: { radius: number; cooldownSeconds: number; energyCost: number; respectsMaxTrophies: number };
 }
 
 export interface UnitStats {
@@ -161,7 +179,16 @@ export interface SiteDef {
 }
 
 /** Tables from rules v0.4 on (residents fight, heroes as enemies); later minor versions only add fields. */
-const MIN_VERSION = 0.4;
+const MIN_VERSION = [0, 4];
+/** Compares "major.minor" as parts: "0.10" is newer than "0.9", which a float compare gets backwards. */
+const versionAtLeast = (v: string, min: number[]) => {
+  const parts = v.split('.').map(Number);
+  for (let i = 0; i < min.length; i++) {
+    const p = parts[i] ?? 0;
+    if (p !== min[i]) return p > min[i];
+  }
+  return true;
+};
 for (const [name, table] of Object.entries({
   buildingsJson,
   configJson,
@@ -175,7 +202,7 @@ for (const [name, table] of Object.entries({
   unitsJson,
 })) {
   const v = (table as { version?: string }).version;
-  if (!v || !(Number(v) >= MIN_VERSION)) throw new Error(`${name}: unsupported table version ${v}`);
+  if (!v || !versionAtLeast(v, MIN_VERSION)) throw new Error(`${name}: unsupported table version ${v}`);
 }
 
 /** boss.selfWakeSeconds comes from the difficulty level (World.effectiveConfig fills it in). */
