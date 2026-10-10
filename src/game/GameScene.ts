@@ -4,7 +4,6 @@ import { BUILDABLE, boons, buildings as buildingDefs, config } from '../core/dat
 import { cellKey } from '../core/grid';
 import { World, type GameEvent } from '../core/world';
 import { t } from '../i18n';
-import { BUILDING_ANCHOR } from './assets';
 import { sound } from './audio';
 import { SoundDirector } from './soundDirector';
 import { Voice } from './voice';
@@ -60,8 +59,15 @@ export interface GameStart {
 }
 type Ev = Phaser.Types.Input.EventData;
 
-/** «Строить» in the HUD, left of the threat ring: width, height, left edge from the HUD's right side. */
-const BUILD_BTN = { w: 72, h: 84, right: 176 };
+/** Dig / Build buttons at the bottom of the dock (§7.3): one geometry for drawing and highlighting. */
+function dockButtons() {
+  const pad = 22;
+  const btnH = 76;
+  const btnGap = 12;
+  const btnW = (DOCK.w - pad * 2 - btnGap) / 2;
+  const btnY = DOCK.y + DOCK.h - btnH - 10;
+  return { pad, btnW, btnH, btnY, digX: DOCK.x + pad, buildX: DOCK.x + pad + btnW + btnGap };
+}
 
 /** Medal tiers earned mid-run, waiting for the HUD (not part of the core's rules). */
 type MedalEvents = { medalEvents?: { id: string; tier: number }[] };
@@ -220,14 +226,14 @@ export class GameScene extends Phaser.Scene {
     ringBox: Phaser.GameObjects.Container;
     goal: Phaser.GameObjects.Text;
     goalBg: Phaser.GameObjects.Graphics;
-    buildBtn: Phaser.GameObjects.Container;
-    buildBtnBg: Phaser.GameObjects.Graphics;
   };
   private shownEnergy = 0;
   private dock!: {
     /** Context line instead of mode tabs: what a tap does now, and a cancel chip while placing. */
     head: { text: Phaser.GameObjects.Text; cancel: Phaser.GameObjects.Container };
     panes: Record<Mode, Phaser.GameObjects.Container>;
+    /** Dig / Build mode buttons at the bottom of the dock (§7.3). */
+    modeBtns: { dig: Phaser.GameObjects.Graphics; build: Phaser.GameObjects.Graphics };
     queue: Phaser.GameObjects.Text;
     cards: { id: string; g: Phaser.GameObjects.Graphics; cost: Phaser.GameObjects.Text; x: number; y: number; w: number; h: number }[];
   };
@@ -748,25 +754,10 @@ export class GameScene extends Phaser.Scene {
       return this.add.text(x + 34, midY + 18, '', TXT.num(32, color)).setOrigin(0, 0.5).setDepth(20);
     };
     const energy = stat(px + 100, t('hud.label.energy'), 'icon.energy', INK.cobalt);
-    // The landscape HUD is narrower: tighten the columns so the «Строить» button and the threat ring stay clear.
     // v0.7: no residents. Our heroes with their limit, and townsfolk brought to the centre (§4.4).
     const residents = stat(px + (LANDSCAPE ? 214 : 262), t('hud.label.heroes'), 'icon.shield', INK.graphite);
     const squad = stat(px + (LANDSCAPE ? 362 : 418), t('hud.label.rescued'), 'icon.resident', INK.teal);
-
-    // «Строить» button: opens the building catalog (MVP_RULES, memory BUILD BUTTON).
-    const bx = HUD.x + HUD.w - BUILD_BTN.right;
-    const bw = BUILD_BTN.w;
-    const bh = BUILD_BTN.h;
-    const buildBtnBg = this.add.graphics().setDepth(20);
-    chip(buildBtnBg, bx, midY - bh / 2, bw, bh, C.graphite, 1, 12);
-    const buildIcon = this.add.image(bx + bw / 2, midY - 14, 'icon.build').setScale(1.4).setDepth(20).setTintFill(0xffffff);
-    const buildBtnTx = this.add.text(bx + bw / 2, midY + 22, t('hud.mode_build'), TXT.body(15, INK.white, '700')).setOrigin(0.5).setDepth(20);
-    const buildBtnHit = this.add.zone(bx, midY - bh / 2, bw, bh).setOrigin(0).setDepth(20).setInteractive({ useHandCursor: true });
-    buildBtnHit.on('pointerdown', stop(() => {
-      if (this.drawer.isOpen) this.closeCatalog();
-      else this.openCatalog();
-    }));
-    const buildBtn = this.add.container(0, 0, [buildBtnBg, buildIcon, buildBtnTx, buildBtnHit]).setDepth(20);
+    // «Строить» moved to the dock (§7.3).
 
     // Threat ring: empties over secondsPerLevel, then the level goes up (UI_SPEC §2.1).
     const rx = HUD.x + HUD.w - 54;
@@ -781,7 +772,7 @@ export class GameScene extends Phaser.Scene {
     this.raidTimer = new RaidTimer(this, HUD.x + (LANDSCAPE ? 256 : 240), GOAL.y, LANDSCAPE ? 236 : 226, 44, 21, () => this.callRaidEarly(), HUD.w - (LANDSCAPE ? 256 : 240));
     const goalBg = this.add.graphics().setDepth(20);
     const goal = this.add.text(HUD.x + HUD.w - 24, GOAL.y + 22, '', TXT.body(23, INK.white, '700')).setOrigin(1, 0.5).setDepth(20);
-    this.hud = { energy, residents, squad, threat, ring, ringBox, goal, goalBg, buildBtn, buildBtnBg };
+    this.hud = { energy, residents, squad, threat, ring, ringBox, goal, goalBg };
   }
 
   private updateHud(deltaMs: number): void {
@@ -917,10 +908,29 @@ export class GameScene extends Phaser.Scene {
   private createDock(): void {
     const g = this.add.graphics().setDepth(20);
     plate(g, DOCK.x, DOCK.y, DOCK.w, DOCK.h, 28);
-    // No attack mode: residents fight on their own, a tap on a foe directs them (MVP_RULES §6).
-    // No mode tabs (Антон 2026-10-09): a tap on a closed block digs, a tap on liberated land builds.
-    // The top row of the dock says what a tap does right now.
-    const pad = 22;
+    // §7.3: two big mode buttons at the bottom of the dock (≥48 px).
+    const { pad, btnW, btnH, btnY, digX, buildX } = dockButtons();
+    // Dig button (§7.3: large, in thumb zone, ≥48 px).
+    const digBg = this.add.graphics().setDepth(20);
+    const digBx = digX;
+    chip(digBg, digBx, btnY, btnW, btnH, C.cobalt, 1, 14);
+    this.add.image(digBx + 40, btnY + btnH / 2, 'icon.dig').setScale(1.6).setDepth(20).setTintFill(0xffffff);
+    this.add.text(digBx + 72, btnY + btnH / 2, t('hud.mode_dig'), TXT.body(26, INK.white, '700')).setOrigin(0, 0.5).setDepth(20);
+    const digHit = this.add.zone(digBx, btnY, btnW, btnH).setOrigin(0).setDepth(20).setInteractive({ useHandCursor: true });
+    digHit.on('pointerdown', stop(() => { this.setGhost(null); this.setMode('dig'); }));
+    // Build button.
+    const buildBg = this.add.graphics().setDepth(20);
+    const buildBx = buildX;
+    chip(buildBg, buildBx, btnY, btnW, btnH, C.graphite, 1, 14);
+    this.add.image(buildBx + 40, btnY + btnH / 2, 'icon.build').setScale(1.6).setDepth(20).setTintFill(0xffffff);
+    this.add.text(buildBx + 72, btnY + btnH / 2, t('hud.mode_build'), TXT.body(26, INK.white, '700')).setOrigin(0, 0.5).setDepth(20);
+    const buildHit = this.add.zone(buildBx, btnY, btnW, btnH).setOrigin(0).setDepth(20).setInteractive({ useHandCursor: true });
+    buildHit.on('pointerdown', stop(() => {
+      if (this.drawer.isOpen) this.closeCatalog();
+      else this.openCatalog();
+    }));
+
+    // Content area sits above the buttons.
     const ty = DOCK.y + 22;
     const headText = this.add
       .text(DOCK.x + pad + 8, ty + 40, '', { ...TXT.body(23, INK.graphite, '600'), wordWrap: { width: DOCK.w - pad * 2 - 190 }, lineSpacing: 2 })
@@ -937,7 +947,6 @@ export class GameScene extends Phaser.Scene {
     divider.fillRect(DOCK.x + pad, ty + 88, DOCK.w - pad * 2, 2);
 
     const top = DOCK.y + 124;
-    const inner = DOCK.w - pad * 2;
     // Dig: legend of the clue glyphs + queue chip (+ scan button).
     const dig = this.add.container(0, 0).setDepth(20);
     const lg = this.add.graphics();
@@ -953,7 +962,7 @@ export class GameScene extends Phaser.Scene {
     if (this.guide) legend.splice(2, 1);
     legend.forEach(([key, kind], k) => {
       const lx = DOCK.x + pad + 14 + (k % 2) * 200;
-      const ly = top + 32 + Math.floor(k / 2) * 52;
+      const ly = top + 24 + Math.floor(k / 2) * 40;
       const ig = this.add.graphics().setPosition(lx, ly);
       if (kind === 'mark') drawMark(ig.setScale(0.6), 0, 0, 'danger');
       else drawLamp(ig.setScale(2), kind, -7, -5, 14, 10);
@@ -978,39 +987,11 @@ export class GameScene extends Phaser.Scene {
     );
     dig.add([qg, queue, qx2, qhit]);
 
-    // Build: five cards with the building sprites.
+    // The build catalog is a drawer (BuildMenu), so the dock keeps only the dig pane as a container.
     const build = this.add.container(0, 0).setDepth(20);
-    const cgap = 10;
-    const cw = (inner - cgap * (BUILDABLE.length - 1)) / BUILDABLE.length;
-    const ch = 150;
-    const cards = BUILDABLE.map((id, k) => {
-      const x = DOCK.x + pad + k * (cw + cgap);
-      const cg = this.add.graphics();
-      const a = BUILDING_ANCHOR[id] ?? [36, 78, 72, 96];
-      const img = this.add.image(x + cw / 2, top + 66, `building.${id}`).setOrigin(0.5, a[1] / a[3]);
-      img.setScale(Math.min(1, 74 / a[3]));
-      const name = this.add.text(x + cw / 2, top + 98, id === 'station' ? t('building.station.label') : t(`building.${id}.name`), { ...TXT.body(16, INK.graphite, '600'), align: 'center', wordWrap: { width: cw - 10 } }).setOrigin(0.5, 0.5);
-      const cost = this.add.text(x + cw / 2 + 10, top + 132, `${buildingDefs[id].cost}`, TXT.num(19, INK.cobalt)).setOrigin(0.5);
-      const eicon = this.add.image(x + cw / 2 - cost.width / 2 - 4, top + 132, 'icon.energy');
-      const hit = this.add.zone(x, top, cw, ch).setOrigin(0).setInteractive({ useHandCursor: true });
-      hit.on(
-        'pointerdown',
-        stop(() => {
-          this.buildType = id;
-          // Switch the ghost on the chosen block to this building.
-          if (this.ghost) this.setGhost(this.ghost);
-          this.say(t(`building.${id}.desc`), 3500);
-        }),
-      );
-      // How far this building frees land around it (buildings.json territoryRadius).
-      const r = buildingDefs[id].territoryRadius ?? 0;
-      build.add([cg, img, name, cost, eicon]);
-      if (r > 0) build.add(this.add.text(x + cw - 8, top + 10, `⬚${r}`, { ...TXT.num(15, INK.teal) }).setOrigin(1, 0));
-      build.add(hit);
-      return { id, g: cg, cost, x, y: top, w: cw, h: ch };
-    });
+    const cards: { id: string; g: Phaser.GameObjects.Graphics; cost: Phaser.GameObjects.Text; x: number; y: number; w: number; h: number }[] = [];
 
-    this.dock = { head: { text: headText, cancel }, panes: { dig, build }, queue, cards };
+    this.dock = { head: { text: headText, cancel }, panes: { dig, build }, queue, cards, modeBtns: { dig: digBg, build: buildBg } };
 
     this.drawer = new BuildDrawer(this, DOCK, UI_DEPTH + 10, {
       pick: (o: BuildOption) => this.pickBuilding(o),
@@ -1030,11 +1011,16 @@ export class GameScene extends Phaser.Scene {
     this.dock.head.cancel.setVisible(mode === 'build');
     this.dock.head.text.setText(t(mode === 'build' ? 'dock.build_here' : this.tutorialWantsBuild() ? 'dock.build_tutorial' : 'dock.hint'));
     for (const [m, pane] of Object.entries(this.dock.panes)) pane.setVisible(m === mode);
-    // Build button highlights while the catalog is open.
-    if (this.hud?.buildBtnBg) {
-      this.hud.buildBtnBg.clear();
-      chip(this.hud.buildBtnBg, HUD.x + HUD.w - BUILD_BTN.right, HUD.y + HUD.h / 2 - BUILD_BTN.h / 2, BUILD_BTN.w, BUILD_BTN.h, mode === 'build' ? C.cobalt : C.graphite, 1, 12);
-    }
+    this.refreshModeBtns(mode === 'build');
+  }
+
+  /** Highlights the active mode button in the dock (§7.3). */
+  private refreshModeBtns(buildActive: boolean): void {
+    if (!this.dock?.modeBtns) return;
+    const { dig: db, build: bb } = this.dock.modeBtns;
+    const { btnW, btnH, btnY, digX, buildX } = dockButtons();
+    db.clear(); chip(db, digX, btnY, btnW, btnH, buildActive ? C.graphite : C.cobalt, 1, 14);
+    bb.clear(); chip(bb, buildX, btnY, btnW, btnH, buildActive ? C.cobalt : C.graphite, 1, 14);
   }
 
   private tutorialWantsBuild(): boolean {
@@ -1048,19 +1034,12 @@ export class GameScene extends Phaser.Scene {
     const energy = this.world.player(this.me).energy;
     const selected = this.buildType ?? null;
     this.drawer.open(opts, energy, this.guide?.step?.highlightBuild ?? [], selected);
-    // Highlight the build button while catalog is open.
-    if (this.hud?.buildBtnBg) {
-      this.hud.buildBtnBg.clear();
-      chip(this.hud.buildBtnBg, HUD.x + HUD.w - 156, HUD.y + HUD.h / 2 - 40, 78, 80, C.cobalt, 1, 12);
-    }
+    this.refreshModeBtns(true);
   }
 
   private closeCatalog(): void {
     this.drawer.close();
-    if (this.hud?.buildBtnBg) {
-      this.hud.buildBtnBg.clear();
-      chip(this.hud.buildBtnBg, HUD.x + HUD.w - 156, HUD.y + HUD.h / 2 - 40, 78, 80, C.graphite, 1, 12);
-    }
+    this.refreshModeBtns(this.mode === 'build');
   }
 
   /** Called when the player picks a building from the catalog drawer. */
