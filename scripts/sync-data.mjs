@@ -21,7 +21,7 @@ const jobs = [
   // clean: the comic drops panels between versions; stale ones would only bloat the one-file build.
   { from: join(root, 'comic/assets/panels'), to: 'src/assets/comic/panels', pick: (f) => /\.(jpg|png)$/.test(f), clean: true },
   // Comic illustrations over the win/lose sheets (ART_REVIEW AR-12): screen_win.png, screen_lose.png.
-  { from: join(root, 'art/export/screens'), to: 'src/assets/art/screens', pick: (f) => f.endsWith('.png') },
+  { from: join(root, 'art/export/screens'), to: 'src/assets/art/screens', pick: (f) => f.endsWith('.png') || f.endsWith('.jpg') },
   { from: join(root, 'comic/assets/sprites'), to: 'src/assets/comic/sprites', pick: (f) => f.endsWith('.png'), clean: true },
   // Dossier «Что заберут жители» tiles: one drawn part per heroes.json drop.
   { from: join(root, 'art/export/trophies'), to: 'src/assets/art/trophies', pick: (f) => f.endsWith('.png') },
