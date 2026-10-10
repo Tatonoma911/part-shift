@@ -44,6 +44,11 @@ export interface Learning {
   coach(topic: keyof typeof COACH, force?: boolean): boolean;
   /** Call every frame: shows a card that waited for a quiet moment. */
   tick(): void;
+  /**
+   * The campaign's «Новое в смене» card for shift N (campaign.shift.N.new) was shown: the coach
+   * cards it already covers are marked seen, so the same mechanic is not explained twice.
+   */
+  shiftCardShown(shift: number): void;
   /** Feed core GameEvent types; the first nest, trophy, threat level and Demon warning open a card. */
   onGameEvent(type: string): boolean;
   /** A clip anywhere (e.g. the main menu or the tutorial card). */
@@ -54,6 +59,15 @@ export interface Learning {
   /** Resolves when the sprites are decoded. */
   ready: Promise<void>;
 }
+
+/** Coach topics each campaign shift card explains (text/ru.json campaign.shift.N.new). */
+const SHIFT_COVERS: Record<number, (keyof typeof COACH)[]> = {
+  1: ['clue'],
+  2: ['threat'],
+  3: ['hero', 'parts'],
+  4: ['elements'],
+  5: ['call'],
+};
 
 export function createLearning(opts: LearningOptions = {}): Learning {
   injectStyles();
@@ -107,6 +121,13 @@ export function createLearning(opts: LearningOptions = {}): Learning {
         }),
       );
       return true;
+    },
+    shiftCardShown(shift) {
+      for (const topic of SHIFT_COVERS[shift] ?? []) {
+        progress.markCoach(topic);
+        const i = waiting.indexOf(topic);
+        if (i >= 0) waiting.splice(i, 1);
+      }
     },
     tick() {
       while (waiting.length && !open && quiet()) if (api.coach(waiting.shift()!)) break;
