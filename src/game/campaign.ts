@@ -41,20 +41,40 @@ export interface ShiftWorldOptions {
   height: number;
   difficulty: string;
   nestCount: number;
+  /** 0 for shifts where features.callTarget is false (boss_hatch never placed). */
+  bossHatchCount: number;
+  /** Total hero lair count; undefined = use heroes.json lairsPerMapByTier defaults. */
+  lairTotal?: number;
+  /** 0 for shifts where features.hazards is false; undefined = use difficulty default. */
+  mineCount?: number;
+  bonusCapsuleCount?: number;
+  medkitCount?: number;
+  survivorCount?: number;
 }
 
 export function getCampaignWorld(n: number): ShiftWorldOptions {
   const shift = CAMPAIGN.shifts.find((s) => s.n === n);
-  if (!shift) return { width: 9, height: 11, difficulty: 'intern', nestCount: 2 };
+  if (!shift) return { width: 9, height: 11, difficulty: 'intern', nestCount: 2, bossHatchCount: 0 };
   const ovr = shift.overrides as Record<string, unknown>;
-  const nestFromKey = ovr['mapgen.counts.nest'] as number | undefined;
-  const nestFromBlock = (ovr['mapgen.counts'] as Record<string, number> | undefined)?.nest;
-  const nestCount = nestFromKey ?? nestFromBlock ?? 2;
+  const counts = (ovr['mapgen.counts'] as Record<string, number> | undefined) ?? {};
+  const features = shift.features as Record<string, boolean>;
+  const nestCount = counts.nest ?? (ovr['mapgen.counts.nest'] as number | undefined) ?? 2;
+  const bossHatchCount = counts.boss_hatch ?? (features.callTarget ? 1 : 0);
+  const lairTotal = counts.hero_lair;
+  const mineCount = features.hazards
+    ? ((ovr['hazards.mine.count'] as number | undefined) ?? undefined)
+    : 0;
   return {
     width: shift.board[0],
     height: shift.board[1],
     difficulty: shift.difficulty,
     nestCount,
+    bossHatchCount,
+    lairTotal,
+    mineCount,
+    bonusCapsuleCount: counts.bonus_capsule,
+    medkitCount: counts.medkit,
+    survivorCount: counts.survivor !== undefined ? counts.survivor : undefined,
   };
 }
 

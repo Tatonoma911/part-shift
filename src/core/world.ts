@@ -58,7 +58,7 @@ const CAPSULE_PEEK_SECONDS = 20;
 
 export type GameEvent = { type: string; x?: number; y?: number; amount?: number; owner?: number; text?: string; unit?: number; fork?: number; wave?: boolean;
   /** Damage-numbers UI (ДИ patch ui/code/damage-numbers/): */
-  tech?: string; mult?: number; victim?: number; kind?: 'weak' | 'neutral' | 'resist' | 'super' | 'reaction' | 'mine' | 'status'; dot?: boolean;
+  tech?: string; mult?: number; victim?: number; kind?: 'weak' | 'neutral' | 'resist' | 'super' | 'reaction' | 'mine' | 'status'; dot?: boolean; bam?: boolean;
 };
 
 export interface WorldOptions {
@@ -767,7 +767,8 @@ export class World {
     const s = this.s;
     if (!s.generated) {
       const nests = s.players.length > 1 ? 6 * s.players.length : this.rules.counts?.nests;
-      const gen = { commands: list, nests, mines: this.rules.counts?.mine, survivors: this.rules.counts?.survivor };
+      const rc = this.rules.counts;
+      const gen = { commands: list, nests, mines: rc?.mine, survivors: rc?.survivor, bossHatch: rc?.bossHatch, lairTotal: rc?.lairTotal, bonusCapsule: rc?.bonusCapsule, medkit: rc?.medkit };
       generateField(s, gen);
       this.genAttempts = 1;
       // Стажёр and Смена never leave the player a 50/50 (MVP_RULES §15.2); tutorial boards are hand-laid.
@@ -2157,12 +2158,16 @@ export class World {
     }
     if (u.burn) {
       u.burn.left -= dt;
-      this.damage(u, u.burn.dps * dt, this.unit(u.burn.source));
+      const burnAmt = u.burn.dps * dt;
+      this.damage(u, burnAmt, this.unit(u.burn.source));
+      this.emit('hit', { x: u.x, y: u.y, tech: 'thermo', unit: u.burn.source, victim: u.owner, amount: Math.round(burnAmt), dot: true });
       if (u.burn && u.burn.left <= 0) u.burn = undefined;
     }
     if (u.poison && u.hp > 0) {
       u.poison.left -= dt;
-      this.damage(u, u.poison.dps * dt, this.unit(u.poison.source));
+      const poisonAmt = u.poison.dps * dt;
+      this.damage(u, poisonAmt, this.unit(u.poison.source));
+      this.emit('hit', { x: u.x, y: u.y, tech: 'toxin', unit: u.poison.source, victim: u.owner, amount: Math.round(poisonAmt), dot: true });
       if (u.poison && u.poison.left <= 0) u.poison = undefined;
     }
     const regen = Object.values(u.parts).reduce((n, p) => n + (p ? partTier(p.id, p.tier).regenPerSec ?? 0 : 0), 0);

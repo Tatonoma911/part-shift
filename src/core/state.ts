@@ -289,7 +289,7 @@ export interface RuleOverrides {
   nest?: { initialSpawn?: number; maxAlive?: number; spawnSeconds?: number; totalBudget?: number };
   adaptant?: { partDropChance?: number; partSlot?: 'arm' | 'leg' };
   /** Site counts for the generator (campaign shifts, Обеденный вызов: hazards.mine.quickMode, modes.json mapgen.counts.survivor). */
-  counts?: { mine?: number; survivor?: number; nests?: number };
+  counts?: { mine?: number; survivor?: number; nests?: number; bossHatch?: number; lairTotal?: number; bonusCapsule?: number; medkit?: number };
 }
 
 export interface GameState {
