@@ -21,7 +21,7 @@ export const animSets = (animJson as unknown as { sets: Record<string, AnimSet> 
 
 /** Anchor points of the static building sprites, as in game/assets.ts. */
 export const BUILDING_ANCHOR: Record<string, [number, number]> = {
-  command: [52, 150],
+  command: [52, 84],
   home: [36, 94],
   reactor: [36, 94],
   cooler: [36, 94],

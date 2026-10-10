@@ -12,6 +12,8 @@ const jobs = [
   { from: join(root, 'art/export/x2/tiles'), to: 'src/assets/art/tiles', pick: (f) => f.endsWith('.png') },
   // objects_gpt: GPT-drawn tile objects — replace matching tile keys (nest, cache, etc.)
   { from: join(root, 'art/export/x2/objects_gpt'), to: 'src/assets/art/tiles', pick: (f) => f.endsWith('.png') && f !== 'objects_gpt.json' },
+  // batch 4 find cells (ground + drawn find, slice_gpt_b4.py): tile.find_blueprint / find_armor / find_record / cache_v2
+  { from: join(root, 'art/export/x2/tiles_gpt'), to: 'src/assets/art/tiles', pick: (f) => /^(find_(blueprint|armor|record)|cache_v2)\.png$/.test(f) },
   { from: join(root, 'art/export/x2/buildings'), to: 'src/assets/art/buildings', pick: (f) => BUILDINGS.includes(f.replace('.png', '')) },
   // buildings_gpt_big normal state (larger than a cell, Антон 2026-10-10): replace the old single-state building sprites
   {

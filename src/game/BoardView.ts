@@ -537,17 +537,18 @@ export class BoardView {
               key = left > 0 ? `vein_${left > 0.67 ? 0 : left > 0.34 ? 1 : 2}_${(frame3 + h) % 3}` : GROUND[h % 8];
               break;
             }
+            // Unresolved finds show their own drawn cell (art batch 4) when it is loaded; plain cache otherwise.
             case 'cache':
-              key = c.resolved ? GROUND[h % 8] : 'cache';
+              key = c.resolved ? GROUND[h % 8] : this.scene.textures.exists('tile.cache_v2') ? 'cache_v2' : 'cache';
               break;
             case 'blueprint':
-              key = c.resolved ? GROUND[h % 8] : 'cache';
+              key = c.resolved ? GROUND[h % 8] : this.scene.textures.exists('tile.find_blueprint') ? 'find_blueprint' : 'cache';
               break;
             case 'armor_crate':
-              key = c.resolved ? GROUND[h % 8] : 'cache';
+              key = c.resolved ? GROUND[h % 8] : this.scene.textures.exists('tile.find_armor') ? 'find_armor' : 'cache';
               break;
             case 'lore_record':
-              key = c.resolved ? GROUND[h % 8] : 'cache';
+              key = c.resolved ? GROUND[h % 8] : this.scene.textures.exists('tile.find_record') ? 'find_record' : 'cache';
               break;
             case 'survivor':
               key = c.resolved ? GROUND[h % 8] : (this.scene.textures.exists('survivor') ? 'survivor' : 'cache');
