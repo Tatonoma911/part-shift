@@ -3,11 +3,13 @@ import type { Unit } from '../src/core/state';
 import { handWorld } from './helpers';
 
 const played: string[] = [];
+const sfx: string[] = [];
 vi.mock('../src/game/audio', () => ({
   sound: {
     playMusic: (id: string) => played.push(id),
     setLayers: () => {},
-    play: () => {},
+    has: () => false,
+    play: (id: string) => sfx.push(id),
     playEnd: () => {},
     bossDown: () => played.push('aftermath'),
   },
@@ -78,5 +80,19 @@ describe('music stages', () => {
     d.onEvent({ type: 'boss_dead' } as never);
     at(10);
     expect(last()).toBe('aftermath');
+  });
+
+  it('voices construction: hammer at the start, welds at 25/50/75 %', () => {
+    const { w, d, at } = setup();
+    d.start();
+    sfx.length = 0;
+    const b = { id: 77, type: 'home', owner: 0, x: 1, y: 1, hp: 50, built: 0, complete: false } as never as (typeof w.s.buildings)[number];
+    w.s.buildings.push(b);
+    const total = w.buildSeconds(b);
+    for (const p of [0.05, 0.2, 0.3, 0.6, 0.8, 0.9]) {
+      b.built = p * total;
+      at(w.s.time + 0.5);
+    }
+    expect(sfx.filter((id) => id === 'hammer' || id === 'hammer_weld')).toEqual(['hammer', 'hammer_weld', 'hammer_weld', 'hammer_weld']);
   });
 });
