@@ -22,20 +22,9 @@ const stopEv = (fn: () => void) => (_p: Phaser.Input.Pointer, _x: number, _y: nu
 
 const SEG = [0x9aa8ae, 0xf2b84b, 0xff8a3d, 0xff5a1f];
 
-/** Vector flame (stand-in for the pixel `icon.tempo_3`). */
-function flame(g: G, x: number, y: number, s: number, hot: boolean, now: number): void {
-  const flick = hot ? 1 + Math.sin(now / 90) * 0.06 : 1;
-  const h = s * flick;
-  g.fillStyle(hot ? 0xff5a1f : 0x9aa8ae, 1);
-  g.fillPoints([new Phaser.Math.Vector2(x, y - h), new Phaser.Math.Vector2(x + s * 0.55, y - s * 0.15), new Phaser.Math.Vector2(x + s * 0.4, y + s * 0.35), new Phaser.Math.Vector2(x - s * 0.4, y + s * 0.35), new Phaser.Math.Vector2(x - s * 0.55, y - s * 0.15)], true);
-  g.fillStyle(hot ? 0xffd34d : 0xc6d4d9, 1);
-  g.fillPoints([new Phaser.Math.Vector2(x, y - h * 0.45), new Phaser.Math.Vector2(x + s * 0.28, y + s * 0.05), new Phaser.Math.Vector2(x + s * 0.2, y + s * 0.3), new Phaser.Math.Vector2(x - s * 0.2, y + s * 0.3), new Phaser.Math.Vector2(x - s * 0.28, y + s * 0.05)], true);
-}
-
 export class TempoMeter {
   private g: G;
   private label: Phaser.GameObjects.Text;
-  private stag: Phaser.GameObjects.Text;
   private last = -1;
   private flashAt = -9999;
 
@@ -47,8 +36,7 @@ export class TempoMeter {
     depth: number,
   ) {
     this.g = scene.add.graphics().setDepth(depth);
-    this.label = scene.add.text(x, y + 22, t('tempo.label').toUpperCase(), TXT.caps(INK.deep)).setOrigin(0, 0.5).setDepth(depth);
-    this.stag = scene.add.text(x, y - 2, t('tempo.stagnation'), { ...TXT.body(14, INK.white, '800'), backgroundColor: '#E03552', padding: { x: 8, y: 2 } }).setOrigin(0, 1).setDepth(depth).setVisible(false);
+    this.label = scene.add.text(x, y + 11, t('tempo.label').toUpperCase(), TXT.caps(INK.deep)).setOrigin(0, 0.5).setDepth(depth);
   }
 
   /** level 0..3, frac = progress inside the level (0..1), stagnant = «Застой» is on. */
@@ -61,33 +49,35 @@ export class TempoMeter {
     const g = this.g;
     g.clear();
     const lx = this.x + this.label.width + 12;
-    const fw = 34;
-    const segW = (this.w - (lx - this.x) - fw - 6 - 3 * 5) / 4;
-    const h = 22;
-    const y = this.y + 11;
+    const segGap = 5;
+    const segW = Math.floor((this.w - (lx - this.x) - segGap * 3) / 4);
+    const h = 20;
+    const cy = this.y + 11;
     const flash = Math.max(0, 1 - (now - this.flashAt) / 400);
+    if (stagnant) {
+      const totalW = 4 * segW + 3 * segGap;
+      g.lineStyle(2, 0xe03552, 0.5 + 0.5 * Math.abs(Math.sin(now / 280)));
+      g.strokeRect(lx - 3, cy - h / 2 - 3, totalW + 6, h + 6);
+    }
     for (let k = 0; k < 4; k++) {
-      const sx = lx + k * (segW + 5);
+      const sx = lx + k * (segW + segGap);
       const on = k <= level;
-      // Parallelogram segments, like hazard tape.
-      const pts = [new Phaser.Math.Vector2(sx + 6, y), new Phaser.Math.Vector2(sx + segW, y), new Phaser.Math.Vector2(sx + segW - 6, y + h), new Phaser.Math.Vector2(sx, y + h)];
+      const pts = [new Phaser.Math.Vector2(sx + 5, cy - h / 2), new Phaser.Math.Vector2(sx + segW, cy - h / 2), new Phaser.Math.Vector2(sx + segW - 5, cy + h / 2), new Phaser.Math.Vector2(sx, cy + h / 2)];
       g.fillStyle(0x10171c, 0.85);
       g.fillPoints(pts, true);
       if (on) {
-        // The current segment fills by progress; lower ones are full.
         const f = k < level ? 1 : Math.max(0.25, frac);
-        g.fillStyle(SEG[k], 1);
-        g.fillPoints([new Phaser.Math.Vector2(sx + 6, y + 3), new Phaser.Math.Vector2(sx + 6 + (segW - 9) * f, y + 3), new Phaser.Math.Vector2(sx + 3 + (segW - 9) * f, y + h - 3), new Phaser.Math.Vector2(sx + 3, y + h - 3)], true);
+        const col = stagnant ? 0xe03552 : SEG[k];
+        const alpha = stagnant ? 0.65 + 0.35 * Math.abs(Math.sin(now / 280)) : 1;
+        g.fillStyle(col, alpha);
+        g.fillPoints([new Phaser.Math.Vector2(sx + 5, cy - h / 2 + 3), new Phaser.Math.Vector2(sx + 5 + (segW - 8) * f, cy - h / 2 + 3), new Phaser.Math.Vector2(sx + 3 + (segW - 8) * f, cy + h / 2 - 3), new Phaser.Math.Vector2(sx + 3, cy + h / 2 - 3)], true);
       }
       if (flash > 0) {
         g.fillStyle(0xffffff, 0.7 * flash);
         g.fillPoints(pts, true);
       }
     }
-    flame(g, lx + 4 * (segW + 5) + fw / 2 - 2, y + h / 2 - 2, 16, level >= 3, now);
-    this.stag.setVisible(stagnant);
-    if (stagnant) this.stag.setAlpha(0.65 + 0.35 * Math.sin(now / 260));
-    this.label.setColor(level >= 3 ? '#E2541B' : INK.deep);
+    this.label.setColor(stagnant ? '#e03552' : level >= 3 ? '#E2541B' : INK.deep);
   }
 }
 
