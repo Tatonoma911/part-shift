@@ -4,6 +4,7 @@ import { watchAccountConflicts } from './account/panel';
 import { GameScene } from './game/GameScene';
 import { LoadingScene } from './game/LoadingScene';
 import { MenuScene } from './game/MenuScene';
+import { ResultsPreviewScene } from './game/meta/ResultsPreviewScene';
 import { UniverseScene } from './game/UniverseScene';
 import { DossierScene } from './game/meta/DossierScene';
 import { applyPalette } from './game/comfort';
@@ -35,7 +36,7 @@ Promise.all([fontsReady(), account.boot()]).then(() => {
     scale: { mode: Phaser.Scale.FIT, autoCenter: Phaser.Scale.CENTER_BOTH },
     input: { activePointers: 2 },
     // The loading screen goes first: it loads the art and hands over to the menu.
-    scene: [LoadingScene, MenuScene, GameScene, DossierScene, UniverseScene],
+    scene: [LoadingScene, MenuScene, GameScene, DossierScene, UniverseScene, ResultsPreviewScene],
   });
   account.markLive();
   bootSocial();
