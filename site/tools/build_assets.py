@@ -110,6 +110,16 @@ def main():
             box = (box[0], box[1] + span * top, box[2], box[3] - span * bottom)
             webp(f'{REFS}/{sheet}.png', f'card-{name}', 700, box)
 
+    # GPT pack for the site (art/source/incoming/site) and the comic portraits, 3 moods per hero (art/comm/gpt).
+    INC = f'{PF}/art/source/incoming/site'
+    webp(f'{INC}/125_site_seraph_concept_sheet.png', 'card-seraph', 1400)
+    webp(f'{INC}/126_site_adaptants_sheet.png', 'adaptants-sheet', 1600)
+    webp(f'{INC}/127_site_control_billboard.png', 'control-billboard', 1600)
+    os.makedirs(os.path.join(OUT, 'portraits'), exist_ok=True)
+    for f in os.listdir(f'{PF}/art/comm/gpt'):
+        if f.endswith('.png'):
+            webp(f'{PF}/art/comm/gpt/{f}', 'portraits/' + f[:-4], 256)
+
     # Pixel sprites from the artist's cut-outs, in-game animation previews.
     for f in os.listdir(f'{PF}/art/source/cutouts/characters'):
         if f.endswith('.png'):
