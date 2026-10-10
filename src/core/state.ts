@@ -276,6 +276,8 @@ export interface RuleOverrides {
   threatEnabled?: boolean;
   bossEnabled?: boolean;
   commandInvulnerable?: boolean;
+  /** The tutorial: a cleared nest does not end the match; the guide's own last card does (FEEL_AUDIT F-15). */
+  holdVictory?: boolean;
   /** The command center may only go here (tutorial). */
   commandFixed?: { x: number; y: number };
   /** Sites laid out around wherever the command center lands (tutorial, design commandPlacement). */
