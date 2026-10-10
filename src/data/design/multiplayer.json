@@ -105,8 +105,8 @@
           "name_ru": "Разведчик",
           "mods": {
             "digTimeFactor": 0.7,
-            "peekNumbersEverySeconds": 45,
-            "peekVisibleToTeam": true,
+            "scannerChargesAdd": 2,
+            "scanMarksVisibleToTeam": true,
             "residentDamageFactor": 0.85
           }
         },
@@ -148,7 +148,7 @@
       "minAmount": 25,
       "cooldownSeconds": 10
     },
-    "assistMarksShared": "no auto-marks; player flags and pings are visible to the team",
+    "assistMarksShared": "only Разведчик's scan marks are visible to everyone; others see only their own marks",
     "pings": {
       "enabled": true,
       "gesture": "long press on a revealed cell or enemy",
@@ -175,7 +175,6 @@
     },
     "callTargetHpPerExtraPlayer": 0.6,
     "nestsPerPlayer": 6,
-    "heroLairsPerPlayer": 2,
-    "cellElementZonesFactor": 2
+    "heroLairsPerPlayer": 2
   }
 }

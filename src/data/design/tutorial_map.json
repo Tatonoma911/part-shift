@@ -76,13 +76,13 @@
       "id": 7,
       "text": "tutorial.step7",
       "focus": "nest_cell",
-      "until": "fight_won"
+      "until": "nest_opened"
     },
     {
       "id": 8,
       "text": "tutorial.step8",
       "until": "part_attached",
-      "minSeconds": 4
+      "minSeconds": 3
     },
     {
       "id": 9,

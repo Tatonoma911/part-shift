@@ -1,5 +1,5 @@
 {
-  "version": "0.9",
+  "version": "0.6",
   "buildings": [
     {
       "id": "command",
@@ -8,114 +8,41 @@
       "buildable": false,
       "cost": 0,
       "buildSeconds": 0,
-      "hp": 625,
-      "defense": 5,
+      "hp": 250,
+      "defense": 2,
       "territoryRadius": 2,
       "isKeep": true,
       "spawnPoint": true,
+      "heroBirthTiers": [1],
       "autoAttack": {
-        "damage": 20,
+        "damage": 8,
         "attackSeconds": 1.2,
         "range": 2,
         "tech": "kinetic"
       },
       "healAura": {
         "radius": 1,
-        "hpPerSecond": 5
+        "hpPerSecond": 2
       },
-      "_b2": "was 80 HP, no attack: one early nest ended the run",
-      "births": {
-        "lowestTierSquadHero": true
-      },
-      "heroCapBase": 2,
-      "catalogCard": {
-        "show": [
-          "orb of the hero it births (lowest-tier squad hero)"
-        ]
-      },
-      "feel": {
-        "groundTint": "#FFC94D",
-        "tintRadius": "healAura.radius / autoAttack.range",
-        "tintOverClosedCells": false,
-        "textKeyOnBuilt": "building.built.command",
-        "sfx": {
-          "place": "radio_click",
-          "start": "hammer",
-          "progress": "hammer_weld",
-          "done": "built_command"
-        }
-      }
-    },
-    {
-      "id": "station",
-      "name_ru": "Станция героя",
-      "template": true,
-      "perHero": true,
-      "sheet": null,
-      "buildable": true,
-      "cost": "heroes.json ourSide.birth.stations.costByTier",
-      "buildSeconds": 8,
-      "hp": 250,
-      "defense": 2.5,
-      "territoryRadius": 1,
-      "births": {
-        "fixedHero": "<heroId>"
-      },
-      "_note": "one buildable card per squad hero; sprite = common station + hero emblem",
-      "catalogCard": {
-        "_doc": "[Антон 10:45] стихия рождаемого героя видна в каталоге стройки",
-        "show": [
-          "hero portrait",
-          "element orb (hero tech colour, white for kinetic)",
-          "«Быстро копает: <cell type>» from config dig.cellDurability.cellWeakTo",
-          "«Силён против: <element>» from elements.json beats",
-          "«Пригодится: <cell type> рядом» if a revealed-adjacent zone is weak to this hero's element"
-        ]
-      },
-      "feel": {
-        "groundTint": "heroTech",
-        "tintRadius": 0,
-        "tintOverClosedCells": false,
-        "textKeyOnBuilt": "building.built.station",
-        "sfx": {
-          "place": "radio_click",
-          "start": "hammer",
-          "progress": "hammer_weld",
-          "done": "built_station"
-        }
-      }
+      "_b2": "was 80 HP, no attack: one early nest ended the run"
     },
     {
       "id": "home",
-      "name_ru": "Общежитие героев",
+      "name_ru": "Жилой блок",
       "sheet": 2,
       "buildable": true,
       "cost": 40,
       "buildSeconds": 6,
-      "hp": 250,
+      "hp": 100,
       "defense": 0,
       "spawnPoint": true,
+      "heroBirthTiers": [2],
       "shelter": {
         "capacity": 3,
-        "residentsInsideTakeNoDamage": true,
-        "shelterHealHpPerSecond": 2.5
+        "residentsInsideTakeNoDamage": true
       },
-      "_note": "v0.8: no births; +1 hero cap and shelter for 3",
-      "territoryRadius": 1,
-      "births": null,
-      "heroCapAdd": 1,
-      "feel": {
-        "groundTint": "#FFB060",
-        "tintRadius": 1,
-        "tintOverClosedCells": false,
-        "textKeyOnBuilt": "building.built.home",
-        "sfx": {
-          "place": "radio_click",
-          "start": "hammer",
-          "progress": "hammer_weld",
-          "done": "built_home"
-        }
-      }
+      "_note": "no longer changes population; new residents appear at the home nearest to the dig queue; fleeing residents hide inside",
+      "territoryRadius": 1
     },
     {
       "id": "reactor",
@@ -124,7 +51,7 @@
       "buildable": true,
       "cost": 50,
       "buildSeconds": 6,
-      "hp": 250,
+      "hp": 100,
       "defense": 0,
       "produce": {
         "energy": 1,
@@ -132,19 +59,7 @@
         "autonomous": true
       },
       "_note": "[Антон] produces energy by itself, no worker needed",
-      "territoryRadius": 1,
-      "feel": {
-        "groundTint": "#5FD3FF",
-        "tintRadius": 0,
-        "tintOverClosedCells": false,
-        "textKeyOnBuilt": "building.built.reactor",
-        "sfx": {
-          "place": "radio_click",
-          "start": "hammer",
-          "progress": "hammer_weld",
-          "done": "built_reactor"
-        }
-      }
+      "territoryRadius": 1
     },
     {
       "id": "cooler",
@@ -153,7 +68,7 @@
       "buildable": true,
       "cost": 100,
       "buildSeconds": 8,
-      "hp": 250,
+      "hp": 100,
       "defense": 0,
       "aura": {
         "radius": 1,
@@ -163,19 +78,7 @@
         "productionSpeedMultiplier": 2,
         "stacks": false
       },
-      "territoryRadius": 1,
-      "feel": {
-        "groundTint": "#A8EBFF",
-        "tintRadius": "aura.radius",
-        "tintOverClosedCells": false,
-        "textKeyOnBuilt": "building.built.cooler",
-        "sfx": {
-          "place": "radio_click",
-          "start": "hammer",
-          "progress": "hammer_weld",
-          "done": "built_cooler"
-        }
-      }
+      "territoryRadius": 1
     },
     {
       "id": "school",
@@ -184,24 +87,12 @@
       "buildable": true,
       "cost": 100,
       "buildSeconds": 10,
-      "hp": 250,
+      "hp": 100,
       "defense": 0,
       "territoryRadius": 2,
+      "heroBirthTiers": [3, 4],
       "trainingLevel": 1,
-      "_note": "v0.8: no births; +1 training level to all our heroes; unlocks tier-3 (1 school) and tier-4 (2 schools) stations",
-      "births": null,
-      "feel": {
-        "groundTint": "#4D7CFF",
-        "tintRadius": 2,
-        "tintOverClosedCells": false,
-        "textKeyOnBuilt": "building.built.school",
-        "sfx": {
-          "place": "radio_click",
-          "start": "hammer",
-          "progress": "hammer_weld",
-          "done": "built_school"
-        }
-      }
+      "_note": "each school (max 3) raises the training level of ALL residents by 1 (config.school.perLevel)"
     },
     {
       "id": "medcenter",
@@ -210,323 +101,30 @@
       "buildable": true,
       "cost": 120,
       "buildSeconds": 10,
-      "hp": 250,
+      "hp": 100,
       "defense": 0,
       "aura": {
         "radius": 2,
         "targets": [
-          "our_hero"
+          "resident"
         ],
-        "healAmount": 10,
+        "healAmount": 4,
         "healEverySeconds": 2
       },
-      "territoryRadius": 2,
-      "regrowLimbSeconds": 60,
-      "feel": {
-        "groundTint": "#4CD964",
-        "tintRadius": "aura.radius",
-        "tintOverClosedCells": false,
-        "textKeyOnBuilt": "building.built.medcenter",
-        "sfx": {
-          "place": "radio_click",
-          "start": "hammer",
-          "progress": "hammer_weld",
-          "done": "built_medcenter"
-        }
-      }
+      "territoryRadius": 2
     },
     {
-      "id": "outpost",
-      "name_ru": "Блокпост",
+      "id": "station",
+      "name_ru": "Станция героя",
       "sheet": null,
       "buildable": true,
       "cost": 60,
-      "buildSeconds": 6,
-      "hp": 200,
-      "defense": 2.5,
-      "territoryRadius": 3,
-      "maxCount": null,
-      "placement": "only on the edge of liberated land",
-      "requires": null,
-      "_role": "дешёвое расширение территории, больше ничего не делает",
-      "feel": {
-        "groundTint": "#E8C547",
-        "tintRadius": 2,
-        "tintOverClosedCells": false,
-        "textKeyOnBuilt": "building.built.outpost",
-        "sfx": {
-          "place": "radio_click",
-          "start": "hammer",
-          "progress": "hammer_weld",
-          "done": "built_outpost"
-        }
-      },
-      "heroAura": {
-        "radius": 2,
-        "defenseAdd": 5,
-        "_doc": "[2026-10-10 v0.9] усилен, чтобы был виден в бою"
-      }
-    },
-    {
-      "id": "relay",
-      "name_ru": "Ретранслятор",
-      "sheet": null,
-      "buildable": true,
-      "cost": 150,
-      "buildSeconds": 10,
-      "hp": 225,
-      "defense": 2.5,
-      "territoryRadius": 1,
-      "maxCount": 2,
-      "heroCapAdd": 1,
-      "raisesCapMaxBy": 1,
-      "pingRadiusAll": true,
-      "requires": null,
-      "_role": "+1 к лимиту героев сверх потолка сложности (до +2), но героев не рождает",
-      "feel": {
-        "groundTint": "#B05CFF",
-        "tintRadius": 0,
-        "tintOverClosedCells": false,
-        "textKeyOnBuilt": "building.built.relay",
-        "sfx": {
-          "place": "radio_click",
-          "start": "hammer",
-          "progress": "hammer_weld",
-          "done": "built_relay"
-        }
-      }
-    },
-    {
-      "id": "watchtower",
-      "name_ru": "Вышка наблюдения",
-      "sheet": null,
-      "buildable": true,
-      "cost": 180,
-      "buildSeconds": 12,
-      "hp": 250,
-      "defense": 2.5,
-      "territoryRadius": 1,
-      "maxCount": 1,
-      "peek": {
-        "area": "3x3",
-        "rangeFromTower": 4,
-        "chargeEverySeconds": 90,
-        "maxCharges": 2,
-        "showSeconds": 20
-      },
-      "requires": null,
-      "_role": "честный сапёр: не метит клетки, а за заряд показывает цифры квартала 3×3 без раскопки (MVP_RULES §3.1а)",
-      "feel": {
-        "groundTint": "#3DE0C8",
-        "tintRadius": "peek.rangeFromTower",
-        "tintOverClosedCells": true,
-        "textKeyOnBuilt": "building.built.watchtower",
-        "sfx": {
-          "place": "radio_click",
-          "start": "hammer",
-          "progress": "hammer_weld",
-          "done": "built_watchtower"
-        }
-      }
-    },
-    {
-      "id": "jammer",
-      "name_ru": "Глушилка Splice",
-      "sheet": null,
-      "buildable": true,
-      "cost": 160,
-      "buildSeconds": 10,
-      "hp": 275,
-      "defense": 5,
-      "territoryRadius": 1,
-      "maxCount": 3,
-      "aura": {
-        "radius": 2,
-        "targets": [
-          "enemy",
-          "enemy_hero"
-        ],
-        "moveSpeedFactor": 0.7,
-        "attackSpeedFactor": 0.8,
-        "noStatusesOrReactions": true,
-        "heroAbilitiesSilenced": true
-      },
-      "requires": {
-        "nestsDestroyed": 1
-      },
-      "_role": "оборона от рейдов: враги рядом медленнее и без стихийных эффектов",
-      "feel": {
-        "groundTint": "#D24DFF",
-        "tintRadius": "aura.radius",
-        "tintOverClosedCells": true,
-        "textKeyOnBuilt": "building.built.jammer",
-        "sfx": {
-          "place": "radio_click",
-          "start": "hammer",
-          "progress": "hammer_weld",
-          "done": "built_jammer"
-        }
-      }
-    },
-    {
-      "id": "backup_lab",
-      "name_ru": "Архив бэкапов",
-      "sheet": null,
-      "buildable": true,
-      "cost": 250,
-      "buildSeconds": 15,
-      "hp": 250,
-      "defense": 2.5,
-      "territoryRadius": 2,
-      "maxCount": 1,
-      "birthTimeFactor": 0.8,
-      "unlockProgressFactorThisRun": 1.5,
-      "requires": {
-        "schools": 1
-      },
-      "_role": "рождение героев на 20 % быстрее; прогресс открытия героев за эту смену ×1,5, если Архив стоит в конце смены",
-      "feel": {
-        "groundTint": "#FFFFFF",
-        "tintRadius": 0,
-        "tintOverClosedCells": false,
-        "textKeyOnBuilt": "building.built.backup_lab",
-        "sfx": {
-          "place": "radio_click",
-          "start": "hammer",
-          "progress": "hammer_weld",
-          "done": "built_backup_lab"
-        }
-      }
-    },
-    {
-      "id": "rotation_center",
-      "name_ru": "Центр ротации конечностей",
-      "sheet": null,
-      "buildable": true,
-      "cost": 400,
-      "buildSeconds": 20,
-      "hp": 400,
-      "defense": 5,
-      "territoryRadius": 2,
-      "maxCount": 1,
-      "requires": {
-        "schools": 2
-      },
-      "swap": {
-        "radius": 2,
-        "modes": [
-          "move trophy from hero A to hero B",
-          "swap two trophies of the same slot"
-        ],
-        "cooldownSeconds": 25,
-        "energyCost": 30,
-        "keepsStump": "moving a trophy away leaves the hero with its own limb back, not a stump",
-        "respectsMaxTrophies": 4
-      },
-      "_role": "[Антон] герои меняются трофеями между собой: собрать ударного героя или раздать стихии всем",
-      "feel": {
-        "groundTint": "#FF8A3D",
-        "tintRadius": 2,
-        "tintOverClosedCells": false,
-        "textKeyOnBuilt": "building.built.rotation_center",
-        "sfx": {
-          "place": "radio_click",
-          "start": "hammer",
-          "progress": "hammer_weld",
-          "done": "built_rotation_center"
-        }
-      }
-    },
-    {
-      "id": "forge",
-      "name_ru": "Кузница стихий",
-      "buildable": true,
-      "cost": 300,
-      "buildSeconds": 16,
-      "hp": 350,
-      "defense": 5,
-      "territoryRadius": 2,
-      "maxCount": 1,
-      "requires": {
-        "schools": 1
-      },
-      "recolor": {
-        "radius": 2,
-        "cooldownSeconds": 60,
-        "energyCost": 40,
-        "what": "change one trophy's element; strength and slot stay"
-      },
-      "feel": {
-        "groundTint": "chosenTech",
-        "tintRadius": 2,
-        "tintOverClosedCells": false,
-        "textKeyOnBuilt": "building.built.forge",
-        "sfx": {
-          "place": "radio_click",
-          "start": "hammer",
-          "progress": "hammer_weld",
-          "done": "built_forge"
-        }
-      }
-    },
-    {
-      "id": "civ_shelter",
-      "name_ru": "Приют горожан",
-      "buildable": true,
-      "cost": 90,
       "buildSeconds": 8,
-      "hp": 250,
-      "defense": 2.5,
+      "hp": 60,
+      "defense": 0,
       "territoryRadius": 1,
-      "maxCount": null,
-      "civilians": {
-        "raisesBalanceBonusCap": 5,
-        "energyEverySeconds": 5,
-        "perCivilianInShelter": 1,
-        "capacity": 5,
-        "_v02": "горожане теперь на балансе: Приют поднимает кап бонуса на 5 и даёт +1 Энергии каждые 5 с за каждого из первых 5"
-      },
-      "feel": {
-        "groundTint": "#FFD08A",
-        "tintRadius": 0,
-        "tintOverClosedCells": false,
-        "textKeyOnBuilt": "building.built.civ_shelter",
-        "sfx": {
-          "place": "radio_click",
-          "start": "hammer",
-          "progress": "hammer_weld",
-          "done": "built_civ_shelter"
-        }
-      }
-    },
-    {
-      "id": "repair",
-      "name_ru": "Ремонтная бригада",
-      "buildable": true,
-      "cost": 110,
-      "buildSeconds": 8,
-      "hp": 250,
-      "defense": 2.5,
-      "territoryRadius": 1,
-      "maxCount": 2,
-      "repair": {
-        "radius": 2,
-        "hpPerSecond": 7.5,
-        "ruinsRebuildFactor": 0.5,
-        "autoRebuildRuins": false
-      },
-      "feel": {
-        "groundTint": "#FFE14D",
-        "tintRadius": "repair.radius",
-        "tintOverClosedCells": false,
-        "textKeyOnBuilt": "building.built.repair",
-        "sfx": {
-          "place": "radio_click",
-          "start": "hammer",
-          "progress": "hammer_weld",
-          "done": "built_repair"
-        }
-      }
+      "heroBirthTiers": [],
+      "_note": "hero-specific: spawns the single hero whose id is stored in building.hero (set by the build command). Texture: building.station_<tech>. UI sends {type:'build', building:'station', x, y, hero}."
     }
   ],
   "territory": {
@@ -539,16 +137,7 @@
       "cooler": 1,
       "school": 2,
       "medcenter": 2,
-      "outpost": 3,
-      "relay": 1,
-      "watchtower": 1,
-      "jammer": 1,
-      "backup_lab": 2,
-      "rotation_center": 2,
-      "station": 1,
-      "forge": 2,
-      "civ_shelter": 1,
-      "repair": 1
+      "station": 1
     },
     "underConstructionCounts": false,
     "ruinsCount": false,
@@ -560,328 +149,5 @@
     ],
     "showOverlay": "when the build panel is open or the player taps an open cell: liberated cells get a soft green tint, border line; cells that would be added by the chosen building are previewed",
     "refuseToastKey": "build.refuse.not_liberated"
-  },
-  "upgrades": {
-    "_doc": "[Антон 2026-10-10 10:40] Тап по своему зданию открывает карточку: Улучшить / Усилить героев / Снести. BUILDINGS.md §6–8, MVP_RULES §7.2",
-    "maxLevel": 3,
-    "defaultCostFactorByLevel": {
-      "2": 0.75,
-      "3": 1.5
-    },
-    "defaultSecondsFactorByLevel": {
-      "2": 1.0,
-      "3": 1.5
-    },
-    "hpFactorPerLevel": 1.25,
-    "upgradeRepairsFully": true,
-    "worksWhileUpgrading": true,
-    "needsOneHeroAtSite": true,
-    "level3RequiresCommandLevel": 2,
-    "blockedIfEnemyWithin": 2,
-    "levelPips": "1–3 шеврона на здании",
-    "perBuilding": {
-      "command": {
-        "levels": {
-          "2": {
-            "cost": 150,
-            "seconds": 15,
-            "autoAttackDamage": 30,
-            "healAuraRadius": 2,
-            "heroCapAdd": 1
-          },
-          "3": {
-            "cost": 300,
-            "seconds": 20,
-            "requires": {
-              "school": 1
-            },
-            "autoAttackDamage": 45,
-            "autoAttackRange": 3,
-            "heroCapAdd": 1,
-            "territoryRadius": 3
-          }
-        }
-      },
-      "home": {
-        "levels": {
-          "2": {
-            "heroCapAdd": 1,
-            "shelterCapacity": 5
-          },
-          "3": {
-            "birthTimeFactor": 0.75,
-            "shelterHealHpPerSecond": 7.5
-          }
-        }
-      },
-      "station": {
-        "levels": {
-          "2": {
-            "birthTimeFactor": 0.7
-          },
-          "3": {
-            "bornWithStars": 1
-          }
-        }
-      },
-      "reactor": {
-        "levels": {
-          "2": {
-            "everySeconds": 2.5
-          },
-          "3": {
-            "everySeconds": 2
-          }
-        }
-      },
-      "cooler": {
-        "levels": {
-          "2": {
-            "auraRadius": 2
-          },
-          "3": {
-            "productionSpeedMultiplier": 2.5
-          }
-        }
-      },
-      "school": {
-        "levels": {
-          "2": {
-            "trainingLevelAdd": 1
-          },
-          "3": {
-            "trainingCostFactor": 0.6,
-            "trainingSeconds": 10
-          }
-        }
-      },
-      "medcenter": {
-        "levels": {
-          "2": {
-            "healAmount": 15,
-            "auraRadius": 3
-          },
-          "3": {
-            "regrowLimbSeconds": 30
-          }
-        }
-      },
-      "outpost": {
-        "maxLevel": 2,
-        "levels": {
-          "2": {
-            "hp": 400,
-            "defense": 5,
-            "autoAttack": {
-              "damage": 10,
-              "attackSeconds": 1.5,
-              "range": 2,
-              "tech": "kinetic"
-            }
-          }
-        }
-      },
-      "relay": {
-        "maxLevel": 2,
-        "levels": {
-          "2": {
-            "heroCapAdd": 1
-          }
-        }
-      },
-      "watchtower": {
-        "maxLevel": 2,
-        "levels": {
-          "2": {
-            "chargeEverySeconds": 60,
-            "maxCharges": 3
-          }
-        }
-      },
-      "jammer": {
-        "levels": {
-          "2": {
-            "auraRadius": 3
-          },
-          "3": {
-            "moveSpeedFactor": 0.55,
-            "attackSpeedFactor": 0.7
-          }
-        }
-      },
-      "backup_lab": {
-        "maxLevel": 2,
-        "levels": {
-          "2": {
-            "birthTimeFactor": 0.65
-          }
-        }
-      },
-      "rotation_center": {
-        "maxLevel": 2,
-        "levels": {
-          "2": {
-            "energyPerSwap": 20,
-            "cooldownSeconds": 15
-          }
-        }
-      },
-      "forge": {
-        "maxLevel": 2,
-        "levels": {
-          "2": {
-            "energyPerRecolor": 25,
-            "cooldownSeconds": 40
-          }
-        }
-      },
-      "civ_shelter": {
-        "maxLevel": 2,
-        "levels": {
-          "2": {
-            "capacity": 8
-          }
-        }
-      },
-      "repair": {
-        "maxLevel": 2,
-        "levels": {
-          "2": {
-            "hpPerSecond": 10,
-            "radius": 3
-          }
-        }
-      }
-    }
-  },
-  "heroBoosts": {
-    "_doc": "Кнопки «Усилить героев» в карточке здания. Цель — герои в радиусе от здания. BUILDINGS.md §7",
-    "stars": {
-      "max": 3,
-      "perStar": {
-        "hpFactor": 1.1,
-        "damageFactor": 1.1
-      },
-      "_doc": "звёзды подготовки живут до конца смены; показываются над полоской HP"
-    },
-    "byBuilding": {
-      "command": [
-        {
-          "id": "emergency_ration",
-          "radius": 3,
-          "energy": 40,
-          "cooldownSeconds": 90,
-          "effect": {
-            "healPercentMaxHp": 50
-          },
-          "name_ru": "Аварийный паёк",
-          "textKey": "building.boost.emergency_ration"
-        }
-      ],
-      "school": [
-        {
-          "id": "train_star",
-          "radius": 2,
-          "energy": 50,
-          "seconds": 20,
-          "target": "one_hero",
-          "effect": {
-            "addStar": 1
-          },
-          "heroBusyWhileTraining": true,
-          "name_ru": "Тренировка",
-          "textKey": "building.boost.train_star"
-        }
-      ],
-      "station": [
-        {
-          "id": "field_drill",
-          "radius": 2,
-          "energy": 35,
-          "cooldownSeconds": 60,
-          "target": "own_hero_type",
-          "effect": {
-            "damageFactor": 1.3,
-            "durationSeconds": 30
-          },
-          "name_ru": "Пятиминутка",
-          "textKey": "building.boost.field_drill"
-        }
-      ],
-      "medcenter": [
-        {
-          "id": "urgent_surgery",
-          "radius": 2,
-          "energy": 60,
-          "cooldownSeconds": 45,
-          "target": "one_hero_with_stump",
-          "effect": {
-            "regrowLimbNow": true
-          },
-          "name_ru": "Срочная операция",
-          "textKey": "building.boost.urgent_surgery"
-        }
-      ],
-      "home": [
-        {
-          "id": "rest",
-          "target": "sheltered",
-          "energy": 0,
-          "effect": {
-            "shelterHealHpPerSecond": 5
-          },
-          "_doc": "бесплатно: спрятать раненых героев внутрь",
-          "name_ru": "Тихий час",
-          "textKey": "building.boost.rest"
-        }
-      ],
-      "forge": [
-        {
-          "id": "element_coat",
-          "radius": 2,
-          "energy": 45,
-          "cooldownSeconds": 60,
-          "target": "one_hero",
-          "effect": {
-            "addElementToAttacks": "chosen",
-            "durationSeconds": 45
-          },
-          "name_ru": "Стихийный заряд",
-          "textKey": "building.boost.element_coat"
-        }
-      ]
-    }
-  },
-  "demolish": {
-    "_doc": "Снос. BUILDINGS.md §8",
-    "allowed": true,
-    "forbidden": [
-      "command"
-    ],
-    "confirm": "second_tap_within_seconds",
-    "confirmSeconds": 3,
-    "seconds": 3,
-    "refundFactorOfInvested": 0.5,
-    "refundScalesWithHpFraction": true,
-    "cancelConstructionRefund": 1.0,
-    "leaves": "ground",
-    "territoryStaysForStandingBuildings": true,
-    "shelteredHeroesExit": true,
-    "capOverflowHeroesStay": true,
-    "blockedIfEnemyWithin": 2
-  },
-  "feelRules": {
-    "_doc": "BUILDINGS.md §9",
-    "tintAlpha": {
-      "idle": 0.12,
-      "selected": 0.3
-    },
-    "buildSteps": [
-      "ghost+zone preview",
-      "scaffold fx",
-      "hammer ticks at 25/50/75%",
-      "dust settle + stamp ПРИНЯТО + text of what it gives + zone flash"
-    ],
-    "noCodeDeformOfBuilding": true
   }
 }

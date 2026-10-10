@@ -11,7 +11,7 @@
       "enemyHpFactor": 0.8,
       "enemyDamageFactor": 0.85,
       "startEnergy": 120,
-      "assistMode": "none",
+      "assistMode": "full",
       "noGuessBoard": true,
       "bossSelfWakeSeconds": 900,
       "callTargetHpFactor": 1.2,
@@ -32,7 +32,7 @@
       "enemyHpFactor": 1.05,
       "enemyDamageFactor": 1.15,
       "startEnergy": 70,
-      "assistMode": "none",
+      "assistMode": "scanner",
       "noGuessBoard": true,
       "bossSelfWakeSeconds": 660,
       "callTargetHpFactor": 1.5,
@@ -58,7 +58,7 @@
       "enemyHpFactor": 1.2,
       "enemyDamageFactor": 1.25,
       "startEnergy": 60,
-      "assistMode": "none",
+      "assistMode": "off",
       "noGuessBoard": false,
       "bossSelfWakeSeconds": 540,
       "callTargetHpFactor": 1.7,
@@ -82,10 +82,8 @@
   ],
   "_timeline_shift": "[Антон 21:26: соло выше среднего по сложности, злодеи регулярно ломают здания] threat every 100 s; first raid 2:30 then every 60 s; heroes self-open at 3:20 / 6:40 / 8:20, call target 11:00; novice target win 13–17 min with some losses, experienced 9–12 min",
   "unlocks": {
-    "intern": "campaign shifts 1–4 use it; free choice after campaign shift 12",
-    "shift": "always",
-    "rush": "campaign shift 12 cleared",
-    "_old": "rush: first win on shift"
+    "rush": "first win on shift",
+    "intern": "always"
   },
   "records": "best time is kept per difficulty",
   "noGuess": {
@@ -125,19 +123,7 @@
     "minSecondsSirenToFirstHit": 10,
     "spawnMinDistanceFromBuildings": 6,
     "tunnelExit": "if the source nest is closer than 6 cells to any player building, raiders surface at a revealed or closed cell 6 cells away along the line from the target; they wait there until the siren has run 10 s",
-    "_b3": "QA B-3: reactor fell 4 s after the toast, home in the same second",
-    "callEarly": {
-      "_doc": "[Антон 10:49] «давай мне больше врагов». MVP_RULES §17.4",
-      "availableFromSeconds": 90,
-      "onlyIfNoActiveRaid": true,
-      "confirm": "second tap",
-      "sirenSeconds": 5,
-      "energyPerSecondSaved": "1 × (1 + 0.1 × threatLevel)",
-      "scorePerSecondSaved": 2,
-      "tempoPoints": 3,
-      "nextTimer": "normal interval counted from the called raid",
-      "internWithoutRaids": "button «Позвать рейд» still offered; raid uses shift rules"
-    }
+    "_b3": "QA B-3: reactor fell 4 s after the toast, home in the same second"
   },
   "buildingDamage": {
     "enemyVsBuildingFactor": 1.5,
@@ -148,32 +134,6 @@
       "rebuildSecondsFactor": 0.5
     },
     "hitShake": true,
-    "_note": "разрушенное здание оставляет руины, отстроить можно за полцены",
-    "enemyHeroDpsCap": {
-      "_doc": "QA F-03: один герой не сносит центр быстрее ~30 с",
-      "commandMaxHpFractionPerSecond": 0.033,
-      "buildingMaxHpFractionPerSecond": 0.06,
-      "perHero": true
-    }
-  },
-  "_assistNote": "v0.7: no auto-marks on any difficulty; Стажёр helps with no-guess board, slower threat, more energy and the neighbour highlight",
-  "lairSelfOpenWarning": {
-    "_doc": "QA F-03",
-    "seconds": 30,
-    "show": [
-      "countdown above the lair cell",
-      "edge arrow",
-      "alarm sound",
-      "summary line «Через 0:30 выйдет <герой>, слабость <стихия>»"
-    ]
-  },
-  "callTargetEarlyWake": {
-    "_doc": "QA F-09: смена не должна стоять",
-    "when": [
-      "closed non-water cells ≤ 15%",
-      "all other lairs and nests destroyed"
-    ],
-    "warningSeconds": 20,
-    "hudGoal": "«Найдите и победите: <цель>» always visible; boss channel (purple numbers) hint once"
+    "_note": "разрушенное здание оставляет руины, отстроить можно за полцены"
   }
 }

@@ -1,29 +1,20 @@
 {
-  "version": "0.2",
+  "version": "0.1",
   "_doc": "Мины, капсулы, аптечки (batch04, art 213–215). MVP_RULES §5.2. Принято с чисел Программиста 2 с правками геймдизайнера",
   "mine": {
     "channel": "threat",
     "countByDifficulty": {
-      "intern": 8,
-      "shift": 14,
-      "crunch": 20
+      "intern": 2,
+      "shift": 3,
+      "crunch": 5
     },
-    "quickMode": 6,
+    "quickMode": 2,
     "coopFactor": 2,
     "element": "zone element of its cell (mapgen.cellElements); safe radius never holds mines",
-    "markedDig": {
-      "defuse": true,
-      "energy": 15,
-      "tempoPoints": 1
-    },
-    "enemiesTrigger": false,
-    "afterUse": "ground",
-    "noGuess": "mines count as threats for the no-guess generator, same as nests",
-    "_v02": "[Антон 14:45] мин заметно больше, взрыв серьёзно ранит отряд, чтобы рейд в этот момент мог всех добить",
-    "densityNote": "Смена 14×18: 6 гнёзд + 4 убежища + 14 мин ≈ 10 % угроз, как «новичок» в классическом сапёре; поле без угадываний сохраняется",
     "unmarkedDig": {
       "armSeconds": 1.2,
       "radius": 1,
+      "damage": 25,
       "hitsBuildings": true,
       "status": {
         "thermo": "burn",
@@ -36,31 +27,19 @@
         },
         "impact": {
           "knockbackTiles": 1,
-          "defenseMinus": 5,
+          "defenseMinus": 2,
           "seconds": 10
         }
-      },
-      "heroDamageMaxHpFraction": {
-        "intern": 0.5,
-        "shift": 0.7,
-        "crunch": 0.8
-      },
-      "neverKillsAlone": true,
-      "leavesMinHp": 1,
-      "concussion": {
-        "seconds": 20,
-        "digSpeedFactor": 0.7,
-        "attackSpeedFactor": 0.7,
-        "moveSpeedFactor": 0.8
-      },
-      "buildingDamageMaxHpFraction": 0.4,
-      "tearLimbChance": 0.25,
-      "threatBump": {
-        "_doc": "взрыв слышат гнёзда: таймер угрозы +15 с",
-        "threatSeconds": 15
-      },
-      "tempoReset": true
-    }
+      }
+    },
+    "markedDig": {
+      "defuse": true,
+      "energy": 15,
+      "tempoPoints": 1
+    },
+    "enemiesTrigger": false,
+    "afterUse": "ground",
+    "noGuess": "mines count as threats for the no-guess generator, same as nests"
   },
   "bonusCapsule": {
     "channel": "finds",
@@ -95,7 +74,7 @@
     "count": 2,
     "quickMode": 1,
     "radius": 1,
-    "hpPerSecond": 7.5,
+    "hpPerSecond": 3,
     "seconds": 10,
     "doctorFactor": 1.5,
     "emptyStays": true

@@ -57,9 +57,9 @@
       "stackable": true,
       "maxStacks": 2,
       "effect": {
-        "type": "hero_cap_and_free_birth",
-        "cap": 1,
-        "freeBirths": 1
+        "type": "residents_now_and_cap",
+        "residents": 2,
+        "cap": 2
       }
     },
     {
@@ -87,16 +87,16 @@
       }
     },
     {
-      "id": "peek_numbers",
+      "id": "drone_scan",
       "name_ru": "Дрон-разведчик",
       "rarity": "common",
       "stackable": true,
       "effect": {
-        "type": "peek_numbers",
-        "area": "3x3 chosen by tap",
-        "durationSeconds": 20,
-        "uses": 2
-      }
+        "type": "scan_now_and_charges",
+        "markDurationSeconds": 30,
+        "scannerChargesAdd": 2
+      },
+      "_note": "in assist mode off: only marks for 30 s, no charges"
     },
     {
       "id": "first_aid",
@@ -105,7 +105,7 @@
       "stackable": false,
       "effect": {
         "type": "residentRegen",
-        "hpPerSecond": 2.5,
+        "hpPerSecond": 1,
         "onlyOutOfCombatSeconds": 3
       }
     },
@@ -134,7 +134,7 @@
       "effect": {
         "type": "give_part",
         "tier": 2,
-        "to": "our hero with the most empty or stump slots",
+        "to": "resident with the most empty slots",
         "slotPriority": [
           "arm",
           "leg"
@@ -159,7 +159,7 @@
       "stackable": true,
       "maxStacks": 2,
       "effect": {
-        "type": "birthTimeFactor",
+        "type": "spawnIntervalFactor",
         "value": 0.8
       }
     }

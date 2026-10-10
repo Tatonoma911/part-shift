@@ -27,14 +27,14 @@
     {
       "id": "buyback",
       "a": {
-        "energy": 80,
-        "civiliansFromBalance": 3
+        "civiliansLose": 3,
+        "energy": 80
       },
       "b": {
         "nextRaidSooner": 30
       },
       "requires": {
-        "civiliansOnBalance": 3
+        "civiliansRescued": 3
       }
     },
     {
