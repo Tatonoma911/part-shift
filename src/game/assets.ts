@@ -23,13 +23,14 @@ interface AnimSet {
 export const animSets = (animJson as unknown as { sets: Record<string, AnimSet> }).sets;
 
 function keyOf(path: string): string | null {
-  const m = path.match(/art\/(tiles|buildings|icons|portraits|screens|anim|buildings_gpt|nests_gpt|villains_mixed|objects_b4)\/(.+)\.(?:png|jpg)$/);
+  const m = path.match(/art\/(tiles|buildings|icons|portraits|screens|anim|buildings_gpt|nests_gpt|villains_mixed|objects_b4|objects_gpt_b4b|objects_gpt_b4sq)\/(.+)\.(?:png|jpg)$/);
   if (!m) return null;
   const [, dir, name] = m;
   if (dir === 'anim') return name;
   const singular: Record<string, string> = {
     tiles: 'tile', buildings: 'building', icons: 'icon', portraits: 'portrait', screens: 'screen',
     buildings_gpt: 'bldg', nests_gpt: 'nest_gpt', villains_mixed: 'villain', objects_b4: 'obj4',
+    objects_gpt_b4b: 'obj4b', objects_gpt_b4sq: 'obj4sq',
   };
   return `${singular[dir]}.${name.replace('@2x', '')}`;
 }
