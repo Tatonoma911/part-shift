@@ -74,6 +74,9 @@ export interface BuildingDef {
   };
   spawnPoint?: boolean;
   trainingLevel?: number;
+  /** Hero tiers this building spawns when construction completes (MVP_RULES §4.1b). */
+  heroBirthTiers?: number[];
+
   autoAttack?: { damage: number; attackSeconds: number; range: number; tech?: string };
   healAura?: { radius: number; hpPerSecond: number };
 }
@@ -110,6 +113,8 @@ export interface HeroDef {
   name_ru: string;
   tech: AttackTech;
   tier: number;
+  /** True: no infected lair in the map; this hero exists as an ally only (e.g. Standard). */
+  allyOnly?: boolean;
   enemy: UnitStats & {
     attackTech: AttackTech;
     resist: Resist;

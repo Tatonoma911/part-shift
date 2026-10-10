@@ -26,6 +26,47 @@
   "allyRespawnSeconds": "see allyRules.respawnSeconds",
   "heroes": [
     {
+      "id": "standard",
+      "name_ru": "Стандарт",
+      "tech": "kinetic",
+      "tier": 1,
+      "allyOnly": true,
+      "_note": "Союзный герой; заражённая версия удалена навсегда. Появляется как союзник из командного центра (heroBirthTiers [1]).",
+      "enemy": {
+        "hp": 240,
+        "damage": 10,
+        "defense": 1,
+        "attackSeconds": 1.0,
+        "speed": 2.4,
+        "attackTech": "kinetic",
+        "resist": {
+          "thermo": 1.0,
+          "cryo": 1.0,
+          "volt": 1.0,
+          "toxin": 1.0,
+          "impact": 1.0
+        },
+        "ability": {
+          "id": "serial_copies",
+          "desc": "в боевом режиме жители рядом атакуют чаще"
+        },
+        "reward": 0
+      },
+      "drops": [
+        { "slot": "arm", "id": "standard_arm", "tech": "kinetic", "damage": 5 },
+        { "slot": "leg", "id": "standard_leg", "tech": "kinetic", "hp": 15, "speed": 0.3 }
+      ],
+      "ally": {
+        "passive": "spawnIntervalFactor",
+        "value": 0.85,
+        "desc_ru": "жители появляются на 15% быстрее"
+      },
+      "unlock": {
+        "type": "starter",
+        "desc": "стартовый герой"
+      }
+    },
+    {
       "id": "patch",
       "name_ru": "Патч",
       "canon": "PATCH (визуальное направление)",
@@ -898,6 +939,7 @@
   },
   "ourSide": {
     "starterRoster": [
+      "standard",
       "patch",
       "canopy",
       "current"
