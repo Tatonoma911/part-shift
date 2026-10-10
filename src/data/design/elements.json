@@ -5,7 +5,7 @@
     {
       "id": "thermo",
       "name_ru": "Огонь",
-      "color": "#FF8A3D",
+      "color": "#E53935",
       "status": "burn"
     },
     {
@@ -17,7 +17,7 @@
     {
       "id": "volt",
       "name_ru": "Молния",
-      "color": "#FFE14D",
+      "color": "#2F6BFF",
       "status": "shock"
     },
     {
