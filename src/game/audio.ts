@@ -22,6 +22,8 @@ interface MusicDef {
   volume: number;
   loop: boolean;
   loopSeconds: number;
+  /** 92 bpm stage track: switches on a bar line of the running 92 bpm music (MUSIC.md). */
+  barSync?: boolean;
 }
 
 interface MusicTrack {
@@ -93,7 +95,7 @@ class SoundBoard {
   private tracks: MusicTrack[] = [];
   private wantMusic: string | null = null;
   private musicToken = 0;
-  /** AudioContext time the run layers started (bar grid for the demon entry). */
+  /** AudioContext time the bar grid of the running 92 bpm music started (run layers and barSync stages). */
   private runStart: number | null = null;
   private layerTarget: Record<string, number> = { run_calm: 1, run_heroes: 0, run_danger: 0 };
   private afterBoss = false;
@@ -227,8 +229,10 @@ class SoundBoard {
 
   /**
    * Music per audio/MUSIC.md. 'run' starts the three run_* layers in sync
-   * (gains follow setLayers); 'demon' crossfades in on the next bar; one-shot
-   * tracks (victory, defeat) hand over to 'menu' when they end.
+   * (gains follow setLayers); a barSync stage (demon, raid, hero_hunt,
+   * last_stand) crossfades in on the next bar of the running 92 bpm music;
+   * the slow ambients crossfade over 3 s; one-shot tracks (victory, defeat)
+   * hand over to 'menu' when they end.
    */
   playMusic(id: string): void {
     if (this.wantMusic === id && this.tracks.length) return;
@@ -243,10 +247,13 @@ class SoundBoard {
       if (token !== this.musicToken || this.wantMusic !== id || bufs.some((b) => !b)) return;
       const old = this.tracks;
       const now = ctx.currentTime;
-      // Demon enters on a bar line of the running layers (same tempo, MUSIC.md).
+      // 92 bpm tracks enter on a bar line of the running 92 bpm music (MUSIC.md).
+      const synced = id === 'run' || !!defs[0].barSync;
+      const fromSynced = this.runStart !== null && old.length > 0;
       let at = now + 0.1;
-      if (id === 'demon' && this.runStart !== null) at = this.runStart + Math.ceil((now + 0.1 - this.runStart) / BAR) * BAR;
-      const fadeIn = id === 'run' && this.afterBoss ? 3 : id === 'menu' && this.afterEnd ? 3 : id === 'demon' ? 1.5 : 0.4;
+      if (synced && fromSynced) at = this.runStart! + Math.ceil((now + 0.1 - this.runStart!) / BAR) * BAR;
+      const stage = old.length > 0 && !(id === 'menu' || id === 'victory' || id === 'defeat');
+      const fadeIn = this.afterBoss || (id === 'menu' && this.afterEnd) ? 3 : stage ? (synced && fromSynced ? 1.5 : 3) : 0.4;
       this.afterBoss = this.afterEnd = false;
       this.tracks = ids.map((m, i) => {
         const def = defs[i];
@@ -268,9 +275,25 @@ class SoundBoard {
           };
         return { id: m, src, gain, volume: def.volume };
       });
-      this.runStart = id === 'run' ? at : this.runStart;
-      this.fadeOut(old, id === 'demon' ? at + 1.5 - now : 0.4);
+      if (!synced) this.runStart = null;
+      else if (!fromSynced) this.runStart = at;
+      this.fadeOut(old, stage ? at + fadeIn - now : 0.4);
+      this.evictMusic(ids);
     });
+  }
+
+  /**
+   * Stage tracks are about a minute of decoded stereo each (~20 MB): keep the
+   * run layers and what is playing, let the rest be decoded again when needed.
+   */
+  private evictMusic(keep: string[]): void {
+    const files = new Set([...RUN_LAYERS, ...keep].flatMap((m) => MUSIC[m]?.files ?? []));
+    for (const def of Object.values(MUSIC))
+      for (const f of def.files)
+        if (!files.has(f)) {
+          this.buffers.delete(f);
+          this.loading.delete(f);
+        }
   }
 
   /** run_heroes / run_danger targets (0..1); ramps up in 1.5 s, down in 4 s. */
@@ -288,14 +311,11 @@ class SoundBoard {
     }
   }
 
-  /** The call target fell: demon fades in 3 s and the run layers come back. */
+  /** The call target fell: the demon fades out over 3 s into the calm "after the storm" track. */
   bossDown(): void {
     if (this.wantMusic !== 'demon') return;
     this.afterBoss = true;
-    this.fadeOut(this.tracks, 3);
-    this.tracks = [];
-    this.runStart = null;
-    this.playMusic('run');
+    this.playMusic('aftermath');
   }
 
   /** Pause ducks the music bus to 35 % instead of silencing it. */

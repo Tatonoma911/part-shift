@@ -5,6 +5,332 @@
     "mp3"
   ],
   "sfx": {
+    "enemy_die": {
+      "files": [
+        "sfx/enemy_die_1",
+        "sfx/enemy_die_2",
+        "sfx/enemy_die_3"
+      ],
+      "volume": 0.45,
+      "cooldownMs": 70,
+      "maxInstances": 3,
+      "priority": 2,
+      "group": "combat",
+      "stereo": true
+    },
+    "build_place": {
+      "files": [
+        "sfx/build_place"
+      ],
+      "volume": 0.6,
+      "cooldownMs": 60,
+      "maxInstances": 2,
+      "priority": 3,
+      "group": "world",
+      "stereo": true
+    },
+    "build_done": {
+      "files": [
+        "sfx/build_done"
+      ],
+      "volume": 0.7,
+      "cooldownMs": 150,
+      "maxInstances": 2,
+      "priority": 3,
+      "group": "world",
+      "stereo": true
+    },
+    "center_hit": {
+      "files": [
+        "sfx/center_hit"
+      ],
+      "volume": 0.7,
+      "cooldownMs": 600,
+      "maxInstances": 1,
+      "priority": 5,
+      "group": "alert",
+      "stereo": true
+    },
+    "hero_part_taken": {
+      "files": [
+        "sfx/hero_part_taken"
+      ],
+      "volume": 0.9,
+      "cooldownMs": 0,
+      "maxInstances": 1,
+      "priority": 6,
+      "group": "combat",
+      "note": "a defender takes a named hero limb; play instead of part_attached",
+      "stereo": true
+    },
+    "boon_taken": {
+      "volume": 0.8,
+      "cooldownMs": 0,
+      "maxInstances": 1,
+      "priority": 5,
+      "group": "ui",
+      "files": [
+        "sfx/boon_taken"
+      ],
+      "stereo": true
+    },
+    "ally_down": {
+      "volume": 0.7,
+      "cooldownMs": 500,
+      "maxInstances": 1,
+      "priority": 5,
+      "group": "combat",
+      "files": [
+        "sfx/ally_down"
+      ],
+      "stereo": true
+    },
+    "site_marked": {
+      "volume": 0.6,
+      "cooldownMs": 100,
+      "maxInstances": 1,
+      "priority": 3,
+      "group": "ui",
+      "files": [
+        "sfx/site_marked"
+      ],
+      "stereo": true
+    },
+    "healed": {
+      "volume": 0.4,
+      "cooldownMs": 400,
+      "maxInstances": 1,
+      "priority": 1,
+      "group": "combat",
+      "files": [
+        "sfx/healed"
+      ],
+      "stereo": true
+    },
+    "energy_orb_arrive": {
+      "files": [
+        "sfx/energy_orb_arrive_1",
+        "sfx/energy_orb_arrive_2",
+        "sfx/energy_orb_arrive_3",
+        "sfx/energy_orb_arrive_4"
+      ],
+      "volume": 0.35,
+      "cooldownMs": 60,
+      "maxInstances": 3,
+      "priority": 1,
+      "group": "world",
+      "note": "combo: orbs less than 1.5 s apart play variant 1 with detune stepping 0,200,400,700,900,1200 cents (major pentatonic), then stay at 1200; reset after 1.5 s of silence. Outside a combo pick a random variant.",
+      "stereo": true
+    },
+    "dig_done": {
+      "files": [
+        "sfx/dig_done_1",
+        "sfx/dig_done_2",
+        "sfx/dig_done_3"
+      ],
+      "volume": 0.5,
+      "cooldownMs": 80,
+      "maxInstances": 3,
+      "priority": 2,
+      "group": "world",
+      "stereo": true
+    },
+    "survivor_joined": {
+      "volume": 0.7,
+      "cooldownMs": 0,
+      "maxInstances": 1,
+      "priority": 4,
+      "group": "world",
+      "files": [
+        "sfx/survivor_joined"
+      ],
+      "stereo": true
+    },
+    "building_lost": {
+      "files": [
+        "sfx/building_lost"
+      ],
+      "volume": 0.8,
+      "cooldownMs": 200,
+      "maxInstances": 2,
+      "priority": 4,
+      "group": "world",
+      "stereo": true
+    },
+    "frozen": {
+      "volume": 0.5,
+      "cooldownMs": 150,
+      "maxInstances": 2,
+      "priority": 2,
+      "group": "combat",
+      "files": [
+        "sfx/frozen"
+      ],
+      "stereo": true
+    },
+    "command_placed": {
+      "volume": 0.9,
+      "cooldownMs": 0,
+      "maxInstances": 1,
+      "priority": 6,
+      "group": "world",
+      "files": [
+        "sfx/command_placed"
+      ],
+      "stereo": true
+    },
+    "reaction": {
+      "volume": 0.7,
+      "cooldownMs": 200,
+      "maxInstances": 2,
+      "priority": 4,
+      "group": "combat",
+      "files": [
+        "sfx/reaction"
+      ],
+      "stereo": true
+    },
+    "quarantine_siren": {
+      "files": [
+        "sfx/quarantine_siren"
+      ],
+      "volume": 0.45,
+      "cooldownMs": 20000,
+      "maxInstances": 1,
+      "priority": 3,
+      "group": "world",
+      "note": "distant city siren: first hero_spawn of a run and when a hero lair is opened; never more than once per 20 s",
+      "stereo": true
+    },
+    "dig_start": {
+      "files": [
+        "sfx/dig_start_1",
+        "sfx/dig_start_2",
+        "sfx/dig_start_3"
+      ],
+      "volume": 0.35,
+      "cooldownMs": 120,
+      "maxInstances": 2,
+      "priority": 1,
+      "group": "world",
+      "stereo": true
+    },
+    "boon_offer": {
+      "volume": 0.7,
+      "cooldownMs": 0,
+      "maxInstances": 1,
+      "priority": 5,
+      "group": "ui",
+      "files": [
+        "sfx/boon_offer"
+      ],
+      "stereo": true
+    },
+    "defender_hit": {
+      "files": [
+        "sfx/defender_hit_1",
+        "sfx/defender_hit_2",
+        "sfx/defender_hit_3"
+      ],
+      "volume": 0.35,
+      "cooldownMs": 90,
+      "maxInstances": 3,
+      "priority": 1,
+      "group": "combat",
+      "stereo": true
+    },
+    "part_attached": {
+      "files": [
+        "sfx/part_attached"
+      ],
+      "volume": 0.8,
+      "cooldownMs": 0,
+      "maxInstances": 2,
+      "priority": 5,
+      "group": "combat",
+      "stereo": true
+    },
+    "cell_reveal": {
+      "files": [
+        "sfx/cell_reveal_1",
+        "sfx/cell_reveal_2",
+        "sfx/cell_reveal_3"
+      ],
+      "volume": 0.3,
+      "cooldownMs": 40,
+      "maxInstances": 3,
+      "priority": 1,
+      "group": "world",
+      "note": "quarantine film lifts off a cell (auto cascade, scan proof); dig_done stays for a dug cell",
+      "stereo": true
+    },
+    "raid_siren": {
+      "volume": 0.8,
+      "cooldownMs": 8000,
+      "maxInstances": 1,
+      "priority": 6,
+      "group": "alert",
+      "note": "raid_incoming",
+      "files": [
+        "sfx/raid_siren"
+      ],
+      "stereo": true
+    },
+    "ruins": {
+      "volume": 0.6,
+      "cooldownMs": 300,
+      "maxInstances": 2,
+      "priority": 3,
+      "group": "world",
+      "files": [
+        "sfx/ruins"
+      ],
+      "stereo": true
+    },
+    "ally_join": {
+      "volume": 0.8,
+      "cooldownMs": 500,
+      "maxInstances": 1,
+      "priority": 5,
+      "group": "combat",
+      "files": [
+        "sfx/ally_join"
+      ],
+      "stereo": true
+    },
+    "cache_open": {
+      "files": [
+        "sfx/cache_open"
+      ],
+      "volume": 0.8,
+      "cooldownMs": 0,
+      "maxInstances": 2,
+      "priority": 4,
+      "group": "world",
+      "stereo": true
+    },
+    "part_recycled": {
+      "files": [
+        "sfx/part_recycled"
+      ],
+      "volume": 0.5,
+      "cooldownMs": 150,
+      "maxInstances": 2,
+      "priority": 2,
+      "group": "world",
+      "stereo": true
+    },
+    "orb_stolen": {
+      "volume": 0.7,
+      "cooldownMs": 200,
+      "maxInstances": 1,
+      "priority": 4,
+      "group": "world",
+      "files": [
+        "sfx/orb_stolen"
+      ],
+      "stereo": true
+    },
     "ui_tap": {
       "files": [
         "sfx/ui_tap"
@@ -44,94 +370,6 @@
       "maxInstances": 1,
       "priority": 3,
       "group": "ui"
-    },
-    "dig_start": {
-      "files": [
-        "sfx/dig_start_1",
-        "sfx/dig_start_2",
-        "sfx/dig_start_3"
-      ],
-      "volume": 0.35,
-      "cooldownMs": 120,
-      "maxInstances": 2,
-      "priority": 1,
-      "group": "world"
-    },
-    "dig_done": {
-      "files": [
-        "sfx/dig_done_1",
-        "sfx/dig_done_2",
-        "sfx/dig_done_3"
-      ],
-      "volume": 0.5,
-      "cooldownMs": 80,
-      "maxInstances": 3,
-      "priority": 2,
-      "group": "world"
-    },
-    "energy_orb_arrive": {
-      "files": [
-        "sfx/energy_orb_arrive_1",
-        "sfx/energy_orb_arrive_2",
-        "sfx/energy_orb_arrive_3",
-        "sfx/energy_orb_arrive_4"
-      ],
-      "volume": 0.35,
-      "cooldownMs": 60,
-      "maxInstances": 3,
-      "priority": 1,
-      "group": "world",
-      "note": "combo: orbs less than 1.5 s apart play variant 1 with detune stepping 0,200,400,700,900,1200 cents (major pentatonic), then stay at 1200; reset after 1.5 s of silence. Outside a combo pick a random variant."
-    },
-    "cache_open": {
-      "files": [
-        "sfx/cache_open"
-      ],
-      "volume": 0.8,
-      "cooldownMs": 0,
-      "maxInstances": 2,
-      "priority": 4,
-      "group": "world"
-    },
-    "part_recycled": {
-      "files": [
-        "sfx/part_recycled"
-      ],
-      "volume": 0.5,
-      "cooldownMs": 150,
-      "maxInstances": 2,
-      "priority": 2,
-      "group": "world"
-    },
-    "build_place": {
-      "files": [
-        "sfx/build_place"
-      ],
-      "volume": 0.6,
-      "cooldownMs": 60,
-      "maxInstances": 2,
-      "priority": 3,
-      "group": "world"
-    },
-    "build_done": {
-      "files": [
-        "sfx/build_done"
-      ],
-      "volume": 0.7,
-      "cooldownMs": 150,
-      "maxInstances": 2,
-      "priority": 3,
-      "group": "world"
-    },
-    "building_lost": {
-      "files": [
-        "sfx/building_lost"
-      ],
-      "volume": 0.8,
-      "cooldownMs": 200,
-      "maxInstances": 2,
-      "priority": 4,
-      "group": "world"
     },
     "resident_born": {
       "files": [
@@ -173,18 +411,6 @@
       "priority": 3,
       "group": "world"
     },
-    "defender_hit": {
-      "files": [
-        "sfx/defender_hit_1",
-        "sfx/defender_hit_2",
-        "sfx/defender_hit_3"
-      ],
-      "volume": 0.35,
-      "cooldownMs": 90,
-      "maxInstances": 3,
-      "priority": 1,
-      "group": "combat"
-    },
     "defender_die": {
       "files": [
         "sfx/defender_die"
@@ -193,16 +419,6 @@
       "cooldownMs": 200,
       "maxInstances": 2,
       "priority": 4,
-      "group": "combat"
-    },
-    "part_attached": {
-      "files": [
-        "sfx/part_attached"
-      ],
-      "volume": 0.8,
-      "cooldownMs": 0,
-      "maxInstances": 2,
-      "priority": 5,
       "group": "combat"
     },
     "nest_open": {
@@ -235,18 +451,6 @@
       "cooldownMs": 250,
       "maxInstances": 2,
       "priority": 1,
-      "group": "combat"
-    },
-    "enemy_die": {
-      "files": [
-        "sfx/enemy_die_1",
-        "sfx/enemy_die_2",
-        "sfx/enemy_die_3"
-      ],
-      "volume": 0.45,
-      "cooldownMs": 70,
-      "maxInstances": 3,
-      "priority": 2,
       "group": "combat"
     },
     "nest_destroyed": {
@@ -318,16 +522,6 @@
       "cooldownMs": 0,
       "maxInstances": 1,
       "priority": 7,
-      "group": "alert"
-    },
-    "center_hit": {
-      "files": [
-        "sfx/center_hit"
-      ],
-      "volume": 0.7,
-      "cooldownMs": 600,
-      "maxInstances": 1,
-      "priority": 5,
       "group": "alert"
     },
     "victory": {
@@ -494,17 +688,6 @@
       "priority": 6,
       "group": "alert"
     },
-    "hero_part_taken": {
-      "files": [
-        "sfx/hero_part_taken"
-      ],
-      "volume": 0.9,
-      "cooldownMs": 0,
-      "maxInstances": 1,
-      "priority": 6,
-      "group": "combat",
-      "note": "a defender takes a named hero limb; play instead of part_attached"
-    },
     "hero_unlocked": {
       "files": [
         "sfx/hero_unlocked"
@@ -515,17 +698,6 @@
       "priority": 7,
       "group": "ui",
       "note": "hero unlock screen"
-    },
-    "quarantine_siren": {
-      "files": [
-        "sfx/quarantine_siren"
-      ],
-      "volume": 0.45,
-      "cooldownMs": 20000,
-      "maxInstances": 1,
-      "priority": 3,
-      "group": "world",
-      "note": "distant city siren: first hero_spawn of a run and when a hero lair is opened; never more than once per 20 s"
     },
     "beacon_place": {
       "files": [
@@ -547,19 +719,6 @@
       "maxInstances": 2,
       "priority": 2,
       "group": "ui"
-    },
-    "cell_reveal": {
-      "files": [
-        "sfx/cell_reveal_1",
-        "sfx/cell_reveal_2",
-        "sfx/cell_reveal_3"
-      ],
-      "volume": 0.3,
-      "cooldownMs": 40,
-      "maxInstances": 3,
-      "priority": 1,
-      "group": "world",
-      "note": "quarantine film lifts off a cell (auto cascade, scan proof); dig_done stays for a dug cell"
     },
     "scan": {
       "files": [
@@ -840,7 +999,8 @@
       "loop": true,
       "bpm": 92,
       "bars": 24,
-      "loopSeconds": 62.6087
+      "loopSeconds": 62.6087,
+      "barSync": true
     },
     "menu": {
       "files": [
@@ -876,6 +1036,72 @@
       "bars": 32,
       "loopSeconds": 73.8462,
       "note": "deprecated chiptune loop, replaced by run_* and menu (audio/MUSIC.md); delete once the code no longer asks for it"
+    },
+    "raid": {
+      "files": [
+        "music/raid"
+      ],
+      "volume": 1.0,
+      "loop": true,
+      "bpm": 92,
+      "bars": 24,
+      "loopSeconds": 62.6087,
+      "barSync": true
+    },
+    "hero_hunt": {
+      "files": [
+        "music/hero_hunt"
+      ],
+      "volume": 1.0,
+      "loop": true,
+      "bpm": 92,
+      "bars": 24,
+      "loopSeconds": 62.6087,
+      "barSync": true
+    },
+    "last_stand": {
+      "files": [
+        "music/last_stand"
+      ],
+      "volume": 1.0,
+      "loop": true,
+      "bpm": 92,
+      "bars": 24,
+      "loopSeconds": 62.6087,
+      "barSync": true
+    },
+    "aftermath": {
+      "files": [
+        "music/aftermath"
+      ],
+      "volume": 1.0,
+      "loop": true,
+      "bpm": 72,
+      "bars": 16,
+      "loopSeconds": 53.3333,
+      "barSync": false
+    },
+    "ambient_lumen": {
+      "files": [
+        "music/ambient_lumen"
+      ],
+      "volume": 1.0,
+      "loop": true,
+      "bpm": 66,
+      "bars": 16,
+      "loopSeconds": 58.1818,
+      "barSync": false
+    },
+    "ambient_glass": {
+      "files": [
+        "music/ambient_glass"
+      ],
+      "volume": 1.0,
+      "loop": true,
+      "bpm": 60,
+      "bars": 16,
+      "loopSeconds": 64.0,
+      "barSync": false
     }
   }
 }
