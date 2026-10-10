@@ -71,6 +71,8 @@ export interface Cell {
   overgrown?: number;
   /** Ruins of this building type: rebuilding is cheaper and faster (difficulty.json buildingDamage.ruins). */
   ruin?: string;
+  /** Elemental zone this cell belongs to (mapgen.cellElements Voronoi). Ground/safe-radius cells have none. */
+  element?: Tech;
 }
 
 /** An opened nest (a structure with HP that releases enemies) or an opened hero lair / boss hatch. */
@@ -315,13 +317,16 @@ export interface GameState {
   raid?: { nextIn: number; active: boolean; techs: Tech[]; callEarlyEnergy: number; canCallEarly: boolean };
   /**
    * Tempo: how well the shift is going (score system for difficulty scaling).
-   * points   = accumulated tempo points (digs, clears, rescues).
-   * level    = 0–3 difficulty tier derived from points.
-   * stagnant = true when no progress was made in the last config.tempo.stagnantSeconds.
+   * points       = accumulated tempo points (digs, clears, rescues).
+   * level        = 0–3 difficulty tier derived from points.
+   * stagnant     = true when no progress was made in the last config.tempo.stagnantSeconds.
+   * lastProgress = game time of the last progress event.
    */
-  tempo?: { points: number; level: number; stagnant: boolean };
-  /** Active boss call, or null if none. id = heroes.json id of the call target. */
-  controlCall?: { id: string } | null;
+  tempo?: { points: number; level: number; stagnant: boolean; lastProgress?: number };
+  /** True while the current raid wave was called early (callRaidEarly command); cleared when the wave ends. */
+  raidCalledEarly?: boolean;
+  /** Active boss call, or null if none. id = heroes.json id of the call target; fork = random 0–9 choice index. */
+  controlCall?: { id: string; fork?: number } | null;
   rules?: RuleOverrides;
   /** Present only in online matches. */
   match?: MatchInfo;

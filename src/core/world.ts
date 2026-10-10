@@ -52,7 +52,7 @@ export const STEP = 0.05;
 /** How long a capsule peek shows the sensors (buildings.json watchtower.peek.showSeconds). */
 const CAPSULE_PEEK_SECONDS = 20;
 
-export type GameEvent = { type: string; x?: number; y?: number; amount?: number; owner?: number; text?: string; unit?: number };
+export type GameEvent = { type: string; x?: number; y?: number; amount?: number; owner?: number; text?: string; unit?: number; fork?: number };
 
 export interface WorldOptions {
   seed: number;
@@ -551,7 +551,27 @@ export class World {
       }
       case 'answerCall': {
         if (!s.controlCall) return bad('call.no_active');
-        this.emit('boss_wake', { owner: playerId });
+        const forkCount = (this.cfg as unknown as { tempo?: { controlCallForks?: number } }).tempo?.controlCallForks ?? 10;
+        const fork = Math.floor(rand(s) * forkCount);
+        s.controlCall = { ...s.controlCall, fork };
+        this.emit('boss_call_fork', { fork, owner: playerId });
+        // Fork effects: 0-2 = boss hesitates (skips waking this call), 3-5 = spawn enemies, 6-8 = reveal cell, 9 = energy toll
+        if (fork <= 2) {
+          // Контроль bluffs — boss doesn't wake this call
+        } else if (fork <= 5) {
+          this.emit('boss_wake', { owner: playerId });
+        } else if (fork <= 8) {
+          const hiddenIdxs = s.cells.reduce<number[]>((acc, c, i) => { if (!c.revealed && c.content !== 'water') acc.push(i); return acc; }, []);
+          if (hiddenIdxs.length) {
+            const idx = hiddenIdxs[Math.floor(rand(s) * hiddenIdxs.length)];
+            s.cells[idx].revealed = true;
+            this.emit('dig_done', { x: idx % s.width, y: Math.floor(idx / s.width), owner: playerId });
+          }
+        } else {
+          const toll = 20;
+          if (p.energy >= toll) p.energy -= toll;
+          this.emit('boss_wake', { owner: playerId });
+        }
         return ok;
       }
       case 'callRaidEarly': {
@@ -559,6 +579,7 @@ export class World {
         if (!rd?.canCallEarly) return bad('raid.not_ready');
         if (p.energy < rd.callEarlyEnergy) return bad('raid.not_enough_energy');
         p.energy -= rd.callEarlyEnergy;
+        s.raidCalledEarly = true;
         // Force the raid clock to fire immediately next tick.
         s.raidAt = 0;
         this.emit('raid_siren', { owner: playerId });
@@ -934,6 +955,7 @@ export class World {
     if (pay) {
       this.spawnOrb(owner, x, y, Math.round(this.cfg.economy.energyPerDugTile * this.allyFactor(owner, 'digEnergyFactor') * this.allyFactor(owner, 'energyProductionFactor', 'value')));
       this.emit('dig_done', { x, y, owner });
+      this.addTempo(owner, 'dig');
     }
     const player = s.players[owner];
     switch (c.content) {
@@ -945,6 +967,7 @@ export class World {
         this.earn(player, energy);
         player.stats.caches++;
         this.emit('cache_open', { x, y, owner, amount: energy });
+        this.addTempo(owner, 'cache');
         if (offer.length) {
           player.boonOffer = { ids: offer, at: s.time };
           this.emit('boon_offer', { x, y, owner, text: offer.join(',') });
@@ -956,6 +979,7 @@ export class World {
         player.capBonus++;
         this.spawnResident(owner, x, y);
         this.emit('survivor_joined', { x, y, owner });
+        this.addTempo(owner, 'survivor');
         break;
       }
       case 'mine':
@@ -1501,6 +1525,7 @@ export class World {
     const callEarlyEnergy = 50;
     const nextIn = r?.enabled ? Math.max(0, (s.raidAt ?? r.firstAfterSeconds) - s.time) : Infinity;
     const activeRaiders = s.units.filter((u) => isEnemy(u) && u.raid !== undefined && u.hp > 0);
+    const wasActive = s.raid?.active ?? false;
     s.raid = {
       nextIn,
       active: activeRaiders.length > 0,
@@ -1508,8 +1533,50 @@ export class World {
       callEarlyEnergy,
       canCallEarly: !!(r?.enabled) && nextIn > 0 && s.players.some((p) => p.energy >= callEarlyEnergy),
     };
-    s.controlCall = s.boss.awake && !s.boss.dead ? { id: s.boss.hero } : null;
-    if (!s.tempo) s.tempo = { points: 0, level: 0, stagnant: false };
+
+    const tempoConf = (this.cfg as unknown as { tempo?: { raidClearEnergyBonus?: number; earlyRaidClearBonusMultiplier?: number; stagnantSeconds?: number; levelThresholds?: number[] } }).tempo;
+
+    // Raid wave cleared: award energy bonus (doubled for early raids).
+    if (wasActive && !s.raid.active) {
+      const base = tempoConf?.raidClearEnergyBonus ?? 15;
+      const mul = s.raidCalledEarly ? (tempoConf?.earlyRaidClearBonusMultiplier ?? 2) : 1;
+      for (const p of s.players) if (p.alive) this.earn(p, base * mul);
+      this.emit('raid_cleared', { amount: base * mul });
+      this.addTempo(-1, 'raidClear');
+      s.raidCalledEarly = undefined;
+    }
+
+    // Boss call: keep fork index if already set (from answerCall).
+    if (s.boss.awake && !s.boss.dead) {
+      if (!s.controlCall) s.controlCall = { id: s.boss.hero };
+    } else {
+      s.controlCall = null;
+    }
+
+    // Tempo stagnation and level.
+    if (!s.tempo) s.tempo = { points: 0, level: 0, stagnant: false, lastProgress: s.time };
+    const stagnantSec = tempoConf?.stagnantSeconds ?? 45;
+    s.tempo.stagnant = s.time - (s.tempo.lastProgress ?? 0) > stagnantSec;
+    const thresholds = tempoConf?.levelThresholds ?? [0, 25, 60, 120];
+    let level = 0;
+    for (let i = thresholds.length - 1; i >= 0; i--) {
+      if (s.tempo.points >= thresholds[i]) { level = i; break; }
+    }
+    if (s.tempo.level !== level) {
+      s.tempo.level = level;
+      if (level > 0) this.emit('tempo_level_up', { amount: level });
+    }
+  }
+
+  /** Add tempo points for a progress event. */
+  private addTempo(_owner: number, event: 'dig' | 'cache' | 'nest' | 'survivor' | 'raidClear'): void {
+    const s = this.s;
+    if (!s.tempo) s.tempo = { points: 0, level: 0, stagnant: false, lastProgress: s.time };
+    const tempoConf = (this.cfg as unknown as { tempo?: { points?: Record<string, number> } }).tempo;
+    const defaults: Record<string, number> = { dig: 1, cache: 5, nest: 10, survivor: 3, raidClear: 15 };
+    const pts = tempoConf?.points?.[event] ?? defaults[event] ?? 1;
+    s.tempo.points += pts;
+    s.tempo.lastProgress = s.time;
   }
 
   /** The raid goes for the building nearest to it; the command center only when nothing else stands. */
@@ -1790,7 +1857,14 @@ export class World {
       return;
     }
     // Enemy.
-    if (by) by.kills++;
+    if (by) {
+      by.kills++;
+      const superPerKill = (this.cfg as unknown as { tempo?: { superChargePerKill?: number } }).tempo?.superChargePerKill ?? 10;
+      if ((by.kind === 'ally' || by.kind === 'hero') && by.kills % superPerKill === 0) {
+        by.superCharge = 100;
+        this.emit('super_charged', { unit: by.id, owner: by.owner });
+      }
+    }
     const site = v.nest ? s.sites.find((t) => siteKey(t.x, t.y) === v.nest) : undefined;
     if (site) site.alive = site.alive.filter((id) => id !== v.id);
     const killer = by && !isEnemy(by) ? by : undefined;
@@ -2002,6 +2076,7 @@ export class World {
     if (by.owner >= 0) {
       this.earn(this.s.players[by.owner], reward);
       this.s.players[by.owner].stats.nests++;
+      this.addTempo(by.owner, 'nest');
     }
     for (const p of this.s.players) if (p.order === siteKey(site.x, site.y)) p.order = null;
     this.emit('nest_destroyed', { x: site.x, y: site.y, owner: by.owner, amount: reward });

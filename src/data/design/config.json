@@ -235,5 +235,21 @@
     "tapBuilding": "building info (HP, effect, upgrade later)",
     "longPressClosedCell": "toggle flag «осторожно»",
     "tapNumberCell": "highlight 8 neighbours (ONBOARDING 1.2); a second tap on the same cell opens build menu if liberated"
+  },
+  "tempo": {
+    "_doc": "progress score that drives stagnation and difficulty scaling",
+    "stagnantSeconds": 45,
+    "levelThresholds": [0, 25, 60, 120],
+    "points": {
+      "dig": 1,
+      "cache": 5,
+      "nest": 10,
+      "survivor": 3,
+      "raidClear": 15
+    },
+    "raidClearEnergyBonus": 15,
+    "earlyRaidClearBonusMultiplier": 2,
+    "superChargePerKill": 10,
+    "controlCallForks": 10
   }
 }
