@@ -12,7 +12,7 @@ import { sound } from './audio';
 import { C, CELL, STEP, TECH_COLOR } from './layout';
 import { buzz, comfort } from './comfort';
 import { Quarantine, type RevealKind } from './Quarantine';
-import { Bars, cellFastTech, cellElement, drawCellOrb, drawHeroExtras, drawWeakOrbs, weaknessesOf, type Weakness } from './Vitals';
+import { Bars, cellFastTech, cellElement, drawCellOrb, TECH_HEX, drawHeroExtras, drawWeakOrbs, weaknessesOf, type Weakness } from './Vitals';
 import { paintZones } from './BuildingFeel';
 import { glyph } from './ui';
 import { drawMark, drawSensor, sensorTexts, type MarkKind } from './Sensor';
@@ -78,6 +78,16 @@ const STARTER_LOOKS = ['standard', 'patch', 'canopy', 'current'];
 const FX2 = 0.5;
 const BLOCK_EL = ['thermo', 'cryo', 'volt', 'impact', 'toxin'];
 const DECOR_EL = ['cryo', 'volt', 'impact'];
+/** What a zone looks like on its closed blocks: ice, sparks, dust; fire and toxin borrow the heat shimmer, tinted. */
+const ZONE_DECOR: Record<string, { anim: string; tint?: number; alpha?: number }> = {
+  cryo: { anim: 'block_fx.loop_cryo' },
+  volt: { anim: 'block_fx.loop_volt' },
+  impact: { anim: 'block_fx.loop_impact' },
+  thermo: { anim: 'fx.heat_haze', tint: 0xff7a3a, alpha: 0.95 },
+  toxin: { anim: 'fx.heat_haze', tint: 0x7dff5a, alpha: 0.8 },
+};
+/** Strength of the zone colour wash on closed blocks (bright colours need less). */
+const ZONE_WASH: Record<string, number> = { cryo: 0.16, volt: 0.12, impact: 0.14, thermo: 0.16, toxin: 0.16 };
 const CIVILIANS = ['civilian_office', 'civilian_courier', 'civilian_granny'];
 /** Game slot ids → the short names the limb-mask sets use in `slots`. */
 /** Find contents → drawn icon (blueprint fragment, armor plates, Control record). */
@@ -628,7 +638,7 @@ export class BoardView {
         glow?.setVisible(living);
         this.updateHot(i, c.hot ?? 0, px, py, now);
         this.updateSite(x, y);
-        this.updateDecor(i, c.revealed, px, py, h);
+        this.updateDecor(i, c, zoned, px, py, h);
         this.updateNestArt(i, x, y);
         this.updateLair(x, y);
         this.updateObject(i, c, px, py, now);
@@ -639,6 +649,12 @@ export class BoardView {
           this.drawClosed(og, x, y, px, py, known.get(cellKey(x, y)), risk?.get(i), me.queue.includes(cellKey(x, y)), me.autoQueue.includes(cellKey(x, y)), c.marked ? (c.markKind ?? 'danger') : null, now);
           // One orb in the corner: the element that digs this block fast; it glows when the squad has it (MVP_RULES §3.4).
           if (zoned) {
+            // The zone shows from afar: a light wash of its colour over the block (MVP_RULES §3.4).
+            const el = cellElement(c);
+            if (el) {
+              og.fillStyle(TECH_HEX[el] ?? 0xffffff, ZONE_WASH[el] ?? 0.14);
+              og.fillRect(px, py, CELL, CELL);
+            }
             const fast = cellFastTech(c);
             if (fast) drawCellOrb(cg, px + CELL - 9, py + 9, fast, this.squadTechs.has(fast), now);
           }
@@ -677,9 +693,8 @@ export class BoardView {
   }
 
   /**
-   * Element orbs on closed blocks are drawn only on a zoned map. Today only nests, mines and lairs carry `tech`;
-   * plain cells get one when the zone generator lands. Drawing orbs where `tech` happens to exist would show
-   * players exactly where the nests and mines hide, so without zones no orb is drawn at all.
+   * Element orbs, washes and zone decor on closed blocks need a zoned map (mapgen.cellElements). Boards without
+   * zones (tutorial, hand-made fields) draw none, so nothing ever singles out a block.
    */
   private isZoned(): boolean {
     const w = this.world;
@@ -972,21 +987,32 @@ export class BoardView {
     img.setPosition(px + CELL / 2, py + CELL - 13).setVisible(true);
   }
 
-  /** Every seventh-ish closed block carries a live hazard: ice, arcing wires or smoke (block_fx loop_*). */
-  private updateDecor(i: number, revealed: boolean, px: number, py: number, h: number): void {
+  /**
+   * Live hazards over closed blocks (block_fx loop_*, fx.heat_haze). On a zoned map they follow the zone, so a zone
+   * reads at a glance: ice, sparks, rubble dust, heat shimmer or toxic fog on about every third block. Without zones,
+   * every seventh-ish block gets a random one.
+   */
+  private updateDecor(i: number, c: Cell, zoned: boolean, px: number, py: number, h: number): void {
     const spr = this.decor.get(i);
-    if (revealed) {
+    if (c.revealed) {
       if (spr) {
         spr.destroy();
         this.decor.delete(i);
       }
       return;
     }
-    if (spr || (h >>> 4) % 7 !== 3) return;
-    const key = `block_fx.loop_${DECOR_EL[(h >>> 8) % DECOR_EL.length]}`;
-    if (!this.scene.anims.exists(key)) return;
-    const s = this.scene.add.sprite(px + CELL / 2, py + CELL, 'block_fx').setOrigin(...originOf('block_fx')).setScale(FX2).setDepth(D.film + 0.5).setAlpha(0.9);
-    s.play({ key, startFrame: h % 6 });
+    if (spr) return;
+    const el = zoned ? cellElement(c) : undefined;
+    if (zoned ? !el || (h >>> 4) % 3 !== 1 : (h >>> 4) % 7 !== 3) return;
+    const look = el ? ZONE_DECOR[el] : { anim: `block_fx.loop_${DECOR_EL[(h >>> 8) % DECOR_EL.length]}` };
+    if (!look || !this.scene.anims.exists(look.anim)) return;
+    const s = look.anim.startsWith('fx.')
+      ? this.scene.add.sprite(px, py, 'fx').setOrigin(0).setDepth(D.film + 0.5)
+      : this.scene.add.sprite(px + CELL / 2, py + CELL, 'block_fx').setOrigin(...originOf('block_fx')).setScale(FX2).setDepth(D.film + 0.5);
+    s.setAlpha(look.alpha ?? 0.9);
+    if (look.tint !== undefined) s.setTint(look.tint);
+    const frames = this.scene.anims.get(look.anim).frames.length;
+    s.play({ key: look.anim, startFrame: h % Math.max(1, frames) });
     this.decor.set(i, s);
   }
 
