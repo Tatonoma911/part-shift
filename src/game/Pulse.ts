@@ -199,7 +199,8 @@ export function costLine(effect: Record<string, unknown>): string {
   const e = n('energy');
   if (e) out.push(`${e > 0 ? '+' : '−'}${Math.abs(e)} ⚡`);
   for (const k of ['nextRaidSooner', 'commandHpPercent', 'randomHeroAwaySeconds', 'civiliansLose', 'scoreBonus', 'nextRaidExtraEnemies', 'reactorsOffSeconds', 'nextBuildingCostFactor', 'returnsWithStar']) {
-    const v = n(k);
+    // events.json v0.2 sells townsfolk off the balance (civiliansFromBalance); same price line as civiliansLose.
+    const v = n(k) ?? (k === 'civiliansLose' ? n('civiliansFromBalance') : null);
     if (v === null) continue;
     const key = `call.cost.${k}`;
     if (hasText(key)) out.push(t(key, { n: k === 'nextBuildingCostFactor' ? Math.round((1 - v) * 100) : Math.abs(v) }));

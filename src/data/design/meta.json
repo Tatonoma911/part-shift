@@ -56,7 +56,8 @@
       "coop_call": 1.0
     },
     "lossKeepsScore": true,
-    "_note": "score counts in lost and abandoned runs too (no win/time bonus): progress always moves. demonDefeated removed: Демон is an ordinary hero [Антон]"
+    "_note": "score counts in lost and abandoned runs too (no win/time bonus): progress always moves. demonDefeated removed: Демон is an ordinary hero [Антон]",
+    "civilianRescued": 25
   },
   "ranks": {
     "_doc": "design/META.md §3",
@@ -80,7 +81,7 @@
         "name_ru": "Дежурный по кварталу",
         "from": 2000,
         "unlocksBoons": [
-          "drone_scan"
+          "peek_numbers"
         ]
       },
       {
@@ -144,20 +145,27 @@
     "buildings_built": "construction finished",
     "parts_taken": "part attached to a resident",
     "parts_recycled": "spare part turned into Energy",
-    "residents_lost": "resident died",
+    "residents_lost": "v0.7: our heroes knocked out",
     "accidental_opens": "nest/heavy_nest revealed by digging WITHOUT the explicit confirm «Да, вскрыть» (tap on a scanner-marked or player-flagged cell + confirm = deliberate). Lairs/hatches self-opening by timer and raid tunnels do not count",
     "heroes_defeated": "any hero killed",
     "hero_seen.<heroId>": "1 once the hero was met as an enemy (lair opened or hero woke)",
     "hero_defeats.<heroId>": "times that hero was defeated",
     "daily_streak": "consecutive UTC days with a finished Вызов дня",
     "daily_last_date": "YYYY-MM-DD",
-    "challenge.<challengeId>": "times the run challenge was completed (win_without_accidental_open, win_no_resident_lost, resident_full_slots); > 0 means done"
+    "challenge.<challengeId>": "times the run challenge was completed (win_without_accidental_open, win_no_resident_lost, resident_full_slots); > 0 means done",
+    "heroes_born": "our heroes born",
+    "civilians_rescued": "civilians who reached the command center",
+    "civilians_lost": "civilians killed by enemies",
+    "sync_xp.<heroId>": "backup sync xp (heroes.json ourSide.backup.sync)",
+    "blueprint_fragments.<id>": "fragments collected per building/hero",
+    "lore_records": "ids of found Записи Контроля",
+    "armor_plates_found": "plates found"
   },
   "runChallenges": {
     "energy_earned": "value = energy earned this run; best kept in best_run_energy",
     "win_without_accidental_open": "win and accidental_opens == 0 this run",
-    "win_no_resident_lost": "win and residents_lost == 0 this run",
-    "resident_full_slots": "any resident had all 6 slots filled at once (does not need a win)"
+    "win_no_hero_lost": "win and no own hero lost a limb of its own this run",
+    "hero_full_trophies": "any own hero had 4 trophies at once (no win needed)"
   },
   "progressDisplay": {
     "_doc": "design/META.md §4; strings text/ru.json dossier.progress.*",
@@ -185,5 +193,38 @@
     "difficulty": "shift",
     "countsOnce": "first finished attempt per day goes to the daily record; replays allowed but not scored for daily",
     "streakBreaksAfterDays": 1
+  },
+  "blueprints": {
+    "_doc": "MVP_RULES §5.1 [Антон 2026-10-10: кусочки пазла открывают новые дома и героев]",
+    "buildingsStartUnlocked": [
+      "command",
+      "home",
+      "reactor",
+      "cooler",
+      "school",
+      "medcenter",
+      "station",
+      "outpost"
+    ],
+    "buildingFragments": {
+      "civ_shelter": 3,
+      "repair": 3,
+      "relay": 4,
+      "watchtower": 4,
+      "jammer": 4,
+      "backup_lab": 5,
+      "forge": 5,
+      "rotation_center": 6
+    },
+    "heroFragments": 6,
+    "heroRule": "backup integrity % = max(unlock condition progress, fragments/6); 100 % restores the backup",
+    "targetPick": {
+      "buildingChance": 0.6,
+      "closestToDoneChance": 0.5,
+      "else": "random not-finished"
+    },
+    "showTargetOnReveal": true,
+    "keptOnLoss": true,
+    "_balance": "2 fragments per run → first new building in ~2 runs, all 8 buildings in ~25–30 runs"
   }
 }
