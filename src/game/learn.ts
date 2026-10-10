@@ -2,6 +2,7 @@ import { sound } from './audio';
 import { lang } from '../i18n';
 import { playIntro } from '../intro';
 import { createLearning, type Learning } from '../learning';
+import { closeCoach as closeCoachCard } from '../learning/coach';
 
 /**
  * One learning layer (field guide, coach cards) for the whole game, from the
@@ -24,6 +25,11 @@ export function learning(): Learning {
     busy: () => hooks.busy?.() ?? false,
   });
   return inst;
+}
+
+/** Hides a coach card that is still on screen when the match ends. */
+export function closeCoach(): void {
+  closeCoachCard();
 }
 
 /** Opens the field guide with its own calm theme (crossfades back on close). Coach cards keep the game music. */

@@ -12,7 +12,7 @@ import { RunTally } from './meta/record';
 import { showResults } from './meta/ResultsScreen';
 import { boonPoolFor, loadMeta, pickAllies, roster } from './meta/store';
 import { pickBoon } from './meta/BoonPick';
-import { learning, openGuide, setLearningHooks } from './learn';
+import { closeCoach, learning, openGuide, setLearningHooks } from './learn';
 import { volumeHeight, volumeSliders } from './volume';
 import { BoardView } from './BoardView';
 import { Comm } from './Comm';
@@ -1359,6 +1359,7 @@ export class GameScene extends Phaser.Scene {
   private showEnd(victory: boolean): void {
     if (this.ended) return;
     this.ended = true;
+    closeCoach();
     this.trackEnd(victory ? 'victory' : 'defeat');
     if (!this.guide) clearSlot(this.slot);
     const shiftN = this.start.shiftN;
