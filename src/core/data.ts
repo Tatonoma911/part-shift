@@ -253,6 +253,12 @@ export interface ControlEventDef {
 export const controlEvents: Record<string, ControlEventDef> = Object.fromEntries(
   ((eventsJson as unknown as { events: ControlEventDef[] }).events ?? []).map((e) => [e.id, e]),
 );
+/** Timing of random Контроль calls (events.json: perRun, firstAtSeconds, gapSeconds). */
+export const controlSchedule = {
+  perRun: (eventsJson as unknown as { perRun: number[] }).perRun,
+  firstAtSeconds: (eventsJson as unknown as { firstAtSeconds: number[] }).firstAtSeconds,
+  gapSeconds: (eventsJson as unknown as { gapSeconds: number[] }).gapSeconds,
+};
 export const multiplayer = multiplayerJson;
 
 export const buildings: Record<string, BuildingDef> = Object.fromEntries(

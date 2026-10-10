@@ -296,6 +296,8 @@ export interface RuleOverrides {
   difficulty?: { enemyHpFactor?: number; enemyDamageFactor?: number; startEnergy?: number };
   /** Elemental zones on the board (campaign features.cellElements); undefined = on. */
   cellElements?: boolean;
+  /** Random Контроль calls (campaign features.controlCalls). */
+  controlCalls?: boolean;
   /** Raid timing for this shift (campaign.json features.raids): overrides the difficulty table. */
   raids?: { enabled: boolean; firstAfterSeconds?: number; everySeconds?: number; size?: number; maxSize?: number };
 }
@@ -346,7 +348,11 @@ export interface GameState {
   /** True while the current raid wave was called early (callRaidEarly command); cleared when the wave ends. */
   raidCalledEarly?: boolean;
   /** Active boss call, or null if none. options[0]=refuse, options[1]=comply. fork set after player chooses. */
-  controlCall?: { id: string; options?: { cost: number; effect: 'refuse' | 'comply' }[]; fork?: number } | null;
+  controlCall?: { id: string; options?: { cost: number; effect: 'refuse' | 'comply' }[]; fork?: number; scheduled?: boolean } | null;
+  /** Timed Контроль buffs on our units (events.json heroesDamageFactor / heroesMoveSpeedFactor + durationSeconds). */
+  callBuffs?: { damage?: { factor: number; until: number }; speed?: { factor: number; until: number } };
+  /** Random Контроль calls of this run (events.json perRun / firstAtSeconds / gapSeconds). */
+  callPlan?: { nextAt: number; left: number; used: string[] };
   rules?: RuleOverrides;
   /** Present only in online matches. */
   match?: MatchInfo;
