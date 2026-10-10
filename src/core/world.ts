@@ -1796,7 +1796,14 @@ export class World {
       const b = this.building(Number(target.slice(2)))!;
       if (b.type === 'command' && this.rules.commandInvulnerable) return;
       const vs = attacker.kind === 'hero' ? buildingDamage.heroVsBuildingFactor : isEnemy(attacker) ? buildingDamage.enemyVsBuildingFactor : 1;
-      b.hp -= Math.max(this.cfg.combat.minDamage, st.damage * factor * vs - buildingDefs[b.type].defense);
+      let rawDmg = Math.max(this.cfg.combat.minDamage, st.damage * factor * vs - buildingDefs[b.type].defense);
+      // F-03: cap hero DPS on buildings (FEEL_AUDIT §3): ≤3.3% cmd HP/s, ≤6% other HP/s.
+      if (attacker.kind === 'hero') {
+        const capFraction = b.type === 'command' ? 0.033 : 0.06;
+        const maxDmg = capFraction * buildingDefs[b.type].hp * this.stats(attacker).attackSeconds;
+        rawDmg = Math.min(rawDmg, Math.max(this.cfg.combat.minDamage, maxDmg));
+      }
+      b.hp -= rawDmg;
       if (b.type === 'command') this.emit('center_hit', { x: b.x, y: b.y, owner: b.owner });
       return;
     }
@@ -2253,16 +2260,53 @@ export class World {
     });
   }
 
-  /** The call target leaves its hatch by itself at 15:00, after a warning (config.boss). */
+  /** The call target leaves its hatch by itself at 15:00, after a warning (config.boss).
+   *  Also wakes early (with a 20 s warning) when ≤15% of non-site cells are still closed
+   *  or every nest/lair site has been destroyed (F-09, FEEL_AUDIT). */
   private bossClock(): void {
     const b = this.s.boss;
     if (b.awake || this.rules.bossEnabled === false) return;
+    const s = this.s;
+
+    // F-09: early wake when the board is nearly fully open or all nests/lairs are cleared.
+    if (!b.earlyWakeAt) {
+      const earlyWake = this.earlyWakeCondition();
+      if (earlyWake) {
+        b.earlyWakeAt = s.time + 20;
+        if (!b.warned) {
+          b.warned = true;
+          this.emit('boss_warning', { text: b.hero });
+        }
+      }
+    }
+    if (b.earlyWakeAt && s.time >= b.earlyWakeAt) {
+      this.wakeBoss();
+      return;
+    }
+
     const wake = this.cfg.boss.selfWakeSeconds;
-    if (!b.warned && this.s.time >= wake - this.cfg.boss.warningSeconds) {
+    if (!b.warned && s.time >= wake - this.cfg.boss.warningSeconds) {
       b.warned = true;
       this.emit('boss_warning', { text: b.hero });
     }
-    if (this.s.time >= wake) this.wakeBoss();
+    if (s.time >= wake) this.wakeBoss();
+  }
+
+  /** Returns true when the field is ≤15% closed (non-site cells) or all nests/lairs are gone. */
+  private earlyWakeCondition(): boolean {
+    const s = this.s;
+    // All nests and hero lairs destroyed (boss hatch excluded — that's the target itself).
+    const activeSites = s.sites.filter(
+      (st) => !st.destroyed && (st.kind === 'nest' || st.kind === 'heavy_nest' || st.kind === 'hero_lair'),
+    );
+    if (activeSites.length === 0 && s.sites.some((st) => st.kind === 'nest' || st.kind === 'heavy_nest' || st.kind === 'hero_lair')) {
+      return true;
+    }
+    // ≤15% of ground-type cells still closed.
+    const groundCells = s.cells.filter((c) => c.content === 'ground' || c.content === 'rubble' || c.content === 'energy_vein');
+    if (groundCells.length === 0) return false;
+    const closedCount = groundCells.filter((c) => !c.revealed).length;
+    return closedCount / groundCells.length <= 0.15;
   }
 
   private wakeBoss(): void {

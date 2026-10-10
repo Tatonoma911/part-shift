@@ -300,7 +300,9 @@ export interface GameState {
   orbs: Orb[];
   nextId: number;
   /** The call target: the strongest hero of the district (boss_hatch). */
-  boss: { hero: string; awake: boolean; warned: boolean; dead: boolean; hpScale: number };
+  boss: { hero: string; awake: boolean; warned: boolean; dead: boolean; hpScale: number;
+    /** Set when the early-wake condition fires (≤15% closed or all nests destroyed); boss exits at earlyWakeAt. */
+    earlyWakeAt?: number };
   outcome: Outcome;
   /** difficulty.json level id. */
   difficulty: string;
