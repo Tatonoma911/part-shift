@@ -1,12 +1,13 @@
 import Phaser from 'phaser';
 import { allySelect } from './AllySelect';
+import { shiftBrief } from './ShiftBrief';
 import { pickBoon } from './BoonPick';
 import { heroReturned, showResults } from './ResultsScreen';
-import { emptyMeta, type MetaSave } from './store';
+import { emptyMeta, rollDistrict, type MetaSave } from './store';
 
 /**
  * Sample data so the meta screens can be checked before the engine counts
- * anything: `?meta=results|lose|boon|dossier|allies|unlock` over the menu.
+ * anything: `?meta=results|lose|boon|dossier|allies|squad|unlock` over the menu.
  * Used by the preview build and by the tester; harmless in production.
  */
 export function demoMeta(): MetaSave {
@@ -61,6 +62,16 @@ export function metaDemo(scene: Phaser.Scene, which: string, meta: MetaSave): bo
   }
   if (which === 'allies') {
     root = allySelect(scene, meta, again, again);
+    return true;
+  }
+  if (which === 'squad') {
+    // A mid-game save: 8 heroes returned, so 4 squad slots.
+    const m = {
+      ...meta,
+      unlocked: [...meta.unlocked, 'lineman', 'mason', 'kiln', 'hive'],
+      stats: { ...meta.stats, 'sync.standard': 34, 'sync.patch': 18, 'sync.current': 6, 'sync.frostline': 52, 'sync.kiln': 2 },
+    };
+    root = shiftBrief(scene, m, rollDistrict(m), again, again);
     return true;
   }
   if (which === 'unlock') {

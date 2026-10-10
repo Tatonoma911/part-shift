@@ -13,6 +13,8 @@ export interface MetaSave {
   unlocked: string[];
   seenHeroes: string[];
   allyChoice: string[];
+  /** Last squad picked on «Сводка смены» (MVP_RULES §4.5), offered again next time. */
+  lastSquad?: string[];
   records: Record<string, { bestSeconds?: number; bestScore?: number; bestEnergy?: number }>;
   daily?: { date: string; bestScore: number; streak: number };
   tutorialDone?: boolean;
@@ -25,7 +27,7 @@ export interface Rank {
 }
 
 interface Unlock {
-  type: 'tutorial_complete' | 'lifetime_stat' | 'run_stat' | 'defeat_hero' | 'run_challenge' | 'unlock_all';
+  type: 'starter' | 'tutorial_complete' | 'lifetime_stat' | 'run_stat' | 'defeat_hero' | 'run_challenge' | 'unlock_all';
   stat?: string;
   hero?: string;
   challenge?: string;
@@ -45,6 +47,21 @@ const KEY = 'partshift.meta.v1';
 export const HEROES = (heroesJson as unknown as { heroes: HeroInfo[] }).heroes;
 export const RANKS = (metaJson as unknown as { ranks: { list: Rank[] } }).ranks.list;
 const SLOTS = (heroesJson as unknown as { allySlots: { unlockedHeroes: number; slots: number }[] }).allySlots;
+interface OurSide {
+  starterRoster?: string[];
+  squad?: {
+    enemyRoll: { lairs: { tier: number }[]; callTarget: { tiers: number[] } };
+    slotsByUnlocked: { unlocked: number; slots: number }[];
+    maxHighTierInSquad: { tiers: number[]; max: number };
+  };
+  backup?: {
+    states: { draft: { maxInSquad: number; hpFactor: number; damageFactor: number } };
+    sync: { levels: number[]; factorsByLevel: { hp: number; damage: number }[] };
+  };
+}
+const OUR = ((heroesJson as unknown as { ourSide?: OurSide }).ourSide ?? {}) as OurSide;
+/** Heroes every player has from the first shift (v0.7). */
+export const STARTERS = OUR.starterRoster ?? [];
 
 /** Heroes whose lines use feminine forms (text/ru.json *_female keys). */
 export const FEMALE = new Set(['seraph', 'frostline', 'beacon', 'canopy']);
@@ -94,7 +111,7 @@ export function rankFraction(score: number): number {
 export type HeroState = 'unknown' | 'seen' | 'unlocked';
 
 export function heroState(m: MetaSave, id: string): HeroState {
-  if (m.unlocked.includes(id)) return 'unlocked';
+  if (m.unlocked.includes(id) || STARTERS.includes(id)) return 'unlocked';
   if (m.seenHeroes.includes(id) || stat(m, `hero_seen.${id}`) > 0) return 'seen';
   return 'unknown';
 }
@@ -105,6 +122,9 @@ export function heroProgress(m: MetaSave, h: HeroInfo): { have: number; need: nu
   let have = 0;
   let need = u.count ?? 1;
   switch (u.type) {
+    case 'starter':
+      have = 1;
+      break;
     case 'tutorial_complete':
       have = m.tutorialDone ? 1 : 0;
       break;
@@ -150,6 +170,138 @@ export function closestHero(m: MetaSave): { hero: HeroInfo; have: number; need: 
     if (!best || p.frac > best.frac) best = { hero: h, ...p };
   }
   return best;
+}
+
+// ------------------------------------------------------- «Сводка смены» (§4.5)
+
+/** Heroes the player can take on a shift: starters plus everyone returned. */
+export function roster(m: MetaSave): string[] {
+  return HEROES.map((h) => h.id).filter((id) => STARTERS.includes(id) || m.unlocked.includes(id));
+}
+
+/** Squad size for this many available heroes: 3, then 4 after 6, 5 after 10. */
+export function squadSlots(m: MetaSave): { slots: number; nextAt?: number } {
+  const n = roster(m).length;
+  const list = OUR.squad?.slotsByUnlocked ?? [{ unlocked: 0, slots: 3 }];
+  let slots = list[0].slots;
+  let nextAt: number | undefined;
+  for (const s of list) {
+    if (n >= s.unlocked) slots = s.slots;
+    else if (nextAt === undefined) nextAt = s.unlocked;
+  }
+  return { slots, nextAt };
+}
+
+export const HIGH_TIERS = OUR.squad?.maxHighTierInSquad.tiers ?? [3, 4];
+export const MAX_HIGH = OUR.squad?.maxHighTierInSquad.max ?? 2;
+
+export interface DistrictEnemy {
+  id: string;
+  tier: number;
+  role: 'lair' | 'target';
+}
+
+/**
+ * The district's infected heroes for one run: lairs of tier 1, 2, 3 and a call
+ * target of tier 3–4, all different; nearest lower tier when a tier runs out.
+ * Rerolled when fewer free heroes than squad slots would be left (§4.5 p.4).
+ * The engine may roll its own; this one serves the screen and the preview.
+ */
+export function rollDistrict(m: MetaSave, rnd: () => number = Math.random): DistrictEnemy[] {
+  const roll = OUR.squad?.enemyRoll ?? { lairs: [{ tier: 1 }, { tier: 2 }, { tier: 3 }], callTarget: { tiers: [3, 4] } };
+  const n73Allowed = HEROES.filter((h) => h.id !== 'n73').every((h) => roster(m).includes(h.id));
+  const pool = HEROES.filter((h) => h.id !== 'n73' || n73Allowed);
+  const { slots } = squadSlots(m);
+  let best: DistrictEnemy[] = [];
+  for (let attempt = 0; attempt < 30; attempt++) {
+    const used = new Set<string>();
+    const take = (tier: number, role: DistrictEnemy['role']): DistrictEnemy | undefined => {
+      for (let t = tier; t >= 1; t--) {
+        const free = pool.filter((h) => h.tier === t && !used.has(h.id));
+        if (free.length) {
+          const h = free[Math.floor(rnd() * free.length)];
+          used.add(h.id);
+          return { id: h.id, tier: h.tier, role };
+        }
+      }
+      return undefined;
+    };
+    const tiers = roll.callTarget.tiers;
+    const target = take(tiers[Math.floor(rnd() * tiers.length)], 'target');
+    const lairs = roll.lairs.map((l) => take(l.tier, 'lair'));
+    const out = [...lairs, target].filter((e): e is DistrictEnemy => !!e);
+    best = out;
+    const freeForUs = roster(m).filter((id) => !used.has(id)).length;
+    if (freeForUs >= slots) break;
+  }
+  return best;
+}
+
+/** Techs that beat this enemy (its weaknesses), from the resist table. */
+function weakTechs(id: string): string[] {
+  const r = HEROES.find((h) => h.id === id)?.enemy?.resist ?? {};
+  return Object.keys(r).filter((k) => (r[k] ?? 1) > 1.001);
+}
+
+/** How many of the district's weaknesses this hero's element hits (the call target counts double). */
+export function weaknessHits(heroId: string, enemies: DistrictEnemy[]): number {
+  const tech = HEROES.find((h) => h.id === heroId)?.tech;
+  if (!tech) return 0;
+  return enemies.reduce((s, e) => s + (weakTechs(e.id).includes(tech) ? (e.role === 'target' ? 2 : 1) : 0), 0);
+}
+
+/** «Авто-отряд»: free heroes whose element hits the most weaknesses, cheaper tiers first on ties, at most MAX_HIGH of tier 3–4. */
+export function autoSquad(m: MetaSave, enemies: DistrictEnemy[]): string[] {
+  const taken = new Set(enemies.map((e) => e.id));
+  const { slots } = squadSlots(m);
+  const free = roster(m)
+    .filter((id) => !taken.has(id))
+    .map((id) => ({ id, tier: HEROES.find((h) => h.id === id)!.tier, hits: weaknessHits(id, enemies) }))
+    .sort((a, b) => b.hits - a.hits || a.tier - b.tier);
+  const out: string[] = [];
+  let high = 0;
+  for (const h of free) {
+    if (out.length >= slots) break;
+    if (HIGH_TIERS.includes(h.tier)) {
+      if (high >= MAX_HIGH) continue;
+      high++;
+    }
+    out.push(h.id);
+  }
+  return out;
+}
+
+/** §4.6: heroes not yet unlocked can still go as a «черновой бэкап», one per squad. */
+export const MAX_DRAFT = OUR.backup?.states.draft.maxInSquad ?? 1;
+
+export function isDraft(m: MetaSave, id: string): boolean {
+  return !roster(m).includes(id);
+}
+
+/** Sync level 0–5 from the `sync.<id>` stat (runs in squad, trophies, same-type kills, wins). */
+export function syncLevel(m: MetaSave, id: string): number {
+  const xp = stat(m, `sync.${id}`);
+  const levels = OUR.backup?.sync.levels ?? [0, 5, 15, 30, 50, 80];
+  let lv = 0;
+  levels.forEach((need, i) => {
+    if (xp >= need) lv = i;
+  });
+  return lv;
+}
+
+/** Our shift worker's strength vs the infected version, 0–1 (draft: fixed, restored: by sync). */
+export function backupFactors(m: MetaSave, id: string): { hp: number; damage: number } {
+  if (isDraft(m, id)) {
+    const d = OUR.backup?.states.draft;
+    return { hp: d?.hpFactor ?? 0.5, damage: d?.damageFactor ?? 0.7 };
+  }
+  const f = OUR.backup?.sync.factorsByLevel ?? [{ hp: 0.6, damage: 0.8 }];
+  return f[Math.min(syncLevel(m, id), f.length - 1)];
+}
+
+export function saveSquad(m: MetaSave, ids: string[]): void {
+  m.lastSquad = [...ids];
+  saveMeta(m);
 }
 
 export function pickAllies(m: MetaSave, ids: string[]): void {

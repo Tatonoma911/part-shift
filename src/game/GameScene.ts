@@ -2,7 +2,6 @@ import Phaser from 'phaser';
 import { openAccountPanel } from '../account/panel';
 import { BUILDABLE, boons, buildings as buildingDefs, config } from '../core/data';
 import { cellKey } from '../core/grid';
-import type { AssistMode } from '../core/state';
 import { World, type GameEvent } from '../core/world';
 import { t } from '../i18n';
 import { BUILDING_ANCHOR } from './assets';
@@ -20,11 +19,13 @@ import { Comm } from './Comm';
 import { Cameras, UI_DEPTH } from './cameras';
 import { EdgePointer } from './EdgePointer';
 import { SidePanel } from './SidePanel';
-import { clearSlot, loadSettings, loadSlot, saveSlot, touchSlot } from './saves';
+import { clearSlot, loadSlot, saveSlot, touchSlot } from './saves';
 import { BOARD, C, CELL, DOCK, GOAL, GUIDE, HUD, INK, LANDSCAPE, STEP, VIEW } from './layout';
 import { markTutorialDone, TutorialGuide } from './Tutorial';
 import { analytics } from '../analytics';
-import { brackets, chip, glyph, plate, TXT } from './ui';
+import { brackets, chip, plate, TXT } from './ui';
+import { buzz } from './comfort';
+import { drawLamp, drawMark, type Channel } from './Sensor';
 import { setBackHandler } from '../platform/native';
 import { challengeUrl, closeSocial, displayName, openBoard, openDonate, profile, rankOf, recordRun, resultCard, share, shouldNudge, socialOpen, type RecordedRun } from '../social';
 
@@ -154,12 +155,13 @@ export class GameScene extends Phaser.Scene {
     shiftLabel: Phaser.GameObjects.Text;
   };
   private shownEnergy = 0;
+  /** Townsfolk who reached the command centre this shift (event `civilian_rescued`). */
+  private rescued = 0;
   private dock!: {
     /** Context line instead of mode tabs: what a tap does now, and a cancel chip while placing. */
     head: { text: Phaser.GameObjects.Text; cancel: Phaser.GameObjects.Container };
     panes: Record<Mode, Phaser.GameObjects.Container>;
     queue: Phaser.GameObjects.Text;
-    scan: Phaser.GameObjects.Text | null;
     cards: { id: string; g: Phaser.GameObjects.Graphics; cost: Phaser.GameObjects.Text; x: number; y: number; w: number; h: number }[];
   };
   private toasts: Phaser.GameObjects.Container[] = [];
@@ -219,7 +221,7 @@ export class GameScene extends Phaser.Scene {
     const st = this.start;
     const params = new URLSearchParams(location.search);
     const assistParam = params.get('assist');
-    const assist = ((['full', 'scanner', 'off'] as const).find((m) => m === assistParam) as AssistMode | undefined) ?? loadSettings().assist;
+    const assist = ((['full', 'scanner', 'off'] as const).find((m) => m === assistParam) as ('full' | 'scanner' | 'off') | undefined) ?? 'off'; // v0.7 (MVP_RULES §3.1а): no auto checks, no scanner
     const saved = st.tutorial || st.fresh ? null : loadSlot(this.slot);
     if (st.tutorial) this.guide = new TutorialGuide();
     // Free play: residents dig only where the player sends them, nothing is queued for them at the start.
@@ -328,7 +330,7 @@ export class GameScene extends Phaser.Scene {
       pointTo: this.pointTo,
       spotlight: this.spotlight,
       focus: this.guide?.focusCells() ?? [],
-      showRisk: w.player(ME).assist.mode === 'full',
+      showRisk: false,
     });
     this.edge.update(time);
     this.side?.update();
@@ -435,6 +437,7 @@ export class GameScene extends Phaser.Scene {
     // However the center went down (tap, restore), the "place the Command Center" line gives way (AR-06).
     if (e.type === 'command_placed' && e.owner === ME && !this.guide) this.say(t('tutorial.dig'), 5000);
     if (e.type === 'cache_open' && e.x !== undefined) this.float(e.x, e.y!, `+${e.amount}`);
+    if (e.type === 'civilian_rescued' && e.owner === ME) this.civilianRescued(e);
     if ((e.type === 'nest_open' || e.type === 'heavy_nest_open') && e.x !== undefined) this.explainNest(e.x, e.y!);
     if (e.type === 'victory' || e.type === 'defeat') this.showEnd(e.type === 'victory');
     // Наводка: point at the cell it marked.
@@ -504,6 +507,23 @@ export class GameScene extends Phaser.Scene {
       this.tweens.add({ targets: box, alpha: 0, duration: 200, onComplete: () => box.destroy() });
       this.toasts = this.toasts.filter((b) => b !== box);
     });
+  }
+
+  /** A townsperson reached the centre: «+25» rises from it and the HUD counter bumps (§4.4). */
+  private civilianRescued(e: GameEvent): void {
+    this.rescued += 1;
+    const cmd = this.world.s.buildings.find((b) => b.owner === ME && b.type === 'command');
+    const at = e.x !== undefined ? { x: e.x, y: e.y! } : cmd ? { x: cmd.x, y: cmd.y } : null;
+    if (at) {
+      const p = this.board.center(at.x, at.y);
+      const pts = e.amount ?? 25;
+      const tx = this.add.text(p.x, p.y - 20, `+${pts}`, { ...TXT.num(34, INK.teal), stroke: '#ffffff', strokeThickness: 7 }).setOrigin(0.5).setDepth(15).setScale(0.6);
+      const sub = this.add.text(p.x, p.y + 12, t(`event.civilians_rescued.one`, { count: 1 }), { ...TXT.body(18, INK.graphite, '700'), stroke: '#ffffff', strokeThickness: 5 }).setOrigin(0.5).setDepth(15);
+      this.tweens.add({ targets: tx, scale: 1, duration: 200, ease: 'Back.easeOut' });
+      this.tweens.add({ targets: [tx, sub], y: '-=80', alpha: 0, delay: 500, duration: 1300, onComplete: () => (tx.destroy(), sub.destroy()) });
+    }
+    this.tweens.add({ targets: this.hud.squad, scale: 1.3, duration: 160, yoyo: true });
+    sound.play('ui_tap');
   }
 
   private float(x: number, y: number, text: string): void {
@@ -622,8 +642,9 @@ export class GameScene extends Phaser.Scene {
     };
     const energy = stat(px + 112, t('hud.label.energy'), 'icon.energy', INK.cobalt);
     // The landscape HUD is narrower: tighten the columns so the threat ring stays clear.
-    const residents = stat(px + (LANDSCAPE ? 244 : 300), t('hud.label.residents'), 'icon.resident', INK.graphite);
-    const squad = stat(px + (LANDSCAPE ? 390 : 456), t('hud.label.squad'), 'icon.shield', INK.graphite);
+    // v0.7: no residents. Our heroes with their limit, and townsfolk brought to the centre (§4.4).
+    const residents = stat(px + (LANDSCAPE ? 244 : 300), t('hud.label.heroes'), 'icon.shield', INK.graphite);
+    const squad = stat(px + (LANDSCAPE ? 390 : 456), t('hud.label.rescued'), 'icon.resident', INK.teal);
 
     // Threat ring: empties over secondsPerLevel, then the level goes up (UI_SPEC §2.1).
     const rx = HUD.x + HUD.w - 66;
@@ -641,21 +662,15 @@ export class GameScene extends Phaser.Scene {
   private updateHud(deltaMs: number): void {
     const w = this.world;
     const mine = w.s.units.filter((u) => u.owner === ME);
-    const residents = mine.filter((u) => u.kind === 'resident').length;
+    const allies = mine.filter((u) => u.kind === 'ally' || u.kind === 'hero').length;
+    const slots = w.residentCap(ME);
     // The counter rolls toward the real value so energy visibly "arrives".
     const real = Math.floor(w.player(ME).energy);
     const diff = real - this.shownEnergy;
     this.shownEnergy = Math.abs(diff) < 1 ? real : this.shownEnergy + diff * Math.min(1, deltaMs / 120);
     this.hud.energy.setText(String(Math.round(this.shownEnergy)));
-    const resText = `${residents}/${w.residentCap(ME)}`;
-    if (this.hud.residents.text !== resText) {
-      // Two-digit counts shrink to stay clear of the school column (QA-033).
-      const room = this.hud.squad.x - this.hud.residents.x - 44;
-      this.hud.residents.setText(resText).setFontSize(36);
-      if (this.hud.residents.width > room) this.hud.residents.setFontSize(Math.max(22, Math.floor((36 * room) / this.hud.residents.width)));
-    }
-    // Shield = school training level of every resident (config.school).
-    this.hud.squad.setText(`${w.trainingLevel(ME)}/${w.cfg.school.trainingLevelsMax}`);
+    this.hud.residents.setText(`${allies}/${slots}`);
+    this.hud.squad.setText(String(this.rescued));
 
     const level = w.threatLevel;
     if (level > this.lastThreat) this.tweens.add({ targets: this.hud.ringBox, scale: 1.25, duration: 300, yoyo: true });
@@ -721,23 +736,20 @@ export class GameScene extends Phaser.Scene {
     const dig = this.add.container(0, 0).setDepth(20);
     const lg = this.add.graphics();
     dig.add(lg);
-    const legend: [string, 'threat' | 'finds' | 'demon' | 'safe', number][] = [
-      ['legend.threat', 'threat', C.coralInk],
-      ['legend.finds', 'finds', C.teal],
-      ['legend.demon', 'demon', C.violet],
-      ['legend.safe', 'safe', C.green],
+    // Legend: the three sensor lamps and the player's own mark (MVP_RULES §3.1а).
+    const legend: [string, Channel | 'mark'][] = [
+      ['legend.threat', 'threat'],
+      ['legend.finds', 'finds'],
+      ['squad.target', 'demon'],
+      ['cell.mark.danger', 'mark'],
     ];
-    legend.forEach(([key, kind, color], k) => {
+    legend.forEach(([key, kind], k) => {
       const lx = DOCK.x + pad + 14 + (k % 2) * 200;
       const ly = top + 32 + Math.floor(k / 2) * 52;
-      if (kind === 'safe') {
-        lg.lineStyle(5, color, 1);
-        lg.beginPath();
-        lg.moveTo(lx - 9, ly);
-        lg.lineTo(lx - 2, ly + 7);
-        lg.lineTo(lx + 10, ly - 7);
-        lg.strokePath();
-      } else glyph(lg, kind, lx, ly, 9, color);
+      const ig = this.add.graphics().setPosition(lx, ly);
+      if (kind === 'mark') drawMark(ig.setScale(0.6), 0, 0, 'danger');
+      else drawLamp(ig.setScale(2), kind, -7, -5, 14, 10);
+      dig.add(ig);
       dig.add(this.add.text(lx + 22, ly, t(key), TXT.body(23, INK.graphite, '500')).setOrigin(0, 0.5));
     });
     const qx = DOCK.x + DOCK.w - pad - 250;
@@ -757,20 +769,6 @@ export class GameScene extends Phaser.Scene {
       }),
     );
     dig.add([qg, queue, qx2, qhit]);
-    let scan: Phaser.GameObjects.Text | null = null;
-    if (this.world.player(ME).assist.mode === 'scanner') {
-      const sg = this.add.graphics();
-      chip(sg, qx, top + 78, 250, 66, C.teal, 1, 12);
-      scan = this.add.text(qx + 125, top + 111, '', TXT.body(24, INK.white, '700')).setOrigin(0.5);
-      const shit = this.add.zone(qx, top + 78, 250, 66).setOrigin(0).setInteractive({ useHandCursor: true });
-      shit.on(
-        'pointerdown',
-        stop(() => {
-          if (!this.world.apply({ type: 'scan' }, ME).ok) this.say(t('assist.scan.empty'));
-        }),
-      );
-      dig.add([sg, scan, shit]);
-    }
 
     // Build: five cards with the building sprites.
     const build = this.add.container(0, 0).setDepth(20);
@@ -804,7 +802,7 @@ export class GameScene extends Phaser.Scene {
       return { id, g: cg, cost, x, y: top, w: cw, h: ch };
     });
 
-    this.dock = { head: { text: headText, cancel }, panes: { dig, build }, queue, scan, cards };
+    this.dock = { head: { text: headText, cancel }, panes: { dig, build }, queue, cards };
   }
 
   /** 'build' while a liberated block is chosen (ghost shown), otherwise 'dig'. */
@@ -861,10 +859,6 @@ export class GameScene extends Phaser.Scene {
     const p = w.player(ME);
     if (this.mode === 'dig') {
       this.dock.queue.setText(t('hud.queue', { count: p.queue.length + p.autoQueue.length }));
-      if (this.dock.scan) {
-        const a = p.assist;
-        this.dock.scan.setText(t('assist.scan.charges', { count: a.charges })).setAlpha(a.charges > 0 || a.scanLeft > 0 ? 1 : 0.5);
-      }
     } else {
       const hl = this.guide?.step?.highlightBuild ?? [];
       const pulse = 0.5 + 0.5 * Math.sin(this.time.now / 180);
@@ -1228,11 +1222,12 @@ export class GameScene extends Phaser.Scene {
   /** "Next to this block: 2 nests" with Russian plural forms. */
   private nearText(x: number, y: number): string {
     const cl = this.world.clues(x, y);
-    const lines: string[] = [];
-    if (cl.threat) lines.push(t(`cell.near.threat.${plural(cl.threat)}`, { count: cl.threat }));
-    if (cl.demon) lines.push(t('cell.near.boss.one', { count: cl.demon }));
-    if (cl.finds) lines.push(t(`cell.near.finds.${plural(cl.finds)}`, { count: cl.finds }));
-    return lines.length ? lines.join('\n') : t('cell.near.clear');
+    // One line in the sensor's words (§3.1а): «Рядом: 2 гнезда, убежище цели вызова, 1 находка».
+    const list: string[] = [];
+    if (cl.threat) list.push(t(`cell.sensor.nest.${plural(cl.threat)}`, { count: cl.threat }));
+    if (cl.demon) list.push(t('cell.sensor.boss'));
+    if (cl.finds) list.push(t(`cell.sensor.find.${plural(cl.finds)}`, { count: cl.finds }));
+    return list.length ? t('cell.sensor', { list: list.join(', ') }) : t('cell.sensor.clear');
   }
 
   private onDown(p: Phaser.Input.Pointer): void {
@@ -1320,6 +1315,18 @@ export class GameScene extends Phaser.Scene {
     if (!c.revealed && this.ghost) this.setGhost(null);
     // Second tap on a cell the scanner knows is dangerous: dig it anyway.
     const k = cellKey(x, y);
+    // Own mark (MVP_RULES §3.1а): the first tap asks, the second removes the mark and digs.
+    if (!c.revealed && c.marked) {
+      if (this.confirmCell === k) {
+        this.confirmCell = null;
+        w.apply({ type: 'toggleMark', x, y, clear: true }, ME);
+        if (w.apply({ type: 'queueDig', x, y, force: true }, ME).ok) this.guide?.notify('queued');
+        return;
+      }
+      this.confirmCell = k;
+      this.say(t('cell.mark.confirm', { mark: t(`cell.mark.${c.markKind ?? 'danger'}`) }), 4000, true);
+      return;
+    }
     if (this.confirmCell === k) {
       this.confirmCell = null;
       if (w.apply({ type: 'queueDig', x, y, force: true }, ME).ok) this.guide?.notify('queued');
@@ -1343,6 +1350,9 @@ export class GameScene extends Phaser.Scene {
       if (this.lastDragCell !== idx || !this.dragMode) return;
       if (this.dragMode === 'queue') w.apply({ type: 'cancelDig', x, y }, ME);
       w.apply({ type: 'toggleMark', x, y }, ME);
+      const kind = w.cell(x, y).markKind;
+      this.say(kind ? t(`cell.mark.${kind}`) : t('cell.mark.hint'), 1800);
+      buzz(20);
       this.dragMode = null;
     });
   }
