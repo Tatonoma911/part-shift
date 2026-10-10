@@ -41,7 +41,7 @@ export function generateField(s: GameState, opts: Options): void {
   const boss = s.boss.hero;
   const lairHeroes: { id: string; tier: number }[] = [];
   for (const [tier, n] of Object.entries(heroRules.lairsPerMapByTier)) {
-    const pool = heroList.filter((h) => h.tier === Number(tier) && h.id !== boss);
+    const pool = heroList.filter((h) => h.tier === Number(tier) && h.id !== boss && !h.allyOnly);
     for (let i = 0; i < n && pool.length; i++) lairHeroes.push({ id: pool.splice(randIntOf(s, pool.length), 1)[0].id, tier: Number(tier) });
   }
 

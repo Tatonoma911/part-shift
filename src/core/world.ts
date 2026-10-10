@@ -1020,6 +1020,9 @@ export class World {
     }
     this.emit('build_done', { x: b.x, y: b.y, owner: b.owner, text: b.type });
     for (const u of this.s.units) if (u.task.type === 'build' && u.task.building === b.id) this.setTask(u, { type: 'idle' });
+    // Spawn a hero of the building's tier when construction finishes (MVP_RULES §4.1b).
+    const birthTiers = buildingDefs[b.type].heroBirthTiers;
+    if (birthTiers?.length) this.spawnAllyFromPool(this.s.players[b.owner], b.x, b.y, birthTiers);
   }
 
   private depleted(x: number, y: number): void {
@@ -2229,13 +2232,14 @@ export class World {
   }
 
   /** Spawns the next available hero from the squad pool (rules.allies) at (x,y).
-   *  Empty pool = no spawns. Skips heroes already alive or waiting to respawn. */
-  private spawnAllyFromPool(p: Player, x: number, y: number): Unit | null {
+   *  Empty pool = no spawns. Skips heroes already alive or waiting to respawn.
+   *  tiers: if set, only consider heroes of those tiers (MVP_RULES §4.1b building births). */
+  private spawnAllyFromPool(p: Player, x: number, y: number, tiers?: number[]): Unit | null {
     // undefined = no squad configured (tutorial/test) → fall back to all heroes; [] = squad explicitly empty → no spawns.
     const pool = this.rules.allies !== undefined ? this.rules.allies : Object.keys(heroDefs);
     const alive = new Set(this.s.units.filter((u) => u.owner === p.id && u.kind === 'ally' && u.hp > 0).map((u) => u.hero));
     const waiting = new Set(Object.keys(p.allyBack ?? {}));
-    const id = pool.find((hid) => !alive.has(hid) && !waiting.has(hid));
+    const id = pool.find((hid) => !alive.has(hid) && !waiting.has(hid) && (!tiers || tiers.includes(heroDefs[hid]?.tier ?? 0)));
     if (!id) return null;
     const h = heroDefs[id];
     if (!h) return null;
