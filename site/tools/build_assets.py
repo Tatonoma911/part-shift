@@ -81,9 +81,6 @@ def main():
 
     # Comics: full 1080 width so the lettering stays readable.
     webp(f'{MEDIA}/09_КОМИКС_ПРОЛОГ.png', 'comics/prologue-ru', 1024)
-    for k in range(1, 5):
-        webp(f'{DONUT}/comic_01_last_donut_ru_story_0{k}_b03.png', f'comics/last-donut-{k}-ru', 1080)
-    webp(f'{DONUT}/comic_01_last_donut_ru_4x5_b03.png', 'comics/last-donut-cover', 1080)
     for slug, src in [('nothing-happened', 'nothing-happened-today-beach-news'), ('pressure-test', 'pressure-test-review-v1'), ('two-kinds', 'two-kinds-of-power-hive-smoke-match')]:
         for lang in ('ru', 'en'):
             webp(f'{REVIEW}/{src}-{lang}.png', f'comics/{slug}-{lang}', 1080)
@@ -122,6 +119,12 @@ def main():
     webp(f'{INC}/site_support_jar.png', 'support-jar', 900)
     B04 = f'{PF}/art/batch04_final/generated'
     webp(f'{B04}/202_comic_11_control_warehouse.png', 'control-warehouse', 1600)
+    # EN lettering for the prologue and captions for «Последний пончик» (RU/EN), set in the site thread.
+    webp(f'{INC}/site_comic_prologue-en.png', 'comics/prologue-en', 1024)
+    for lang in ('ru', 'en'):
+        for k in range(1, 5):
+            webp(f'{INC}/site_comic_last_donut_{k}-{lang}.png', f'comics/last-donut-{k}-{lang}', 1080)
+        webp(f'{INC}/site_comic_last_donut_cover-{lang}.png', f'comics/last-donut-cover-{lang}', 1080)
     # Cover of «Как всё началось», the intro comic the site plays (site/intro.ts).
     webp(f'{PF}/comic/assets/panels/city_sunset.jpg', 'comics/intro-cover', 900, (0.2, 0, 0.8, 1))
     for lang in ('ru', 'en'):

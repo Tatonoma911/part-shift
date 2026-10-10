@@ -40,7 +40,7 @@ const lib = content.slice(content.indexOf('export const COMICS'), content.indexO
 const uni = new Set([...lib.matchAll(/['`]([\w/.-]+\.(?:webp|png))['`]/g)].map((m) => m[1]).filter((f) => !f.includes('$')));
 for (const k of lib.matchAll(/\[([^\]]*)\]\.map\(\(\w+\) => \(\{\s*src: `card-/g)) for (const id of k[1].match(/[a-z0-9]+/g)) uni.add(`card-${id}.webp`);
 uni.add('comics/intro-cover.webp');
-for (const k of [1, 2, 3, 4]) uni.add(`comics/last-donut-${k}-ru.webp`), uni.add(`comics/last-donut-${k}-en.webp`);
+for (const k of [1, 2, 3, 4]) for (const l of ['ru', 'en']) uni.add(`comics/last-donut-${k}-${l}.webp`);
 for (const f of uni) {
   try {
     mkdirSync(`artifact/files/universe/${f}`.replace(/\/[^/]+$/, ''), { recursive: true });

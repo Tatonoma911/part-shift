@@ -432,7 +432,7 @@ function villainsView(): string {
 }
 
 function comicCard(c: (typeof COMICS)[number]): string {
-  const cover = c.id === 'last-donut' ? 'comics/last-donut-cover.webp' : c.pages[lang][0];
+  const cover = c.id === 'last-donut' ? `comics/last-donut-cover-${lang}.webp` : c.pages[lang][0];
   return `<a class="comic-card slab" href="#comic-${c.id}">
     <div class="cover"><img src="${img(cover)}" alt="" loading="lazy"></div>
     <div class="meta"><span class="caps">${tr(c.series)} // ${tr(c.cast)}</span><h3>${tr(c.title)}</h3><p>${tr(c.blurb)}</p></div>
@@ -456,7 +456,7 @@ function comicsView(): string {
 function comicView(id: string): string {
   const c = COMICS.find((x) => x.id === id);
   if (!c) return comicsView();
-  const ruOnly = c.pages.en[0] === c.pages.ru[0] && lang === 'en';
+  const ruOnly = lang === 'en' && c.pages.en.some((p) => p.includes('-ru.'));
   const i = COMICS.indexOf(c);
   const next = COMICS[(i + 1) % COMICS.length];
   return `<section class="section"><div class="wrap">
