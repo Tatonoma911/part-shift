@@ -488,6 +488,7 @@
   "run.roster.ours": "On your side: {list}",
   "run.roster.theirs": "Infected this shift: {list}",
   "building.station.name": "Station: {hero}",
+  "building.station.label": "Hero Station",
   "building.station.desc": "A {hero} service post. Dispatches only this hero. The higher the hero's level, the pricier the station.",
   "squad.title": "Shift Briefing",
   "squad.enemies": "Against you",
