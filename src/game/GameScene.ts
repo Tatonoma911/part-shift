@@ -817,14 +817,19 @@ export class GameScene extends Phaser.Scene {
     const earned = (this.world.s as MedalEvents).medalEvents;
     if (earned?.length) for (const e of earned.splice(0)) this.medals.push(e.id, e.tier as Tier);
 
-    let goal = t('mode.call.goal', { hero: heroName(w.s.boss.hero) });
+    const nestsLeft = w.s.cells.filter((c) => (c.content === 'nest' || c.content === 'heavy_nest') && !c.resolved).length;
+    let goal = this.start.shiftN
+      ? t('hud.nests_left', { n: nestsLeft })
+      : t('mode.call.goal', { hero: heroName(w.s.boss.hero) });
     let bg = C.graphite;
     if (this.paused && !this.online) {
       goal = t('pause.plan_banner');
       bg = C.amber;
-    } else if (w.s.boss.warned && !w.s.boss.awake && !w.s.boss.dead) {
+    } else if (!this.start.shiftN && w.s.boss.warned && !w.s.boss.awake && !w.s.boss.dead) {
       goal = t('event.boss_warning');
       bg = C.violet;
+    } else if (this.start.shiftN && nestsLeft === 0) {
+      bg = C.teal;
     }
     const showGoal = !this.guide;
     if (this.hud.goal.text !== goal) this.hud.goal.setText(goal);
