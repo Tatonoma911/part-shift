@@ -1,4 +1,5 @@
 import metaJson from '../../data/design/meta.json';
+import { buildings as buildingDefs } from '../../core/data';
 import type { GameEvent, World } from '../../core/world';
 import { t } from '../../i18n';
 import { runScore } from '../../social/score';
@@ -205,7 +206,10 @@ export class RunTally {
       const key = `run_${stat(m, 'runs_played')}`;
       if (!m.loreRecords.includes(key)) m.loreRecords.push(key);
     }
-    for (const [k, n] of Object.entries(this.counts)) if (!RUN_ONLY.has(k)) inc(k, n);
+    // The Backup archive (buildings.json backup_lab): hero unlock progress of this run counts ×1.5 if it stands at the end.
+    const archive = w.s.buildings.some((b) => b.owner === this.me && b.type === 'backup_lab' && b.complete && !b.ruined);
+    const unlockMul = archive ? buildingDefs.backup_lab.unlockProgressFactorThisRun ?? 1 : 1;
+    for (const [k, n] of Object.entries(this.counts)) if (!RUN_ONLY.has(k)) inc(k, n * unlockMul);
     // «Вызов дня» streak: consecutive UTC days with a finished daily shift.
     if (opts.daily) {
       const d = m.daily;
@@ -216,7 +220,7 @@ export class RunTally {
       m.daily = { date: opts.daily, streak, bestScore: Math.max(d?.date === opts.daily ? d.bestScore : 0, total) };
       m.stats.daily_streak_best = Math.max(stat(m, 'daily_streak_best'), streak);
     }
-    for (const [id, n] of Object.entries(this.defeats)) inc(`hero_defeats.${id}`, n);
+    for (const [id, n] of Object.entries(this.defeats)) inc(`hero_defeats.${id}`, n * unlockMul);
     m.stats.best_run_energy = Math.max(stat(m, 'best_run_energy'), Math.floor(p.stats.energy));
     for (const id of this.seen) {
       m.stats[`hero_seen.${id}`] = 1;
