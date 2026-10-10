@@ -21,9 +21,11 @@ import { metaPreview } from './meta/preview';
 import { clearSlot, lastSlot, loadSettings, loadSlot, saveSettings, SLOTS } from './saves';
 import { tutorialDone } from './Tutorial';
 import { setBackHandler } from '../platform/native';
+import { closeOnlineScreen, openOnlineScreen, onlineScreenOpen } from '../net/lobby';
+import { onlineAvailable } from '../net/online';
 import { chip, plate, TXT } from './ui';
 import { drawMenuBackdrop, drawMenuHeroes } from './MenuBackdrop';
-import { closeSocial, dailySeed, dayId, heroOfWeek, invite, openBoard, openDonate, openFeedback, readChallenge, socialOpen } from '../social';
+import { dailySeed, dayId, heroOfWeek, invite, openBoard, openDonate, openFeedback, readChallenge } from '../social';
 
 type Ev = Phaser.Types.Input.EventData;
 type Page = 'main' | 'slots' | 'settings' | 'comfort';
@@ -61,6 +63,7 @@ export class MenuScene extends Phaser.Scene {
   }
 
   create(): void {
+    this.input.enabled = true;
     this.allyUi = null;
     if (!this.anims.exists('resident.idle')) createArt(this);
     // QA-018: disable Phaser input while the guide/coach overlay is open, so touches
@@ -81,16 +84,22 @@ export class MenuScene extends Phaser.Scene {
       this.scene.start('game', start);
       return;
     }
+    // Friend invite link: ?room=CODE — open the online screen and join the room.
+    const roomCode = params.get('room');
+    if (!this.registry.get('deepLinked') && roomCode && onlineAvailable()) {
+      this.registry.set('deepLinked', true);
+    }
     this.drawBackdrop();
     this.show('main');
+    if (roomCode && onlineAvailable()) this.online(roomCode);
     metaPreview(this);
     analytics.where('menu');
     analytics.track('menu_view', { tutorial_done: tutorialDone(), has_run: lastSlot() !== null });
     // Android back: skips the intro comic, sub-pages return to the main page; on the main page the app goes to the background.
     setBackHandler(() => {
       if (learning().isOpen) return true;
-      if (socialOpen()) {
-        closeSocial();
+      if (onlineScreenOpen()) {
+        closeOnlineScreen();
         return true;
       }
       if (this.storyPlaying) {
@@ -216,6 +225,7 @@ export class MenuScene extends Phaser.Scene {
         button(t('menu.continue'), () => this.play({ slot: last }), true, `${t('menu.slot', { n: last })} · ${this.fmt(s.time)}`);
       } else if (!tutorialDone()) button(t('menu.tutorial'), () => this.play({ tutorial: true }), true);
       button(t('menu.new_run'), () => this.show('slots'), !last && tutorialDone());
+      button(t('online.menu'), onlineAvailable() ? () => this.online() : null, false, onlineAvailable() ? t('online.menu_sub') : t('menu.soon'));
       // Meta progress: returned heroes, stats, records, rank (design/META.md §6).
       button(t('dossier.title'), () => this.scene.start('dossier'));
       if (last || tutorialDone()) button(t('menu.tutorial'), () => this.play({ tutorial: true }));
@@ -329,6 +339,19 @@ export class MenuScene extends Phaser.Scene {
     // Keep the panel on screen when it grows (settings has six rows).
     const overflow = top + h + 24 - VIEW.height;
     if (overflow > 0) c.y = -overflow;
+  }
+
+  /** Online screen over the menu (src/net/lobby.ts); the match opens the board. */
+  private online(initialCode?: string): void {
+    this.input.enabled = false;
+    openOnlineScreen({
+      assist: loadSettings().assist,
+      initialCode,
+      onStart: (online) => this.play({ online }),
+      onClose: () => {
+        if (this.scene.isActive()) this.input.enabled = true;
+      },
+    });
   }
 
   /** Ranking · Invite · Feedback · Coffee (the coffee chip is gold: supporting the author is one tap away). */

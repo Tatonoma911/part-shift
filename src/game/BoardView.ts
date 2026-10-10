@@ -12,7 +12,6 @@ import { Bars, drawWeakOrbs, weaknessesOf, type Weakness } from './Vitals';
 import { glyph } from './ui';
 import { drawMark, drawSensor, sensorTexts, type MarkKind } from './Sensor';
 
-const ME = 0;
 const CHANNELS = ['finds', 'threat', 'demon'] as const;
 const GROUND = ['ground_0', 'ground_1', 'ground_0', 'ground_grass_0', 'ground_1', 'ground_grass_1', 'ground_0', 'ground_grass_2'];
 const FEET = 46;
@@ -100,6 +99,8 @@ export class BoardView {
     private readonly world: World,
     bx: number,
     by: number,
+    /** The player this screen belongs to (online: the server's seat number). */
+    private readonly me = 0,
   ) {
     this.bx = bx;
     this.by = by;
@@ -376,8 +377,8 @@ export class BoardView {
   update(now: number, view: ViewState): void {
     const w = this.world;
     const s = w.s;
-    const me = w.player(ME);
-    const known = w.started ? w.visibleKnowledge(ME) : new Map<string, string>();
+    const me = w.player(this.me);
+    const known = w.started ? w.visibleKnowledge(this.me) : new Map<string, string>();
     const risk = view.showRisk && w.started ? this.riskMap() : null;
     const og = this.overlay;
     const cg = this.clueG;
@@ -461,7 +462,7 @@ export class BoardView {
           this.drawClosed(og, x, y, px, py, known.get(cellKey(x, y)), risk?.get(i), me.queue.includes(cellKey(x, y)), me.autoQueue.includes(cellKey(x, y)), c.marked ? (c.markKind ?? 'danger') : null, now);
           continue;
         }
-        if (w.started && w.inTerritory(ME, x, y) && c.building === undefined) {
+        if (w.started && w.inTerritory(this.me, x, y) && c.building === undefined) {
           og.lineStyle(2, C.seam, 0.55);
           og.strokeRect(px + 2, py + 2, CELL - 4, CELL - 4);
           if (view.showTerritory) {
@@ -469,7 +470,7 @@ export class BoardView {
             og.fillRect(px, py, CELL, CELL);
           }
         }
-        if (view.buildType && w.canBuild(ME, view.buildType, x, y) === null) {
+        if (view.buildType && w.canBuild(this.me, view.buildType, x, y) === null) {
           const pulse = 0.35 + 0.25 * Math.sin(now / 200);
           og.fillStyle(C.seam, pulse * 0.6);
           og.fillRect(px, py, CELL, CELL);
@@ -761,7 +762,7 @@ export class BoardView {
     }
     if (state === 'construct' && hasSheet) spr.setFrame(Math.min(6, Math.floor((b.built / def.buildSeconds) * 6)));
     spr.setAlpha(b.complete ? 1 : 0.85);
-    if (b.owner !== ME) spr.setTint(0xffc2a8);
+    if (b.owner !== this.me) spr.setTint(0xffc2a8);
     const g = this.topG;
     const p = this.center(b.x, b.y);
     if (b.complete && b.hp < def.hp) this.vitals.draw(g, `b:${b.id}`, p.x - 28, p.y - 46, 56, b.hp / def.hp, 'building', this.scene.time.now);
@@ -865,7 +866,7 @@ export class BoardView {
     const w = this.world;
     const g = this.topG;
     const alive = new Set<number>();
-    const order = w.player(ME).order;
+    const order = w.player(this.me).order;
     for (const u of w.s.units) {
       alive.add(u.id);
       let v = this.units.get(u.id);
@@ -890,7 +891,7 @@ export class BoardView {
           spr.setScale(1.3);
           v.ring = this.scene.add.image(fx, fy, 'tile.defender_ring').setOrigin(0.5, 0.75).setScale(1.6).setTint(C.violet);
         }
-        if (u.owner >= 0 && u.owner !== ME) spr.setTint(0xffb080);
+        if (u.owner >= 0 && u.owner !== this.me) spr.setTint(0xffb080);
         this.units.set(u.id, v);
         this.oneShot(v, 'emerge');
       }
@@ -922,7 +923,7 @@ export class BoardView {
       else if (u.slow) v.spr.setTint(0x9fdcff);
       else if (u.poison) v.spr.setTint(0xb8f08a);
       else if (v.tint !== undefined) v.spr.setTint(v.tint);
-      else if (!(u.owner >= 0 && u.owner !== ME)) v.spr.clearTint();
+      else if (!(u.owner >= 0 && u.owner !== this.me)) v.spr.clearTint();
       const windup = u.blast?.phase === 'windup';
       if (windup && !v.windup) this.oneShot(v, 'tail_swing');
       v.windup = windup;
@@ -935,7 +936,7 @@ export class BoardView {
         } else if (moved) anim = 'walk';
         // A maddened hero with nobody to chase keeps its nervous tic.
         else if (u.kind === 'hero' && !u.target && set.anims.tic) anim = 'tic';
-        if (anim === 'dig' && v.anim !== 'dig' && u.owner === ME) sound.play('dig_start');
+        if (anim === 'dig' && v.anim !== 'dig' && u.owner === this.me) sound.play('dig_start');
         v.anim = anim;
         // Ally sheets may not have every resident action yet; fall back gracefully.
         const playAnim = set.anims[anim] ? anim : ({ walk_back: 'walk', dig: 'walk', build: 'idle', flee: 'walk' }[anim] ?? 'idle');
