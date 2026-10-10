@@ -393,6 +393,12 @@ export class World {
     if (!isEnemy(u) && this.overgrownAt(u)) out.speed *= 1 - (HERO_ABILITY.overgrowth.amount ?? 40) / 100;
     if (u.poison) out.defense = Math.max(0, out.defense - u.poison.defense);
     if (u.bare) out.defense = 0;
+    if (!isEnemy(u)) out.defense += this.heroAuraAt(u);
+    if (isEnemy(u) && this.jammedAt(u)) {
+      const j = buildingDefs.jammer.aura!;
+      out.speed *= j.moveSpeedFactor ?? 1;
+      out.attackSeconds /= j.attackSpeedFactor ?? 1;
+    }
     if (!isEnemy(u)) {
       const cb = this.s.callBuffs;
       if (cb?.damage && this.s.time < cb.damage.until) out.damage *= cb.damage.factor;
@@ -3023,11 +3029,33 @@ export class World {
     }
   }
 
+  /** Defense an outpost adds to our hero standing in its range (buildings.json heroAura); 0 if none. */
+  private heroAuraAt(u: Unit): number {
+    const a = buildingDefs.outpost.heroAura;
+    if (!a) return 0;
+    const near = this.s.buildings.some((b) => b.type === 'outpost' && b.owner === u.owner && b.complete && !b.ruined && cheb(b.x, b.y, Math.round(u.x), Math.round(u.y)) <= a.radius);
+    return near ? a.defenseAdd : 0;
+  }
+
+  /** True when a built jammer of any side reaches this enemy (buildings.json jammer.aura). */
+  private jammedAt(u: Unit): boolean {
+    const a = buildingDefs.jammer.aura;
+    if (!a) return false;
+    return this.s.buildings.some((b) => b.type === 'jammer' && b.complete && !b.ruined && cheb(b.x, b.y, Math.round(u.x), Math.round(u.y)) <= a.radius);
+  }
+
   private production(dt: number): void {
     const s = this.s;
     for (const b of s.buildings) {
       if (!b.complete) continue;
       const def = buildingDefs[b.type];
+      // Repair building: our finished buildings in range regain HP (buildings.json repair).
+      if (def.repair) {
+        for (const o of s.buildings) {
+          if (o.owner !== b.owner || !o.complete || o.ruined || o.hp <= 0) continue;
+          if (cheb(o.x, o.y, b.x, b.y) <= def.repair.radius) o.hp = Math.min(buildingDefs[o.type].hp, o.hp + def.repair.hpPerSecond * dt);
+        }
+      }
       if (def.produce) {
         // Reactors work by themselves [Антон]; a cooler next door doubles the pace.
         const cooled = s.buildings.some((o) => {
