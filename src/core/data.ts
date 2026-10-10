@@ -76,6 +76,16 @@ export interface BuildingDef {
   trainingLevel?: number;
   /** Hero tiers this building spawns when construction completes (MVP_RULES §4.1b). */
   heroBirthTiers?: number[];
+  /** Upgrade levels beyond base (index 0 = level 2, index 1 = level 3). Cost defaults to base cost × (level). */
+  levels?: { cost?: number; effectKey?: string }[];
+  /** Boost: temporary acceleration. Cost defaults to 30, cooldown to 60 s. */
+  boost?: { cost?: number; cooldown?: number; effectKey?: string };
+  /** Fraction of total spent energy returned on demolish. Defaults to 0.5. Command center cannot be demolished. */
+  demolishRefund?: number;
+  /** Maximum number of this building per player. */
+  maxCount?: number;
+  /** Build requirements beyond energy (checked by canBuild). */
+  requires?: { schools?: number; nestsDestroyed?: number };
 
   autoAttack?: { damage: number; attackSeconds: number; range: number; tech?: string };
   healAura?: { radius: number; hpPerSecond: number };

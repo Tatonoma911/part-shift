@@ -162,6 +162,16 @@ export interface Building {
   rebuild?: boolean;
   /** Seconds until the next shot (buildings with autoAttack: the command center). */
   attackCd?: number;
+  /** Current upgrade level (1 = base, 2 = upgraded once, 3 = max). */
+  level?: number;
+  /** Seconds remaining on the boost cooldown (0 or absent = ready). */
+  boostCooldown?: number;
+  /** True while the building is in ruined state (damaged below 0 HP). */
+  ruined?: boolean;
+  /** Total energy spent building and upgrading this structure (for demolish refund). */
+  spent?: number;
+  /** For stations: the hero id this building gives birth to. */
+  hero?: string;
 }
 
 export interface Orb {
