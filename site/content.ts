@@ -365,7 +365,7 @@ export const COMICS: Comic[] = [
     series: { ru: 'Пролог', en: 'Prologue' },
     cast: { ru: 'Линейщик, мальчик-фанат', en: 'Lineman, a young fan' },
     blurb: { ru: 'Мальчик вызывает службу спасения ради автографа. Город любит своих героев, а внизу HeroOut уже выращивает им врагов.', en: 'A boy calls the rescue service just to get an autograph. The city loves its heroes, while deep below HeroOut is already growing their enemies.' },
-    pages: { ru: ['comics/prologue-ru.webp'], en: ['comics/prologue-en.webp'] },
+    pages: { ru: ['comics/prologue-1-ru.webp', 'comics/prologue-2-ru.webp'], en: ['comics/prologue-1-en.webp', 'comics/prologue-2-en.webp'] },
   },
   {
     id: 'nothing-happened',
@@ -391,6 +391,15 @@ export const COMICS: Comic[] = [
     blurb: { ru: 'Банка мёда на 900 000 калорий и электрик, который отвечает за другую энергию.', en: 'A 900,000-calorie jar of honey and an electrician who handles the other kind of power.' },
     pages: { ru: ['comics/two-kinds-ru.webp'], en: ['comics/two-kinds-en.webp'] },
   },
+  {
+    id: 'seven-seconds',
+    title: { ru: 'Семь секунд', en: 'Seven Seconds' },
+    series: { ru: 'До сирен', en: 'Before the Sirens' },
+    cast: { ru: 'Каменщик, уличный повар', en: 'Mason, a street cook' },
+    blurb: { ru: 'Тяжёлый кран падает на хот-дожную холодную цепь. Семь секунд между краном и дружиной.', en: 'A heavy crane falls toward a food cart’s cold chain. Seven seconds between the crane and a friendship.' },
+    pages: { ru: ['comics/seven-seconds-ru.webp'], en: ['comics/seven-seconds-en.webp'] },
+  },
+
   {
     id: 'cat-record',
     title: { ru: 'О кошке', en: 'About the Cat' },
