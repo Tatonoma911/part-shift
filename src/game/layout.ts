@@ -84,4 +84,6 @@ export const TECH_COLOR: Record<string, number> = {
   volt: 0xffe14d,
   impact: 0xc9a27a,
   toxin: 0x8cff5a,
+  // Без стихии: a steel tone, so a plain limb never reads as a white bug.
+  kinetic: 0xa9b6c2,
 };
