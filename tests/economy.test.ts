@@ -164,3 +164,21 @@ describe('free play digging', () => {
     expect(w.player(0).autoQueue.length).toBe(0);
   });
 });
+
+describe('medcenter', () => {
+  it('pulses 4 HP to a resident within 2 cells every 2 s', () => {
+    const w = handWorld(['.......', '.......', '.......', '......n']);
+    for (const c of w.s.cells) c.revealed = c.content === 'ground';
+    w.apply({ type: 'placeCommand', x: 1, y: 1 });
+    w.player(0).energy = 1000;
+    w.apply({ type: 'build', building: 'medcenter', x: 2, y: 2 });
+    run(w, 12); // build it
+    const r = residents(w)[0];
+    r.hp = 20;
+    w.drainEvents();
+    run(w, 20);
+    const pulses = w.drainEvents().filter((e) => e.type === 'healed' && e.unit === r.id).length;
+    expect(pulses).toBeGreaterThanOrEqual(9);
+    expect(pulses).toBeLessThanOrEqual(10);
+  });
+});
