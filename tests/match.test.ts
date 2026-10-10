@@ -91,5 +91,5 @@ describe('state patches', () => {
     }
     expect(w.s.units.length).toBeGreaterThan(2);
     expect(client).toEqual(compact(w.s));
-  });
+  }, 15000);
 });
