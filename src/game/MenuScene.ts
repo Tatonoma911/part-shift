@@ -222,8 +222,10 @@ export class MenuScene extends Phaser.Scene {
       if (last) {
         const s = loadSlot(last)!;
         button(t('menu.continue'), () => this.play({ slot: last }), true, `${t('menu.slot', { n: last })} · ${this.fmt(s.time)}`);
-      } else if (!tutorialDone()) button(t('menu.tutorial'), () => this.play({ tutorial: true }), true);
-      button(t('menu.new_run'), () => this.show('slots'), !last && tutorialDone());
+      }
+      // F-06: until the tutorial is done, «Новая смена» is the tutorial (it has its own «Пропустить»).
+      if (!tutorialDone()) button(t('menu.new_run'), () => this.play({ tutorial: true }), !last);
+      else button(t('menu.new_run'), () => this.show('slots'), !last);
       button(t('online.menu'), onlineAvailable() ? () => this.online() : null, false, onlineAvailable() ? t('online.menu_sub') : t('menu.soon'));
       // Meta progress: returned heroes, stats, records, rank (design/META.md §6).
       button(t('dossier.title'), () => this.scene.start('dossier'));
