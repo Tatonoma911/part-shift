@@ -7,8 +7,8 @@ const names = (n: number) => Array.from({ length: n }, (_, i) => `P${i + 1}`);
 
 describe('online match setup (MVP_RULES §14)', () => {
   it('board size follows the player count', () => {
-    expect(boardFor(2)).toEqual({ width: 18, height: 22 });
-    expect(boardFor(4)).toEqual({ width: 22, height: 26 });
+    expect(boardFor(2)).toEqual({ width: 20, height: 26 });
+    expect(boardFor(4)).toEqual({ width: 26, height: 34 });
   });
 
   for (const n of [2, 3, 4]) {

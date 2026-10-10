@@ -23,16 +23,16 @@
   "pause": false,
   "board": {
     "2": {
-      "width": 18,
-      "height": 22
+      "width": 20,
+      "height": 26
     },
     "3": {
-      "width": 22,
-      "height": 26
+      "width": 24,
+      "height": 30
     },
     "4": {
-      "width": 22,
-      "height": 26
+      "width": 26,
+      "height": 34
     },
     "pinchZoom": true
   },
@@ -56,6 +56,23 @@
   "adsDuringMatch": false,
   "coop": {
     "escalationSecondsPerLevel": 60,
-    "comment": "Coop is significantly harder: threat levels arrive 2× faster (120→60s) and enemy nests respond accordingly. Players must coordinate or they lose."
+    "enemyDamageScale": 1.25,
+    "lairsPerPlayer": 2,
+    "raidIntervalSeconds": 45,
+    "raidBaseAdaptants": 3,
+    "raidAdaptantsPerLevel": 1,
+    "raidMaxAdaptants": 8,
+    "raidPursueRadius": 6,
+    "spliceShieldDamageMultiplier": 0.5,
+    "spliceShieldRequiredPlayers": 2,
+    "spliceShieldWindowSeconds": 4,
+    "teamworkBonusPercent": 20,
+    "energyTransferAmount": 25,
+    "energyTransferCooldownSeconds": 10,
+    "rescueHoldResidents": 3,
+    "rescueHoldSeconds": 10,
+    "rescueWindowSeconds": 60,
+    "rescueCommandHpPercent": 40,
+    "comment": "Coop balance v2 (Геймдизайнер spec). Board is 2x larger, escalation 2x faster. Raids, splice shield, teamwork bonus, rescue command are TODO follow-up PR."
   }
 }
