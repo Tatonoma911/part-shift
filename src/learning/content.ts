@@ -247,7 +247,7 @@ export const SECTIONS: Section[] = [
         stats: () => [1, 2, 3, 4].map((t) => [`stat.tier${t}`, `stat.birth_v|${birthOf(t).cost} ⚡ · ${birthOf(t).seconds}`] as [string, string]),
         related: ['building.command', 'building.home', 'building.school', 'people.cap'],
       },
-      { id: 'people.cap', name: 'people.cap.name', desc: 'people.cap.text', visual: { kind: 'image', key: 'building.home', scale: 2 }, related: ['building.home', 'map.survivor'] },
+      { id: 'people.cap', name: 'people.cap.name', desc: 'people.cap.text', visual: { kind: 'image', key: 'building.home', scale: 2 }, related: ['building.home'] },
       { id: 'people.rally', name: 'people.rally.name', desc: 'people.rally.text', visual: { kind: 'anim', set: ourSet('kiln'), anim: 'attack', scale: 2.3 }, clip: 'heroes' },
       { id: 'people.knockout', name: 'people.knockout.name', desc: 'people.knockout.text', visual: { kind: 'anim', set: ourSet('mason'), anim: 'hit', scale: 2.3 }, related: ['building.medcenter', 'parts.slots'] },
       { id: 'people.ranks', name: 'people.ranks.name', desc: 'people.ranks.text', visual: { kind: 'anim', set: ourSet('frostline'), anim: 'idle', scale: 2.3 }, clip: 'parts' },
