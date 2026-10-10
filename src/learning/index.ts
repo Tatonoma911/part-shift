@@ -110,7 +110,12 @@ export function createLearning(opts: LearningOptions = {}): Learning {
       if (i >= 0) waiting.splice(i, 1);
       lastShown = performance.now();
       opened();
-      void ready.then(() =>
+      void ready.then(() => {
+        if (opts.busy?.()) {
+          closed();
+          waiting.unshift(topic);
+          return;
+        }
         showCoach(topic, {
           host: opts.host,
           onClose: closed,
@@ -118,8 +123,8 @@ export function createLearning(opts: LearningOptions = {}): Learning {
             // the coach already resumed the game; the guide pauses it again
             api.openGuide(entry);
           },
-        }),
-      );
+        });
+      });
       return true;
     },
     shiftCardShown(shift) {

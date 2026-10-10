@@ -136,7 +136,7 @@ interface Live {
 /** config.combat.damageNumbers: hits within 0.15 s merge; a number lives 0.6 s. */
 const MERGE_MS = 150;
 const DOT_MS = 600;
-const LIFE_MS = 600;
+const LIFE_MS = 1500;
 const CAP = LANDSCAPE ? 22 : 14;
 /** Screen height of a normal number (px of the 780/1600 canvas). */
 const BASE_H = LANDSCAPE ? 22 : 30;
@@ -184,7 +184,7 @@ export class DamageNumbers {
       }
       this.pending.delete(key);
     }
-    const size = h.super ? 1.9 : h.dot ? 0.7 : mult >= 1.5 ? 1.45 : mult <= 0.55 ? 0.72 : mult < 1 ? 0.88 : 1;
+    const size = h.super ? 2.2 : h.dot ? 0.7 : mult >= 1.5 ? 1.8 : mult <= 0.55 ? 0.72 : mult < 1 ? 0.88 : 1;
     let color = h.heal ? HEAL : COLOR[tech] ?? 0xffffff;
     if (!h.heal && mult <= 0.55) color = mix(color, GREY, 0.55);
     const c = this.center(h.x, h.y);
@@ -195,7 +195,7 @@ export class DamageNumbers {
       key,
       target: h.target,
       born: now,
-      life: h.super ? LIFE_MS + 500 : size > 1 ? LIFE_MS + 150 : LIFE_MS,
+      life: size > 1 ? 2000 : LIFE_MS,
       sum: amount,
       size,
       x: c.x + (Math.random() - 0.5) * CELL * 0.25,
