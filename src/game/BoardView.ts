@@ -932,10 +932,12 @@ export class BoardView {
         else if (u.kind === 'hero' && !u.target && set.anims.tic) anim = 'tic';
         if (anim === 'dig' && v.anim !== 'dig' && u.owner === ME) sound.play('dig_start');
         v.anim = anim;
-        v.spr.play(`${v.set}.${anim}`, true);
+        // Ally sheets may not have every resident action yet; fall back gracefully.
+        const playAnim = set.anims[anim] ? anim : ({ walk_back: 'walk', dig: 'walk', build: 'idle', flee: 'walk' }[anim] ?? 'idle');
+        v.spr.play(`${v.set}.${playAnim}`, true);
         // Runs carry the distance one cycle covers; match it to the unit's real speed so feet don't slide.
-        const stride = set.anims[anim]?.pxPerCycle;
-        const def = set.anims[anim];
+        const stride = set.anims[playAnim]?.pxPerCycle;
+        const def = set.anims[playAnim];
         v.spr.anims.timeScale = stride && def ? Phaser.Math.Clamp((w.stats(u).speed * CELL) / ((stride * def.fps) / def.frames.length), 0.5, 2) : 1;
       }
       v.spr.setPosition(fx, fy).setDepth(D.unit + fy / 4000);

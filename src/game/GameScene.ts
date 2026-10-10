@@ -1095,7 +1095,7 @@ export class GameScene extends Phaser.Scene {
       nests: p.stats.nests,
       caches: p.stats.caches,
       buildings: w.s.buildings.filter((b) => b.owner === ME).length,
-      residents: w.s.units.filter((u) => u.owner === ME && u.kind === 'resident').length,
+      residents: w.s.units.filter((u) => u.owner === ME && (u.kind === 'resident' || u.kind === 'ally')).length,
       heroes: p.stats.heroes.length,
       boss: w.s.boss.hero,
       ...(this.guide ? { step: this.guide.stepIndex } : {}),
