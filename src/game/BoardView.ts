@@ -416,10 +416,29 @@ export class BoardView {
             case 'cache':
               key = c.resolved ? GROUND[h % 8] : 'cache';
               break;
+            case 'blueprint':
+              key = c.resolved ? GROUND[h % 8] : 'cache';
+              break;
+            case 'armor_crate':
+              key = c.resolved ? GROUND[h % 8] : 'cache';
+              break;
+            case 'lore_record':
+              key = c.resolved ? GROUND[h % 8] : 'cache';
+              break;
+            case 'survivor':
+              key = c.resolved ? GROUND[h % 8] : (this.scene.textures.exists('survivor') ? 'survivor' : 'cache');
+              break;
             case 'nest':
             case 'heavy_nest': {
               const dead = c.resolved || w.site(x, y)?.destroyed;
-              key = (c.content === 'nest' ? 'nest' : 'nest_heavy') + (dead ? '_dead' : '');
+              const tech = c.tech;
+              // Use elemental nest sprite when art exists (nests_gpt/).
+              const nestGptKey = tech ? `nest_gpt.nest_${tech}_0${dead ? '_cleared' : ''}` : null;
+              if (nestGptKey && this.scene.textures.exists(nestGptKey)) {
+                key = nestGptKey;
+              } else {
+                key = (c.content === 'nest' ? 'nest' : 'nest_heavy') + (dead ? '_dead' : '');
+              }
               break;
             }
             case 'boss_hatch':

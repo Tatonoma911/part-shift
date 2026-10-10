@@ -872,5 +872,28 @@
     "respawnAt": "command center",
     "leashRadiusFromCommand": 5,
     "takesParts": false
+  },
+  "enemyMutations": {
+    "countByTier": {
+      "1": 1,
+      "2": 1,
+      "3": 2,
+      "4": 2
+    },
+    "slots": [
+      "arm",
+      "arm",
+      "leg",
+      "leg"
+    ],
+    "elementPool": [
+      "thermo",
+      "cryo",
+      "volt",
+      "toxin",
+      "impact"
+    ],
+    "otherThanOwnTechChance": 0.7,
+    "sameElementForAllMutationsChance": 0.4
   }
 }

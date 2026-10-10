@@ -11,6 +11,9 @@ export type CellContent =
   | 'energy_vein'
   | 'cache'
   | 'survivor'
+  | 'blueprint'
+  | 'armor_crate'
+  | 'lore_record'
   | 'nest'
   | 'heavy_nest'
   | 'hero_lair'
@@ -120,6 +123,10 @@ export interface Unit {
   hero?: string;
   tech?: Tech;
   attackTech?: AttackTech;
+  /** Enemy heroes: mutation slots, each with a random element (MVP_RULES §9.9). */
+  mutations?: { slot: SlotId; tech: Tech }[];
+  /** Ally/resident: armor plates from armor_crate (enemies.json armorPlate). */
+  armorPlates?: number;
   /** Seconds until the hero's ability fires again. */
   abilityCd?: number;
   /** Demon special attack state. */
@@ -187,7 +194,7 @@ export interface Player {
   allyBack?: Record<string, number>;
   /** Ally passive timers (heroes.json ally.everySeconds): hero id → seconds left. */
   allyTimers?: Record<string, number>;
-  stats: { nests: number; caches: number; heroes: string[]; energy: number; lost: number; parts: number };
+  stats: { nests: number; caches: number; heroes: string[]; energy: number; lost: number; parts: number; blueprints: number; loreRecords: number };
   /** Scanner helper (design/ONBOARDING.md §1.3). */
   assist: AssistState;
 }

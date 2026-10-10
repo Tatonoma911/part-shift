@@ -16,7 +16,7 @@ interface Options {
   countScale?: number;
 }
 
-const SITE_KINDS: CellContent[] = ['nest', 'heavy_nest', 'hero_lair', 'boss_hatch', 'cache', 'survivor'];
+const SITE_KINDS: CellContent[] = ['nest', 'heavy_nest', 'hero_lair', 'boss_hatch', 'cache', 'survivor', 'blueprint', 'armor_crate', 'lore_record'];
 
 export function generateField(s: GameState, opts: Options): void {
   const { commands } = opts;
@@ -83,9 +83,16 @@ export function generateField(s: GameState, opts: Options): void {
     if (p) cellAt(s, p.x, p.y).tech = heavy ? siteDefs.heavy_nest.tech : nestTech();
   }
   const k = opts.countScale ?? 1;
-  const counts = { cache: mapgen.counts.cache * k, survivor: mapgen.counts.survivor * k, energy_vein: mapgen.counts.energy_vein * k, rubble: mapgen.counts.rubble * k };
+  const mc = mapgen.counts as Record<string, number | { chance: number; max: number }>;
+  const counts = { cache: (mc.cache as number) * k, survivor: (mc.survivor as number) * k, energy_vein: (mc.energy_vein as number) * k, rubble: (mc.rubble as number) * k };
   for (let i = 0; i < counts.cache; i++) set(pick(free()), 'cache');
   for (let i = 0; i < counts.survivor; i++) set(pick(free()), 'survivor');
+  const blueprintCount = (mc.blueprint as number | undefined) ?? 0;
+  for (let i = 0; i < blueprintCount * k; i++) set(pick(free()), 'blueprint');
+  const armorCount = (mc.armor_crate as number | undefined) ?? 0;
+  for (let i = 0; i < armorCount * k; i++) set(pick(free()), 'armor_crate');
+  const loreRule = mc.lore_record as { chance: number; max: number } | undefined;
+  if (loreRule && rand(s) < loreRule.chance) set(pick(free()), 'lore_record');
   for (let i = 0; i < counts.energy_vein; i++) {
     const p = set(pick(free()), 'energy_vein');
     if (p) cellAt(s, p.x, p.y).stock = mapgen.energyVein.energy;

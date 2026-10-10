@@ -37,6 +37,7 @@ import {
   raidRules,
   boonRules,
   boons as boonDefs,
+  armorPlateDef,
 } from './data';
 import { cellAt, cellKey, cheb, dist, inBounds, neighbors, parseKey, walkableForEnemy, walkableForPlayer } from './grid';
 import { generateField } from './mapgen';
@@ -69,6 +70,9 @@ const CHANNEL_OF: Partial<Record<Cell['content'], ClueChannel>> = {
   boss_hatch: 'demon',
   cache: 'finds',
   survivor: 'finds',
+  blueprint: 'finds',
+  armor_crate: 'finds',
+  lore_record: 'finds',
 };
 
 /**
@@ -144,7 +148,7 @@ export function createState(opts: WorldOptions): GameState {
       order: null,
       spawnTimer: config.population.spawnSeconds,
       capBonus: 0,
-      stats: { nests: 0, caches: 0, heroes: [], energy: 0, lost: 0, parts: 0 },
+      stats: { nests: 0, caches: 0, heroes: [], energy: 0, lost: 0, parts: 0, blueprints: 0, loreRecords: 0 },
       assist: {
         mode: opts.assist ?? 'full',
         charges: config.assist.scanner.maxCharges,
@@ -720,6 +724,40 @@ export class World {
         player.capBonus++;
         this.spawnResident(owner, x, y);
         this.emit('survivor_joined', { x, y, owner });
+        break;
+      }
+      case 'blueprint': {
+        c.resolved = true;
+        player.stats.blueprints++;
+        this.emit('blueprint_found', { x, y, owner });
+        break;
+      }
+      case 'lore_record': {
+        c.resolved = true;
+        player.stats.loreRecords++;
+        this.emit('lore_found', { x, y, owner });
+        break;
+      }
+      case 'armor_crate': {
+        c.resolved = true;
+        const plates = siteDefs.armor_crate.onReveal?.armorPlates ?? 3;
+        // Give plates to nearby ally/resident units with the fewest plates (within 4 cells).
+        const nearby = this.s.units
+          .filter((u) => (u.kind === 'resident' || u.kind === 'ally') && u.owner === owner && u.hp > 0 && cheb(u.x, u.y, x, y) <= 4)
+          .sort((a, b) => (a.armorPlates ?? 0) - (b.armorPlates ?? 0));
+        let left = plates;
+        for (const u of nearby) {
+          if (left <= 0) break;
+          const current = u.armorPlates ?? 0;
+          const give = Math.min(left, armorPlateDef.maxPerHero - current);
+          if (give <= 0) continue;
+          u.armorPlates = current + give;
+          u.base = { ...u.base, defense: u.base.defense + give * armorPlateDef.defenseAdd };
+          const hpBonus = give * armorPlateDef.hpAdd;
+          u.hp = Math.min(u.hp + hpBonus, this.maxHp(u) + hpBonus);
+          left -= give;
+        }
+        this.emit('armor_crate_open', { x, y, owner, amount: plates - left });
         break;
       }
       case 'nest':
@@ -1440,6 +1478,12 @@ export class World {
       // An ally is knocked out, not lost: it is back at the center after a while.
       const p = s.players[v.owner];
       (p.allyBack ??= {})[v.hero!] = s.time + ALLY.respawnSeconds;
+      // Armor plates: lose 1 on knockout (enemies.json armorPlate.lostOnKnockout).
+      if (v.armorPlates && v.armorPlates > 0) {
+        const lost = Math.min(v.armorPlates, armorPlateDef.lostOnKnockout);
+        v.armorPlates -= lost;
+        v.base = { ...v.base, defense: Math.max(0, v.base.defense - lost * armorPlateDef.defenseAdd) };
+      }
       this.emit('ally_down', { x: v.x, y: v.y, owner: v.owner, unit: v.id, text: v.hero });
       return;
     }
@@ -1685,6 +1729,39 @@ export class World {
       u.attackTech = hero.enemy.attackTech;
       u.abilityCd = HERO_ABILITY[hero.enemy.ability.id]?.every ?? Infinity;
       u.nest = siteKey(x, y);
+      // Mutations (MVP_RULES §9.9): roll 1–2 random limbs with random elements.
+      const tier = kind === 'boss_hatch' ? 4 : (this.cell(x, y).heroTier ?? 1);
+      const mutCount = heroRules.enemyMutations.countByTier[String(tier)] ?? 1;
+      const heroTech = hero.tech as Tech | undefined;
+      const mutEl = (): Tech => {
+        const pool = heroRules.enemyMutations.elementPool;
+        if (heroTech && rand(this.s) < heroRules.enemyMutations.otherThanOwnTechChance) {
+          const other = pool.filter((t) => t !== heroTech);
+          return other[randIntOf(this.s, other.length)];
+        }
+        return pool[randIntOf(this.s, pool.length)];
+      };
+      const firstEl = mutEl();
+      const useSameEl = mutCount > 1 && rand(this.s) < heroRules.enemyMutations.sameElementForAllMutationsChance;
+      const mutations: { slot: SlotId; tech: Tech }[] = [];
+      const slotPool = [...heroRules.enemyMutations.slots]; // 'arm'|'leg' base kinds
+      for (let m = 0; m < mutCount; m++) {
+        const si = randIntOf(this.s, slotPool.length);
+        const [slotBase] = slotPool.splice(si, 1);
+        // Expand 'arm'/'leg' to a full SlotId that isn't already taken.
+        const isArm = slotBase === 'arm';
+        const slotId: SlotId = isArm
+          ? (mutations.some((mt) => mt.slot === 'arm_left') ? 'arm_right' : 'arm_left')
+          : (mutations.some((mt) => mt.slot === 'leg_left') ? 'leg_right' : 'leg_left');
+        const tech = m === 0 ? firstEl : (useSameEl ? firstEl : mutEl());
+        mutations.push({ slot: slotId, tech });
+      }
+      u.mutations = mutations;
+      // Apply mutation bonuses: +1 defense and +10 hp per mutation limb.
+      const mutDefense = mutations.length;
+      const mutHp = mutations.length * 10;
+      u.base = { ...u.base, defense: u.base.defense + mutDefense };
+      u.hp = Math.min(u.hp + mutHp, this.maxHp(u) + mutHp);
       site.alive.push(u.id);
     }
     this.cell(x, y).revealed = true;

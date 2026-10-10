@@ -85,6 +85,19 @@ export class RunTally {
     inc('total_score', total);
     inc('energy_earned', p.stats.energy);
     inc('parts_taken', p.stats.parts);
+    inc('blueprints_found', p.stats.blueprints);
+    inc('lore_records_found', p.stats.loreRecords);
+    // Blueprint fragments persist across runs (meta.json §5.1).
+    if (p.stats.blueprints > 0) {
+      m.blueprintFragments ??= {};
+      m.blueprintFragments['total'] = (m.blueprintFragments['total'] ?? 0) + p.stats.blueprints;
+    }
+    if (p.stats.loreRecords > 0) {
+      m.loreRecords ??= [];
+      // Record a count-based key per run since records don't have unique ids yet.
+      const key = `run_${stat(m, 'runs_played')}`;
+      if (!m.loreRecords.includes(key)) m.loreRecords.push(key);
+    }
     for (const [k, n] of Object.entries(this.counts)) inc(k, n);
     for (const [id, n] of Object.entries(this.defeats)) inc(`hero_defeats.${id}`, n);
     m.stats.best_run_energy = Math.max(stat(m, 'best_run_energy'), Math.floor(p.stats.energy));
