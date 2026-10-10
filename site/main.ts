@@ -1,5 +1,5 @@
 import './style.css';
-import { APK_URL, supportBlock, wireSupport } from './support';
+import { androidSoon, supportBlock, wireSupport } from './support';
 import { ADS, ARCHIVE, ARTBOOK, BARKS, COMICS, DISTRICTS, HEROES, img, REACTIONS, TECH, UI, type Hero, type L, type Lang } from './content';
 
 /**
@@ -69,7 +69,7 @@ function drawer(): string {
   return `<div class="drawer" id="drawer" hidden><div class="drawer-panel">
     <div class="drawer-head"><span class="wordmark">PART<b>SHIFT</b></span><button class="icon-btn" id="drawer-close" aria-label="${u('close')}">${ICON.close}</button></div>
     ${items}
-    <a class="item" href="${APK_URL}" rel="noopener">${R('Скачать для Android', 'Download for Android')}<span class="caps">APK</span></a>
+    <span class="item soon" aria-disabled="true">Android<span class="caps">${R('В РАЗРАБОТКЕ', 'IN DEVELOPMENT')}</span></span>
     <a class="item" href="#support">${R('Донат автору', 'Tip the author')}<span class="caps">☕</span></a>
     <div class="row" style="margin-top:18px;justify-content:space-between">${langSwitch()}<a class="btn btn-primary" href="${playHref()}">${ICON.play}${u('play')}</a></div>
   </div></div>`;
@@ -79,7 +79,7 @@ function footer(): string {
   return `<footer><div class="wrap">
     <span class="wordmark">PART<b>SHIFT</b></span>
     <span>${R('Lumen City. Всегда на смене. Игра бесплатная, мир вымышленный.', 'Lumen City. Always on call. The game is free, the world is fiction.')}</span>
-    <div class="row"><a class="btn btn-ghost" href="${APK_URL}" rel="noopener">${R('Скачать для Android', 'Download for Android')}</a><a class="btn btn-ghost" href="#support">☕ ${R('Донат автору', 'Tip the author')}</a><a class="btn btn-ghost" href="${playHref()}">${ICON.play}${u('playFree')}</a></div>
+    <div class="row">${androidSoon(lang)}<a class="btn btn-ghost" href="#support">☕ ${R('Донат автору', 'Tip the author')}</a><a class="btn btn-ghost" href="${playHref()}">${ICON.play}${u('playFree')}</a></div>
   </div></footer>`;
 }
 
@@ -107,14 +107,14 @@ function home(): string {
       <span class="caps">LUMEN CITY // ${R('СМЕНА 01', 'SHIFT 01')}</span>
       <h1>PART<b>SHIFT</b></h1>
       <p class="lead">${R(
-        'Сеть спасения сломалась и перестроила город под себя. Открывай кварталы, строй, защищай жителей и забирай у врагов их руки, ноги и хвосты.',
-        'The rescue network broke and rebuilt the city in its own image. Open blocks, build, protect residents and take your enemies’ arms, legs and tails.',
+        'Гель Splice свёл с ума спасателей Lumen City, и теперь они спасают всех так, что приходится убегать. Открывай кварталы, печатай своих героев и забирай у заражённых их руки, ноги и силу.',
+        'Splice gel drove Lumen City’s rescuers mad, and now they rescue everyone so hard that people run. Open blocks, print your own heroes and take the infected’s arms, legs and power.',
       )}</p>
-      <div class="row"><a class="btn btn-primary btn-lg" href="${playHref()}">${ICON.play}${u('playFree')}</a><a class="btn btn-ghost btn-lg" href="${APK_URL}" rel="noopener">${R('Скачать для Android', 'Download for Android')}</a><a class="btn btn-ghost btn-lg" href="#world">${R('Узнать историю', 'Read the story')}</a></div>
+      <div class="row"><a class="btn btn-primary btn-lg" href="${playHref()}">${ICON.play}${u('playFree')}</a>${androidSoon(lang, 'btn-lg')}<a class="btn btn-ghost btn-lg" href="#story" data-scroll="story">${R('Узнать историю', 'Read the story')}</a></div>
     </div></div>
   </section>
 
-  <section class="section"><div class="wrap split">
+  <section class="section" id="story"><div class="wrap split">
     <div class="stack">
       ${head(R('КАНОН // ЧТО СЛУЧИЛОСЬ', 'CANON // WHAT HAPPENED'), R('Город, который любил своих героев', 'The city that loved its heroes'))}
       <div class="prose">
@@ -142,27 +142,27 @@ function home(): string {
   </div></section>
 
   <section class="section" style="padding-top:0"><div class="wrap">
-    ${head(R('ДОСЬЕ // HEROOUT', 'DOSSIERS // HEROOUT'), R('Герои, они же злодеи', 'Heroes, also the villains'), R('У каждого героя одна функция, один цвет, одна мания и одна часть тела, которую мечтает забрать любой житель.', 'Each hero has one function, one colour, one obsession and one body part every resident dreams of claiming.'))}
+    ${head(R('ДОСЬЕ // HEROOUT', 'DOSSIERS // HEROOUT'), R('Герои, они же злодеи', 'Heroes, also the villains'), R('У каждого героя одна функция, один цвет, одна мания и одна часть тела, которую мечтает забрать любой наш герой.', 'Each hero has one function, one colour, one obsession and one body part every hero on our side dreams of claiming.'))}
     <div class="grid">${canon.map(heroTile).join('')}</div>
     <div class="row" style="margin-top:22px"><a class="btn btn-ghost" href="#heroes">${u('all')} (${HEROES.length})</a></div>
   </div></section>
 
   <section class="section band"><div class="wrap split">
     <div class="stack">
-      ${head(R('ИГРА // СРОЧНЫЙ ВЫЗОВ', 'GAME // URGENT CALL'), R('Открой город квартал за кварталом', 'Reopen the city block by block'), R('Числа на открытых кварталах подсказывают, что прячется рядом. Галочки и подсветка сами покажут, где безопасно.', 'Numbers on opened blocks tell you what hides next door. Ticks and highlights show you where it’s safe.'))}
+      ${head(R('ИГРА // СРОЧНЫЙ ВЫЗОВ', 'GAME // URGENT CALL'), R('Открой город квартал за кварталом', 'Reopen the city block by block'), R('Датчики на открытых кварталах показывают, что прячется рядом. Считать придётся самому: игра за тебя не решает.', 'Sensors on opened blocks show what hides next door. The counting is up to you: the game won’t solve it for you.'))}
       <div class="howto">${howto(true)}</div>
       <div class="row"><a class="btn btn-primary btn-lg" href="${playHref()}">${ICON.play}${u('playFree')}</a></div>
     </div>
-    <figure><img src="${img('sprites-02.webp')}" alt="" loading="lazy"><figcaption>${R('Обычный житель забирает руку врага и меняется прямо на поле.', 'An ordinary resident takes an enemy’s arm and changes right on the board.')}</figcaption></figure>
+    <figure><img src="${img('sprites-02.webp')}" alt="" loading="lazy"><figcaption>${R('Герой забирает руку врага и меняется прямо на поле.', 'A hero takes an enemy’s arm and changes right on the board.')}</figcaption></figure>
   </div></section>
 
   <section class="section"><div class="wrap">
     ${head(R('КОМИКСЫ // ДО СИРЕН', 'COMICS // BEFORE THE SIRENS'), R('Обычные проблемы. Профессиональная громкость.', 'Ordinary problems. Professional volume.'))}
-    <div class="comics">${COMICS.slice(0, 4).map(comicCard).join('')}</div>
+    <div class="comics">${storyCard()}${COMICS.slice(0, 3).map(comicCard).join('')}</div>
   </div></section>
 
   <section class="section" id="support" style="padding-top:0"><div class="wrap">
-    ${head(R('СКАЧАТЬ // ПОДДЕРЖАТЬ', 'DOWNLOAD // SUPPORT'), R('Игра на телефоне и кофе автору', 'The game on your phone, and a coffee for the author'))}
+    ${head(R('ТЕЛЕФОН // ПОДДЕРЖАТЬ', 'PHONE // SUPPORT'), R('Скоро на телефоне, а пока кофе автору', 'Coming to phones, and a coffee for the author'))}
     ${supportBlock(lang)}
   </div></section>
 
@@ -172,9 +172,9 @@ function home(): string {
 function howto(dark = false): string {
   const steps: [string, string, string, string, string][] = [
     ['⌂', 'Поставь Командный центр', 'Place the Command Center', 'Первое нажатие на поле. Это твоя база: потеряешь её — смена окончена.', 'Your first tap. It’s your base; lose it and the shift is over.'],
-    ['↘', 'Проведи по кварталам', 'Swipe across blocks', 'Жители сами пойдут копать. Открытые клетки дают Энергию и место для стройки.', 'Residents go and dig. Opened cells give Energy and room to build.'],
-    ['▲', 'Читай числа', 'Read the numbers', '▲ гнёзда врагов рядом, ◆ находки, ⬡ герой на вызове. Зелёная галочка — точно безопасно.', '▲ nests nearby, ◆ finds, ⬡ the hero on call. A green tick means safe for sure.'],
-    ['✚', 'Расти и забирай части', 'Grow and claim parts', 'Школа делает защитников. Победив врага, защитник сам прикрутит его руку или ногу.', 'The school trains defenders. After a win, a defender bolts on the enemy’s arm or leg.'],
+    ['↘', 'Проведи по кварталам', 'Swipe across blocks', 'Твои герои пойдут копать то, что ты отметил. Открытые кварталы дают Энергию и место для стройки.', 'Your heroes dig what you mark. Opened blocks give Energy and room to build.'],
+    ['▲', 'Читай датчики', 'Read the sensors', 'Красный показывает гнёзда рядом, фиолетовый показывает героя на вызове, голубой показывает находки. Где безопасно, решаешь ты.', 'Red shows nests nearby, violet shows the hero on call, blue shows finds. You decide where it’s safe.'],
+    ['✚', 'Строй и забирай части', 'Build and claim parts', 'Здания печатают героев из твоего отряда. Победив врага, герой сам прикрутит себе его руку или ногу.', 'Buildings print heroes from your squad. After a win, a hero bolts on the enemy’s arm or leg.'],
   ];
   return steps
     .map(
@@ -432,24 +432,31 @@ function villainsView(): string {
 }
 
 function comicCard(c: (typeof COMICS)[number]): string {
-  const cover = c.id === 'last-donut' ? 'comics/last-donut-cover.webp' : c.pages[lang][0];
+  const cover = c.id === 'last-donut' ? `comics/last-donut-cover-${lang}.webp` : c.pages[lang][0];
   return `<a class="comic-card slab" href="#comic-${c.id}">
     <div class="cover"><img src="${img(cover)}" alt="" loading="lazy"></div>
     <div class="meta"><span class="caps">${tr(c.series)} // ${tr(c.cast)}</span><h3>${tr(c.title)}</h3><p>${tr(c.blurb)}</p></div>
   </a>`;
 }
 
+function storyCard(): string {
+  return `<button class="comic-card slab story-card" data-story="1">
+    <div class="cover"><img src="${img('comics/intro-cover.webp')}" alt="" loading="lazy"><span class="play-badge">${ICON.play}</span></div>
+    <div class="meta"><span class="caps">${R('ПРОЛОГ ИГРЫ // 12 СТРАНИЦ, СО ЗВУКОМ', 'GAME PROLOGUE // 12 PAGES, WITH SOUND')}</span><h3>${R('Как всё началось', 'How it all began')}</h3><p>${R('Купол, голубая Энергия, гель Splice и 42-й этаж, где решили, что пусть случается почаще. Тот самый комикс, с которого начинается игра.', 'The Dome, blue Energy, Splice gel and floor 42, where someone decided it should happen more often. The comic the game opens with.')}</p></div>
+  </button>`;
+}
+
 function comicsView(): string {
   return `<section class="section"><div class="wrap">
     ${head(R('ЧИТАТЬ // КОМИКСЫ', 'READ // COMICS'), R('Комиксы', 'Comics'), R('«До сирен» — истории Lumen City до аварии: обычные городские проблемы, которые решают необычные спасатели.', '“Before the Sirens” is about Lumen City before the accident: ordinary city problems solved by extraordinary rescuers.'))}
-    <div class="comics">${COMICS.map(comicCard).join('')}</div>
+    <div class="comics">${storyCard()}${COMICS.map(comicCard).join('')}</div>
   </div></section>`;
 }
 
 function comicView(id: string): string {
   const c = COMICS.find((x) => x.id === id);
   if (!c) return comicsView();
-  const ruOnly = c.pages.en[0] === c.pages.ru[0] && lang === 'en';
+  const ruOnly = lang === 'en' && c.pages.en.some((p) => p.includes('-ru.'));
   const i = COMICS.indexOf(c);
   const next = COMICS[(i + 1) % COMICS.length];
   return `<section class="section"><div class="wrap">
@@ -496,6 +503,8 @@ function route(): { view: string; active: string; anchor?: string } {
       return { view: comicsView(), active: 'comics' };
     case 'support':
       return { view: home(), active: 'home', anchor: 'support' };
+    case 'story':
+      return { view: home(), active: 'home', anchor: 'story' };
     case 'archive':
       return { view: villainsView(), active: 'villains', anchor: 'archive' };
     default:
@@ -537,6 +546,13 @@ app.addEventListener('click', (ev) => {
   if (t.closest('#burger')) return void (document.getElementById('drawer')!.hidden = false);
   if (t.closest('#drawer-close') || t.id === 'drawer') return void (document.getElementById('drawer')!.hidden = true);
   if (t.closest('#drawer a')) document.getElementById('drawer')!.hidden = true;
+  // «Узнать историю» just scrolls the home page down to the canon block instead of opening a new page.
+  if (t.closest('[data-story]')) return void import('./intro').then((m) => m.playStory(lang));
+  const jump = t.closest<HTMLAnchorElement>('a[data-scroll]');
+  if (jump) {
+    ev.preventDefault();
+    return document.getElementById(jump.dataset.scroll!)?.scrollIntoView({ behavior: 'smooth' });
+  }
   const zoom = t.closest<HTMLButtonElement>('button.zoom');
   if (zoom) {
     const lb = document.getElementById('lightbox')!;

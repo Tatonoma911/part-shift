@@ -102,7 +102,8 @@ export class SoundDirector {
     const tech = e.text ? heroes[e.text]?.tech : undefined;
     switch (e.type) {
       case 'hero_spawn':
-        return [`hero_spawn_${tech ?? 'impact'}`, 'quarantine_siren'];
+        // The city siren already sounded on hero_warning (~30 s before); the exit itself is the element hit.
+        return [`hero_spawn_${tech ?? 'impact'}`];
       case 'hero_ability':
         return [`hero_ability_${tech ?? 'impact'}`];
       case 'build_place':

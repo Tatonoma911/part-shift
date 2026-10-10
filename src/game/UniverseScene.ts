@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 import { hasText, t } from '../i18n';
 import { playIntro } from '../intro';
+import { openLibrary } from './library';
 import { setBackHandler } from '../platform/native';
 import { sound } from './audio';
 import { preloadComm } from './Comm';
@@ -16,7 +17,7 @@ import { drawTechOrb } from './Vitals';
  * чтобы хотели изучать это, читать, смотреть, подписываться»).
  * A short, beautiful door into the universe from the game:
  *   - the heroes as big comic figures with their bios, swipe through them, tap opens the hero's page on the site;
- *   - four comic tiles: comics, the city under the Dome, the artbook (site pages), the intro comic (plays here);
+ *   - four comic tiles: comics and the artbook (open here, game/library.ts), the city under the Dome (site page), the intro comic (plays here);
  *   - «Следите за сменой»: YouTube Shorts and Instagram (hidden until the links exist) and the universe site.
  * The stories themselves live on the site (Сайт вселенной thread), so nothing is written twice.
  * One layer: comic art + BRAND_UI plates.
@@ -42,10 +43,10 @@ export function openExternal(url: string): void {
 const HEROES = ['standard', 'patch', 'canopy', 'current', 'frostline', 'kiln', 'lineman', 'seraph', 'mason', 'sweep', 'beacon', 'hive', 'doctor', 'n73', 'demon'];
 
 const PANEL = (f: string) => new URL(`../assets/comic/panels/${f}.jpg`, import.meta.url).href;
-const TILES: { id: string; pic: string; hash?: string }[] = [
-  { id: 'comics', pic: 'city_rescue', hash: '#comics' },
+const TILES: { id: string; pic: string; hash?: string; lib?: 'comics' | 'artbook' }[] = [
+  { id: 'comics', pic: 'city_rescue', lib: 'comics' },
   { id: 'world', pic: 'dome_city', hash: '#world' },
-  { id: 'artbook', pic: 'heroes_team', hash: '#artbook' },
+  { id: 'artbook', pic: 'heroes_team', lib: 'artbook' },
   { id: 'intro', pic: 'city_sunset' },
 ];
 
@@ -87,8 +88,11 @@ export class UniverseScene extends Phaser.Scene {
     chip(bg, pad, 34, 88, 72, C.graphite, 1, 14);
     this.add.text(pad + 44, 70, '←', TXT.num(30, INK.white)).setOrigin(0.5);
     const back = this.add.zone(pad - 8, 26, 104, 88).setOrigin(0).setInteractive({ useHandCursor: true });
+    back.on('pointerover', () => this.tweens.add({ targets: bg, alpha: 0.7, scaleX: 1.08, scaleY: 1.08, duration: 100, ease: 'Sine.Out' }));
+    back.on('pointerout', () => this.tweens.add({ targets: bg, alpha: 1, scaleX: 1, scaleY: 1, duration: 120, ease: 'Sine.Out' }));
     back.on('pointerdown', (_p: Phaser.Input.Pointer, _x: number, _y: number, ev: Ev) => {
       stop(ev);
+      this.tweens.add({ targets: bg, scaleX: 0.9, scaleY: 0.9, duration: 60, yoyo: true });
       this.leave();
     });
     this.add.text(pad + 112, 40, t('universe.kicker').toUpperCase(), TXT.caps(INK.teal));
@@ -249,7 +253,7 @@ export class UniverseScene extends Phaser.Scene {
     }
   }
 
-  private drawTile(x: number, y: number, w: number, h: number, tile: { id: string; pic: string; hash?: string }): void {
+  private drawTile(x: number, y: number, w: number, h: number, tile: (typeof TILES)[number]): void {
     const g = this.add.graphics();
     g.fillStyle(C.night, 0.2);
     g.fillRect(x + 6, y + 8, w, h);
@@ -266,14 +270,21 @@ export class UniverseScene extends Phaser.Scene {
     const cap = this.add.text(x + 12, y + h - 12, t(`universe.tile.${tile.id}`).toUpperCase(), { ...TXT.caps(INK.graphite), backgroundColor: '#FFE14D', padding: { x: 10, y: 6 } }).setOrigin(0, 1);
     if (cap.width > w - 24) cap.setScale((w - 24) / cap.width);
     const hit = this.add.zone(x, y, w, h).setOrigin(0).setInteractive({ useHandCursor: true });
+    hit.on('pointerover', () => {
+      this.tweens.add({ targets: g, alpha: 0.88, scaleX: 1.02, scaleY: 1.02, duration: 120, ease: 'Sine.Out' });
+    });
+    hit.on('pointerout', () => {
+      this.tweens.add({ targets: g, alpha: 1, scaleX: 1, scaleY: 1, duration: 150, ease: 'Sine.Out' });
+    });
     hit.on('pointerdown', (_p: Phaser.Input.Pointer, _x: number, _y: number, ev: Ev) => {
       stop(ev);
+      this.tweens.add({ targets: g, scaleX: 0.96, scaleY: 0.96, duration: 70, yoyo: true, ease: 'Sine.InOut' });
       sound.play('ui_tap');
       if (tile.hash) return openExternal(`${siteBase()}${tile.hash}`);
-      // The intro comic plays right here, over this screen.
+      // Comics, the artbook and the intro comic open right here, over this screen.
       this.input.enabled = false;
       this.playing = true;
-      playIntro({ skipGate: true }).finally(() => {
+      (tile.lib ? openLibrary(tile.lib) : playIntro({ skipGate: true })).finally(() => {
         this.playing = false;
         if (this.scene.isActive()) this.input.enabled = true;
       });
@@ -305,8 +316,15 @@ export class UniverseScene extends Phaser.Scene {
       const tl = this.add.text(bx + bw / 2, by + bh / 2, b.label, TXT.body(22, b.ink, '800')).setOrigin(0.5);
       if (tl.width > bw - 20) tl.setScale((bw - 20) / tl.width);
       const hit = this.add.zone(bx, by, bw, bh).setOrigin(0).setInteractive({ useHandCursor: true });
+      hit.on('pointerover', () => {
+        this.tweens.add({ targets: bg, alpha: 0.82, scaleX: 1.04, scaleY: 1.04, duration: 110, ease: 'Sine.Out' });
+      });
+      hit.on('pointerout', () => {
+        this.tweens.add({ targets: bg, alpha: 1, scaleX: 1, scaleY: 1, duration: 130, ease: 'Sine.Out' });
+      });
       hit.on('pointerdown', (_p: Phaser.Input.Pointer, _x: number, _y: number, ev: Ev) => {
         stop(ev);
+        this.tweens.add({ targets: bg, scaleX: 0.95, scaleY: 0.95, duration: 60, yoyo: true, ease: 'Sine.InOut' });
         sound.play('ui_tap');
         openExternal(b.url);
       });
@@ -354,8 +372,11 @@ export function universeButton(scene: Phaser.Scene, cx: number, y: number, w: nu
   shine.setMask(sm.createGeometryMask());
   scene.tweens.add({ targets: shine, x: { from: -40, to: w + 40 }, duration: 900, delay: 2600, repeat: -1, repeatDelay: 2600, ease: 'Sine.easeInOut' });
   const hit = scene.add.zone(-4, -4, w + 8, h + 8).setOrigin(0).setInteractive({ useHandCursor: true });
+  hit.on('pointerover', () => scene.tweens.add({ targets: g, alpha: 0.85, scaleX: 1.015, scaleY: 1.015, duration: 110, ease: 'Sine.Out' }));
+  hit.on('pointerout', () => scene.tweens.add({ targets: g, alpha: 1, scaleX: 1, scaleY: 1, duration: 130, ease: 'Sine.Out' }));
   hit.on('pointerdown', (_p: Phaser.Input.Pointer, _x: number, _y: number, ev: Ev) => {
     stop(ev);
+    scene.tweens.add({ targets: g, scaleX: 0.97, scaleY: 0.97, duration: 70, yoyo: true, ease: 'Sine.InOut' });
     sound.play('ui_tap');
     onTap();
   });

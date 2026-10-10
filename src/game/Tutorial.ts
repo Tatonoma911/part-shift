@@ -70,7 +70,9 @@ export class TutorialGuide {
     // Don't move on to a step that points at something not on the board yet
     // (step 4 "tap the number" before any threat number is open: QA-008).
     const next = this.steps[this.index + 1];
-    const nextReady = !next?.focus || this.cellsFor(next).length > 0;
+    // A next step whose goal is already met (the cache opened early by a zero cascade) is ready too,
+    // otherwise the tutorial waits forever for a cell that no longer exists.
+    const nextReady = !next?.focus || this.cellsFor(next).length > 0 || this.met(next.until);
     if (done && nextReady && elapsed >= (step.minSeconds ?? 0)) {
       this.index++;
       this.stepStartedAt = w.s.time;
