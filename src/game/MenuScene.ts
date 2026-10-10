@@ -16,8 +16,8 @@ import type { GameStart } from './GameScene';
 import { C, INK, LANDSCAPE, VIEW } from './layout';
 import { menuIcon, type MenuIconId } from './menuIcons';
 import { preloadMetaArt } from './meta/art';
-import { loadMeta, pickAllies } from './meta/store';
-import { allySelect } from './meta/AllySelect';
+import { loadMeta, pickAllies, rollDistrict } from './meta/store';
+import { shiftBrief } from './meta/ShiftBrief';
 import { metaPreview } from './meta/preview';
 import { clearSlot, lastSlot, loadSettings, loadSlot, saveSettings, SLOTS } from './saves';
 import { tutorialDone } from './Tutorial';
@@ -381,16 +381,18 @@ export class MenuScene extends Phaser.Scene {
 
   private play(start: GameStart): void {
     closeConsent();
-    // A new shift with heroes back on the team: pick who comes along first (META.md, allySelection).
+    // Before each shift: show «Сводка смены» (MVP_RULES §4.5) to pick the squad.
     const meta = loadMeta();
-    if (start.fresh && !start.tutorial && meta.unlocked.length && !this.allyUi) {
-      this.allyUi = allySelect(
+    if (start.fresh && !start.tutorial && !this.allyUi) {
+      const enemies = rollDistrict(meta);
+      this.allyUi = shiftBrief(
         this,
         meta,
-        (ids) => {
-          pickAllies(meta, ids);
+        enemies,
+        (squad) => {
+          pickAllies(meta, squad);
           this.allyUi = null;
-          this.scene.start('game', { ...start, allies: ids });
+          this.scene.start('game', { ...start, allies: squad });
         },
         () => {
           this.allyUi?.destroy();
