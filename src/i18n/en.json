@@ -440,5 +440,9 @@
   "loading.ready": "Shift ready. Move out!",
   "event.limb_lost.arm": "{hero} will be back minus an arm. HeroOut calls it the lightweight trim.",
   "event.limb_lost.leg": "{hero} will be back minus a leg. Control reminds you sick leave is not part of the shift.",
-  "event.limb_lost.trophy": "{hero} lost a trophy limb. The original is still attached, for now."
+  "event.limb_lost.trophy": "{hero} lost a trophy limb. The original is still attached, for now.",
+  "event.find.blueprint": "Blueprint fragment found. HeroOut's archive had filed it as non-essential.",
+  "event.find.lore": "A Control record found. Nobody was supposed to hear it, least of all you.",
+  "event.find.armor": "Armor crate cracked open: {count} plates for the heroes nearby.",
+  "event.find.armor_none": "Armor crate cracked open, but no heroes are nearby. The plates will wait."
 }

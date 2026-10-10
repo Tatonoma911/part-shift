@@ -70,6 +70,8 @@ const BLOCK_EL = ['thermo', 'cryo', 'volt', 'impact', 'toxin'];
 const DECOR_EL = ['cryo', 'volt', 'impact'];
 const CIVILIANS = ['civilian_office', 'civilian_courier', 'civilian_granny'];
 /** Game slot ids → the short names the limb-mask sets use in `slots`. */
+/** Find contents → drawn icon (blueprint fragment, armor plates, Control record). */
+const FIND_ICON: Partial<Record<string, string>> = { blueprint: 'icon.build', armor_crate: 'icon.boon_armor_plates', lore_record: 'icon.control_mask' };
 const SLOT_SHORT: Record<string, string> = { arm_left: 'arm_l', arm_right: 'arm_r', leg_left: 'leg_l', leg_right: 'leg_r', tail: 'tail', wings: 'wings' };
 
 function elementOf(tech: string | undefined, pool = BLOCK_EL): string {
@@ -401,6 +403,15 @@ export class BoardView {
       }
       case 'part_recycled':
         this.fxAtCell('energy_arrive', e.x, e.y, 1.2);
+        break;
+      case 'blueprint_found':
+        this.popFind('blueprint', e.x, e.y);
+        break;
+      case 'lore_found':
+        this.popFind('lore_record', e.x, e.y);
+        break;
+      case 'armor_crate_open':
+        this.popFind('armor_crate', e.x, e.y);
         break;
       case 'survivor_joined':
         this.rescueRun(e.x, e.y, e.owner ?? this.me);
@@ -840,6 +851,20 @@ export class BoardView {
     img ??= this.scene.add.image(p.x, p.y, `nest_gpt.${id}`).setDepth(D.site + 0.5);
     img.setTexture(`nest_gpt.${id}`).setOrigin(a.anchor[0] / a.size[0], a.anchor[1] / a.size[1]).setScale(c.content === 'heavy_nest' ? 1.2 : 1).setData('id', id);
     this.nestArt.set(i, img);
+  }
+
+  /** A find's icon pops out of the opened block and fades (its own art comes with batch 04, 155 and 177). */
+  private popFind(content: string, x: number, y: number): void {
+    const icon = FIND_ICON[content];
+    const p = this.center(x, y);
+    this.fx('energy_arrive', p.x, p.y - 10, 1.3);
+    if (!icon || !this.scene.textures.exists(icon)) return;
+    const img = this.scene.add.image(p.x, p.y - 8, icon).setDepth(D.site + 0.6);
+    // Icons come in different sizes (a 32 px glyph, a large boon picture): pop each to about 64 px.
+    const k = 64 / Math.max(img.width, img.height);
+    img.setScale(k * 0.5);
+    this.scene.tweens.add({ targets: img, y: p.y - 58, scale: k, duration: 650, ease: 'Back.easeOut' });
+    this.scene.tweens.add({ targets: img, alpha: 0, delay: 1300, duration: 400, onComplete: () => img.destroy() });
   }
 
   /** Every seventh-ish closed block carries a live hazard: ice, arcing wires or smoke (block_fx loop_*). */
