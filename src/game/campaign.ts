@@ -1,4 +1,5 @@
 import CAMPAIGN from '../data/design/campaign.json';
+import { t } from '../i18n';
 
 export interface CampaignProgress {
   cleared: number[];
@@ -78,10 +79,12 @@ export function getCampaignWorld(n: number): ShiftWorldOptions {
   };
 }
 
+/** Debrief after a won shift (CAMPAIGN.md §6): the writer's text for shift n (campaign.debrief.N). */
 export function districtText(n: number): string {
-  if (n === 1)
-    return 'Срочные новости: в нашем прекрасном городе сегодня ничего не произошло. Гнёзда зачищены, район свободен. Но купол над соседним кварталом ещё мигает. Переходите туда.';
-  if (n === CAMPAIGN_TOTAL)
-    return 'Финальный район очищен. Контроль признаёт: без вас купол бы уже пал. Открываются Аврал, свободные смены и Вызов дня.';
-  return 'Район очищен. Герои в порядке, горожане спасены, Контроль уже составил отчёт, что вас не было. Город всё ещё в опасности — следующий район ждёт.';
+  return t(`campaign.debrief.${n}`);
+}
+
+/** The reward line for shift n from campaign.json (shifts[].reward), or '' when none. */
+export function shiftReward(n: number): string {
+  return CAMPAIGN.shifts.find((s) => s.n === n)?.reward ?? '';
 }

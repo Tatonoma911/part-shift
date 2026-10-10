@@ -58,7 +58,7 @@ const CAPSULE_PEEK_SECONDS = 20;
 
 export type GameEvent = { type: string; x?: number; y?: number; amount?: number; owner?: number; text?: string; unit?: number; fork?: number; wave?: boolean;
   /** Damage-numbers UI (ДИ patch ui/code/damage-numbers/): */
-  tech?: string; mult?: number; victim?: number; kind?: 'weak' | 'neutral' | 'resist' | 'super' | 'reaction' | 'mine' | 'status'; dot?: boolean; bam?: boolean;
+  tech?: string; mult?: number; victim?: number; kind?: 'weak' | 'neutral' | 'resist' | 'super' | 'reaction' | 'mine' | 'status'; dot?: boolean;
 };
 
 export interface WorldOptions {
