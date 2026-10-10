@@ -119,7 +119,7 @@ describe('PeerSession P2P protocol', () => {
 
   it('guest lobby shows both players after joining', async () => {
     const host = await PeerSession.create({ name: 'Аня', assist: 'full' }, 'coop');
-    const guest = await PeerSession.join({ name: 'Боря', assist: 'none' }, host.code);
+    const guest = await PeerSession.join({ name: 'Боря', assist: 'off' }, host.code);
 
     // State is set directly on session; check without relying on callback timing
     await until(() => !!guest.lobby && guest.lobby.seats.length >= 2);
@@ -136,7 +136,7 @@ describe('PeerSession P2P protocol', () => {
 
   it('host.start() fires start on both sides and sets worlds', async () => {
     const host = await PeerSession.create({ name: 'Аня', assist: 'full' }, 'coop');
-    const guest = await PeerSession.join({ name: 'Боря', assist: 'none' }, host.code);
+    const guest = await PeerSession.join({ name: 'Боря', assist: 'off' }, host.code);
 
     await until(() => (host.lobby?.seats.length ?? 0) >= 2);
 
@@ -154,7 +154,7 @@ describe('PeerSession P2P protocol', () => {
 
   it('host ticks advance lastTick and guest catches up after draining buffer', async () => {
     const host = await PeerSession.create({ name: 'P1', assist: 'full' }, 'ffa');
-    const guest = await PeerSession.join({ name: 'P2', assist: 'none' }, host.code);
+    const guest = await PeerSession.join({ name: 'P2', assist: 'off' }, host.code);
 
     await until(() => (host.lobby?.seats.length ?? 0) >= 2);
     host.start();
@@ -180,7 +180,7 @@ describe('PeerSession P2P protocol', () => {
     const closedCodes: number[] = [];
 
     const host = await PeerSession.create({ name: 'X', assist: 'full' }, 'coop');
-    const guest = await PeerSession.join({ name: 'Y', assist: 'none' }, host.code);
+    const guest = await PeerSession.join({ name: 'Y', assist: 'off' }, host.code);
     guest.on({ closed: (code) => closedCodes.push(code) });
 
     await until(() => (host.lobby?.seats.length ?? 0) >= 2);
