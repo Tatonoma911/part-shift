@@ -11000,6 +11000,397 @@
     "leg_r": "leg_front"
    },
    "note": "Маски конечностей для ally_n73: белый силуэт, красить tint'ом цвета стихии трофея; культя — тёмный tint. Кадры один в один с ally_n73."
+  },
+  "block_fx": {
+   "sheet": "block_fx.png",
+   "frameSize": [
+    144,
+    131
+   ],
+   "cols": 8,
+   "anchor": [
+    72,
+    127
+   ],
+   "anims": {
+    "loop_cryo": {
+     "frames": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5
+     ],
+     "fps": 10,
+     "loop": true
+    },
+    "loop_volt": {
+     "frames": [
+      8,
+      9,
+      10,
+      11,
+      12,
+      13
+     ],
+     "fps": 10,
+     "loop": true
+    },
+    "loop_impact": {
+     "frames": [
+      16,
+      17,
+      18,
+      19,
+      20,
+      21
+     ],
+     "fps": 10,
+     "loop": true
+    },
+    "open_thermo": {
+     "frames": [
+      24,
+      25,
+      26,
+      27,
+      28,
+      29,
+      30,
+      31
+     ],
+     "fps": 10,
+     "loop": false
+    },
+    "open_cryo": {
+     "frames": [
+      32,
+      33,
+      34,
+      35,
+      36,
+      37,
+      38,
+      39
+     ],
+     "fps": 10,
+     "loop": false
+    },
+    "open_volt": {
+     "frames": [
+      40,
+      41,
+      42,
+      43,
+      44,
+      45,
+      46,
+      47
+     ],
+     "fps": 10,
+     "loop": false
+    },
+    "open_impact": {
+     "frames": [
+      48,
+      49,
+      50,
+      51,
+      52,
+      53,
+      54,
+      55
+     ],
+     "fps": 10,
+     "loop": false
+    },
+    "open_toxin": {
+     "frames": [
+      56,
+      57,
+      58,
+      59,
+      60,
+      61,
+      62,
+      63
+     ],
+     "fps": 10,
+     "loop": false
+    },
+    "rescued": {
+     "frames": [
+      64,
+      65,
+      66,
+      67,
+      68,
+      69
+     ],
+     "fps": 10,
+     "loop": false
+    }
+   },
+   "note": "Из генератора: 138, 139. loop_* — цикл декора поверх закрытого квартала (накладка, якорь = низ блока); open_* — вскрытие квартала по стихии, разово, рисует блок целиком; rescued — вспышка «спасён» над штабом."
+  },
+  "lair_fx": {
+   "sheet": "lair_fx.png",
+   "frameSize": [
+    214,
+    124
+   ],
+   "cols": 9,
+   "anchor": [
+    107,
+    116
+   ],
+   "anims": {
+    "idle_thermo": {
+     "frames": [
+      0,
+      1,
+      2,
+      3,
+      4
+     ],
+     "fps": 10,
+     "loop": true
+    },
+    "release_thermo": {
+     "frames": [
+      9,
+      10,
+      11,
+      12,
+      13,
+      14,
+      15,
+      16,
+      17
+     ],
+     "fps": 10,
+     "loop": false
+    },
+    "destroy_thermo": {
+     "frames": [
+      18,
+      19,
+      20,
+      21,
+      22,
+      23,
+      24,
+      25,
+      26
+     ],
+     "fps": 10,
+     "loop": false
+    },
+    "idle_cryo": {
+     "frames": [
+      27,
+      28,
+      29,
+      30,
+      31
+     ],
+     "fps": 10,
+     "loop": true
+    },
+    "release_cryo": {
+     "frames": [
+      36,
+      37,
+      38,
+      39,
+      40,
+      41,
+      42,
+      43,
+      44
+     ],
+     "fps": 10,
+     "loop": false
+    },
+    "destroy_cryo": {
+     "frames": [
+      45,
+      46,
+      47,
+      48,
+      49,
+      50,
+      51,
+      52,
+      53
+     ],
+     "fps": 10,
+     "loop": false
+    },
+    "idle_volt": {
+     "frames": [
+      54,
+      55,
+      56,
+      57,
+      58
+     ],
+     "fps": 10,
+     "loop": true
+    },
+    "release_volt": {
+     "frames": [
+      63,
+      64,
+      65,
+      66,
+      67,
+      68,
+      69,
+      70,
+      71
+     ],
+     "fps": 10,
+     "loop": false
+    },
+    "destroy_volt": {
+     "frames": [
+      72,
+      73,
+      74,
+      75,
+      76,
+      77,
+      78,
+      79,
+      80
+     ],
+     "fps": 10,
+     "loop": false
+    },
+    "idle_toxin": {
+     "frames": [
+      81,
+      82,
+      83,
+      84,
+      85,
+      86
+     ],
+     "fps": 10,
+     "loop": true
+    },
+    "release_toxin": {
+     "frames": [
+      90,
+      91,
+      92,
+      93,
+      94,
+      95,
+      96,
+      97
+     ],
+     "fps": 10,
+     "loop": false
+    },
+    "destroy_toxin": {
+     "frames": [
+      99,
+      100,
+      101,
+      102,
+      103,
+      104,
+      105,
+      106
+     ],
+     "fps": 10,
+     "loop": false
+    },
+    "idle_impact": {
+     "frames": [
+      108,
+      109,
+      110,
+      111,
+      112,
+      113
+     ],
+     "fps": 10,
+     "loop": true
+    },
+    "release_impact": {
+     "frames": [
+      117,
+      118,
+      119,
+      120,
+      121,
+      122,
+      123,
+      124
+     ],
+     "fps": 10,
+     "loop": false
+    },
+    "destroy_impact": {
+     "frames": [
+      126,
+      127,
+      128,
+      129,
+      130,
+      131,
+      132,
+      133
+     ],
+     "fps": 10,
+     "loop": false
+    },
+    "idle_demon": {
+     "frames": [
+      135,
+      136,
+      137,
+      138,
+      139,
+      140
+     ],
+     "fps": 10,
+     "loop": true
+    },
+    "release_demon": {
+     "frames": [
+      144,
+      145,
+      146,
+      147,
+      148,
+      149,
+      150,
+      151
+     ],
+     "fps": 10,
+     "loop": false
+    },
+    "destroy_demon": {
+     "frames": [
+      153,
+      154,
+      155,
+      156,
+      157,
+      158,
+      159,
+      160
+     ],
+     "fps": 10,
+     "loop": false
+    }
+   },
+   "note": "Из генератора: 140, 141. Накладка живого портала поверх любого логова: idle_<стихия> цикл, release_<стихия> выпуск злодея (разово), destroy_<стихия> уничтожение (разово). Стихии: thermo, cryo, volt, toxin, impact, demon."
   }
  }
 }
