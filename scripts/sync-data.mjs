@@ -10,7 +10,22 @@ const jobs = [
   { from: join(root, 'design/data'), to: 'src/data/design', pick: (f) => f.endsWith('.json') },
   { from: join(root, 'text'), to: 'src/data/text', pick: (f) => /^[a-z]{2}\.json$/.test(f) },
   { from: join(root, 'art/export/x2/tiles'), to: 'src/assets/art/tiles', pick: (f) => f.endsWith('.png') },
+  // objects_gpt: GPT-drawn tile objects — replace matching tile keys (nest, cache, etc.)
+  { from: join(root, 'art/export/x2/objects_gpt'), to: 'src/assets/art/tiles', pick: (f) => f.endsWith('.png') && f !== 'objects_gpt.json' },
   { from: join(root, 'art/export/x2/buildings'), to: 'src/assets/art/buildings', pick: (f) => BUILDINGS.includes(f.replace('.png', '')) },
+  // buildings_gpt normal state: replace the old single-state building sprites
+  {
+    from: join(root, 'art/export/x2/buildings_gpt'),
+    to: 'src/assets/art/buildings',
+    pick: (f) => f.endsWith('_normal.png'),
+    rename: (f) => f.replace('_normal.png', '.png'),
+  },
+  // buildings_gpt all states + json: for future state-aware rendering
+  { from: join(root, 'art/export/x2/buildings_gpt'), to: 'src/assets/art/buildings_gpt', pick: (f) => f.endsWith('.png') || f === 'buildings_gpt.json' },
+  // nests_gpt: element-specific revealed nest sprites
+  { from: join(root, 'art/export/x2/nests_gpt'), to: 'src/assets/art/nests_gpt', pick: (f) => f.endsWith('.png') || f === 'nests_gpt.json' },
+  // villains_mixed: heroes with spliced limbs
+  { from: join(root, 'art/export/x2/units/villains_mixed'), to: 'src/assets/art/villains_mixed', pick: (f) => f.endsWith('.png') || f === 'villains_mixed.json' },
   { from: join(root, 'art/anim/x2'), to: 'src/assets/art/anim', pick: (f) => f.endsWith('.png') || f === 'anim.json' },
   { from: join(root, 'art/export/icons'), to: 'src/assets/art/icons', pick: (f) => f.endsWith('@2x.png') },
   { from: join(root, 'audio/sfx'), to: 'src/assets/audio/sfx', pick: (f) => f.endsWith('.mp3') },
@@ -30,15 +45,17 @@ const jobs = [
   { from: join(root, 'text'), to: 'src/data/text', pick: (f) => ['comm.json', 'voice.json', 'en_voice.json', 'en_meta.json'].includes(f) },
   { from: join(root, 'art/comm/game'), to: 'src/assets/comm', pick: (f) => f.endsWith('.webp') },
 ];
-for (const { from, to, pick, clean } of jobs) {
+for (const { from, to, pick, clean, rename } of jobs) {
   if (!existsSync(from)) {
     console.warn(`skip: ${from} not found`);
     continue;
   }
   if (clean) rmSync(to, { recursive: true, force: true });
   mkdirSync(to, { recursive: true });
-  for (const f of readdirSync(from).filter(pick)) {
-    copyFileSync(join(from, f), join(to, f));
-    console.log(`${join(from, f)} -> ${join(to, f)}`);
+  const files = readdirSync(from);
+  for (const f of files.filter((f, i, a) => pick(f, i, a))) {
+    const dest = rename ? rename(f) : f;
+    copyFileSync(join(from, f), join(to, dest));
+    console.log(`${join(from, f)} -> ${join(to, dest)}`);
   }
 }

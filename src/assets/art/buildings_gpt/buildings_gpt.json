@@ -1,0 +1,1549 @@
+{
+ "scale": 2,
+ "cell": 52,
+ "buildings": {
+  "command_normal": {
+   "building": "command",
+   "state": "normal",
+   "file": "buildings_gpt/command_normal.png",
+   "size": [
+    52,
+    88
+   ],
+   "anchor": [
+    26,
+    75
+   ],
+   "source": "source/incoming/gpt/094_command_center.png"
+  },
+  "command_construction": {
+   "building": "command",
+   "state": "construction",
+   "file": "buildings_gpt/command_construction.png",
+   "size": [
+    52,
+    88
+   ],
+   "anchor": [
+    26,
+    75
+   ],
+   "source": "source/incoming/gpt/094_command_center.png"
+  },
+  "command_damaged": {
+   "building": "command",
+   "state": "damaged",
+   "file": "buildings_gpt/command_damaged.png",
+   "size": [
+    52,
+    88
+   ],
+   "anchor": [
+    26,
+    75
+   ],
+   "source": "source/incoming/gpt/094_command_center.png"
+  },
+  "command_destroyed": {
+   "building": "command",
+   "state": "destroyed",
+   "file": "buildings_gpt/command_destroyed.png",
+   "size": [
+    52,
+    88
+   ],
+   "anchor": [
+    26,
+    75
+   ],
+   "source": "source/incoming/gpt/094_command_center.png"
+  },
+  "home_construction": {
+   "building": "home",
+   "state": "construction",
+   "file": "buildings_gpt/home_construction.png",
+   "size": [
+    52,
+    80
+   ],
+   "anchor": [
+    26,
+    67
+   ],
+   "source": "source/incoming/gpt/095_building_states_1.png"
+  },
+  "home_normal": {
+   "building": "home",
+   "state": "normal",
+   "file": "buildings_gpt/home_normal.png",
+   "size": [
+    52,
+    80
+   ],
+   "anchor": [
+    26,
+    67
+   ],
+   "source": "source/incoming/gpt/095_building_states_1.png"
+  },
+  "home_damaged": {
+   "building": "home",
+   "state": "damaged",
+   "file": "buildings_gpt/home_damaged.png",
+   "size": [
+    52,
+    80
+   ],
+   "anchor": [
+    26,
+    67
+   ],
+   "source": "source/incoming/gpt/095_building_states_1.png"
+  },
+  "home_destroyed": {
+   "building": "home",
+   "state": "destroyed",
+   "file": "buildings_gpt/home_destroyed.png",
+   "size": [
+    52,
+    80
+   ],
+   "anchor": [
+    26,
+    67
+   ],
+   "source": "source/incoming/gpt/095_building_states_1.png"
+  },
+  "apartments_construction": {
+   "building": "apartments",
+   "state": "construction",
+   "file": "buildings_gpt/apartments_construction.png",
+   "size": [
+    52,
+    80
+   ],
+   "anchor": [
+    26,
+    67
+   ],
+   "source": "source/incoming/gpt/095_building_states_1.png"
+  },
+  "apartments_normal": {
+   "building": "apartments",
+   "state": "normal",
+   "file": "buildings_gpt/apartments_normal.png",
+   "size": [
+    52,
+    80
+   ],
+   "anchor": [
+    26,
+    67
+   ],
+   "source": "source/incoming/gpt/095_building_states_1.png"
+  },
+  "apartments_damaged": {
+   "building": "apartments",
+   "state": "damaged",
+   "file": "buildings_gpt/apartments_damaged.png",
+   "size": [
+    52,
+    80
+   ],
+   "anchor": [
+    26,
+    67
+   ],
+   "source": "source/incoming/gpt/095_building_states_1.png"
+  },
+  "apartments_destroyed": {
+   "building": "apartments",
+   "state": "destroyed",
+   "file": "buildings_gpt/apartments_destroyed.png",
+   "size": [
+    52,
+    80
+   ],
+   "anchor": [
+    26,
+    67
+   ],
+   "source": "source/incoming/gpt/095_building_states_1.png"
+  },
+  "skyscraper_construction": {
+   "building": "skyscraper",
+   "state": "construction",
+   "file": "buildings_gpt/skyscraper_construction.png",
+   "size": [
+    52,
+    80
+   ],
+   "anchor": [
+    26,
+    67
+   ],
+   "source": "source/incoming/gpt/096_building_states_2.png"
+  },
+  "skyscraper_normal": {
+   "building": "skyscraper",
+   "state": "normal",
+   "file": "buildings_gpt/skyscraper_normal.png",
+   "size": [
+    52,
+    80
+   ],
+   "anchor": [
+    26,
+    67
+   ],
+   "source": "source/incoming/gpt/096_building_states_2.png"
+  },
+  "skyscraper_damaged": {
+   "building": "skyscraper",
+   "state": "damaged",
+   "file": "buildings_gpt/skyscraper_damaged.png",
+   "size": [
+    52,
+    80
+   ],
+   "anchor": [
+    26,
+    67
+   ],
+   "source": "source/incoming/gpt/096_building_states_2.png"
+  },
+  "skyscraper_destroyed": {
+   "building": "skyscraper",
+   "state": "destroyed",
+   "file": "buildings_gpt/skyscraper_destroyed.png",
+   "size": [
+    52,
+    80
+   ],
+   "anchor": [
+    26,
+    67
+   ],
+   "source": "source/incoming/gpt/096_building_states_2.png"
+  },
+  "medcenter_construction": {
+   "building": "medcenter",
+   "state": "construction",
+   "file": "buildings_gpt/medcenter_construction.png",
+   "size": [
+    52,
+    80
+   ],
+   "anchor": [
+    26,
+    67
+   ],
+   "source": "source/incoming/gpt/096_building_states_2.png"
+  },
+  "medcenter_normal": {
+   "building": "medcenter",
+   "state": "normal",
+   "file": "buildings_gpt/medcenter_normal.png",
+   "size": [
+    52,
+    80
+   ],
+   "anchor": [
+    26,
+    67
+   ],
+   "source": "source/incoming/gpt/096_building_states_2.png"
+  },
+  "medcenter_damaged": {
+   "building": "medcenter",
+   "state": "damaged",
+   "file": "buildings_gpt/medcenter_damaged.png",
+   "size": [
+    52,
+    80
+   ],
+   "anchor": [
+    26,
+    67
+   ],
+   "source": "source/incoming/gpt/096_building_states_2.png"
+  },
+  "medcenter_destroyed": {
+   "building": "medcenter",
+   "state": "destroyed",
+   "file": "buildings_gpt/medcenter_destroyed.png",
+   "size": [
+    52,
+    80
+   ],
+   "anchor": [
+    26,
+    67
+   ],
+   "source": "source/incoming/gpt/096_building_states_2.png"
+  },
+  "school_construction": {
+   "building": "school",
+   "state": "construction",
+   "file": "buildings_gpt/school_construction.png",
+   "size": [
+    52,
+    80
+   ],
+   "anchor": [
+    26,
+    67
+   ],
+   "source": "source/incoming/gpt/097_building_states_3.png"
+  },
+  "school_normal": {
+   "building": "school",
+   "state": "normal",
+   "file": "buildings_gpt/school_normal.png",
+   "size": [
+    52,
+    80
+   ],
+   "anchor": [
+    26,
+    67
+   ],
+   "source": "source/incoming/gpt/097_building_states_3.png"
+  },
+  "school_damaged": {
+   "building": "school",
+   "state": "damaged",
+   "file": "buildings_gpt/school_damaged.png",
+   "size": [
+    52,
+    80
+   ],
+   "anchor": [
+    26,
+    67
+   ],
+   "source": "source/incoming/gpt/097_building_states_3.png"
+  },
+  "school_destroyed": {
+   "building": "school",
+   "state": "destroyed",
+   "file": "buildings_gpt/school_destroyed.png",
+   "size": [
+    52,
+    80
+   ],
+   "anchor": [
+    26,
+    67
+   ],
+   "source": "source/incoming/gpt/097_building_states_3.png"
+  },
+  "radar_tower_construction": {
+   "building": "radar_tower",
+   "state": "construction",
+   "file": "buildings_gpt/radar_tower_construction.png",
+   "size": [
+    52,
+    80
+   ],
+   "anchor": [
+    26,
+    67
+   ],
+   "source": "source/incoming/gpt/097_building_states_3.png"
+  },
+  "radar_tower_normal": {
+   "building": "radar_tower",
+   "state": "normal",
+   "file": "buildings_gpt/radar_tower_normal.png",
+   "size": [
+    52,
+    80
+   ],
+   "anchor": [
+    26,
+    67
+   ],
+   "source": "source/incoming/gpt/097_building_states_3.png"
+  },
+  "radar_tower_damaged": {
+   "building": "radar_tower",
+   "state": "damaged",
+   "file": "buildings_gpt/radar_tower_damaged.png",
+   "size": [
+    52,
+    80
+   ],
+   "anchor": [
+    26,
+    67
+   ],
+   "source": "source/incoming/gpt/097_building_states_3.png"
+  },
+  "radar_tower_destroyed": {
+   "building": "radar_tower",
+   "state": "destroyed",
+   "file": "buildings_gpt/radar_tower_destroyed.png",
+   "size": [
+    52,
+    80
+   ],
+   "anchor": [
+    26,
+    67
+   ],
+   "source": "source/incoming/gpt/097_building_states_3.png"
+  },
+  "workshop_construction": {
+   "building": "workshop",
+   "state": "construction",
+   "file": "buildings_gpt/workshop_construction.png",
+   "size": [
+    52,
+    80
+   ],
+   "anchor": [
+    26,
+    67
+   ],
+   "source": "source/incoming/gpt/098_building_states_4.png"
+  },
+  "workshop_normal": {
+   "building": "workshop",
+   "state": "normal",
+   "file": "buildings_gpt/workshop_normal.png",
+   "size": [
+    52,
+    80
+   ],
+   "anchor": [
+    26,
+    67
+   ],
+   "source": "source/incoming/gpt/098_building_states_4.png"
+  },
+  "workshop_damaged": {
+   "building": "workshop",
+   "state": "damaged",
+   "file": "buildings_gpt/workshop_damaged.png",
+   "size": [
+    52,
+    80
+   ],
+   "anchor": [
+    26,
+    67
+   ],
+   "source": "source/incoming/gpt/098_building_states_4.png"
+  },
+  "workshop_destroyed": {
+   "building": "workshop",
+   "state": "destroyed",
+   "file": "buildings_gpt/workshop_destroyed.png",
+   "size": [
+    52,
+    80
+   ],
+   "anchor": [
+    26,
+    67
+   ],
+   "source": "source/incoming/gpt/098_building_states_4.png"
+  },
+  "reactor_construction": {
+   "building": "reactor",
+   "state": "construction",
+   "file": "buildings_gpt/reactor_construction.png",
+   "size": [
+    52,
+    80
+   ],
+   "anchor": [
+    26,
+    67
+   ],
+   "source": "source/incoming/gpt/098_building_states_4.png"
+  },
+  "reactor_normal": {
+   "building": "reactor",
+   "state": "normal",
+   "file": "buildings_gpt/reactor_normal.png",
+   "size": [
+    52,
+    80
+   ],
+   "anchor": [
+    26,
+    67
+   ],
+   "source": "source/incoming/gpt/098_building_states_4.png"
+  },
+  "reactor_damaged": {
+   "building": "reactor",
+   "state": "damaged",
+   "file": "buildings_gpt/reactor_damaged.png",
+   "size": [
+    52,
+    80
+   ],
+   "anchor": [
+    26,
+    67
+   ],
+   "source": "source/incoming/gpt/098_building_states_4.png"
+  },
+  "reactor_destroyed": {
+   "building": "reactor",
+   "state": "destroyed",
+   "file": "buildings_gpt/reactor_destroyed.png",
+   "size": [
+    52,
+    80
+   ],
+   "anchor": [
+    26,
+    67
+   ],
+   "source": "source/incoming/gpt/098_building_states_4.png"
+  },
+  "cooler_construction": {
+   "building": "cooler",
+   "state": "construction",
+   "file": "buildings_gpt/cooler_construction.png",
+   "size": [
+    52,
+    80
+   ],
+   "anchor": [
+    26,
+    67
+   ],
+   "source": "source/incoming/gpt/099_building_states_5.png"
+  },
+  "cooler_normal": {
+   "building": "cooler",
+   "state": "normal",
+   "file": "buildings_gpt/cooler_normal.png",
+   "size": [
+    52,
+    80
+   ],
+   "anchor": [
+    26,
+    67
+   ],
+   "source": "source/incoming/gpt/099_building_states_5.png"
+  },
+  "cooler_damaged": {
+   "building": "cooler",
+   "state": "damaged",
+   "file": "buildings_gpt/cooler_damaged.png",
+   "size": [
+    52,
+    80
+   ],
+   "anchor": [
+    26,
+    67
+   ],
+   "source": "source/incoming/gpt/099_building_states_5.png"
+  },
+  "cooler_destroyed": {
+   "building": "cooler",
+   "state": "destroyed",
+   "file": "buildings_gpt/cooler_destroyed.png",
+   "size": [
+    52,
+    80
+   ],
+   "anchor": [
+    26,
+    67
+   ],
+   "source": "source/incoming/gpt/099_building_states_5.png"
+  },
+  "greenhouse_construction": {
+   "building": "greenhouse",
+   "state": "construction",
+   "file": "buildings_gpt/greenhouse_construction.png",
+   "size": [
+    52,
+    80
+   ],
+   "anchor": [
+    26,
+    67
+   ],
+   "source": "source/incoming/gpt/099_building_states_5.png"
+  },
+  "greenhouse_normal": {
+   "building": "greenhouse",
+   "state": "normal",
+   "file": "buildings_gpt/greenhouse_normal.png",
+   "size": [
+    52,
+    80
+   ],
+   "anchor": [
+    26,
+    67
+   ],
+   "source": "source/incoming/gpt/099_building_states_5.png"
+  },
+  "greenhouse_damaged": {
+   "building": "greenhouse",
+   "state": "damaged",
+   "file": "buildings_gpt/greenhouse_damaged.png",
+   "size": [
+    52,
+    80
+   ],
+   "anchor": [
+    26,
+    67
+   ],
+   "source": "source/incoming/gpt/099_building_states_5.png"
+  },
+  "greenhouse_destroyed": {
+   "building": "greenhouse",
+   "state": "destroyed",
+   "file": "buildings_gpt/greenhouse_destroyed.png",
+   "size": [
+    52,
+    80
+   ],
+   "anchor": [
+    26,
+    67
+   ],
+   "source": "source/incoming/gpt/099_building_states_5.png"
+  },
+  "monorail_construction": {
+   "building": "monorail",
+   "state": "construction",
+   "file": "buildings_gpt/monorail_construction.png",
+   "size": [
+    52,
+    80
+   ],
+   "anchor": [
+    26,
+    67
+   ],
+   "source": "source/incoming/gpt/100_building_states_6.png"
+  },
+  "monorail_normal": {
+   "building": "monorail",
+   "state": "normal",
+   "file": "buildings_gpt/monorail_normal.png",
+   "size": [
+    52,
+    80
+   ],
+   "anchor": [
+    26,
+    67
+   ],
+   "source": "source/incoming/gpt/100_building_states_6.png"
+  },
+  "monorail_damaged": {
+   "building": "monorail",
+   "state": "damaged",
+   "file": "buildings_gpt/monorail_damaged.png",
+   "size": [
+    52,
+    80
+   ],
+   "anchor": [
+    26,
+    67
+   ],
+   "source": "source/incoming/gpt/100_building_states_6.png"
+  },
+  "monorail_destroyed": {
+   "building": "monorail",
+   "state": "destroyed",
+   "file": "buildings_gpt/monorail_destroyed.png",
+   "size": [
+    52,
+    80
+   ],
+   "anchor": [
+    26,
+    67
+   ],
+   "source": "source/incoming/gpt/100_building_states_6.png"
+  },
+  "shield_spire_construction": {
+   "building": "shield_spire",
+   "state": "construction",
+   "file": "buildings_gpt/shield_spire_construction.png",
+   "size": [
+    52,
+    80
+   ],
+   "anchor": [
+    26,
+    67
+   ],
+   "source": "source/incoming/gpt/100_building_states_6.png"
+  },
+  "shield_spire_normal": {
+   "building": "shield_spire",
+   "state": "normal",
+   "file": "buildings_gpt/shield_spire_normal.png",
+   "size": [
+    52,
+    80
+   ],
+   "anchor": [
+    26,
+    67
+   ],
+   "source": "source/incoming/gpt/100_building_states_6.png"
+  },
+  "shield_spire_damaged": {
+   "building": "shield_spire",
+   "state": "damaged",
+   "file": "buildings_gpt/shield_spire_damaged.png",
+   "size": [
+    52,
+    80
+   ],
+   "anchor": [
+    26,
+    67
+   ],
+   "source": "source/incoming/gpt/100_building_states_6.png"
+  },
+  "shield_spire_destroyed": {
+   "building": "shield_spire",
+   "state": "destroyed",
+   "file": "buildings_gpt/shield_spire_destroyed.png",
+   "size": [
+    52,
+    80
+   ],
+   "anchor": [
+    26,
+    67
+   ],
+   "source": "source/incoming/gpt/100_building_states_6.png"
+  },
+  "checkpoint_construction": {
+   "building": "checkpoint",
+   "state": "construction",
+   "file": "buildings_gpt/checkpoint_construction.png",
+   "size": [
+    52,
+    80
+   ],
+   "anchor": [
+    26,
+    67
+   ],
+   "tiles": 1,
+   "note": "блокпост HeroOut",
+   "source": "source/incoming/gpt/135_buildings_new_1.png"
+  },
+  "checkpoint_normal": {
+   "building": "checkpoint",
+   "state": "normal",
+   "file": "buildings_gpt/checkpoint_normal.png",
+   "size": [
+    52,
+    80
+   ],
+   "anchor": [
+    26,
+    67
+   ],
+   "tiles": 1,
+   "note": "блокпост HeroOut",
+   "source": "source/incoming/gpt/135_buildings_new_1.png"
+  },
+  "checkpoint_damaged": {
+   "building": "checkpoint",
+   "state": "damaged",
+   "file": "buildings_gpt/checkpoint_damaged.png",
+   "size": [
+    52,
+    80
+   ],
+   "anchor": [
+    26,
+    67
+   ],
+   "tiles": 1,
+   "note": "блокпост HeroOut",
+   "source": "source/incoming/gpt/135_buildings_new_1.png"
+  },
+  "checkpoint_destroyed": {
+   "building": "checkpoint",
+   "state": "destroyed",
+   "file": "buildings_gpt/checkpoint_destroyed.png",
+   "size": [
+    52,
+    80
+   ],
+   "anchor": [
+    26,
+    67
+   ],
+   "tiles": 1,
+   "note": "блокпост HeroOut",
+   "source": "source/incoming/gpt/135_buildings_new_1.png"
+  },
+  "comms_tower_construction": {
+   "building": "comms_tower",
+   "state": "construction",
+   "file": "buildings_gpt/comms_tower_construction.png",
+   "size": [
+    52,
+    80
+   ],
+   "anchor": [
+    26,
+    67
+   ],
+   "tiles": 1,
+   "note": "вышка связи / ретранслятор",
+   "source": "source/incoming/gpt/135_buildings_new_1.png"
+  },
+  "comms_tower_normal": {
+   "building": "comms_tower",
+   "state": "normal",
+   "file": "buildings_gpt/comms_tower_normal.png",
+   "size": [
+    52,
+    80
+   ],
+   "anchor": [
+    26,
+    67
+   ],
+   "tiles": 1,
+   "note": "вышка связи / ретранслятор",
+   "source": "source/incoming/gpt/135_buildings_new_1.png"
+  },
+  "comms_tower_damaged": {
+   "building": "comms_tower",
+   "state": "damaged",
+   "file": "buildings_gpt/comms_tower_damaged.png",
+   "size": [
+    52,
+    80
+   ],
+   "anchor": [
+    26,
+    67
+   ],
+   "tiles": 1,
+   "note": "вышка связи / ретранслятор",
+   "source": "source/incoming/gpt/135_buildings_new_1.png"
+  },
+  "comms_tower_destroyed": {
+   "building": "comms_tower",
+   "state": "destroyed",
+   "file": "buildings_gpt/comms_tower_destroyed.png",
+   "size": [
+    52,
+    80
+   ],
+   "anchor": [
+    26,
+    67
+   ],
+   "tiles": 1,
+   "note": "вышка связи / ретранслятор",
+   "source": "source/incoming/gpt/135_buildings_new_1.png"
+  },
+  "monitoring_tower_construction": {
+   "building": "monitoring_tower",
+   "state": "construction",
+   "file": "buildings_gpt/monitoring_tower_construction.png",
+   "size": [
+    52,
+    80
+   ],
+   "anchor": [
+    26,
+    67
+   ],
+   "tiles": 1,
+   "note": "перехваченная вышка мониторинга",
+   "source": "source/incoming/gpt/136_buildings_new_2.png"
+  },
+  "monitoring_tower_normal": {
+   "building": "monitoring_tower",
+   "state": "normal",
+   "file": "buildings_gpt/monitoring_tower_normal.png",
+   "size": [
+    52,
+    80
+   ],
+   "anchor": [
+    26,
+    67
+   ],
+   "tiles": 1,
+   "note": "перехваченная вышка мониторинга",
+   "source": "source/incoming/gpt/136_buildings_new_2.png"
+  },
+  "monitoring_tower_damaged": {
+   "building": "monitoring_tower",
+   "state": "damaged",
+   "file": "buildings_gpt/monitoring_tower_damaged.png",
+   "size": [
+    52,
+    80
+   ],
+   "anchor": [
+    26,
+    67
+   ],
+   "tiles": 1,
+   "note": "перехваченная вышка мониторинга",
+   "source": "source/incoming/gpt/136_buildings_new_2.png"
+  },
+  "monitoring_tower_destroyed": {
+   "building": "monitoring_tower",
+   "state": "destroyed",
+   "file": "buildings_gpt/monitoring_tower_destroyed.png",
+   "size": [
+    52,
+    80
+   ],
+   "anchor": [
+    26,
+    67
+   ],
+   "tiles": 1,
+   "note": "перехваченная вышка мониторинга",
+   "source": "source/incoming/gpt/136_buildings_new_2.png"
+  },
+  "splice_jammer_construction": {
+   "building": "splice_jammer",
+   "state": "construction",
+   "file": "buildings_gpt/splice_jammer_construction.png",
+   "size": [
+    52,
+    80
+   ],
+   "anchor": [
+    26,
+    67
+   ],
+   "tiles": 1,
+   "note": "глушилка Splice",
+   "source": "source/incoming/gpt/136_buildings_new_2.png"
+  },
+  "splice_jammer_normal": {
+   "building": "splice_jammer",
+   "state": "normal",
+   "file": "buildings_gpt/splice_jammer_normal.png",
+   "size": [
+    52,
+    80
+   ],
+   "anchor": [
+    26,
+    67
+   ],
+   "tiles": 1,
+   "note": "глушилка Splice",
+   "source": "source/incoming/gpt/136_buildings_new_2.png"
+  },
+  "splice_jammer_damaged": {
+   "building": "splice_jammer",
+   "state": "damaged",
+   "file": "buildings_gpt/splice_jammer_damaged.png",
+   "size": [
+    52,
+    80
+   ],
+   "anchor": [
+    26,
+    67
+   ],
+   "tiles": 1,
+   "note": "глушилка Splice",
+   "source": "source/incoming/gpt/136_buildings_new_2.png"
+  },
+  "splice_jammer_destroyed": {
+   "building": "splice_jammer",
+   "state": "destroyed",
+   "file": "buildings_gpt/splice_jammer_destroyed.png",
+   "size": [
+    52,
+    80
+   ],
+   "anchor": [
+    26,
+    67
+   ],
+   "tiles": 1,
+   "note": "глушилка Splice",
+   "source": "source/incoming/gpt/136_buildings_new_2.png"
+  },
+  "backup_archive_construction": {
+   "building": "backup_archive",
+   "state": "construction",
+   "file": "buildings_gpt/backup_archive_construction.png",
+   "size": [
+    52,
+    80
+   ],
+   "anchor": [
+    26,
+    67
+   ],
+   "tiles": 1,
+   "note": "архив бэкапов",
+   "source": "source/incoming/gpt/137_buildings_new_3.png"
+  },
+  "backup_archive_normal": {
+   "building": "backup_archive",
+   "state": "normal",
+   "file": "buildings_gpt/backup_archive_normal.png",
+   "size": [
+    52,
+    80
+   ],
+   "anchor": [
+    26,
+    67
+   ],
+   "tiles": 1,
+   "note": "архив бэкапов",
+   "source": "source/incoming/gpt/137_buildings_new_3.png"
+  },
+  "backup_archive_damaged": {
+   "building": "backup_archive",
+   "state": "damaged",
+   "file": "buildings_gpt/backup_archive_damaged.png",
+   "size": [
+    52,
+    80
+   ],
+   "anchor": [
+    26,
+    67
+   ],
+   "tiles": 1,
+   "note": "архив бэкапов",
+   "source": "source/incoming/gpt/137_buildings_new_3.png"
+  },
+  "backup_archive_destroyed": {
+   "building": "backup_archive",
+   "state": "destroyed",
+   "file": "buildings_gpt/backup_archive_destroyed.png",
+   "size": [
+    52,
+    80
+   ],
+   "anchor": [
+    26,
+    67
+   ],
+   "tiles": 1,
+   "note": "архив бэкапов",
+   "source": "source/incoming/gpt/137_buildings_new_3.png"
+  },
+  "limb_rotation_center_construction": {
+   "building": "limb_rotation_center",
+   "state": "construction",
+   "file": "buildings_gpt/limb_rotation_center_construction.png",
+   "size": [
+    104,
+    120
+   ],
+   "anchor": [
+    52,
+    94
+   ],
+   "tiles": 2,
+   "note": "центр ротации конечностей",
+   "source": "source/incoming/gpt/137_buildings_new_3.png"
+  },
+  "limb_rotation_center_normal": {
+   "building": "limb_rotation_center",
+   "state": "normal",
+   "file": "buildings_gpt/limb_rotation_center_normal.png",
+   "size": [
+    104,
+    120
+   ],
+   "anchor": [
+    52,
+    94
+   ],
+   "tiles": 2,
+   "note": "центр ротации конечностей",
+   "source": "source/incoming/gpt/137_buildings_new_3.png"
+  },
+  "limb_rotation_center_damaged": {
+   "building": "limb_rotation_center",
+   "state": "damaged",
+   "file": "buildings_gpt/limb_rotation_center_damaged.png",
+   "size": [
+    104,
+    120
+   ],
+   "anchor": [
+    52,
+    94
+   ],
+   "tiles": 2,
+   "note": "центр ротации конечностей",
+   "source": "source/incoming/gpt/137_buildings_new_3.png"
+  },
+  "limb_rotation_center_destroyed": {
+   "building": "limb_rotation_center",
+   "state": "destroyed",
+   "file": "buildings_gpt/limb_rotation_center_destroyed.png",
+   "size": [
+    104,
+    120
+   ],
+   "anchor": [
+    52,
+    94
+   ],
+   "tiles": 2,
+   "note": "центр ротации конечностей",
+   "source": "source/incoming/gpt/137_buildings_new_3.png"
+  },
+  "element_forge_construction": {
+   "building": "element_forge",
+   "state": "construction",
+   "file": "buildings_gpt/element_forge_construction.png",
+   "size": [
+    104,
+    92
+   ],
+   "anchor": [
+    52,
+    66
+   ],
+   "tiles": 2,
+   "note": "кузница стихий",
+   "source": "source/incoming/gpt/149_buildings_new_4.png"
+  },
+  "element_forge_normal": {
+   "building": "element_forge",
+   "state": "normal",
+   "file": "buildings_gpt/element_forge_normal.png",
+   "size": [
+    104,
+    92
+   ],
+   "anchor": [
+    52,
+    66
+   ],
+   "tiles": 2,
+   "note": "кузница стихий",
+   "source": "source/incoming/gpt/149_buildings_new_4.png"
+  },
+  "element_forge_damaged": {
+   "building": "element_forge",
+   "state": "damaged",
+   "file": "buildings_gpt/element_forge_damaged.png",
+   "size": [
+    104,
+    92
+   ],
+   "anchor": [
+    52,
+    66
+   ],
+   "tiles": 2,
+   "note": "кузница стихий",
+   "source": "source/incoming/gpt/149_buildings_new_4.png"
+  },
+  "element_forge_destroyed": {
+   "building": "element_forge",
+   "state": "destroyed",
+   "file": "buildings_gpt/element_forge_destroyed.png",
+   "size": [
+    104,
+    92
+   ],
+   "anchor": [
+    52,
+    66
+   ],
+   "tiles": 2,
+   "note": "кузница стихий",
+   "source": "source/incoming/gpt/149_buildings_new_4.png"
+  },
+  "residents_shelter_construction": {
+   "building": "residents_shelter",
+   "state": "construction",
+   "file": "buildings_gpt/residents_shelter_construction.png",
+   "size": [
+    52,
+    80
+   ],
+   "anchor": [
+    26,
+    67
+   ],
+   "tiles": 1,
+   "note": "приют горожан",
+   "source": "source/incoming/gpt/149_buildings_new_4.png"
+  },
+  "residents_shelter_normal": {
+   "building": "residents_shelter",
+   "state": "normal",
+   "file": "buildings_gpt/residents_shelter_normal.png",
+   "size": [
+    52,
+    80
+   ],
+   "anchor": [
+    26,
+    67
+   ],
+   "tiles": 1,
+   "note": "приют горожан",
+   "source": "source/incoming/gpt/149_buildings_new_4.png"
+  },
+  "residents_shelter_damaged": {
+   "building": "residents_shelter",
+   "state": "damaged",
+   "file": "buildings_gpt/residents_shelter_damaged.png",
+   "size": [
+    52,
+    80
+   ],
+   "anchor": [
+    26,
+    67
+   ],
+   "tiles": 1,
+   "note": "приют горожан",
+   "source": "source/incoming/gpt/149_buildings_new_4.png"
+  },
+  "residents_shelter_destroyed": {
+   "building": "residents_shelter",
+   "state": "destroyed",
+   "file": "buildings_gpt/residents_shelter_destroyed.png",
+   "size": [
+    52,
+    80
+   ],
+   "anchor": [
+    26,
+    67
+   ],
+   "tiles": 1,
+   "note": "приют горожан",
+   "source": "source/incoming/gpt/149_buildings_new_4.png"
+  },
+  "repair_crew_construction": {
+   "building": "repair_crew",
+   "state": "construction",
+   "file": "buildings_gpt/repair_crew_construction.png",
+   "size": [
+    52,
+    80
+   ],
+   "anchor": [
+    26,
+    67
+   ],
+   "tiles": 1,
+   "note": "ремонтная бригада",
+   "source": "source/incoming/gpt/149_buildings_new_4.png"
+  },
+  "repair_crew_normal": {
+   "building": "repair_crew",
+   "state": "normal",
+   "file": "buildings_gpt/repair_crew_normal.png",
+   "size": [
+    52,
+    80
+   ],
+   "anchor": [
+    26,
+    67
+   ],
+   "tiles": 1,
+   "note": "ремонтная бригада",
+   "source": "source/incoming/gpt/149_buildings_new_4.png"
+  },
+  "repair_crew_damaged": {
+   "building": "repair_crew",
+   "state": "damaged",
+   "file": "buildings_gpt/repair_crew_damaged.png",
+   "size": [
+    52,
+    80
+   ],
+   "anchor": [
+    26,
+    67
+   ],
+   "tiles": 1,
+   "note": "ремонтная бригада",
+   "source": "source/incoming/gpt/149_buildings_new_4.png"
+  },
+  "repair_crew_destroyed": {
+   "building": "repair_crew",
+   "state": "destroyed",
+   "file": "buildings_gpt/repair_crew_destroyed.png",
+   "size": [
+    52,
+    80
+   ],
+   "anchor": [
+    26,
+    67
+   ],
+   "tiles": 1,
+   "note": "ремонтная бригада",
+   "source": "source/incoming/gpt/149_buildings_new_4.png"
+  },
+  "hero_station_construction": {
+   "building": "hero_station",
+   "state": "construction",
+   "file": "buildings_gpt/hero_station_construction.png",
+   "size": [
+    52,
+    80
+   ],
+   "anchor": [
+    26,
+    67
+   ],
+   "tiles": 1,
+   "note": "станция героя (круглая плита под эмблему)",
+   "source": "source/incoming/gpt/144_hero_station_template.png",
+   "emblem": {
+    "center": [
+     21.0,
+     52.0
+    ],
+    "r": 5.0,
+    "size": 10,
+    "file_dir": "buildings_gpt/emblems/"
+   }
+  },
+  "hero_station_normal": {
+   "building": "hero_station",
+   "state": "normal",
+   "file": "buildings_gpt/hero_station_normal.png",
+   "size": [
+    52,
+    80
+   ],
+   "anchor": [
+    26,
+    67
+   ],
+   "tiles": 1,
+   "note": "станция героя (круглая плита под эмблему)",
+   "source": "source/incoming/gpt/144_hero_station_template.png",
+   "emblem": {
+    "center": [
+     20.0,
+     53.0
+    ],
+    "r": 5.0,
+    "size": 10,
+    "file_dir": "buildings_gpt/emblems/"
+   }
+  },
+  "hero_station_damaged": {
+   "building": "hero_station",
+   "state": "damaged",
+   "file": "buildings_gpt/hero_station_damaged.png",
+   "size": [
+    52,
+    80
+   ],
+   "anchor": [
+    26,
+    67
+   ],
+   "tiles": 1,
+   "note": "станция героя (круглая плита под эмблему)",
+   "source": "source/incoming/gpt/144_hero_station_template.png",
+   "emblem": {
+    "center": [
+     20.0,
+     53.0
+    ],
+    "r": 5.0,
+    "size": 10,
+    "file_dir": "buildings_gpt/emblems/"
+   }
+  },
+  "hero_station_destroyed": {
+   "building": "hero_station",
+   "state": "destroyed",
+   "file": "buildings_gpt/hero_station_destroyed.png",
+   "size": [
+    52,
+    80
+   ],
+   "anchor": [
+    26,
+    67
+   ],
+   "tiles": 1,
+   "note": "станция героя (круглая плита под эмблему)",
+   "source": "source/incoming/gpt/144_hero_station_template.png"
+  },
+  "hero_station_normal_thermo": {
+   "building": "hero_station",
+   "state": "normal",
+   "file": "buildings_gpt/hero_station_normal_thermo.png",
+   "size": [
+    52,
+    80
+   ],
+   "anchor": [
+    26,
+    67
+   ],
+   "tiles": 1,
+   "note": "станция героя (круглая плита под эмблему)",
+   "source": "source/incoming/gpt/144_hero_station_template.png",
+   "element": "thermo",
+   "emblem": {
+    "center": [
+     20.0,
+     53.0
+    ],
+    "r": 5.0,
+    "size": 10,
+    "file_dir": "buildings_gpt/emblems/"
+   }
+  },
+  "hero_station_normal_cryo": {
+   "building": "hero_station",
+   "state": "normal",
+   "file": "buildings_gpt/hero_station_normal_cryo.png",
+   "size": [
+    52,
+    80
+   ],
+   "anchor": [
+    26,
+    67
+   ],
+   "tiles": 1,
+   "note": "станция героя (круглая плита под эмблему)",
+   "source": "source/incoming/gpt/144_hero_station_template.png",
+   "element": "cryo",
+   "emblem": {
+    "center": [
+     20.0,
+     53.0
+    ],
+    "r": 5.0,
+    "size": 10,
+    "file_dir": "buildings_gpt/emblems/"
+   }
+  },
+  "hero_station_normal_volt": {
+   "building": "hero_station",
+   "state": "normal",
+   "file": "buildings_gpt/hero_station_normal_volt.png",
+   "size": [
+    52,
+    80
+   ],
+   "anchor": [
+    26,
+    67
+   ],
+   "tiles": 1,
+   "note": "станция героя (круглая плита под эмблему)",
+   "source": "source/incoming/gpt/144_hero_station_template.png",
+   "element": "volt",
+   "emblem": {
+    "center": [
+     20.0,
+     53.0
+    ],
+    "r": 5.0,
+    "size": 10,
+    "file_dir": "buildings_gpt/emblems/"
+   }
+  },
+  "hero_station_normal_toxin": {
+   "building": "hero_station",
+   "state": "normal",
+   "file": "buildings_gpt/hero_station_normal_toxin.png",
+   "size": [
+    52,
+    80
+   ],
+   "anchor": [
+    26,
+    67
+   ],
+   "tiles": 1,
+   "note": "станция героя (круглая плита под эмблему)",
+   "source": "source/incoming/gpt/144_hero_station_template.png",
+   "element": "toxin",
+   "emblem": {
+    "center": [
+     20.0,
+     53.0
+    ],
+    "r": 5.0,
+    "size": 10,
+    "file_dir": "buildings_gpt/emblems/"
+   }
+  },
+  "hero_station_normal_impact": {
+   "building": "hero_station",
+   "state": "normal",
+   "file": "buildings_gpt/hero_station_normal_impact.png",
+   "size": [
+    52,
+    80
+   ],
+   "anchor": [
+    26,
+    67
+   ],
+   "tiles": 1,
+   "note": "станция героя (круглая плита под эмблему)",
+   "source": "source/incoming/gpt/144_hero_station_template.png",
+   "element": "impact",
+   "emblem": {
+    "center": [
+     20.0,
+     53.0
+    ],
+    "r": 5.0,
+    "size": 10,
+    "file_dir": "buildings_gpt/emblems/"
+   }
+  }
+ },
+ "emblems": {
+  "standard": "buildings_gpt/emblems/standard.png",
+  "patch": "buildings_gpt/emblems/patch.png",
+  "canopy": "buildings_gpt/emblems/canopy.png",
+  "current": "buildings_gpt/emblems/current.png",
+  "lineman": "buildings_gpt/emblems/lineman.png",
+  "frostline": "buildings_gpt/emblems/frostline.png",
+  "mason": "buildings_gpt/emblems/mason.png",
+  "sweep": "buildings_gpt/emblems/sweep.png",
+  "beacon": "buildings_gpt/emblems/beacon.png",
+  "hive": "buildings_gpt/emblems/hive.png",
+  "kiln": "buildings_gpt/emblems/kiln.png",
+  "seraph": "buildings_gpt/emblems/seraph.png",
+  "doctor": "buildings_gpt/emblems/doctor.png",
+  "demon": "buildings_gpt/emblems/demon.png",
+  "n73": "buildings_gpt/emblems/n73.png"
+ },
+ "emblem_size": 10
+}

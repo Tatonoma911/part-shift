@@ -1,0 +1,101 @@
+{
+ "note": "Безумные герои с чужой конечностью (GPT 151). Вид спереди 3/4, анкер = середина низа кадра (ноги), контур врага; рост = <hero>_mad_front из heroes_gpt.",
+ "villains": {
+  "demon_cryo_arms": {
+   "file": "units/villains_mixed/demon_cryo_arms.png",
+   "hero": "demon",
+   "limb": "cryo",
+   "kind": "mad",
+   "view": "front",
+   "size": [
+    88,
+    88
+   ],
+   "anchor": [
+    44,
+    87
+   ],
+   "source": "source/incoming/gpt/151_enemy_mixed_villains.png"
+  },
+  "frostline_kiln_arm": {
+   "file": "units/villains_mixed/frostline_kiln_arm.png",
+   "hero": "frostline",
+   "limb": "kiln",
+   "kind": "mad",
+   "view": "front",
+   "size": [
+    72,
+    72
+   ],
+   "anchor": [
+    36,
+    71
+   ],
+   "source": "source/incoming/gpt/151_enemy_mixed_villains.png"
+  },
+  "lineman_kiln_arm": {
+   "file": "units/villains_mixed/lineman_kiln_arm.png",
+   "hero": "lineman",
+   "limb": "kiln",
+   "kind": "mad",
+   "view": "front",
+   "size": [
+    72,
+    72
+   ],
+   "anchor": [
+    36,
+    71
+   ],
+   "source": "source/incoming/gpt/151_enemy_mixed_villains.png"
+  },
+  "kiln_frostline_arm": {
+   "file": "units/villains_mixed/kiln_frostline_arm.png",
+   "hero": "kiln",
+   "limb": "frostline",
+   "kind": "mad",
+   "view": "front",
+   "size": [
+    72,
+    72
+   ],
+   "anchor": [
+    36,
+    71
+   ],
+   "source": "source/incoming/gpt/151_enemy_mixed_villains.png"
+  },
+  "mason_volt_arm": {
+   "file": "units/villains_mixed/mason_volt_arm.png",
+   "hero": "mason",
+   "limb": "volt",
+   "kind": "mad",
+   "view": "front",
+   "size": [
+    72,
+    72
+   ],
+   "anchor": [
+    36,
+    71
+   ],
+   "source": "source/incoming/gpt/151_enemy_mixed_villains.png"
+  },
+  "sweep_toxin_arm": {
+   "file": "units/villains_mixed/sweep_toxin_arm.png",
+   "hero": "sweep",
+   "limb": "toxin",
+   "kind": "mad",
+   "view": "front",
+   "size": [
+    72,
+    72
+   ],
+   "anchor": [
+    36,
+    71
+   ],
+   "source": "source/incoming/gpt/151_enemy_mixed_villains.png"
+  }
+ }
+}

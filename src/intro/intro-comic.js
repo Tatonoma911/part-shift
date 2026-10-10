@@ -42,11 +42,15 @@ export const SCRIPT = [
   },
   { // 2
     tag: { ru: 'БОЛЬШОЙ ГОРОД // ВЫЗОВЫ', en: 'BIG CITY // CALLS' },
-    wide: { cols: '1fr 0.85fr 1fr', rows: '1fr', areas: '"a b c"' },
-    tall: { cols: '1fr 1fr', rows: '0.95fr 1fr', areas: '"a a" "b c"' },
+    wide: { cols: '0.5fr 1fr 1fr', rows: '1.15fr 1fr', areas: '"a d d" "a b c"' },
+    tall: { cols: '1fr 1fr', rows: '0.7fr 0.8fr 1fr', areas: '"a a" "d d" "b c"' },
     panels: [
       { art: 'log', area: 'a', beats: [
         { k: 'cap', at: [4, 80], w: 92, ru: 'В большом городе всегда что-то случается.', en: 'In a big city, something is always happening.' },
+      ] },
+      { img: 'crane_kiln', area: 'd', fit: 'contain', kb: [1.0, 1.03, 0, 0], beats: [
+        { k: 'cap', at: [3, 4], w: 60, ru: 'Кран сошёл с ума. Килн его переубедил.', en: 'A crane went crazy. Kiln talked it out of it.' },
+        { k: 'say', who: 'lineman', at: [58, 58], w: 40, tail: 'l', ru: 'Хот-доги целы!', en: 'The hot dogs are safe!' },
       ] },
       { img: 'geyser', area: 'b', kb: [1.0, 1.04, 0, 0], beats: [
         { k: 'cap', at: [4, 4], w: 92, ru: 'Люк решил стать фонтаном.', en: 'A manhole decided to be a fountain.' },
@@ -79,26 +83,33 @@ export const SCRIPT = [
   },
   { // 4
     tag: { ru: 'СРОЧНЫЕ НОВОСТИ', en: 'BREAKING NEWS' },
-    wide: { cols: '1fr', rows: '1fr', areas: '"c"' },
-    tall: { cols: '1fr', rows: '1fr', areas: '"c"' },
+    wide: { cols: '1fr 1fr', rows: '1fr', areas: '"a b"' },
+    tall: { cols: '1fr 1fr', rows: '1fr', areas: '"a b"' },
     panels: [
-      { img: 'beach', area: 'c', kb: [1.04, 1.0, 0, 0], beats: [
-        { k: 'say', who: 'anchor', at: [4, 5], w: 60, ru: 'Срочные новости. В нашем прекрасном городе сегодня…', en: 'Breaking news. Today in our beautiful city…' },
-        { k: 'say', who: 'anchor', at: [4, 5], w: 60, ru: '…ничего не произошло.', en: '…nothing happened.', replace: true },
-        { k: 'cap', at: [4, 80], w: 60, ru: 'Герои отдыхают. Город работает. Пока.', en: 'The heroes are resting. The city is working. For now.' },
+      { img: 'news_serious', area: 'a', kb: [1.0, 1.04, 0, 0], beats: [
+        { k: 'say', who: 'anchor', at: [4, 4], w: 92, tail: 'b', ru: 'Срочные новости. В нашем прекрасном городе сегодня…', en: 'Breaking news. Today in our beautiful city…' },
+      ] },
+      { img: 'news_smile', area: 'b', kb: [1.0, 1.04, 0, 0], beats: [
+        { k: 'say', who: 'anchor', at: [4, 4], w: 92, tail: 'b', ru: '…ничего не произошло.', en: '…nothing happened.' },
+        { k: 'cap', at: [4, 78], w: 92, ru: 'Герои отдыхают. Город работает. Пока.', en: 'The heroes are resting. The city is working. For now.' },
       ] },
     ],
   },
   { // 5
     tag: { ru: 'ЦЕНА СПАСЕНИЯ // SPLICE', en: 'THE PRICE OF RESCUE // SPLICE' },
-    wide: { cols: '1.6fr 1fr', rows: '1fr', areas: '"a b"' },
-    tall: { cols: '1fr', rows: '1fr 1.15fr', areas: '"a" "b"' },
+    wide: { cols: '1.2fr 0.9fr 0.75fr', rows: '1fr 1fr', areas: '"a a d" "b c d"' },
+    tall: { cols: '1fr 1fr', rows: '0.8fr 0.9fr 1fr', areas: '"a a" "b d" "c d"' },
     panels: [
-      { img: 'lab_team', area: 'a', kb: [1.0, 1.04, 0, 0], beats: [
-        { k: 'cap', at: [3, 4], w: 62, ru: 'Работа опасная. Спасатели получали травмы и теряли руки и ноги.', en: 'The job was dangerous. Rescuers got hurt and lost arms and legs.' },
-        { k: 'cap', at: [3, 74], w: 70, ru: 'Без магии: биоткань, гель и нейроинтерфейс. Хоть руку, которая не горит, хоть ногу, которая не мёрзнет.', en: 'No magic: bio-tissue, gel and a neural interface. An arm that won’t burn, a leg that won’t freeze.' },
+      { img: 'lab_team', area: 'a', fit: 'contain', kb: [1.0, 1.03, 0, 0], beats: [
+        { k: 'cap', at: [3, 80], w: 70, ru: 'Работа опасная. Спасатели получали травмы и теряли руки и ноги.', en: 'The job was dangerous. Rescuers got hurt and lost arms and legs.' },
       ] },
-      { img: 'gel_capsule', area: 'b', kb: [1.0, 1.05, 0, 0], fx: 'glow', beats: [
+      { img: 'clinic', area: 'b', kb: [1.0, 1.04, 0, 0], beats: [
+        { k: 'cap', at: [3, 4], w: 80, ru: 'Сначала были протезы. Хорошие. Но железо не чувствует, как дочка держит за руку.', en: 'First there were prosthetics. Good ones. But metal can’t feel a daughter holding your hand.' },
+      ] },
+      { img: 'leg_tank', area: 'c', kb: [1.0, 1.04, 0, 0], fx: 'glow', beats: [
+        { k: 'cap', at: [3, 4], w: 80, ru: 'Без магии: биоткань, гель и нейроинтерфейс. Хоть руку, которая не горит, хоть ногу, которая не мёрзнет.', en: 'No magic: bio-tissue, gel and a neural interface. An arm that won’t burn, a leg that won’t freeze.' },
+      ] },
+      { img: 'gel_capsule', area: 'd', kb: [1.0, 1.05, 0, 0], fx: 'glow', beats: [
         { k: 'cap', at: [5, 4], w: 90, ru: 'Тогда HeroOut создала гель Splice. Он заживлял раны и отращивал потерянные конечности.', en: 'So HeroOut created Splice gel. It healed wounds and regrew lost limbs.' },
         { k: 'ad', at: [5, 70], w: 90, ru: 'Потеряли руку? Не теряйте надежду! Гель Splice: отрастёт к понедельнику.', en: 'Lost an arm? Don’t lose hope! Splice gel: regrown by Monday.' },
       ] },
@@ -106,8 +117,8 @@ export const SCRIPT = [
   },
   { // 6
     tag: { ru: 'УРОВЕНЬ 42 // РУКОВОДСТВО', en: 'LEVEL 42 // EXECUTIVE' },
-    wide: { cols: '0.75fr 1.25fr', rows: '1.1fr 0.62fr', areas: '"a a" "b c"' },
-    tall: { cols: '1fr', rows: '1fr 0.85fr 0.45fr', areas: '"a" "b" "c"' },
+    wide: { cols: '1fr 0.5fr', rows: '1.1fr 0.62fr', areas: '"a d" "b d"' },
+    tall: { cols: '1fr 0.55fr', rows: '1fr 0.9fr', areas: '"a a" "b d"' },
     panels: [
       { img: 'boardroom', area: 'a', kb: [1.0, 1.04, 0, 0], beats: [
         { k: 'say', who: 'exec', at: [30, 6], w: 40, tail: 'r', ru: 'Город платит, пока у него что-то случается.', en: 'The city pays as long as something keeps happening.' },
@@ -117,8 +128,30 @@ export const SCRIPT = [
         { k: 'cap', at: [4, 5], w: 90, ru: 'С тех пор кошки чаще залезали на деревья, а краны чаще сходили с ума.', en: 'From then on, cats climbed trees more often, and cranes went crazy more often.', sfx: 'ui_tap' },
         { k: 'cap', at: [4, 66], w: 90, ru: 'А гель Splice сделал HeroOut самой богатой корпорацией города.', en: 'And Splice gel made HeroOut the richest corporation in the city.' },
       ] },
+      { img: 'tower_cutaway', area: 'd', kb: [1.0, 1.06, 0, 1], beats: [
+        { k: 'cap', at: [4, 4], w: 92, ru: 'Гель варят глубоко под башней.', en: 'The gel is brewed deep beneath the tower.' },
+      ] },
+    ],
+  },
+  { // 7: the Lower Product (Антон 2026-10-10: the Demon is made down here; dropping it breaks the logic)
+    dark: true,
+    tag: { ru: 'УРОВЕНЬ −42 // ПРОДУКТ', en: 'LEVEL −42 // THE PRODUCT' },
+    wide: { cols: '1.1fr 0.9fr 0.75fr', rows: '0.9fr 1.1fr', areas: '"a a v" "d c v"' },
+    tall: { cols: '1fr 1fr', rows: '0.6fr 1fr 0.8fr', areas: '"a a" "v d" "v c"' },
+    panels: [
+      { img: 'factory', area: 'a', kb: [1.0, 1.04, 0, 0], beats: [
+        { k: 'cap', at: [3, 5], w: 62, ru: 'Под башней гель не только варили. Из него собирали.', en: 'Beneath the tower the gel wasn’t just brewed. It was assembled.' },
+        { k: 'cap', at: [3, 70], w: 62, ru: 'Лучшие части лучших спасателей. Четыре руки, хвост-бур. Один образец.', en: 'The best parts of the best rescuers. Four arms, a drill tail. One specimen.' },
+      ] },
+      { img: 'demon_vat', area: 'v', kb: [1.0, 1.05, 0, 1], fx: 'glow', beats: [
+        { k: 'cap', at: [4, 4], w: 92, ru: 'Продукт №1: Демон. Спасатель, который не устаёт, не спорит и не берёт отпуск.', en: 'Product No. 1: the Demon. A rescuer who never tires, never argues and never takes a day off.', sfx: 'demon_awake' },
+        { k: 'ad', at: [4, 78], w: 92, ru: 'Демон. Скоро на каждом вызове.', en: 'The Demon. Coming soon to every call.' },
+      ] },
+      { img: 'demon_face', area: 'd', kb: [1.0, 1.06, 0, 0], beats: [
+        { k: 'cap', at: [4, 5], w: 90, ru: 'Он ещё не проснулся.', en: 'He hasn’t woken up yet.' },
+      ] },
       { img: 'glass_crack', area: 'c', fit: 'cover', kb: [1.0, 1.0, 0, 0], glow: 'glass_crack_glow', beats: [
-        { k: 'cap', at: [3, 6], w: 70, ru: 'Пока однажды капсула с гелем не треснула.', en: 'Until one day, a capsule of gel cracked.', fx: 'crackglow', sfx: 'nest_open' },
+        { k: 'cap', at: [3, 6], w: 80, ru: 'Пока однажды его капсула не треснула.', en: 'Until one day, his capsule cracked.', fx: 'crackglow', sfx: 'nest_open' },
       ] },
     ],
   },
@@ -156,13 +189,13 @@ export const SCRIPT = [
   },
   { // 9
     tag: { ru: 'ГЕРОИ ВНЕ СМЕНЫ // ИХ МНОГО', en: 'HEROES OFF THE LEASH // THERE ARE MANY' },
-    wide: { cols: '1fr', rows: '0.8fr 1fr', areas: '"a" "b"' },
-    tall: { cols: '1fr', rows: '0.8fr 1fr', areas: '"a" "b"' },
+    wide: { cols: '1fr', rows: '0.7fr 1.3fr', areas: '"a" "b"' },
+    tall: { cols: '1fr', rows: '0.5fr 1fr', areas: '"a" "b"' },
     panels: [
       { img: 'heroes_action', area: 'a', fit: 'contain', kb: [1.0, 1.04, 0, 0], fx: 'alarm', beats: [
         { k: 'cap', at: [3, 5], w: 70, ru: 'Килн выносит людей из домов, где нет пожара. Фростлайн тушит всё, что тёплое. Серафим лечит тех, кто не болен. Демон уводит всех под землю, «в безопасность».', en: 'Kiln carries people out of houses that aren’t on fire. Frostline puts out anything warm. Seraph heals people who aren’t sick. The Demon takes everyone underground, “to safety”.', sfx: 'demon_awake' },
       ] },
-      { img: 'heroes_turn', area: 'b', kb: [1.0, 1.05, 0, 0], beats: [
+      { img: 'mad_crowd', area: 'b', kb: [1.0, 1.06, 0, 0], beats: [
         { k: 'cap', at: [4, 80], w: 60, ru: 'Их больше десятка. И все на смене.', en: 'There are more than a dozen of them. And they’re all on shift.' },
       ] },
     ],
@@ -185,14 +218,14 @@ export const SCRIPT = [
   },
   { // 11
     tag: { ru: 'СМЕНА 01 // ТВОЙ ХОД', en: 'SHIFT 01 // YOUR MOVE' },
-    wide: { cols: '0.7fr 1.3fr', rows: '1fr', areas: '"a b"' },
+    wide: { cols: '0.9fr 1.3fr', rows: '1fr', areas: '"a b"' },
     tall: { cols: '1fr', rows: '1fr 1fr', areas: '"a" "b"' },
     panels: [
-      { img: 'lineman_arm', area: 'a', kb: [1.0, 1.05, 0, 0], beats: [
+      { img: 'resident_arm', area: 'a', pos: '30% 50%', kb: [1.0, 1.05, 0, 0], beats: [
         { k: 'cap', at: [4, 4], w: 92, ru: 'Но у каждой чужой руки есть сила.', en: 'But every stolen arm has a power.' },
-        { k: 'cap', at: [4, 70], w: 92, ru: 'Житель побеждает заражённого и забирает его руку или ногу. А с ней и его силу.', en: 'A resident beats an infected one and takes their arm or leg. And their power with it.' },
+        { k: 'cap', at: [4, 72], w: 70, ru: 'Житель побеждает заражённого и забирает его руку или ногу. А с ней и его силу.', en: 'A resident beats an infected one and takes their arm or leg. And their power with it.' },
       ] },
-      { img: 'roof_wide', area: 'b', kb: [1.0, 1.05, 1, 0], beats: [
+      { img: 'command_center', area: 'b', kb: [1.0, 1.05, 1, 0], beats: [
         { k: 'cap', at: [4, 5], w: 70, ru: 'Ты командир последнего Командного центра.', en: 'You command the last Command Center.' },
         { k: 'cap', at: [4, 74], w: 70, ru: 'Открывай кварталы. Строй дома. Верни город людям.', en: 'Open the blocks. Build homes. Give the city back to its people.' },
       ] },
@@ -234,16 +267,20 @@ const CSS = `
  clip-path:polygon(10px 0,100% 0,100% calc(100% - 10px),calc(100% - 10px) 100%,0 100%,0 10px)}
 .psc-page.out{transform:translateX(-40px) scale(.97);opacity:0}
 .psc-page.in{transform:translateX(40px) scale(.97);opacity:0}
-.psc-panel{position:relative;overflow:hidden;background:var(--graph);border:3px solid var(--graph);opacity:0;transform:scale(.94);
+.psc-panel{position:relative;overflow:hidden;display:flex;flex-direction:column;background:var(--graph);border:3px solid var(--graph);opacity:0;transform:scale(.94);
  transition:opacity .45s ease,transform .6s cubic-bezier(.2,.9,.25,1.15),clip-path .6s ease;clip-path:inset(0 100% 0 0)}
 .psc-panel.show{opacity:1;transform:none;clip-path:inset(0 0 0 0)}
-.psc-panel>img.bg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transform-origin:50% 50%;will-change:transform}
-.psc-panel>img.bd{position:absolute;inset:-8%;width:116%;height:116%;object-fit:cover;filter:blur(16px) brightness(.62) saturate(.9);display:none}
-.psc-panel.contain>img.bd{display:block}
-.psc-panel>img.gl{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;mix-blend-mode:screen;opacity:0;pointer-events:none}
-.psc-panel>img.gl.on{animation:psc-crackglow 1.6s ease-in-out infinite}
+.psc-pic{position:relative;flex:1;min-height:0;overflow:hidden}
+.psc-band{flex:none;display:flex;flex-direction:column;gap:5px;padding:7px 8px;background:var(--graph)}
+.psc-band:empty{display:none}
+.psc-band .psc-b{position:static;max-width:100%}
+.psc-pic>img.bg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transform-origin:50% 50%;will-change:transform}
+.psc-pic>img.bd{position:absolute;inset:-8%;width:116%;height:116%;object-fit:cover;filter:blur(16px) brightness(.62) saturate(.9);display:none}
+.psc-panel.contain .psc-pic>img.bd{display:block}
+.psc-pic>img.gl{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;mix-blend-mode:screen;opacity:0;pointer-events:none}
+.psc-pic>img.gl.on{animation:psc-crackglow 1.6s ease-in-out infinite}
 @keyframes psc-crackglow{0%{opacity:0}25%{opacity:1}60%{opacity:.55}100%{opacity:1}}
-.psc-panel.contain>img.bg{box-shadow:0 0 0 2px var(--graph),0 10px 30px #0008}
+.psc-panel.contain .psc-pic>img.bg{box-shadow:0 0 0 2px var(--graph),0 10px 30px #0008}
 .psc-dos{background:linear-gradient(#0f1a21,#0B1117);display:flex;gap:2.5%;padding:clamp(38px,9vh,70px) 3% clamp(40px,8vh,64px);align-items:center;justify-content:center}
 .psc-card{position:relative;flex:1;max-width:24%;aspect-ratio:.6;max-height:100%;background:var(--paper);border:2px solid var(--graph);overflow:hidden;opacity:0;transform:translateY(14px) rotate(var(--r));transition:opacity .4s,transform .5s cubic-bezier(.2,.9,.3,1.3);
  clip-path:polygon(8px 0,100% 0,100% calc(100% - 8px),calc(100% - 8px) 100%,0 100%,0 8px)}
@@ -484,69 +521,6 @@ export function playIntroComic(opts = {}) {
 
   // ---- drawn panels
   const ART = {
-    billboard(p) {
-      const a = el('div', 'psc-art psc-bill');
-      const c = el('div', 'city'); c.style.backgroundImage = `url(${url('panels/city_rescue.jpg')})`;
-      const b = el('div', 'psc-board', '<div>HERO</div><div class="bar"></div><div>OUT</div>');
-      a.append(c, b);
-      p.fxSplit = () => {
-        b.classList.add('split');
-        for (let i = 0; i < 26; i++) {
-          const s = el('div', 'psc-spark');
-          s.style.left = '50%'; s.style.top = (36 + Math.random() * 20) + '%';
-          s.style.setProperty('--dx', (Math.random() * 160 - 80) + 'px'); s.style.setProperty('--dy', (Math.random() * 120 - 30) + 'px');
-          a.appendChild(s); setTimeout(() => s.remove(), 1000);
-        }
-        const st = el('div', 'psc-stripe'); a.appendChild(st);
-      };
-      return a;
-    },
-    control() {
-      const a = el('div', 'psc-art psc-ctrlart');
-      const scr = el('div', 'psc-screen', `<div class="lbl">HERO | OUT</div>
-        <svg viewBox="0 0 120 120" aria-hidden="true"><defs><linearGradient id="pscm" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff"/><stop offset="1" stop-color="#d9e4e8"/></linearGradient></defs>
-        <path d="M20 58 C20 28 38 12 60 12 C82 12 100 28 100 58 L100 74 C100 96 84 108 60 108 C36 108 20 96 20 74 Z" fill="url(#pscm)" stroke="#10171C" stroke-width="3"/>
-        <path d="M30 50 C30 38 44 32 60 32 C76 32 90 38 90 50 L90 58 C90 64 86 66 80 66 L40 66 C34 66 30 64 30 58 Z" fill="#10171C"/>
-        <circle cx="46" cy="49" r="3" fill="#57D8F2"/><circle cx="74" cy="49" r="3" fill="#57D8F2"/>
-        <path class="psc-smile" d="M42 84 Q60 96 78 84" fill="none" stroke="#57D8F2" stroke-width="4" stroke-linecap="round"/></svg>`);
-      a.append(scr, el('div', 'psc-stripe'));
-      const smile = scr.querySelector('.psc-smile');
-      const shapes = ['M42 84 Q60 96 78 84', 'M42 86 Q60 90 78 86', 'M42 84 Q60 100 78 84', 'M44 86 L76 86'];
-      let i = 0; const t = setInterval(() => { if (!a.isConnected) return clearInterval(t); smile.setAttribute('d', shapes[(i++) % 3]); }, 180);
-      return a;
-    },
-    swap(p) {
-      const a = el('div', 'psc-art psc-swap');
-      a.append(el('div', 'psc-floor'));
-      // an infected hero (Frostline) and a resident, both game sprites at the same pixel scale
-      const ad = el('div', 'psc-spr psc-adapt', `<img src="${url('sprites/hero_frostline.png')}" alt="">`);
-      const res = el('div', 'psc-spr psc-res');
-      res.style.aspectRatio = '55/96';
-      const i1 = el('img'); i1.src = url('sprites/res_normal.png'); i1.alt = '';
-      const i2 = el('img'); i2.src = url('sprites/res_ice_arm.png'); i2.alt = ''; i2.style.opacity = 0;
-      res.append(i1, i2);
-      const orb = el('div', 'psc-orb');
-      const badge = el('div', 'psc-badge', lang === 'ru' ? '+ КРИОРУКА' : '+ CRYO ARM');
-      const flash = el('div', 'psc-flash');
-      a.append(ad, res, orb, badge, flash);
-      p.fxSwap = async () => {
-        res.style.transform = 'translateX(-30%)';
-        await new Promise(r => setTimeout(r, 380));
-        flash.classList.add('go'); a.classList.add('psc-shake');
-        ad.classList.add('dead');
-        res.style.transform = '';
-        const ar = a.getBoundingClientRect(), rr = res.getBoundingClientRect(), orr = orb.getBoundingClientRect();
-        orb.style.setProperty('--tx', (rr.left + rr.width * 0.3 - orr.left) + 'px');
-        orb.style.setProperty('--ty', (rr.top + rr.height * 0.45 - orr.top) + 'px');
-        orb.classList.add('fly');
-        await new Promise(r => setTimeout(r, 800));
-        orb.style.opacity = 0; orb.classList.remove('fly');
-        i1.style.opacity = 0; i2.style.opacity = 1; badge.classList.add('on');
-        flash.classList.remove('go'); void flash.offsetWidth; flash.classList.add('go');
-        void ar;
-      };
-      return a;
-    },
     dossier(p) {
       const a = el('div', 'psc-art psc-dos');
       const H = [['c_lineman', lang === 'ru' ? 'ЛИНЕЙЩИК' : 'LINEMAN', '-3deg'], ['c_frostline', lang === 'ru' ? 'ФРОСТЛАЙН' : 'FROSTLINE', '2deg'], ['c_kiln', lang === 'ru' ? 'КИЛН' : 'KILN', '-1.5deg'], ['c_seraph', lang === 'ru' ? 'СЕРАФИМ' : 'SERAPH', '2.5deg']];
@@ -557,18 +531,6 @@ export function playIntroComic(opts = {}) {
       a.appendChild(el('div', 'psc-stripe'));
       cards.forEach((c, i) => setTimeout(() => c.classList.add('on'), 700 + i * 260));
       p.fxStamp = () => cards.forEach((c, i) => setTimeout(() => c.querySelector('.st').classList.add('on'), 300 + i * 380));
-      return a;
-    },
-    core() {
-      const a = el('div', 'psc-art psc-core');
-      a.innerHTML = `<svg viewBox="0 0 200 120" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
-        <defs><radialGradient id="pscc" cx="50%" cy="50%" r="50%"><stop offset="0" stop-color="#E8F7FF"/><stop offset=".35" stop-color="#57D8F2"/><stop offset=".7" stop-color="#2E55C8"/><stop offset="1" stop-color="#2E55C800"/></radialGradient></defs>
-        <g class="veins" fill="none" stroke="#2E55C8" stroke-width="1.6" stroke-linecap="round">
-          <path d="M100 66 C80 70 60 90 20 96"/><path d="M100 66 C120 76 150 80 196 104"/><path d="M100 60 C70 50 40 52 4 40"/><path d="M104 60 C130 44 160 40 198 30"/><path d="M98 70 C96 90 90 104 84 124"/><path d="M106 70 C116 92 130 104 140 124"/></g>
-        <circle class="glow" cx="102" cy="64" r="34" fill="url(#pscc)"/>
-        <path d="M84 58 C84 44 92 36 102 36 C112 36 120 44 120 58 L120 70 C120 84 112 92 102 92 C92 92 84 84 84 70 Z" fill="#F4F7F7" stroke="#10171C" stroke-width="2"/>
-        <path d="M96 40 L100 52 L94 60 L102 72 L98 90 M100 52 L110 56 L114 66" fill="none" stroke="#57D8F2" stroke-width="2.4"/>
-        <rect x="80" y="88" width="44" height="8" fill="#10171C"/></svg>`;
       return a;
     },
     log() {
@@ -590,12 +552,6 @@ export function playIntroComic(opts = {}) {
       a.appendChild(el('div', 'hd', `<span>HERO | OUT · ${lang === 'ru' ? 'ВЫЗОВЫ' : 'DISPATCH'}</span><i>● LIVE</i>`));
       const rows = R.map(([t, x, hot]) => { const r = el('div', 'row' + (hot ? ' hot' : ''), `<b>${t}</b><span>${x}</span>`); a.appendChild(r); return r; });
       rows.forEach((r, i) => setTimeout(() => r.classList.add('on'), 600 + i * 650));
-      return a;
-    },
-    command() {
-      const a = el('div', 'psc-art psc-cmd');
-      const img = el('img'); img.src = url('sprites/command.png'); img.alt = '';
-      a.append(el('div', 'ring'), img, el('div', 'lbl', lang === 'ru' ? 'КОМАНДНЫЙ ЦЕНТР' : 'COMMAND CENTER'));
       return a;
     },
   };
@@ -651,18 +607,20 @@ export function playIntroComic(opts = {}) {
     const panels = def.panels.map((p) => {
       const n = el('div', 'psc-panel');
       n.style.gridArea = p.area;
-      const ctx = { def: p, node: n };
+      const pic = el('div', 'psc-pic'), band = el('div', 'psc-band');
+      n.append(pic, band);
+      const ctx = { def: p, node: n, pic, band };
       if (p.img) {
         const img = el('img', 'bg'); img.src = url('panels/' + p.img + '.jpg'); img.alt = ''; img.draggable = false;
         const [s0, s1, dx, dy] = p.kb || [1.06, 1, 0, 0];
         img.style.transform = `scale(${s0})`;
-        if (p.pos) img.style.objectPosition = p.pos;
+        img.style.objectPosition = p.pos || '50% 0%';
         ctx.kb = () => { if (RM) return; img.animate([{ transform: `scale(${s0}) translate(0,0)` }, { transform: `scale(${s1}) translate(${dx}%,${dy}%)` }], { duration: p.kbMs || 12000, fill: 'forwards', easing: 'ease-out' }); };
         // Small source crops must not be blown up: if covering the box needs more than MAX_UP zoom,
         // show the whole picture at a readable size over a blurred copy of itself.
         const bd = el('img', 'bd'); bd.src = img.src; bd.alt = ''; bd.draggable = false;
         ctx.fit = () => {
-          const W = n.clientWidth, H = n.clientHeight, nw = img.naturalWidth, nh = img.naturalHeight;
+          const W = pic.clientWidth, H = pic.clientHeight, nw = img.naturalWidth, nh = img.naturalHeight;
           if (!W || !nw) return;
           const need = Math.max(W / nw, H / nh) * Math.max(s0, s1);
           const contain = p.fit === 'contain' || (p.fit !== 'cover' && need > MAX_UP);
@@ -673,13 +631,13 @@ export function playIntroComic(opts = {}) {
           } else Object.assign(img.style, { width: '', height: '', left: '', top: '' });
         };
         img.addEventListener('load', ctx.fit);
-        n.append(bd, img);
-        if (p.glow) { const gl = el('img', 'gl'); gl.src = url('panels/' + p.glow + '.png'); gl.alt = ''; n.appendChild(gl); ctx.glow = gl; }
+        pic.append(bd, img);
+        if (p.glow) { const gl = el('img', 'gl'); gl.src = url('panels/' + p.glow + '.png'); gl.alt = ''; pic.appendChild(gl); ctx.glow = gl; }
       } else if (p.art) {
-        n.appendChild(ART[p.art](ctx));
+        pic.appendChild(ART[p.art](ctx));
       }
-      const fx = el('div', 'psc-fx'); n.appendChild(fx); ctx.fx = fx;
-      const flash = el('div', 'psc-flash'); n.appendChild(flash); ctx.flash = flash;
+      const fx = el('div', 'psc-fx'); pic.appendChild(fx); ctx.fx = fx;
+      const flash = el('div', 'psc-flash'); pic.appendChild(flash); ctx.flash = flash;
       page.appendChild(n);
       return ctx;
     });
@@ -722,7 +680,8 @@ export function playIntroComic(opts = {}) {
         for (const b of ctx.def.beats) {
           if (finished) return;
           if (b.replace && last) { last.node.classList.add('gone'); await wait(200); last.node.remove(); }
-          const bub = makeBubble(b); ctx.node.appendChild(bub.node);
+          const bub = makeBubble(b); (b.k === 'say' ? ctx.pic : ctx.band).appendChild(bub.node);
+          if (b.k !== 'say') { bub.node.style.left = bub.node.style.top = ''; }
           void bub.node.offsetWidth; bub.node.classList.add('show');
           runFx(ctx, b.fx); sfx(b.sfx);
           await typeText(bub.txt, bub.text);

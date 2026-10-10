@@ -189,15 +189,6 @@ describe('heroes and the call target', () => {
     expect(w.player(0).stats.heroes).toContain('kiln');
   });
 
-  it('Standard comes as three copies with a third of the HP each', () => {
-    const w = squad(['..........', '..........', '..........', '.........L'], 1);
-    Object.assign(w.cell(9, 3), { hero: 'standard', heroTier: 1 });
-    internals(w).reveal(9, 3, 0);
-    const copies = w.s.units.filter((u) => u.hero === 'standard' && u.kind === 'hero');
-    expect(copies).toHaveLength(3);
-    expect(copies[0].base.hp).toBeCloseTo((heroes.standard.enemy.hp / 3) * w.difficulty.enemyHpFactor);
-  });
-
   it('unopened lairs open by themselves at their threat level', () => {
     const w = squad(['..........', '..........', '..........', '.........L'], 1);
     w.s.time = 4 * w.cfg.threat.secondsPerLevel - 0.01;

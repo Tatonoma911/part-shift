@@ -80,13 +80,17 @@ export function drawLamp(g: G, ch: Channel, x: number, y: number, w: number, h: 
  */
 export function drawSensor(g: G, texts: Phaser.GameObjects.Text[], cx: number, cy: number, clues: Clues): boolean {
   const active = SENSOR_ORDER.filter((ch) => clues[ch] > 0);
+  const hide = (t: Phaser.GameObjects.Text) => {
+    t.setVisible(false);
+    (t.getData('lamp') as Phaser.GameObjects.Image | undefined)?.setVisible(false);
+  };
   if (!active.length) {
-    texts.forEach((t) => t.setVisible(false));
+    texts.forEach(hide);
     return false;
   }
   const n = active.length;
   const ww = n === 1 ? 26 : n === 2 ? 20 : 15;
-  const wh = 30;
+  const wh = 33;
   const gap = 2;
   const pw = n * ww + (n - 1) * gap + 6;
   const ph = wh + 6;
@@ -109,24 +113,32 @@ export function drawSensor(g: G, texts: Phaser.GameObjects.Text[], cx: number, c
   SENSOR_ORDER.forEach((ch, k) => {
     const t = texts[k];
     const slot = active.indexOf(ch);
-    if (slot < 0) return void t.setVisible(false);
+    if (slot < 0) return hide(t);
     const wx = px + 3 + slot * (ww + gap);
     const wy = py + 3;
     g.fillStyle(WINDOW, 1);
     g.fillRect(wx, wy, ww, wh);
-    drawLamp(g, ch, wx, wy + 2, ww, 8);
+    // The artist's lamp sprite (art/export/icons/lamp_*), or the code lamp until it loads.
+    const lamp = t.getData('lamp') as Phaser.GameObjects.Image | undefined;
+    if (lamp) lamp.setVisible(true).setPosition(wx + ww / 2, wy + 6).setScale(Math.min(1, (ww - 1) / lamp.width));
+    else drawLamp(g, ch, wx, wy + 2, ww, 8);
     t.setVisible(true)
       .setText(String(clues[ch]))
       .setFontSize(size)
       .setColor(numberCss(ch))
-      .setPosition(wx + ww / 2, wy + 20);
+      .setPosition(wx + ww / 2, wy + 22);
   });
   return true;
 }
 
 /** Text objects for one sign (create once per cell, reuse). */
 export function sensorTexts(scene: Phaser.Scene, depth: number): Phaser.GameObjects.Text[] {
-  return SENSOR_ORDER.map(() => scene.add.text(0, 0, '', { ...TXT.num(20, '#ffffff'), stroke: '#0b1117', strokeThickness: 3 }).setOrigin(0.5).setDepth(depth));
+  return SENSOR_ORDER.map((ch) => {
+    const t = scene.add.text(0, 0, '', { ...TXT.num(20, '#ffffff'), stroke: '#0b1117', strokeThickness: 3 }).setOrigin(0.5).setDepth(depth);
+    const key = `icon.lamp_${ch === 'demon' ? 'target' : ch}`;
+    if (scene.textures.exists(key)) t.setData('lamp', scene.add.image(0, 0, key).setDepth(depth).setVisible(false));
+    return t;
+  });
 }
 
 /** 5×7 pixel question mark. */

@@ -29,7 +29,11 @@ interface HeroComm {
   defeat: Line;
 }
 
-const HEROES = (commJson as unknown as { heroes: Record<string, HeroComm> }).heroes;
+/** Heroes cut from the game: the infected Standard was removed for good (Антон, 2026-10-10). */
+const RETIRED = new Set(['standard']);
+const HEROES = Object.fromEntries(
+  Object.entries((commJson as unknown as { heroes: Record<string, HeroComm> }).heroes).filter(([id]) => !RETIRED.has(id)),
+);
 const IDS = Object.keys(HEROES);
 const RESIST: Record<string, Record<string, number>> = Object.fromEntries(
   (heroesJson as unknown as { heroes: { id: string; enemy: { resist: Record<string, number> } }[] }).heroes.map((x) => [x.id, x.enemy.resist]),

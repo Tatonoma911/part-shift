@@ -32,6 +32,8 @@ function smallComic(): Plugin {
 
 export default defineConfig({
   base: './',
+  // Threads, not forks: the match server (tests/server.test.ts) talks to process.send when it exists.
+  test: { pool: 'threads' },
   // The universe site's files are not part of the game preview.
   publicDir: artifact ? false : 'public',
   plugins: artifact ? [smallComic()] : [],

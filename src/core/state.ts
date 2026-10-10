@@ -205,6 +205,17 @@ export interface AssistState {
 
 export type Outcome = 'playing' | 'victory' | 'defeat';
 
+/** Online match (design/MVP_RULES.md §14): coop "Вместе против Демона" or FFA "Последний центр". */
+export type MatchMode = 'coop' | 'ffa';
+
+export interface MatchInfo {
+  mode: MatchMode;
+  /** Display names by player id. */
+  names: string[];
+  /** FFA: the player whose center stood last (null: nobody). */
+  winner?: number | null;
+}
+
 /**
  * Per-match changes to the design tables (the tutorial uses them).
  * `config` keys are dotted paths into config.json, e.g. "dig.digSeconds".
@@ -251,4 +262,6 @@ export interface GameState {
   /** Game time of the next raid (MVP_RULES §9.7). */
   raidAt?: number;
   rules?: RuleOverrides;
+  /** Present only in online matches. */
+  match?: MatchInfo;
 }

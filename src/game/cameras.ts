@@ -75,6 +75,13 @@ export class Cameras {
     this.apply();
   }
 
+  /** Centers the view on a board-world point at a zoom (online: our own center on a big field). */
+  focus(x: number, y: number, zoom: number): void {
+    this.zoom = Phaser.Math.Clamp(zoom, this.fit, MAX_ZOOM);
+    this.center = { x, y };
+    this.apply();
+  }
+
   reset(): void {
     this.zoom = this.fit;
     this.center = { ...this.home };

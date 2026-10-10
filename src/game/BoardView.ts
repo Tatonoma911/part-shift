@@ -12,7 +12,6 @@ import { Bars, drawWeakOrbs, weaknessesOf, type Weakness } from './Vitals';
 import { glyph } from './ui';
 import { drawMark, drawSensor, sensorTexts, type MarkKind } from './Sensor';
 
-const ME = 0;
 const CHANNELS = ['finds', 'threat', 'demon'] as const;
 const GROUND = ['ground_0', 'ground_1', 'ground_0', 'ground_grass_0', 'ground_1', 'ground_grass_1', 'ground_0', 'ground_grass_2'];
 const FEET = 46;
@@ -59,6 +58,8 @@ function hash(x: number, y: number): number {
 
 /** Residents fight now; their swing, flinch and limb install come from the animator's fighter sheet. */
 const RESIDENT_COMBAT_SET = 'defender';
+/** Starter heroes (MVP_RULES §4) whose drawn sheets stand in for workers until v0.7 spawns real heroes. */
+const STARTER_LOOKS = ['standard', 'patch', 'canopy', 'current'];
 
 /**
  * Draws the board from the artist's tiles and the animator's sheets.
@@ -98,6 +99,8 @@ export class BoardView {
     private readonly world: World,
     bx: number,
     by: number,
+    /** The player this screen belongs to (online: the server's seat number). */
+    private readonly me = 0,
   ) {
     this.bx = bx;
     this.by = by;
@@ -350,7 +353,7 @@ export class BoardView {
       case 'hero_part_taken': {
         // Instant limb swap: a flash on the resident and the install animation.
         const v = e.unit !== undefined ? this.units.get(e.unit) : undefined;
-        if (v) this.oneShot(v, 'install_part', RESIDENT_COMBAT_SET);
+        if (v) this.oneShot(v, 'install_part', v.set === 'resident' ? RESIDENT_COMBAT_SET : v.set);
         const p = this.center(e.x, e.y);
         this.fx('energy_arrive', p.x, p.y - 26, 1.4);
         this.fx('hit_volt', p.x, p.y - 26, 0.9);
@@ -374,8 +377,8 @@ export class BoardView {
   update(now: number, view: ViewState): void {
     const w = this.world;
     const s = w.s;
-    const me = w.player(ME);
-    const known = w.started ? w.visibleKnowledge(ME) : new Map<string, string>();
+    const me = w.player(this.me);
+    const known = w.started ? w.visibleKnowledge(this.me) : new Map<string, string>();
     const risk = view.showRisk && w.started ? this.riskMap() : null;
     const og = this.overlay;
     const cg = this.clueG;
@@ -459,7 +462,7 @@ export class BoardView {
           this.drawClosed(og, x, y, px, py, known.get(cellKey(x, y)), risk?.get(i), me.queue.includes(cellKey(x, y)), me.autoQueue.includes(cellKey(x, y)), c.marked ? (c.markKind ?? 'danger') : null, now);
           continue;
         }
-        if (w.started && w.inTerritory(ME, x, y) && c.building === undefined) {
+        if (w.started && w.inTerritory(this.me, x, y) && c.building === undefined) {
           og.lineStyle(2, C.seam, 0.55);
           og.strokeRect(px + 2, py + 2, CELL - 4, CELL - 4);
           if (view.showTerritory) {
@@ -467,7 +470,7 @@ export class BoardView {
             og.fillRect(px, py, CELL, CELL);
           }
         }
-        if (view.buildType && w.canBuild(ME, view.buildType, x, y) === null) {
+        if (view.buildType && w.canBuild(this.me, view.buildType, x, y) === null) {
           const pulse = 0.35 + 0.25 * Math.sin(now / 200);
           og.fillStyle(C.seam, pulse * 0.6);
           og.fillRect(px, py, CELL, CELL);
@@ -759,7 +762,7 @@ export class BoardView {
     }
     if (state === 'construct' && hasSheet) spr.setFrame(Math.min(6, Math.floor((b.built / def.buildSeconds) * 6)));
     spr.setAlpha(b.complete ? 1 : 0.85);
-    if (b.owner !== ME) spr.setTint(0xffc2a8);
+    if (b.owner !== this.me) spr.setTint(0xffc2a8);
     const g = this.topG;
     const p = this.center(b.x, b.y);
     if (b.complete && b.hp < def.hp) this.vitals.draw(g, `b:${b.id}`, p.x - 28, p.y - 46, 56, b.hp / def.hp, 'building', this.scene.time.now);
@@ -830,15 +833,18 @@ export class BoardView {
 
   private setOf(u: Unit): string {
     switch (u.kind) {
-      case 'resident':
-        return 'resident';
+      case 'resident': {
+        // v0.7: no plain residents on screen, our workers are the starter heroes (Антон, 2026-10-10).
+        const set = `ally_${STARTER_LOOKS[u.id % STARTER_LOOKS.length]}`;
+        return animSets[set] ? set : 'resident';
+      }
       case 'hero':
-        return animSets[u.hero!] ? u.hero! : 'standard';
+        return animSets[u.hero!] ? u.hero! : 'patch';
       case 'heavy_adaptant':
         return 'heavy_adaptant';
       case 'ally':
         // The hero's own team look (animator's ally_<id> sheets), else the enemy sheet.
-        return animSets[`ally_${u.hero}`] ? `ally_${u.hero}` : animSets[u.hero!] ? u.hero! : 'standard';
+        return animSets[`ally_${u.hero}`] ? `ally_${u.hero}` : animSets[u.hero!] ? u.hero! : 'ally_patch';
       default: {
         // The animator's redrawn sheets, one per nest element, no shields (AR-18).
         const set = `adaptant_${u.tech ?? 'thermo'}`;
@@ -860,7 +866,7 @@ export class BoardView {
     const w = this.world;
     const g = this.topG;
     const alive = new Set<number>();
-    const order = w.player(ME).order;
+    const order = w.player(this.me).order;
     for (const u of w.s.units) {
       alive.add(u.id);
       let v = this.units.get(u.id);
@@ -885,7 +891,7 @@ export class BoardView {
           spr.setScale(1.3);
           v.ring = this.scene.add.image(fx, fy, 'tile.defender_ring').setOrigin(0.5, 0.75).setScale(1.6).setTint(C.violet);
         }
-        if (u.owner >= 0 && u.owner !== ME) spr.setTint(0xffb080);
+        if (u.owner >= 0 && u.owner !== this.me) spr.setTint(0xffb080);
         this.units.set(u.id, v);
         this.oneShot(v, 'emerge');
       }
@@ -898,7 +904,7 @@ export class BoardView {
       if (Math.abs(dx) > 0.0005) v.spr.setFlipX(set.faces === 'left' ? dx > 0 : dx < 0);
       // A fresh cooldown means the unit just struck.
       if (u.attackCooldown > v.lastCd + 0.05) {
-        if (!v.oneShot) this.oneShot(v, 'attack', u.kind === 'resident' ? RESIDENT_COMBAT_SET : v.set);
+        if (!v.oneShot) this.oneShot(v, 'attack', u.kind === 'resident' && v.set === 'resident' ? RESIDENT_COMBAT_SET : v.set);
         const tp = this.targetPos(u.target ?? (u.owner >= 0 ? w.player(u.owner).order ?? undefined : undefined));
         if (tp) {
           const big = u.kind === 'hero' || u.kind === 'heavy_adaptant';
@@ -917,7 +923,7 @@ export class BoardView {
       else if (u.slow) v.spr.setTint(0x9fdcff);
       else if (u.poison) v.spr.setTint(0xb8f08a);
       else if (v.tint !== undefined) v.spr.setTint(v.tint);
-      else if (!(u.owner >= 0 && u.owner !== ME)) v.spr.clearTint();
+      else if (!(u.owner >= 0 && u.owner !== this.me)) v.spr.clearTint();
       const windup = u.blast?.phase === 'windup';
       if (windup && !v.windup) this.oneShot(v, 'tail_swing');
       v.windup = windup;
@@ -930,12 +936,14 @@ export class BoardView {
         } else if (moved) anim = 'walk';
         // A maddened hero with nobody to chase keeps its nervous tic.
         else if (u.kind === 'hero' && !u.target && set.anims.tic) anim = 'tic';
-        if (anim === 'dig' && v.anim !== 'dig' && u.owner === ME) sound.play('dig_start');
+        if (anim === 'dig' && v.anim !== 'dig' && u.owner === this.me) sound.play('dig_start');
         v.anim = anim;
-        v.spr.play(`${v.set}.${anim}`, true);
+        // Ally sheets may not have every resident action yet; fall back gracefully.
+        const playAnim = set.anims[anim] ? anim : ({ walk_back: 'walk', dig: 'walk', build: 'idle', flee: 'walk' }[anim] ?? 'idle');
+        v.spr.play(`${v.set}.${playAnim}`, true);
         // Runs carry the distance one cycle covers; match it to the unit's real speed so feet don't slide.
-        const stride = set.anims[anim]?.pxPerCycle;
-        const def = set.anims[anim];
+        const stride = set.anims[playAnim]?.pxPerCycle;
+        const def = set.anims[playAnim];
         v.spr.anims.timeScale = stride && def ? Phaser.Math.Clamp((w.stats(u).speed * CELL) / ((stride * def.fps) / def.frames.length), 0.5, 2) : 1;
       }
       v.spr.setPosition(fx, fy).setDepth(D.unit + fy / 4000);
