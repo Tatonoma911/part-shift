@@ -17,6 +17,9 @@ const PAD = 24;
 const BEACON_SPIN = 1200;
 const BEACON_ALARM = 450;
 const MAX_BEACONS = 8;
+/** Burning and smoking roofs per field (FEEL_AUDIT F-07: 6–8 hazards in all). */
+const MAX_FIRES = 6;
+const MAX_SMOKE = 4;
 
 function hash(x: number, y: number): number {
   return (Math.imul(x + 17, 73856093) ^ Math.imul(y + 31, 19349663)) >>> 0;
@@ -212,6 +215,8 @@ export class Quarantine {
     const dmg = this.dmgTex.getContext();
     dmg.clearRect(0, 0, this.bw, this.bh);
     const fires = Math.min(15, 3 + 2 * w.threatLevel);
+    const fireAt: Deco[] = [];
+    const smokeAt: Deco[] = [];
 
     for (let y = 0; y < s.height; y++) {
       for (let x = 0; x < s.width; x++) {
@@ -231,18 +236,22 @@ export class Quarantine {
         if (this.isOpen(x + 1, y)) segs.push({ x: x + 1, y, len: 1, vertical: true, red: false, seed: seed >> 7 });
 
         // Damage only deep inside the zone.
+        // F-07: two blocks clear of the frontier, and only a handful per field, so the closed field stays calm.
         let near = false;
-        for (let dy = -1; dy <= 1 && !near; dy++) for (let dx = -1; dx <= 1; dx++) if (this.isOpen(x + dx, y + dy)) near = true;
+        for (let dy = -2; dy <= 2 && !near; dy++) for (let dx = -2; dx <= 2; dx++) if (this.isOpen(x + dx, y + dy)) near = true;
         if (near) continue;
         const v = seed % 100;
         const px = x * STEP;
         const py = y * STEP;
         if (v < fires + 7) this.scorch(dmg, px + CELL / 2, py + CELL / 2);
-        if (v < fires) this.decos.push({ cx: this.bx + px + CELL / 2, cy: this.by + py + CELL / 2, seed, kind: 'fire' });
-        else if (v < fires + 7) this.decos.push({ cx: this.bx + px + CELL / 2, cy: this.by + py + CELL / 2, seed, kind: 'smoke' });
+        if (v < fires) fireAt.push({ cx: this.bx + px + CELL / 2, cy: this.by + py + CELL / 2, seed, kind: 'fire' });
+        else if (v < fires + 7) smokeAt.push({ cx: this.bx + px + CELL / 2, cy: this.by + py + CELL / 2, seed, kind: 'smoke' });
         else if (v < fires + 20) this.crack(dmg, px, py, seed);
       }
     }
+    // Scattered over the whole zone (by seed), not the first rows.
+    const pick = (list: Deco[], n: number) => list.sort((a, b) => (a.seed % 9973) - (b.seed % 9973)).slice(0, n);
+    this.decos.push(...pick(fireAt, MAX_FIRES), ...pick(smokeAt, MAX_SMOKE));
     this.dmgTex.refresh();
 
     const tape = this.tapeTex.getContext();

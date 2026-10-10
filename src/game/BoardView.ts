@@ -78,6 +78,8 @@ const STARTER_LOOKS = ['standard', 'patch', 'canopy', 'current'];
 const FX2 = 0.5;
 const BLOCK_EL = ['thermo', 'cryo', 'volt', 'impact', 'toxin'];
 const DECOR_EL = ['cryo', 'volt', 'impact'];
+/** Live hazards over closed blocks per field (FEEL_AUDIT F-07). */
+const DECOR_MAX = 8;
 /** What a zone looks like on its closed blocks: ice, sparks, dust; fire and toxin borrow the heat shimmer, tinted. */
 const ZONE_DECOR: Record<string, { anim: string; tint?: number; alpha?: number }> = {
   cryo: { anim: 'block_fx.loop_cryo' },
@@ -644,7 +646,7 @@ export class BoardView {
         glow?.setVisible(living);
         this.updateHot(i, c.hot ?? 0, px, py, now);
         this.updateSite(x, y);
-        this.updateDecor(i, c, zoned, px, py, h);
+        this.updateDecor(i, x, y, c, zoned, px, py, h);
         this.updateNestArt(i, x, y);
         this.updateLair(x, y);
         this.updateObject(i, c, px, py, now);
@@ -661,8 +663,9 @@ export class BoardView {
               og.fillStyle(TECH_HEX[el] ?? 0xffffff, ZONE_WASH[el] ?? 0.14);
               og.fillRect(px, py, CELL, CELL);
             }
+            // F-07: the orb only on the frontier, where the next dig is chosen; the rest of the field stays calm.
             const fast = cellFastTech(c);
-            if (fast) drawCellOrb(cg, px + CELL - 9, py + 9, fast, this.squadTechs.has(fast), now);
+            if (fast && this.nearOpen(x, y, 1)) drawCellOrb(cg, px + CELL - 9, py + 9, fast, this.squadTechs.has(fast), now);
           }
           continue;
         }
@@ -994,13 +997,27 @@ export class BoardView {
   }
 
   /**
-   * Live hazards over closed blocks (block_fx loop_*, fx.heat_haze). On a zoned map they follow the zone, so a zone
-   * reads at a glance: ice, sparks, rubble dust, heat shimmer or toxic fog on about every third block. Without zones,
-   * every seventh-ish block gets a random one.
+   * Live hazards over closed blocks (block_fx loop_*, fx.heat_haze): at most DECOR_MAX per field, away from the
+   * frontier. On a zoned map they follow the zone (ice, sparks, rubble dust, heat shimmer, toxic fog); the zone itself
+   * reads from afar by its colour wash.
    */
-  private updateDecor(i: number, c: Cell, zoned: boolean, px: number, py: number, h: number): void {
+  /** Whether an open cell lies within `r` cells (Chebyshev) of (x, y). */
+  private nearOpen(x: number, y: number, r: number): boolean {
+    const w = this.world;
+    for (let dy = -r; dy <= r; dy++)
+      for (let dx = -r; dx <= r; dx++) {
+        if (!dx && !dy) continue;
+        const nx = x + dx;
+        const ny = y + dy;
+        if (nx >= 0 && ny >= 0 && nx < w.s.width && ny < w.s.height && w.cell(nx, ny).revealed) return true;
+      }
+    return false;
+  }
+
+  private updateDecor(i: number, x: number, y: number, c: Cell, zoned: boolean, px: number, py: number, h: number): void {
     const spr = this.decor.get(i);
-    if (c.revealed) {
+    // F-07: fire, snow and smoke never sit next to the frontier, where they would read as danger.
+    if (c.revealed || this.nearOpen(x, y, 2)) {
       if (spr) {
         spr.destroy();
         this.decor.delete(i);
@@ -1008,8 +1025,10 @@ export class BoardView {
       return;
     }
     if (spr) return;
+    // F-07: a handful of live hazards per field (6–8), scattered by the cell hash.
+    if (this.decor.size >= DECOR_MAX) return;
     const el = zoned ? cellElement(c) : undefined;
-    if (zoned ? !el || (h >>> 4) % 3 !== 1 : (h >>> 4) % 7 !== 3) return;
+    if (zoned ? !el || (h >>> 4) % 11 !== 5 : (h >>> 4) % 11 !== 3) return;
     const look = el ? ZONE_DECOR[el] : { anim: `block_fx.loop_${DECOR_EL[(h >>> 8) % DECOR_EL.length]}` };
     if (!look || !this.scene.anims.exists(look.anim)) return;
     const s = look.anim.startsWith('fx.')
