@@ -58,6 +58,18 @@ describe('hazards (hazards.json)', () => {
     expect(w.cell(2, 1).bonus).toBe(opened[0]);
   });
 
+  it('a medkit has two charges, one per tap, and a tap during a heal is refused', () => {
+    const w = siteWorld('medkit');
+    run(w, 20);
+    expect(w.apply({ type: 'useMedkit', x: 2, y: 1 }).ok).toBe(true);
+    expect(w.apply({ type: 'useMedkit', x: 2, y: 1 }).ok).toBe(false);
+    run(w, hazards.medkit.seconds + 1);
+    expect(w.apply({ type: 'useMedkit', x: 2, y: 1 }).ok).toBe(true);
+    run(w, hazards.medkit.seconds + 1);
+    expect(w.apply({ type: 'useMedkit', x: 2, y: 1 }).ok).toBe(false);
+    expect(w.cell(2, 1).resolved).toBe(true);
+  });
+
   it('an opened medkit heals wounded heroes next to it and then runs dry', () => {
     const w = siteWorld('medkit');
     const log = run(w, 20);
@@ -69,6 +81,7 @@ describe('hazards (hazards.json)', () => {
     u.path = [];
     u.task = { type: 'idle' };
     u.hp = 1;
+    expect(w.apply({ type: 'useMedkit', x: 2, y: 1 }).ok).toBe(true);
     run(w, 1, log);
     expect(u.hp).toBeGreaterThan(1);
     run(w, hazards.medkit.seconds + 1, log);
