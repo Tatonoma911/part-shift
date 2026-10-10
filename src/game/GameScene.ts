@@ -1273,6 +1273,19 @@ export class GameScene extends Phaser.Scene {
         return;
       }
     }
+    // Long press on an existing building: show name + desc (QA-009, UI_SPEC §4.4).
+    if (c.revealed && c.building !== undefined) {
+      const bid = c.building;
+      this.pressTimer = this.time.delayedCall(LONG_PRESS_MS, () => {
+        const b = this.world.s.buildings.find((bld) => bld.id === bid);
+        if (!b) return;
+        const nameKey = `building.${b.type}.name`;
+        const descKey = b.complete ? `building.${b.type}.desc` : 'building.under_construction';
+        this.say(`${t(nameKey)}\n${t(descKey)}`, 3500);
+        this.pressTimer = null;
+      });
+      return;
+    }
     // Open land: liberated → build here; not liberated → say why and light the land that is.
     if (c.revealed && c.content === 'ground' && c.building === undefined && w.inTerritory(ME, x, y) && !(this.guide && !this.tutorialWantsBuild())) {
       // A number first shows the eight cells it counts; the second tap on it builds (config.input.tapNumberCell).
