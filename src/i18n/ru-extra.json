@@ -361,5 +361,20 @@
   "campaign.next_shift": "Следующая смена",
   "campaign.closed": "СМЕНА ЗАКРЫТА",
   "hud.nests_left": "Гнёзд: {n}",
-  "end.last_chance": "Два провала подряд. Попробуйте начать с Командного центра и не спешить с раздачей героев."
+  "end.last_chance": "Два провала подряд. Попробуйте начать с Командного центра и не спешить с раздачей героев.",
+  "building.card.trophy": "Трофеи",
+  "building.card.disabled.no_trophy_near": "Рядом нет героя с трофеем",
+  "building.card.disabled.no_trophy_pair": "Нет пары: нужен трофей и свободное место того же типа рядом",
+  "building.trophy.recolor.name": "Перекраска трофея",
+  "building.trophy.recolor.desc": "Сменить стихию одного трофея; сила и место остаются.",
+  "building.trophy.recolor.pick": "Какую стихию дать трофею?",
+  "building.trophy.swap.name": "Ротация трофеев",
+  "building.trophy.swap.desc": "Перенести трофей к герою рядом с вами, на такое же свободное место.",
+  "trophy.invalid": "С этим трофеем сейчас ничего не сделать.",
+  "trophy.out_of_range": "Герой должен стоять рядом с этим зданием.",
+  "trophy.on_cooldown": "Ещё перезаряжается.",
+  "trophy.not_enough_energy": "Не хватает энергии.",
+  "trophy.same_element": "У трофея уже эта стихия.",
+  "trophy.slot_mismatch": "Трофеи меняются только на такое же место того же типа.",
+  "trophy.max_reached": "У героя уже максимум трофеев."
 }

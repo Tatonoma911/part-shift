@@ -30,6 +30,7 @@ import { buzz } from './comfort';
 import { drawLamp, drawMark, type Channel } from './Sensor';
 import { controlCall, RaidTimer, TempoMeter, type CallCard } from './Pulse';
 import { buildingCard, buildingInfo, DEMOLISH_CONFIRM_MS, type CardActionId } from './BuildingCard';
+import { recolorCommand, swapCommand } from './trophyActions';
 import { techOf } from './Vitals';
 import { armTechs } from './BoardView';
 import eventsJson from '../data/design/events.json';
@@ -1119,14 +1120,22 @@ export class GameScene extends Phaser.Scene {
         return;
       }
     }
+    // The forge picks an element first (the card's orbs); the rotation centre swaps at once.
+    if (a === 'recolor') return this.openBuildingCard(id, 'recolor');
+    const bld = this.world.s.buildings.find((x) => x.id === id);
     const cmd =
       a === 'upgrade' ? { type: 'upgradeBuilding', building: id }
       : a === 'demolish' ? { type: 'demolish', building: id }
       : a === 'rebuild' ? { type: 'rebuild', building: id }
       : a === 'cancel' ? { type: 'cancelBuild', building: id }
       : a.startsWith('boost:') ? { type: 'heroBoost', building: id }
+      : a.startsWith('recolor:') && bld ? recolorCommand(this.world, bld, this.me, a.slice('recolor:'.length))
+      : a === 'swap' && bld ? swapCommand(this.world, bld, this.me)
       : null;
-    if (!cmd) return;
+    if (!cmd) {
+      this.say(t('trophy.invalid'), 2800, true);
+      return this.openBuildingCard(id);
+    }
     const r = this.world.apply(cmd as never, this.me);
     if (!r.ok) {
       this.say(t(r.reason), 2800, true);
