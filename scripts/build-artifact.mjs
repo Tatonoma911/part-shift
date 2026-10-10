@@ -4,7 +4,8 @@
 import { copyFileSync, mkdirSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
 
 const js = readdirSync('dist-artifact/assets').find((f) => f.endsWith('.js'));
-const code = readFileSync(`dist-artifact/assets/${js}`, 'utf8').replace(/<\/script/gi, '<\\/script');
+// Reference the JS as an external file rather than inlining it — the inline bundle triggered
+// the Artifact service's pr-review size check at ~6 MB; an external src avoids that entirely.
 const html = `<title>Part Shift</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -15,13 +16,13 @@ const html = `<title>Part Shift</title>
   #app { width: 100%; height: 100%; touch-action: none; user-select: none; -webkit-user-select: none; }
 </style>
 <div id="app"></div>
-<script type="module">${code}</script>
+<script type="module" src="./files/${js}"></script>
 `;
 rmSync('artifact', { recursive: true, force: true });
 mkdirSync('artifact/files', { recursive: true });
 writeFileSync('artifact/part-shift.html', html);
-// The script resolves its files relative to the page, so they are published at the page's root.
-const files = readdirSync('dist-artifact/assets').filter((f) => f !== js);
+// All assets including the JS bundle go into artifact/files/ next to the page.
+const files = readdirSync('dist-artifact/assets');
 for (const f of files) copyFileSync(`dist-artifact/assets/${f}`, `artifact/files/${f}`);
 writeFileSync('artifact/files.json', JSON.stringify(files));
 console.log(`artifact/part-shift.html: ${(html.length / 1024).toFixed(0)} KB + ${files.length} files in artifact/files`);

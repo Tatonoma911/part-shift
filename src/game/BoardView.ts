@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { buildings as buildingDefs, config, mapgen, parts as partDefs } from '../core/data';
+import { buildings as buildingDefs, config, heroes as heroDefs, mapgen, parts as partDefs } from '../core/data';
 import { cellKey } from '../core/grid';
 import type { Building, Unit } from '../core/state';
 import type { GameEvent, World } from '../core/world';
@@ -60,6 +60,22 @@ function hash(x: number, y: number): number {
 const RESIDENT_COMBAT_SET = 'defender';
 /** Starter heroes (MVP_RULES §4) whose drawn sheets stand in for workers until v0.7 spawns real heroes. */
 const STARTER_LOOKS = ['standard', 'patch', 'canopy', 'current'];
+/** block_fx / lair_fx are drawn at 2× (a block is ~104 px wide in the frame). */
+const FX2 = 0.5;
+const BLOCK_EL = ['thermo', 'cryo', 'volt', 'impact', 'toxin'];
+const DECOR_EL = ['cryo', 'volt', 'impact'];
+const CIVILIANS = ['civilian_office', 'civilian_courier', 'civilian_granny'];
+/** Game slot ids → the short names the limb-mask sets use in `slots`. */
+const SLOT_SHORT: Record<string, string> = { arm_left: 'arm_l', arm_right: 'arm_r', leg_left: 'leg_l', leg_right: 'leg_r', tail: 'tail', wings: 'wings' };
+
+function elementOf(tech: string | undefined, pool = BLOCK_EL): string {
+  if (tech === 'demon') return tech;
+  return tech && pool.includes(tech) ? tech : 'impact';
+}
+
+function hitOf(tech: string | undefined): string {
+  return tech === 'thermo' ? 'hit_thermo' : tech === 'cryo' ? 'hit_cryo' : tech === 'volt' || tech === 'toxin' ? 'hit_volt' : 'hit_impact';
+}
 
 /**
  * Draws the board from the artist's tiles and the animator's sheets.
@@ -79,6 +95,12 @@ export class BoardView {
   /** Pulsing glow over nests that are still alive (nest_live, AR-05). */
   private readonly nestGlow = new Map<number, Phaser.GameObjects.Sprite>();
   private readonly sites = new Map<string, Phaser.GameObjects.Sprite>();
+  /** Animated decor over some closed blocks (block_fx loop_*). */
+  private readonly decor = new Map<number, Phaser.GameObjects.Sprite>();
+  /** Live portal over each open nest / hero lair (lair_fx), keyed by site key. */
+  private readonly lairs = new Map<string, { spr: Phaser.GameObjects.Sprite; el: string; busy: boolean; dead: boolean }>();
+  /** Trophy limbs drawn over our heroes (ally_*_limbs masks), per unit then per slot. */
+  private readonly trophies = new Map<number, Map<string, Phaser.GameObjects.Sprite>>();
   private readonly clueTexts = new Map<number, Phaser.GameObjects.Text[]>();
   private readonly buildingViews = new Map<number, { spr: Phaser.GameObjects.Sprite; state: string; type: string; x: number; y: number }>();
   private readonly units = new Map<number, UnitView>();
@@ -276,6 +298,7 @@ export class BoardView {
         const kind: RevealKind =
           content === 'cache' ? 'cache' : content === 'survivor' ? 'survivor' : content === 'nest' || content === 'heavy_nest' ? 'nest' : content === 'boss_hatch' || content === 'hero_lair' ? 'hatch' : 'safe';
         this.quarantine.reveal(e.x, e.y, `closed_${hash(e.x, e.y) % 4}`, kind);
+        this.openBlock(e.x, e.y);
         const i = e.y * this.world.s.width + e.x;
         const t = this.tiles[i];
         t.setScale(0.55).setPosition(t.x + CELL * 0.225, t.y + CELL * 0.225);
@@ -362,7 +385,80 @@ export class BoardView {
       case 'part_recycled':
         this.fxAtCell('energy_arrive', e.x, e.y, 1.2);
         break;
+      case 'survivor_joined':
+        this.rescueRun(e.x, e.y, e.owner ?? this.me);
+        break;
+      case 'enemy_spawn': {
+        const from = e.unit !== undefined ? this.world.unit(e.unit)?.nest : undefined;
+        if (from) this.releaseFrom(from);
+        break;
+      }
     }
+    if (e.type === 'hero_spawn') this.releaseFrom(cellKey(Math.round(e.x), Math.round(e.y)));
+  }
+
+  /** The block caves in by its element (block_fx open_*), then fades off the freshly revealed tile. */
+  private openBlock(x: number, y: number): void {
+    const c = this.world.cell(x, y);
+    const el = c.tech ? elementOf(c.tech) : BLOCK_EL[hash(x, y) % BLOCK_EL.length];
+    const key = `block_fx.open_${el}`;
+    if (!this.scene.anims.exists(key)) return;
+    const p = this.center(x, y);
+    const s = this.scene.add.sprite(p.x, p.y + CELL / 2, 'block_fx').setOrigin(...originOf('block_fx')).setScale(FX2).setDepth(D.site + 0.7);
+    s.play(key).once('animationcomplete', () => this.scene.tweens.add({ targets: s, alpha: 0, duration: 220, onComplete: () => s.destroy() }));
+  }
+
+  /** A rescued townsperson waves for help, runs to our command centre and cheers there (civilian_* sheets). */
+  private rescueRun(x: number, y: number, owner: number): void {
+    const kinds = CIVILIANS.filter((k) => animSets[k]);
+    if (!kinds.length) return;
+    const set = kinds[hash(x, y) % kinds.length];
+    const p = this.center(x, y);
+    const fy = p.y - CELL / 2 + FEET;
+    const spr = this.scene.add.sprite(p.x, fy, set).setOrigin(...originOf(set)).setDepth(D.unit + fy / 4000).play(`${set}.help`);
+    const fade = (delay: number) => this.scene.tweens.add({ targets: spr, alpha: 0, delay, duration: 300, onComplete: () => spr.destroy() });
+    const cmd = this.world.s.buildings.find((b) => b.owner === owner && b.type === 'command');
+    if (!cmd) return void fade(1500);
+    const c = this.center(cmd.x, cmd.y);
+    const dx = c.x - p.x;
+    const dy = c.y - CELL / 2 + FEET - fy;
+    const dist = Math.hypot(dx, dy);
+    // Stop just short of the building, on the side the runner comes from.
+    const stop = dist > 1 ? Math.min(1, (CELL * 0.6) / dist) : 0;
+    const tx = c.x - dx * stop;
+    const ty = fy + dy * (1 - stop);
+    this.scene.time.delayedCall(1100, () => {
+      if (!spr.active) return;
+      const up = dy < -Math.abs(dx) * 0.6 && animSets[set].anims.run_up;
+      spr.play(`${set}.${up ? 'run_up' : 'run'}`).setFlipX(!up && dx < 0);
+      this.scene.tweens.add({
+        targets: spr,
+        x: tx,
+        y: ty,
+        duration: Math.max(400, (dist / 120) * 1000),
+        onUpdate: () => spr.setDepth(D.unit + spr.y / 4000),
+        onComplete: () => {
+          spr.play(`${set}.cheer`).setFlipX(false);
+          if (this.scene.anims.exists('block_fx.rescued')) {
+            const f = this.scene.add.sprite(c.x, c.y + CELL / 2, 'block_fx').setOrigin(...originOf('block_fx')).setScale(FX2).setDepth(D.top - 0.4);
+            f.play('block_fx.rescued').once('animationcomplete', () => f.destroy());
+          }
+          fade(1200);
+        },
+      });
+    });
+  }
+
+  /** The lair's portal flares as it lets an enemy out, then goes back to idling. */
+  private releaseFrom(siteKey: string): void {
+    const l = this.lairs.get(siteKey);
+    const key = l && `lair_fx.release_${l.el}`;
+    if (!l || l.busy || !key || !this.scene.anims.exists(key)) return;
+    l.busy = true;
+    l.spr.play(key).once('animationcomplete', () => {
+      l.busy = false;
+      if (l.spr.active) l.spr.play(`lair_fx.idle_${l.el}`);
+    });
   }
 
   /** Shake only the board camera; HUD and dock stay still. */
@@ -456,6 +552,8 @@ export class BoardView {
         glow?.setVisible(living);
         this.updateHot(i, c.hot ?? 0, px, py, now);
         this.updateSite(x, y);
+        this.updateDecor(i, c.revealed, px, py, h);
+        this.updateLair(x, y);
 
         if (!c.revealed) {
           this.setClues(i, x, y, null);
@@ -688,6 +786,55 @@ export class BoardView {
     if (dead && spr.getData('dead') !== true) {
       spr.setData('dead', true);
       spr.play(`${set}.destroy`).once('animationcomplete', () => spr!.setVisible(false));
+    }
+  }
+
+  /** Every seventh-ish closed block carries a live hazard: ice, arcing wires or smoke (block_fx loop_*). */
+  private updateDecor(i: number, revealed: boolean, px: number, py: number, h: number): void {
+    const spr = this.decor.get(i);
+    if (revealed) {
+      if (spr) {
+        spr.destroy();
+        this.decor.delete(i);
+      }
+      return;
+    }
+    if (spr || (h >>> 4) % 7 !== 3) return;
+    const key = `block_fx.loop_${DECOR_EL[(h >>> 8) % DECOR_EL.length]}`;
+    if (!this.scene.anims.exists(key)) return;
+    const s = this.scene.add.sprite(px + CELL / 2, py + CELL, 'block_fx').setOrigin(...originOf('block_fx')).setScale(FX2).setDepth(D.film + 0.5).setAlpha(0.9);
+    s.play({ key, startFrame: h % 6 });
+    this.decor.set(i, s);
+  }
+
+  /** Live portal over an open nest or hero lair: idles, flares on release (releaseFrom), collapses when destroyed. */
+  private updateLair(x: number, y: number): void {
+    const w = this.world;
+    const c = w.cell(x, y);
+    if (!c.revealed || (c.content !== 'nest' && c.content !== 'heavy_nest' && c.content !== 'hero_lair')) return;
+    const k = cellKey(x, y);
+    const dead = c.resolved || w.site(x, y)?.destroyed;
+    let l = this.lairs.get(k);
+    if (!l) {
+      if (dead || !w.site(x, y)) return;
+      const el = elementOf(c.content === 'hero_lair' ? heroDefs[c.hero!]?.tech : c.tech, [...BLOCK_EL]);
+      if (!this.scene.anims.exists(`lair_fx.idle_${el}`)) return;
+      const p = this.center(x, y);
+      const spr = this.scene.add
+        .sprite(p.x, p.y + CELL * 0.4, 'lair_fx')
+        .setOrigin(...originOf('lair_fx'))
+        .setScale(c.content === 'heavy_nest' ? FX2 * 1.25 : FX2)
+        .setDepth(D.site + 0.35);
+      spr.play({ key: `lair_fx.idle_${el}`, startFrame: hash(x, y) % 5 });
+      l = { spr, el, busy: false, dead: false };
+      this.lairs.set(k, l);
+      return;
+    }
+    if (dead && !l.dead) {
+      const spr = l.spr;
+      l.dead = true;
+      l.busy = true;
+      spr.play(`lair_fx.destroy_${l.el}`).once('animationcomplete', () => this.scene.tweens.add({ targets: spr, alpha: 0, delay: 400, duration: 500, onComplete: () => spr.destroy() }));
     }
   }
 
@@ -952,9 +1099,10 @@ export class BoardView {
 
       const st = w.stats(u);
       const top = fy - (u.kind === 'hero' ? (v.spr.scaleX > 1 ? 104 : 74) : u.kind === 'heavy_adaptant' ? 70 : 54);
-      // Trophy parts: a colored pip per slot until the artist's overlays exist.
-      Object.values(u.parts).forEach((part, k) => {
-        if (!part) return;
+      // Trophy parts: drawn limbs tinted by element where the animator made masks, else a coloured pip per slot.
+      const masked = this.updateTrophies(u, v);
+      Object.entries(u.parts).forEach(([slot, part], k) => {
+        if (!part || masked.has(slot)) return;
         g.fillStyle(0x0b1117, 1);
         g.fillCircle(fx - 14 + k * 9, top + 2, 5);
         g.fillStyle(TECH_COLOR[partDefs[part.id]?.tech] ?? 0xffffff, 1);
@@ -974,6 +1122,8 @@ export class BoardView {
       if (alive.has(id)) continue;
       this.units.delete(id);
       v.ring?.destroy();
+      this.trophies.get(id)?.forEach((s) => s.destroy());
+      this.trophies.delete(id);
       if (animSets[v.set].anims.death) {
         v.spr.anims.timeScale = 1;
         v.spr.play(`${v.set}.death`).once('animationcomplete', () => v.spr.destroy());
@@ -991,6 +1141,58 @@ export class BoardView {
       const p = this.center(site.x, site.y);
       this.vitals.draw(g, `s:${site.x},${site.y}`, p.x - 26, p.y - 34, 52, site.hp / site.maxHp, 'enemy', this.scene.time.now);
     }
+  }
+
+  /**
+   * A second sprite per trophy slot plays the same frame from the hero's limb-mask set (`<set>_limbs`,
+   * anims `<anim>@<mask slot>`), tinted with the trophy's element; hit/death/knockout have no masks, so it hides.
+   * Returns the slots drawn this way.
+   */
+  private updateTrophies(u: Unit, v: UnitView): Set<string> {
+    const done = new Set<string>();
+    const limbsKey = `${v.set}_limbs`;
+    const ls = animSets[limbsKey] as (typeof animSets)[string] & { slots?: Record<string, string> };
+    let mine = this.trophies.get(u.id);
+    if (!ls?.slots) return done;
+    const cur = v.spr.anims.currentAnim;
+    const anim = cur ? cur.key.slice(v.set.length + 1) : 'idle';
+    const idx = (v.spr.anims.currentFrame?.index ?? 1) - 1;
+    for (const [slot, part] of Object.entries(u.parts)) {
+      const mask = part && ls.slots[SLOT_SHORT[slot]];
+      if (!mask) continue;
+      done.add(slot);
+      mine ??= new Map();
+      this.trophies.set(u.id, mine);
+      let s = mine.get(slot);
+      if (!s) {
+        s = this.scene.add.sprite(0, 0, limbsKey);
+        mine.set(slot, s);
+      }
+      const a = ls.anims[`${anim}@${mask}`];
+      if (!a || !v.spr.visible) {
+        s.setVisible(false);
+        continue;
+      }
+      const tech = partDefs[part!.id]?.tech;
+      s.setVisible(true)
+        .setFrame(a.frames[Math.min(idx, a.frames.length - 1)])
+        .setOrigin(v.spr.originX, v.spr.originY)
+        .setPosition(v.spr.x, v.spr.y)
+        .setScale(v.spr.scaleX, v.spr.scaleY)
+        .setFlipX(v.spr.flipX)
+        .setDepth(v.spr.depth + 0.00005)
+        .setTint(TECH_COLOR[tech] ?? 0xffffff)
+        .setAlpha(0.9);
+      if (Math.random() < 0.02) this.fx(hitOf(tech), v.spr.x + (Math.random() - 0.5) * 24, v.spr.y - v.spr.displayHeight * 0.45, 0.35);
+    }
+    if (mine) {
+      for (const [slot, s] of mine) {
+        if (done.has(slot)) continue;
+        s.destroy();
+        mine.delete(slot);
+      }
+    }
+    return done;
   }
 
   private drawWindup(g: Phaser.GameObjects.Graphics, u: Unit): void {
