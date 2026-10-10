@@ -780,7 +780,7 @@ export class World {
     if (!s.generated) {
       const nests = s.players.length > 1 ? 6 * s.players.length : this.rules.counts?.nests;
       const rc = this.rules.counts;
-      const gen = { commands: list, nests, mines: rc?.mine, survivors: rc?.survivor, bossHatch: rc?.bossHatch, lairTotal: rc?.lairTotal, bonusCapsule: rc?.bonusCapsule, medkit: rc?.medkit };
+      const gen = { commands: list, nests, mines: rc?.mine, survivors: rc?.survivor, bossHatch: rc?.bossHatch, lairTotal: rc?.lairTotal, bonusCapsule: rc?.bonusCapsule, medkit: rc?.medkit, cellElements: this.rules.cellElements };
       generateField(s, gen);
       this.genAttempts = 1;
       // Стажёр and Смена never leave the player a 50/50 (MVP_RULES §15.2); tutorial boards are hand-laid.

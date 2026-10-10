@@ -25,6 +25,8 @@ interface Options {
   bonusCapsule?: number;
   /** medkit count override; undefined = hazards.json default. */
   medkit?: number;
+  /** false: no elemental zones (campaign shifts without features.cellElements). */
+  cellElements?: boolean;
 }
 
 const SITE_KINDS: CellContent[] = ['nest', 'heavy_nest', 'hero_lair', 'boss_hatch', 'cache', 'survivor', 'blueprint', 'armor_crate', 'lore_record', 'mine', 'bonus_capsule', 'medkit'];
@@ -133,7 +135,7 @@ export function generateField(s: GameState, opts: Options): void {
   }
 
   // Elemental zones: Voronoi partition of non-water cells outside the safe radius (mapgen.cellElements).
-  assignCellZones(s, commands, minCmdDist);
+  if (opts.cellElements !== false) assignCellZones(s, commands, minCmdDist);
   // Nests and mines inside a zone inherit that zone's element.
   for (let y = 0; y < s.height; y++) {
     for (let x = 0; x < s.width; x++) {
