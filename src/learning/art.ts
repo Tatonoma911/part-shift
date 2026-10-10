@@ -21,12 +21,12 @@ export const animSets = (animJson as unknown as { sets: Record<string, AnimSet> 
 
 /** Anchor points of the static building sprites, as in game/assets.ts. */
 export const BUILDING_ANCHOR: Record<string, [number, number]> = {
-  command: [44, 90],
-  home: [36, 78],
-  reactor: [36, 78],
-  cooler: [36, 78],
-  school: [36, 78],
-  medcenter: [36, 78],
+  command: [52, 150],
+  home: [36, 94],
+  reactor: [36, 94],
+  cooler: [36, 94],
+  school: [36, 94],
+  medcenter: [36, 94],
 };
 
 function keyOf(path: string): string | null {
