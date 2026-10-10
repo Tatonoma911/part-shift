@@ -343,6 +343,7 @@ describe('save and determinism', () => {
     const b = new World({ state: JSON.parse(JSON.stringify(a.s)) });
     run(a, 60);
     run(b, 60);
-    expect(JSON.stringify(b.s)).toBe(JSON.stringify(a.s));
+    // Same values; key order may differ (a status cleared to `undefined` keeps its slot in `a`, the JSON copy re-adds it last).
+    expect(JSON.parse(JSON.stringify(b.s))).toEqual(JSON.parse(JSON.stringify(a.s)));
   });
 });
