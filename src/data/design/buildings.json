@@ -20,9 +20,9 @@
         "tech": "kinetic"
       },
       "healAura": {
-        "radius": 1,
-        "hpPerSecond": 5
-      },
+      "radius": 2,
+      "hpPerSecond": 3
+    },
       "_b2": "was 80 HP, no attack: one early nest ended the run",
       "births": {
         "lowestTierSquadHero": true
@@ -213,8 +213,8 @@
       "hp": 250,
       "defense": 0,
       "healAura": {
-      "radius": 1,
-      "hpPerSecond": 5
+      "radius": 2,
+      "hpPerSecond": 3
     },
       "territoryRadius": 2,
       "regrowLimbSeconds": 60,
