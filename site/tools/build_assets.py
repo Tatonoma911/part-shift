@@ -75,8 +75,6 @@ def main():
     webp(f'{MEDIA}/03_ДОКТОР_С_РУКОЙ.png', 'doctor-arm', 1600)
     for n, src in [('dossier-s01', '10_S01_ДОСЬЕ'), ('dossier-doctor', '11_ДОКТОР_ДОСЬЕ'), ('dossier-n73', '12_N73_ДОСЬЕ')]:
         webp(f'{MEDIA}/{src}.png', n, 1536)
-    for n, src in [('motion-s01', '13_S01_БЕГ'), ('motion-doctor', '15_ДОКТОР_БЕГ'), ('motion-n73', '17_N73_ДВИЖЕНИЕ')]:
-        copy(f'{MEDIA}/{src}.gif', n + '.gif')
     webp(f'{UP}/OWNER_HANDOFF_SOCIAL_2026-08-11/01_AVATAR_RECOMMENDED_03.png', 'emblem', 256)
     for n in ['smm_01_sunline_beach_4x5', 'smm_02_pressure_ice_4x5', 'smm_03_hive_terrace_4x5']:
         webp(f'{SMM}/{n}.png', n.replace('_4x5', '').replace('smm_0', 'scene-').replace('_', '-'), 1080)
@@ -115,9 +113,20 @@ def main():
     webp(f'{INC}/125_site_seraph_concept_sheet.png', 'card-seraph', 1400)
     webp(f'{INC}/126_site_adaptants_sheet.png', 'adaptants-sheet', 1600)
     webp(f'{INC}/127_site_control_billboard.png', 'control-billboard', 1600)
+    # gpt_batch_04 (site/gpt_batch_04_site.md). The comic and the jar label arrive already lettered (Pangolin, Unbounded).
+    webp(f'{INC}/site_floor42_boardroom.png', 'floor42', 1600)
+    webp(f'{INC}/site_splice_heart.png', 'splice-heart', 1600)
+    webp(f'{INC}/site_all_on_shift_banner.png', 'all-on-shift', 1900)
+    webp(f'{INC}/site_archive_desk.png', 'archive-desk', 1600)
+    webp(f'{INC}/site_world_dome.png', 'world-dome', 1900)
+    webp(f'{INC}/site_support_jar.png', 'support-jar', 900)
+    B04 = f'{PF}/art/batch04_final/generated'
+    webp(f'{B04}/202_comic_11_control_warehouse.png', 'control-warehouse', 1600)
+    for lang in ('ru', 'en'):
+        webp(f'{INC}/site_comic_cat_record-{lang}.png', f'comics/cat-record-{lang}', 1054)
     os.makedirs(os.path.join(OUT, 'portraits'), exist_ok=True)
     for f in os.listdir(f'{PF}/art/comm/gpt'):
-        if f.endswith('.png'):
+        if f.endswith('.png') and not f.startswith('radio_'):
             webp(f'{PF}/art/comm/gpt/{f}', 'portraits/' + f[:-4], 256)
 
     # Pixel sprites from the artist's cut-outs, in-game animation previews.

@@ -1,0 +1,427 @@
+{
+ "scale": 2,
+ "cell": 52,
+ "note": "Мины, капсула бонуса, аптечка (slice_gpt_b4b.py) под квадратную клетку: каменный ромб снят, общий масштаб на стихию/лист, ≤ 80 % клетки, anchor — центр клетки.",
+ "objects": {
+  "mine_toxin_hidden": {
+   "id": "mine_toxin_hidden",
+   "file": "objects_gpt_b4sq/mine_toxin_hidden.png",
+   "size": [
+    52,
+    52
+   ],
+   "anchor": [
+    26,
+    26
+   ],
+   "fill": 0.8,
+   "source": "source/incoming/gpt_extra/x01_mines_five_elements_four_states.png",
+   "note": "без ромба-плиты, под квадратную клетку"
+  },
+  "mine_toxin_armed": {
+   "id": "mine_toxin_armed",
+   "file": "objects_gpt_b4sq/mine_toxin_armed.png",
+   "size": [
+    52,
+    52
+   ],
+   "anchor": [
+    26,
+    26
+   ],
+   "fill": 0.8,
+   "source": "source/incoming/gpt_extra/x01_mines_five_elements_four_states.png",
+   "note": "без ромба-плиты, под квадратную клетку"
+  },
+  "mine_toxin_triggered": {
+   "id": "mine_toxin_triggered",
+   "file": "objects_gpt_b4sq/mine_toxin_triggered.png",
+   "size": [
+    52,
+    52
+   ],
+   "anchor": [
+    26,
+    26
+   ],
+   "fill": 0.8,
+   "source": "source/incoming/gpt_extra/x01_mines_five_elements_four_states.png",
+   "note": "без ромба-плиты, под квадратную клетку"
+  },
+  "mine_toxin_spent": {
+   "id": "mine_toxin_spent",
+   "file": "objects_gpt_b4sq/mine_toxin_spent.png",
+   "size": [
+    52,
+    52
+   ],
+   "anchor": [
+    26,
+    26
+   ],
+   "fill": 0.8,
+   "source": "source/incoming/gpt_extra/x01_mines_five_elements_four_states.png",
+   "note": "без ромба-плиты, под квадратную клетку"
+  },
+  "mine_volt_hidden": {
+   "id": "mine_volt_hidden",
+   "file": "objects_gpt_b4sq/mine_volt_hidden.png",
+   "size": [
+    52,
+    52
+   ],
+   "anchor": [
+    26,
+    26
+   ],
+   "fill": 0.8,
+   "source": "source/incoming/gpt_extra/x01_mines_five_elements_four_states.png",
+   "note": "без ромба-плиты, под квадратную клетку"
+  },
+  "mine_volt_armed": {
+   "id": "mine_volt_armed",
+   "file": "objects_gpt_b4sq/mine_volt_armed.png",
+   "size": [
+    52,
+    52
+   ],
+   "anchor": [
+    26,
+    26
+   ],
+   "fill": 0.8,
+   "source": "source/incoming/gpt_extra/x01_mines_five_elements_four_states.png",
+   "note": "без ромба-плиты, под квадратную клетку"
+  },
+  "mine_volt_triggered": {
+   "id": "mine_volt_triggered",
+   "file": "objects_gpt_b4sq/mine_volt_triggered.png",
+   "size": [
+    52,
+    52
+   ],
+   "anchor": [
+    26,
+    26
+   ],
+   "fill": 0.8,
+   "source": "source/incoming/gpt_extra/x01_mines_five_elements_four_states.png",
+   "note": "без ромба-плиты, под квадратную клетку"
+  },
+  "mine_volt_spent": {
+   "id": "mine_volt_spent",
+   "file": "objects_gpt_b4sq/mine_volt_spent.png",
+   "size": [
+    52,
+    52
+   ],
+   "anchor": [
+    26,
+    26
+   ],
+   "fill": 0.8,
+   "source": "source/incoming/gpt_extra/x01_mines_five_elements_four_states.png",
+   "note": "без ромба-плиты, под квадратную клетку"
+  },
+  "mine_fire_hidden": {
+   "id": "mine_fire_hidden",
+   "file": "objects_gpt_b4sq/mine_fire_hidden.png",
+   "size": [
+    52,
+    52
+   ],
+   "anchor": [
+    26,
+    26
+   ],
+   "fill": 0.8,
+   "source": "source/incoming/gpt_extra/x01_mines_five_elements_four_states.png",
+   "note": "без ромба-плиты, под квадратную клетку"
+  },
+  "mine_fire_armed": {
+   "id": "mine_fire_armed",
+   "file": "objects_gpt_b4sq/mine_fire_armed.png",
+   "size": [
+    52,
+    52
+   ],
+   "anchor": [
+    26,
+    26
+   ],
+   "fill": 0.8,
+   "source": "source/incoming/gpt_extra/x01_mines_five_elements_four_states.png",
+   "note": "без ромба-плиты, под квадратную клетку"
+  },
+  "mine_fire_triggered": {
+   "id": "mine_fire_triggered",
+   "file": "objects_gpt_b4sq/mine_fire_triggered.png",
+   "size": [
+    52,
+    52
+   ],
+   "anchor": [
+    26,
+    26
+   ],
+   "fill": 0.8,
+   "source": "source/incoming/gpt_extra/x01_mines_five_elements_four_states.png",
+   "note": "без ромба-плиты, под квадратную клетку"
+  },
+  "mine_fire_spent": {
+   "id": "mine_fire_spent",
+   "file": "objects_gpt_b4sq/mine_fire_spent.png",
+   "size": [
+    52,
+    52
+   ],
+   "anchor": [
+    26,
+    26
+   ],
+   "fill": 0.8,
+   "source": "source/incoming/gpt_extra/x01_mines_five_elements_four_states.png",
+   "note": "без ромба-плиты, под квадратную клетку"
+  },
+  "mine_force_hidden": {
+   "id": "mine_force_hidden",
+   "file": "objects_gpt_b4sq/mine_force_hidden.png",
+   "size": [
+    52,
+    52
+   ],
+   "anchor": [
+    26,
+    26
+   ],
+   "fill": 0.8,
+   "source": "source/incoming/gpt_extra/x01_mines_five_elements_four_states.png",
+   "note": "без ромба-плиты, под квадратную клетку"
+  },
+  "mine_force_armed": {
+   "id": "mine_force_armed",
+   "file": "objects_gpt_b4sq/mine_force_armed.png",
+   "size": [
+    52,
+    52
+   ],
+   "anchor": [
+    26,
+    26
+   ],
+   "fill": 0.8,
+   "source": "source/incoming/gpt_extra/x01_mines_five_elements_four_states.png",
+   "note": "без ромба-плиты, под квадратную клетку"
+  },
+  "mine_force_triggered": {
+   "id": "mine_force_triggered",
+   "file": "objects_gpt_b4sq/mine_force_triggered.png",
+   "size": [
+    52,
+    52
+   ],
+   "anchor": [
+    26,
+    26
+   ],
+   "fill": 0.8,
+   "source": "source/incoming/gpt_extra/x01_mines_five_elements_four_states.png",
+   "note": "без ромба-плиты, под квадратную клетку"
+  },
+  "mine_force_spent": {
+   "id": "mine_force_spent",
+   "file": "objects_gpt_b4sq/mine_force_spent.png",
+   "size": [
+    52,
+    52
+   ],
+   "anchor": [
+    26,
+    26
+   ],
+   "fill": 0.8,
+   "source": "source/incoming/gpt_extra/x01_mines_five_elements_four_states.png",
+   "note": "без ромба-плиты, под квадратную клетку"
+  },
+  "mine_ice_hidden": {
+   "id": "mine_ice_hidden",
+   "file": "objects_gpt_b4sq/mine_ice_hidden.png",
+   "size": [
+    52,
+    52
+   ],
+   "anchor": [
+    26,
+    26
+   ],
+   "fill": 0.8,
+   "source": "source/incoming/gpt_extra/x01_mines_five_elements_four_states.png",
+   "note": "без ромба-плиты, под квадратную клетку"
+  },
+  "mine_ice_armed": {
+   "id": "mine_ice_armed",
+   "file": "objects_gpt_b4sq/mine_ice_armed.png",
+   "size": [
+    52,
+    52
+   ],
+   "anchor": [
+    26,
+    26
+   ],
+   "fill": 0.8,
+   "source": "source/incoming/gpt_extra/x01_mines_five_elements_four_states.png",
+   "note": "без ромба-плиты, под квадратную клетку"
+  },
+  "mine_ice_triggered": {
+   "id": "mine_ice_triggered",
+   "file": "objects_gpt_b4sq/mine_ice_triggered.png",
+   "size": [
+    52,
+    52
+   ],
+   "anchor": [
+    26,
+    26
+   ],
+   "fill": 0.8,
+   "source": "source/incoming/gpt_extra/x01_mines_five_elements_four_states.png",
+   "note": "без ромба-плиты, под квадратную клетку"
+  },
+  "mine_ice_spent": {
+   "id": "mine_ice_spent",
+   "file": "objects_gpt_b4sq/mine_ice_spent.png",
+   "size": [
+    52,
+    52
+   ],
+   "anchor": [
+    26,
+    26
+   ],
+   "fill": 0.8,
+   "source": "source/incoming/gpt_extra/x01_mines_five_elements_four_states.png",
+   "note": "без ромба-плиты, под квадратную клетку"
+  },
+  "bonus_capsule_closed": {
+   "id": "bonus_capsule_closed",
+   "file": "objects_gpt_b4sq/bonus_capsule_closed.png",
+   "size": [
+    52,
+    52
+   ],
+   "anchor": [
+    26,
+    26
+   ],
+   "fill": 0.8,
+   "source": "source/incoming/gpt_extra/x02_bonus_capsule_four_states.png",
+   "note": "под квадратную клетку"
+  },
+  "bonus_capsule_opening": {
+   "id": "bonus_capsule_opening",
+   "file": "objects_gpt_b4sq/bonus_capsule_opening.png",
+   "size": [
+    52,
+    52
+   ],
+   "anchor": [
+    26,
+    26
+   ],
+   "fill": 0.8,
+   "source": "source/incoming/gpt_extra/x02_bonus_capsule_four_states.png",
+   "note": "под квадратную клетку"
+  },
+  "bonus_capsule_open_glow": {
+   "id": "bonus_capsule_open_glow",
+   "file": "objects_gpt_b4sq/bonus_capsule_open_glow.png",
+   "size": [
+    52,
+    52
+   ],
+   "anchor": [
+    26,
+    26
+   ],
+   "fill": 0.8,
+   "source": "source/incoming/gpt_extra/x02_bonus_capsule_four_states.png",
+   "note": "под квадратную клетку"
+  },
+  "bonus_capsule_empty": {
+   "id": "bonus_capsule_empty",
+   "file": "objects_gpt_b4sq/bonus_capsule_empty.png",
+   "size": [
+    52,
+    52
+   ],
+   "anchor": [
+    26,
+    26
+   ],
+   "fill": 0.8,
+   "source": "source/incoming/gpt_extra/x02_bonus_capsule_four_states.png",
+   "note": "под квадратную клетку"
+  },
+  "medkit_closed": {
+   "id": "medkit_closed",
+   "file": "objects_gpt_b4sq/medkit_closed.png",
+   "size": [
+    52,
+    52
+   ],
+   "anchor": [
+    26,
+    26
+   ],
+   "fill": 0.8,
+   "source": "source/incoming/gpt_extra/x03_medkit_four_states.png",
+   "note": "под квадратную клетку"
+  },
+  "medkit_open": {
+   "id": "medkit_open",
+   "file": "objects_gpt_b4sq/medkit_open.png",
+   "size": [
+    52,
+    52
+   ],
+   "anchor": [
+    26,
+    26
+   ],
+   "fill": 0.8,
+   "source": "source/incoming/gpt_extra/x03_medkit_four_states.png",
+   "note": "под квадратную клетку"
+  },
+  "medkit_use_glow": {
+   "id": "medkit_use_glow",
+   "file": "objects_gpt_b4sq/medkit_use_glow.png",
+   "size": [
+    52,
+    52
+   ],
+   "anchor": [
+    26,
+    26
+   ],
+   "fill": 0.8,
+   "source": "source/incoming/gpt_extra/x03_medkit_four_states.png",
+   "note": "под квадратную клетку"
+  },
+  "medkit_spent": {
+   "id": "medkit_spent",
+   "file": "objects_gpt_b4sq/medkit_spent.png",
+   "size": [
+    52,
+    52
+   ],
+   "anchor": [
+    26,
+    26
+   ],
+   "fill": 0.8,
+   "source": "source/incoming/gpt_extra/x03_medkit_four_states.png",
+   "note": "под квадратную клетку"
+  }
+ }
+}

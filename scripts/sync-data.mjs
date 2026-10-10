@@ -28,6 +28,9 @@ const jobs = [
   { from: join(root, 'art/export/x2/nests_gpt'), to: 'src/assets/art/nests_gpt', pick: (f) => f.endsWith('.png') || f === 'nests_gpt.json' },
   // objects_b4: mines, bonus capsules, medkits, caches, finds, build overlays (batch 04)
   { from: join(root, 'art/export/x2/objects_gpt_b4'), to: 'src/assets/art/objects_b4', pick: (f) => f.endsWith('.png') || f === 'objects_gpt_b4.json' },
+  // batch 4b (slice_gpt_b4b.py): allies in a trophy stance (obj4b.trophy_<hero>), mines/bonus/medkit for the square cell (obj4sq.<id>)
+  { from: join(root, 'art/export/x2/objects_gpt_b4b'), to: 'src/assets/art/objects_gpt_b4b', pick: (f) => f.endsWith('.png') || f === 'objects_gpt_b4b.json' },
+  { from: join(root, 'art/export/x2/objects_gpt_b4sq'), to: 'src/assets/art/objects_gpt_b4sq', pick: (f) => f.endsWith('.png') || f === 'objects_gpt_b4sq.json' },
   // villains_mixed: heroes with spliced limbs
   { from: join(root, 'art/export/x2/units/villains_mixed'), to: 'src/assets/art/villains_mixed', pick: (f) => f.endsWith('.png') || f === 'villains_mixed.json' },
   { from: join(root, 'art/anim/x2'), to: 'src/assets/art/anim', pick: (f) => f.endsWith('.png') || f === 'anim.json' },

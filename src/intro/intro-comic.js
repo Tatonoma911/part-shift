@@ -202,14 +202,16 @@ export const SCRIPT = [
   },
   { // 10
     tag: { ru: 'КАРАНТИН // ГОЛОС КОНТРОЛЯ', en: 'QUARANTINE // THE VOICE OF CONTROL' },
-    wide: { cols: '0.85fr 1.4fr', rows: '1fr', areas: '"a b"' },
-    tall: { cols: '1fr', rows: '0.8fr 1.2fr', areas: '"a" "b"' },
+    wide: { cols: '0.45fr 1.55fr', rows: '1fr 1fr', areas: '"a b" "a c"' },
+    tall: { cols: '1fr', rows: '0.45fr 1fr 1fr', areas: '"a" "b" "c"' },
     panels: [
       { img: 'tendril', area: 'a', kb: [1.0, 1.05, 0, 0], fx: 'glow', beats: [
         { k: 'cap', at: [4, 5], w: 90, ru: 'Заражение расползается дальше, квартал за кварталом.', en: 'The infection keeps spreading, block after block.' },
       ] },
-      { img: 'city_sunset', area: 'b', kb: [1.05, 1.0, 0, 0], fx: 'hex', beats: [
+      { img: 'quarantine_city', area: 'b', fit: 'contain', kb: [1.0, 1.04, 0, 0], beats: [
         { k: 'cap', at: [4, 5], w: 60, ru: 'Купол превратился в карантин. Город заперли вместе с заразой.', en: 'The Dome turned into a quarantine. The city got locked in with the infection.' },
+      ] },
+      { img: 'warehouse', area: 'c', fit: 'contain', kb: [1.0, 1.04, 0, 0], beats: [
         { k: 'ctrl', at: [6, 56], w: 80, ru: 'Уважаемые жители! Вы являетесь имуществом HeroOut.', en: 'Dear residents! You are the property of HeroOut.' },
         { k: 'ctrl', at: [6, 56], w: 80, ru: 'Пожалуйста, пройдите на склад.', en: 'Please proceed to the warehouse.', replace: true },
         { k: 'ctrl', at: [6, 56], w: 80, ru: 'Склад работает круглосуточно. Очередь на склад тоже является заботой о вас.', en: 'The warehouse is open 24/7. The queue for the warehouse is also part of our care.', replace: true },
@@ -218,14 +220,16 @@ export const SCRIPT = [
   },
   { // 11
     tag: { ru: 'СМЕНА 01 // ТВОЙ ХОД', en: 'SHIFT 01 // YOUR MOVE' },
-    wide: { cols: '0.9fr 1.3fr', rows: '1fr', areas: '"a b"' },
-    tall: { cols: '1fr', rows: '1fr 1fr', areas: '"a" "b"' },
+    wide: { cols: '1.1fr 0.9fr', rows: '0.6fr 1fr', areas: '"a a" "b c"' },
+    tall: { cols: '1fr', rows: '0.6fr 0.9fr 1fr', areas: '"a" "b" "c"' },
     panels: [
-      { img: 'resident_arm', area: 'a', pos: '30% 50%', kb: [1.0, 1.05, 0, 0], beats: [
+      { img: 'backup_print', area: 'a', fit: 'contain', kb: [1.0, 1.04, 0, 0], beats: [
         { k: 'cap', at: [4, 4], w: 92, ru: 'Но у HeroOut остались бэкапы всех спасателей, снятые ещё до вспышки. Из них можно напечатать героев, которые пока в своём уме.', en: 'But HeroOut still has backups of every rescuer, taken before the outbreak. You can print heroes from them who are still in their right minds.' },
+      ] },
+      { img: 'backup_arm', area: 'b', fit: 'contain', kb: [1.0, 1.04, 0, 0], beats: [
         { k: 'cap', at: [4, 72], w: 70, ru: 'Наши герои побеждают заражённых и забирают их руки и ноги. А вместе с ними и силу.', en: 'Our heroes beat the infected and take their arms and legs. And their power along with them.' },
       ] },
-      { img: 'command_center', area: 'b', fit: 'contain', kb: [1.0, 1.03, 0, 0], beats: [
+      { img: 'command_center', area: 'c', fit: 'contain', kb: [1.0, 1.03, 0, 0], beats: [
         { k: 'cap', at: [4, 5], w: 70, ru: 'Из всех штабов HeroOut на связи остался один. Твой.', en: 'Out of every HeroOut headquarters, only one is still answering. Yours.' },
         { k: 'cap', at: [4, 74], w: 70, ru: 'Открывай кварталы, печатай героев и верни город людям.', en: 'Open the blocks, print your heroes and give the city back to its people.' },
       ] },

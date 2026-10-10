@@ -1,5 +1,5 @@
 {
-  "_meta.version": "0.38",
+  "_meta.version": "0.39",
   "_meta.date": "2026-10-10",
   "_meta.note": "Русский оригинал строк MVP, сверено с design/MVP_RULES.md, ONBOARDING.md и ELEMENTS.md 0.3. Ключи плоские, плейсхолдеры в фигурных скобках, множественное число через суффиксы .one/.few/.many. Формат описан в text/README.md",
   "game.title": "Part Shift",
@@ -1687,5 +1687,19 @@
   "universe.follow": "Следите за сменой",
   "universe.follow.youtube": "YouTube Shorts",
   "universe.follow.instagram": "Instagram Reels",
-  "universe.site": "Сайт вселенной"
+  "universe.site": "Сайт вселенной",
+  "raid.now": "РЕЙД!",
+  "call.vote_hint": "Голосуют все. При ничьей решает хост.",
+  "call.waiting": "Ждём ответа ещё от {n}",
+  "call.cost.nextRaidSooner": "рейд на {n} с раньше",
+  "call.cost.commandHpPercent": "Командный центр: −{n} % прочности",
+  "call.cost.randomHeroAwaySeconds": "один герой уйдёт на {n} с",
+  "call.cost.civiliansLose": "горожане: −{n}",
+  "call.cost.scoreBonus": "очки смены: +{n}",
+  "call.cost.nextRaidExtraEnemies": "врагов в рейде: +{n}",
+  "call.cost.reactorsOffSeconds": "реакторы стоят {n} с",
+  "call.cost.nextBuildingCostFactor": "следующее здание дешевле на {n} %",
+  "call.cost.returnsWithStar": "вернётся со звездой подготовки",
+  "settings.reset_all": "Стереть весь прогресс",
+  "settings.wipe.step3.button": "Стереть"
 }

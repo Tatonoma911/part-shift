@@ -22,7 +22,8 @@ import { clearSlot, lastSlot, loadSettings, loadSlot, saveSettings, SLOTS } from
 import { tutorialDone } from './Tutorial';
 import { setBackHandler } from '../platform/native';
 import { closeOnlineScreen, openOnlineScreen, onlineScreenOpen } from '../net/lobby';
-import { onlineAvailable } from '../net/online';
+// P2P is always available (no server required)
+const onlineAvailable = () => true;
 import { chip, plate, TXT } from './ui';
 import { drawMenuBackdrop, drawMenuHeroes } from './MenuBackdrop';
 import { resetDialog } from './ResetProgress';
@@ -329,8 +330,16 @@ export class MenuScene extends Phaser.Scene {
         learning().resetProgress();
         this.show('settings');
       });
-      // Start over completely (Антон 10.10): a list of what goes and a held button (ResetProgress.ts).
-      button(t('settings.reset_all'), () => {
+      button(t('menu.back'), () => this.show('main'), true);
+      // Start over completely (META §1а): small and red at the very bottom, three steps inside (ResetProgress.ts).
+      const wipe = this.add.text(cx, y + 8, t('settings.reset_all'), TXT.body(20, INK.coral, '700')).setOrigin(0.5, 0);
+      const ul = this.add.graphics();
+      ul.fillStyle(C.coralInk, 0.6);
+      ul.fillRect(cx - wipe.width / 2, y + 10 + wipe.height, wipe.width, 2);
+      const wz = this.add.zone(cx - wipe.width / 2 - 20, y - 4, wipe.width + 40, wipe.height + 28).setOrigin(0).setInteractive({ useHandCursor: true });
+      wz.on('pointerdown', (_p: Phaser.Input.Pointer, _x: number, _y: number, ev: Ev) => {
+        ev.stopPropagation();
+        sound.play('ui_tap');
         const d = resetDialog(
           this,
           60,
@@ -338,7 +347,8 @@ export class MenuScene extends Phaser.Scene {
           () => d.destroy(),
         );
       });
-      button(t('menu.back'), () => this.show('main'), true);
+      c.add([wipe, ul, wz]);
+      y += wipe.height + 30;
     }
     const h = y - top + 24;
     plate(bg, x0, top, w, h, 28);

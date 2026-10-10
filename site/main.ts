@@ -204,6 +204,7 @@ function heroesView(): string {
   const canon = HEROES.filter((h) => h.group === 'canon');
   const city = HEROES.filter((h) => h.group === 'city');
   return `<section class="section"><div class="wrap">
+    <figure class="banner slab"><img src="${img('all-on-shift.webp')}" alt="${R('Герои HeroOut снова на смене вместе с жителями', 'HeroOut heroes back on shift with the residents')}"><figcaption class="caps">${R('Так будет, когда смена закончится. Сейчас каждого из них надо победить и вернуть.', 'This is how it ends when the shift is over. Right now every one of them has to be beaten and brought back.')}</figcaption></figure>
     ${head(R('ДОСЬЕ // HEROOUT', 'DOSSIERS // HEROOUT'), R('Герои. Они же злодеи', 'Heroes. Also the villains'), R('Гель Splice свёл с ума всех спасателей HeroOut, их пятнадцать. Каждый всё ещё «спасает», только от такой помощи надо бежать. Главного среди них нет. Победишь героя — заберёшь его часть, а победишь много раз — он вернётся в себя и станет союзником.', 'Splice gel drove every HeroOut rescuer mad, fifteen of them. Each one is still “rescuing,” and you should run from that kind of help. None of them is in charge. Beat a hero and take their part; beat them enough times and they come back to themselves as your ally.'))}
     <div class="grid">${canon.map(heroTile).join('')}</div>
   </div></section>
@@ -226,7 +227,7 @@ function heroView(id: string): string {
     <div class="dossier" style="margin-top:20px">
       <div class="dossier-art">
         <div class="frame slab">${main}</div>
-        <div class="slab moods">${(['', '_smile', '_talk'] as const).map((m, k) => `<figure><img src="${img(`portraits/${h.id === 's01' ? 'standard' : h.id}${m}.webp`)}" alt="" loading="lazy" onerror="this.parentElement.remove()"><figcaption class="caps">${[R('НА СМЕНЕ', 'ON SHIFT'), R('УЛЫБКА', 'SMILE'), R('ГОВОРИТ', 'TALKING')][k]}</figcaption></figure>`).join('')}
+        <div class="slab moods">${(['', '_smile', '_talk', '_mad'] as const).map((m, k) => `<figure><img src="${img(`portraits/${h.id === 's01' ? 'standard' : h.id}${m}.webp`)}" alt="" loading="lazy" onerror="this.parentElement.remove()"><figcaption class="caps">${[R('НА СМЕНЕ', 'ON SHIFT'), R('УЛЫБКА', 'SMILE'), R('ГОВОРИТ', 'TALKING'), R('ОБЕЗУМЕЛ', 'DERANGED')][k]}</figcaption></figure>`).join('')}
           <figure><img class="px" src="${img(h.px)}" alt=""><figcaption class="caps">${R('НА ПОЛЕ', 'ON THE BOARD')}</figcaption></figure></div>
       </div>
       <div class="stack">
@@ -269,7 +270,8 @@ function heroView(id: string): string {
 
 function worldView(): string {
   const tc = (id: string) => TECH.find((t) => t.id === id)!;
-  return `<section class="section"><div class="wrap split">
+  return `<section class="section" style="padding-bottom:0"><div class="wrap"><figure class="banner slab"><img src="${img('world-dome.webp')}" alt="${R('Lumen City под куполом посреди пустоши', 'Lumen City under its dome in the middle of the wasteland')}"></figure></div></section>
+  <section class="section"><div class="wrap split">
     <div class="stack">
       ${head(R('МИР // LUMEN CITY', 'WORLD // LUMEN CITY'), R('История вселенной', 'The story of the universe'))}
       <div class="prose">
@@ -366,7 +368,7 @@ function villainsView(): string {
         <div class="bark slab"><span class="caps">${R('КОНТРОЛЬ:', 'CONTROL:')}</span>${R('Если вы видите обезумевшего героя, не паникуйте. Он на смене.', 'If you see a deranged hero, do not panic. They are on shift.')}</div>
       </div>
     </div>
-    <div class="grid">${mad.map(madTile).join('')}</div>
+        <div class="grid">${mad.map(madTile).join('')}</div>
 
     <figure class="billboard slab" style="margin-top:56px"><img src="${img('control-billboard.webp')}" alt="${esc(R('Маска Контроля на билборде HeroOut', 'Control’s mask on a HeroOut billboard'))}" loading="lazy"><figcaption><span class="caps">HERO | OUT</span><b>${R('Всегда на смене.', 'Always on call.')}</b><span>${R('Даже когда вас об этом не просили.', 'Even when you didn’t ask.')}</span></figcaption></figure>
     <div class="villain">
@@ -389,11 +391,10 @@ function villainsView(): string {
         <div class="stack" style="gap:10px">${BARKS.map(([ru, en]) => `<div class="bark slab"><span class="caps">${R('КОНТРОЛЬ:', 'CONTROL:')}</span>${R(ru, en)}</div>`).join('')}</div>
       </div>
     </div>
+    <figure class="banner slab" style="margin-top:40px"><img src="${img('control-warehouse.webp')}" alt="${esc(R('Очередь жителей на склад Контроля', 'Residents queueing for the Control warehouse'))}" loading="lazy"><figcaption class="caps">${R('«Вы спасены. Пройдите на склад.» Очередь на склад Контроля', '“You have been rescued. Proceed to the warehouse.” The queue at the Control warehouse')}</figcaption></figure>
 
     <div class="villain">
-      <div class="art slab" style="background:linear-gradient(180deg,#10171c,#0b1117);display:grid;place-items:center">
-        <div style="font:900 clamp(96px,16vw,180px)/1 var(--display);color:#EDF4F5;letter-spacing:-0.04em">42</div>
-      </div>
+      <figure class="art slab shot"><img src="${img('floor42.webp')}" alt="${R('Совет директоров на 42-м этаже', 'The board on floor 42')}" loading="lazy"><span class="floor-no">42</span></figure>
       <div class="stack">
         <span class="chip"><i style="--dot:#E8A33A"></i>${R('КОРПОРАЦИЯ НАВЕРХУ // НАСТОЯЩИЙ ФИНАЛ', 'THE CORPORATION UPSTAIRS // THE REAL FINALE')}</span>
         <h2>${R('42-й этаж', 'Floor 42')}</h2>
@@ -403,15 +404,7 @@ function villainsView(): string {
     </div>
 
     <div class="villain">
-      <div class="art slab" style="background:linear-gradient(180deg,#0f1a22,#0b1117)">
-        <svg class="core" viewBox="0 0 200 200" role="img" aria-label="${R('Ядро вспышки', 'Splice Heart')}">
-          <g stroke="#2E55C8" stroke-width="3" fill="none" opacity=".8"><path d="M100 150 C 80 170, 40 172, 12 190"/><path d="M100 150 C 120 172, 160 168, 192 186"/><path d="M60 100 C 40 90, 22 70, 8 40"/><path d="M140 100 C 162 88, 176 66, 194 36"/></g>
-          <circle cx="100" cy="100" r="58" fill="#EDF4F5" stroke="#10171C" stroke-width="3"/>
-          <path d="M70 62 L92 96 L80 120 M132 70 L112 100 L126 134" stroke="#10171C" stroke-width="3" fill="none"/>
-          <circle class="pulse" cx="100" cy="100" r="34" fill="#2E55C8"/>
-          <circle class="pulse" cx="100" cy="100" r="18" fill="#9FF4FF"/>
-        </svg>
-      </div>
+      <figure class="art slab shot"><img src="${img('splice-heart.webp')}" alt="${R('Ядро вспышки в реакторе Research Campus', 'The Splice Heart in the Research Campus reactor')}" loading="lazy"></figure>
       <div class="stack">
         <span class="chip"><i style="--dot:#8A4DFF"></i>${R('РАСТУЩАЯ УГРОЗА // RESEARCH CAMPUS', 'GROWING THREAT // RESEARCH CAMPUS')}</span>
         <h2>${R('Ядро вспышки', 'Splice Heart')}</h2>
@@ -433,6 +426,7 @@ function villainsView(): string {
 
   <section class="section" id="archive" style="scroll-margin-top:80px"><div class="wrap">
     ${head(R('УТЕЧКА // ЗАПИСИ КОНТРОЛЯ', 'LEAK // CONTROL RECORDS'), R('Архив HeroOut', 'HeroOut Archive'), R('Внутренние документы компании. В игре они выпадают находкой «Запись Контроля» и собираются в Досье, во вкладке «Архив».', 'Internal company documents. In the game they drop as a “Control Record” find and collect in the Dossier, under the Archive tab.'))}
+    <figure class="banner slab"><img src="${img('archive-desk.webp')}" alt="" loading="lazy"></figure>
     <div class="archive">${ARCHIVE.map((a, i) => `<article class="record slab"><header><span class="caps">${R('ЗАПИСЬ', 'RECORD')} № ${String(i + 1).padStart(3, '0')}</span><span class="caps from">${tr(a.from)}</span></header><h3>${tr(a.title)}</h3><p>${tr(a.text)}</p><span class="stamp caps">${R('СЕКРЕТНО', 'CLASSIFIED')}</span></article>`).join('')}</div>
   </div></section>`;
 }

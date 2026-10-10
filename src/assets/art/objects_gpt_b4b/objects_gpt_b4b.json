@@ -1,0 +1,217 @@
+{
+ "scale": 2,
+ "cell": 52,
+ "note": "Пачка 4b (slice_gpt_b4b.py): союзники в трофейной стойке (164–168). Кадр и рост как heroes_gpt, anchor — середина низа (ноги).",
+ "objects": {
+  "trophy_standard": {
+   "id": "trophy_standard",
+   "hero": "standard",
+   "file": "objects_gpt_b4b/trophy_standard.png",
+   "size": [
+    72,
+    72
+   ],
+   "anchor": [
+    36,
+    71
+   ],
+   "note": "союзник standard в стойке с трофейной рукой/деталью",
+   "source": "source/incoming/gpt/164_ally_trophies_standard_patch_canopy.png"
+  },
+  "trophy_patch": {
+   "id": "trophy_patch",
+   "hero": "patch",
+   "file": "objects_gpt_b4b/trophy_patch.png",
+   "size": [
+    72,
+    72
+   ],
+   "anchor": [
+    36,
+    71
+   ],
+   "note": "союзник patch в стойке с трофейной рукой/деталью",
+   "source": "source/incoming/gpt/164_ally_trophies_standard_patch_canopy.png"
+  },
+  "trophy_canopy": {
+   "id": "trophy_canopy",
+   "hero": "canopy",
+   "file": "objects_gpt_b4b/trophy_canopy.png",
+   "size": [
+    72,
+    72
+   ],
+   "anchor": [
+    36,
+    71
+   ],
+   "note": "союзник canopy в стойке с трофейной рукой/деталью",
+   "source": "source/incoming/gpt/164_ally_trophies_standard_patch_canopy.png"
+  },
+  "trophy_current": {
+   "id": "trophy_current",
+   "hero": "current",
+   "file": "objects_gpt_b4b/trophy_current.png",
+   "size": [
+    72,
+    72
+   ],
+   "anchor": [
+    36,
+    71
+   ],
+   "note": "союзник current в стойке с трофейной рукой/деталью",
+   "source": "source/incoming/gpt/165_ally_trophies_current_lineman_frostline.png"
+  },
+  "trophy_lineman": {
+   "id": "trophy_lineman",
+   "hero": "lineman",
+   "file": "objects_gpt_b4b/trophy_lineman.png",
+   "size": [
+    72,
+    72
+   ],
+   "anchor": [
+    36,
+    71
+   ],
+   "note": "союзник lineman в стойке с трофейной рукой/деталью",
+   "source": "source/incoming/gpt/165_ally_trophies_current_lineman_frostline.png"
+  },
+  "trophy_frostline": {
+   "id": "trophy_frostline",
+   "hero": "frostline",
+   "file": "objects_gpt_b4b/trophy_frostline.png",
+   "size": [
+    72,
+    72
+   ],
+   "anchor": [
+    36,
+    71
+   ],
+   "note": "союзник frostline в стойке с трофейной рукой/деталью",
+   "source": "source/incoming/gpt/165_ally_trophies_current_lineman_frostline.png"
+  },
+  "trophy_sweep": {
+   "id": "trophy_sweep",
+   "hero": "sweep",
+   "file": "objects_gpt_b4b/trophy_sweep.png",
+   "size": [
+    72,
+    72
+   ],
+   "anchor": [
+    36,
+    71
+   ],
+   "note": "союзник sweep в стойке с трофейной рукой/деталью",
+   "source": "source/incoming/gpt/166_ally_trophies_mason_sweep_beacon.png"
+  },
+  "trophy_beacon": {
+   "id": "trophy_beacon",
+   "hero": "beacon",
+   "file": "objects_gpt_b4b/trophy_beacon.png",
+   "size": [
+    72,
+    72
+   ],
+   "anchor": [
+    36,
+    71
+   ],
+   "note": "союзник beacon в стойке с трофейной рукой/деталью",
+   "source": "source/incoming/gpt/166_ally_trophies_mason_sweep_beacon.png"
+  },
+  "trophy_kiln": {
+   "id": "trophy_kiln",
+   "hero": "kiln",
+   "file": "objects_gpt_b4b/trophy_kiln.png",
+   "size": [
+    72,
+    72
+   ],
+   "anchor": [
+    36,
+    71
+   ],
+   "note": "союзник kiln в стойке с трофейной рукой/деталью",
+   "source": "source/incoming/gpt/167_ally_trophies_hive_kiln_seraph.png"
+  },
+  "trophy_hive": {
+   "id": "trophy_hive",
+   "hero": "hive",
+   "file": "objects_gpt_b4b/trophy_hive.png",
+   "size": [
+    72,
+    72
+   ],
+   "anchor": [
+    36,
+    71
+   ],
+   "note": "союзник hive в стойке с трофейной рукой/деталью",
+   "source": "source/incoming/gpt/167_ally_trophies_hive_kiln_seraph.png"
+  },
+  "trophy_seraph": {
+   "id": "trophy_seraph",
+   "hero": "seraph",
+   "file": "objects_gpt_b4b/trophy_seraph.png",
+   "size": [
+    72,
+    72
+   ],
+   "anchor": [
+    36,
+    71
+   ],
+   "note": "союзник seraph в стойке с трофейной рукой/деталью",
+   "source": "source/incoming/gpt/167_ally_trophies_hive_kiln_seraph.png"
+  },
+  "trophy_doctor": {
+   "id": "trophy_doctor",
+   "hero": "doctor",
+   "file": "objects_gpt_b4b/trophy_doctor.png",
+   "size": [
+    72,
+    72
+   ],
+   "anchor": [
+    36,
+    71
+   ],
+   "note": "союзник doctor в стойке с трофейной рукой/деталью",
+   "source": "source/incoming/gpt/168_ally_trophies_doctor_demon_n73.png"
+  },
+  "trophy_demon": {
+   "id": "trophy_demon",
+   "hero": "demon",
+   "file": "objects_gpt_b4b/trophy_demon.png",
+   "size": [
+    88,
+    88
+   ],
+   "anchor": [
+    44,
+    87
+   ],
+   "note": "союзник demon в стойке с трофейной рукой/деталью",
+   "source": "source/incoming/gpt/168_ally_trophies_doctor_demon_n73.png"
+  },
+  "trophy_n73": {
+   "id": "trophy_n73",
+   "hero": "n73",
+   "file": "objects_gpt_b4b/trophy_n73.png",
+   "size": [
+    72,
+    72
+   ],
+   "anchor": [
+    36,
+    71
+   ],
+   "note": "союзник n73 в стойке с трофейной рукой/деталью",
+   "source": "source/incoming/gpt/168_ally_trophies_doctor_demon_n73.png"
+  }
+ }
+}

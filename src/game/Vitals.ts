@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 import elementsJson from '../data/design/elements.json';
 import heroesJson from '../data/design/heroes.json';
+import configJson from '../data/design/config.json';
 import { C } from './layout';
 
 /**
@@ -186,5 +187,104 @@ export class Bars {
 
   forget(id: string): void {
     this.lag.delete(id);
+  }
+}
+
+/** A hero's own element (heroes.json), 'kinetic' for heroes without one. */
+export const techOf = (id: string | undefined) => HEROES.find((h) => h.id === id)?.tech ?? 'kinetic';
+
+/** Cell element → the element that digs it fast (config.json dig.cellDurability.cellWeakTo; same table as the build catalog). */
+const CELL_WEAK_TO: Record<string, string> = (configJson as unknown as { dig?: { cellDurability?: { cellWeakTo?: Record<string, string> } } }).dig?.cellDurability?.cellWeakTo ?? {
+  cryo: 'thermo',
+  thermo: 'cryo',
+  volt: 'impact',
+  toxin: 'volt',
+  impact: 'toxin',
+};
+/** Element of a closed cell: core keeps it as `tech` (older drafts called it `element`, MVP_RULES §3.4). */
+/**
+ * The zone element of a block (mapgen.cellElements). Only `element`: a site's own `tech` (a lair's hero, a nest
+ * outside the zones) can differ from its zone, and showing it would point at the site.
+ */
+export const cellElement = (c: unknown) => (c as { element?: string }).element;
+/** The element that digs a closed block fast, or undefined for blocks without an element. */
+export const cellFastTech = (c: unknown): string | undefined => CELL_WEAK_TO[cellElement(c) ?? ''];
+
+/**
+ * One orb in the corner of a closed block (MVP_RULES §3.4, config.readability.weaknessOrbs.closedCell):
+ * the colour of the element that digs this block fast. It glows when someone in the squad hits with that element.
+ */
+export function drawCellOrb(g: G, x: number, y: number, tech: string, glow: boolean, now: number): void {
+  if (glow) {
+    const p = 0.5 + 0.5 * Math.sin(now / 320);
+    g.fillStyle(TECH_HEX[tech] ?? 0xffffff, 0.25 + 0.25 * p);
+    g.fillCircle(x, y, 11 + 2 * p);
+  }
+  g.fillStyle(0x0b1117, 0.6);
+  g.fillCircle(x + 1, y + 1.5, 8);
+  g.fillStyle(TECH_HEX[tech] ?? 0xffffff, glow ? 1 : 0.8);
+  g.fillCircle(x, y, 7);
+  g.lineStyle(1.5, 0xffffff, glow ? 1 : 0.6);
+  g.strokeCircle(x, y, 7);
+  if ((TECHS as string[]).includes(tech)) techGlyph(g, tech as Tech, x, y, 7);
+}
+
+/** A five-point star centred on (x, y). */
+function star(g: G, x: number, y: number, r: number): void {
+  const pts: Phaser.Math.Vector2[] = [];
+  for (let k = 0; k < 10; k++) {
+    const a = -Math.PI / 2 + (k * Math.PI) / 5;
+    const rr = k % 2 ? r * 0.45 : r;
+    pts.push(new Phaser.Math.Vector2(x + Math.cos(a) * rr, y + Math.sin(a) * rr));
+  }
+  g.fillPoints(pts, true);
+}
+
+/**
+ * Extras around one of our heroes' HP bar (x, y = the bar's top-left, w = its width):
+ *   - up to 3 orbs to the LEFT of the bar: the elements the hero hits and digs with (own arm, trophies, Forge coat; white = bare hand);
+ *   - training stars ★ above the bar (BUILDINGS §7, max 3);
+ *   - a thin gold super-strike bar under it; at full charge the hero glows (MVP_RULES §17.5).
+ * `feetX/feetY` = where the glow goes. Drawn into the same graphics as the HP bar.
+ */
+export function drawHeroExtras(
+  g: G,
+  x: number,
+  y: number,
+  w: number,
+  o: { arms?: string[]; stars?: number; superFrac?: number; feetX?: number; feetY?: number; now: number },
+): void {
+  const arms = (o.arms ?? []).slice(0, 3);
+  // Drawn right to left and overlapping like chips, so three fit in ~30 px and neighbours stay clear.
+  for (let k = arms.length - 1; k >= 0; k--) {
+    const tech = arms[k];
+    const cx = x - 8 - k * 10;
+    g.fillStyle(0x0b1117, 0.75);
+    g.fillCircle(cx, y + 4, 6.5);
+    g.fillStyle(TECH_HEX[tech] ?? 0xffffff, 1);
+    g.fillCircle(cx, y + 4, 5.2);
+  }
+  const stars = Math.min(3, o.stars ?? 0);
+  for (let k = 0; k < stars; k++) {
+    const sx = x + w / 2 + (k - (stars - 1) / 2) * 13;
+    g.fillStyle(0x0b1117, 0.7);
+    star(g, sx + 0.5, y - 8, 6.5);
+    g.fillStyle(0xffc94d, 1);
+    star(g, sx, y - 9, 5.5);
+  }
+  if (o.superFrac === undefined) return;
+  const f = Phaser.Math.Clamp(o.superFrac, 0, 1);
+  const by = y + 13;
+  g.fillStyle(0x0b1117, 0.75);
+  g.fillRect(x - 1, by - 1, w + 2, 5);
+  g.fillStyle(f >= 1 ? 0xffe14d : 0xd9a520, 1);
+  g.fillRect(x, by, w * f, 3);
+  if (f >= 1 && o.feetX !== undefined && o.feetY !== undefined) {
+    // Charged: a gold glow under the hero and around the bar; the next hit is a super strike.
+    const p = 0.5 + 0.5 * Math.sin(o.now / 180);
+    g.fillStyle(0xffe14d, 0.18 + 0.18 * p);
+    g.fillEllipse(o.feetX, o.feetY - 2, 54 + 8 * p, 20 + 4 * p);
+    g.lineStyle(2, 0xffe14d, 0.6 + 0.4 * p);
+    g.strokeRect(x - 3, y - 3, w + 6, 21);
   }
 }

@@ -392,6 +392,14 @@ export const COMICS: Comic[] = [
     pages: { ru: ['comics/two-kinds-ru.webp'], en: ['comics/two-kinds-en.webp'] },
   },
   {
+    id: 'cat-record',
+    title: { ru: 'О кошке', en: 'About the Cat' },
+    series: { ru: 'Архив Контроля', en: 'Control Archive' },
+    cast: { ru: 'Серафим, кошка с улицы Солнечной', en: 'Seraph, the cat from Sunny Street' },
+    blurb: { ru: 'Запись Контроля № 1 в картинках: кошку снимают с дерева в 412-й раз, и всем это выгодно.', en: 'Control Record No. 1 in pictures: the cat comes down from the tree for the 412th time, and everyone profits.' },
+    pages: { ru: ['comics/cat-record-ru.webp'], en: ['comics/cat-record-en.webp'] },
+  },
+  {
     id: 'last-donut',
     title: { ru: 'Последний пончик', en: 'The Last Donut' },
     series: { ru: 'До сирен', en: 'Before the Sirens' },
