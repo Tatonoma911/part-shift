@@ -171,17 +171,25 @@ for (const [name, table] of Object.entries({
 export const config = configJson as unknown as Omit<typeof configJson, 'boss'> & { boss: { selfWakeSeconds: number; warningSeconds: number } };
 export const mapgen = mapgenJson;
 
-/** Mines, bonus capsules, medkits (hazards.json). */
+/** Mines, bonus capsules, medkits (hazards.json, MVP_RULES §5.2). */
 export interface HazardRules {
   mine: {
-    fuseSeconds: number;
-    radius: number;
-    damage: number;
-    buildingDamage: number;
-    status: Partial<Record<Tech, { burnDps?: number; poisonDps?: number; defenseMinus?: number; seconds?: number; stunSeconds?: number; bareSeconds?: number }>>;
+    countByDifficulty: Record<string, number>;
+    coopFactor: number;
+    unmarkedDig: {
+      armSeconds: number;
+      radius: number;
+      damage: number;
+      hitsBuildings: boolean;
+      status: Partial<Record<Tech, string | { stunSeconds?: number; freezeSeconds?: number; defenseMinus?: number; seconds?: number }>>;
+    };
+    markedDig: { defuse: boolean; energy: number };
   };
-  bonusCapsule: { types: Record<string, { amount?: number; plates?: number; percent?: number; charges?: number; factor?: number; seconds?: number }> };
-  medkit: { radius: number; hpPerSecond: number; seconds: number; doctorFactor: number };
+  bonusCapsule: {
+    count: number;
+    pool: Record<string, { energy?: number; armorPlateNearestHero?: number; buildingsHealPercent?: number; peekCharges?: number; heroesDamageTakenFactor?: number; seconds?: number }>;
+  };
+  medkit: { count: number; radius: number; hpPerSecond: number; seconds: number; doctorFactor: number };
 }
 export const hazards = hazardsJson as unknown as HazardRules;
 export const multiplayer = multiplayerJson;

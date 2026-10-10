@@ -83,6 +83,7 @@ const TOASTS: Record<string, { text: (e: GameEvent) => string; bad?: boolean }> 
   armor_crate_open: { text: (e) => (e.amount ? t('event.find.armor', { count: e.amount }) : t('event.find.armor_none')) },
   ally_limb_lost: { text: (e) => limbLine(e.text), bad: true },
   mine_armed: { text: () => t('event.mine.armed'), bad: true },
+  mine_defused: { text: (e) => t('event.mine.defused', { energy: e.amount ?? 0 }) },
   mine_blast: { text: (e) => t('event.mine.blast', { element: t(`tech.${e.text}`) }), bad: true },
   bonus_opened: { text: (e) => (e.text === 'armor' && !e.amount ? t('event.bonus.armor_none') : t(`event.bonus.${e.text}`, { amount: e.amount ?? 0 })) },
   medkit_open: { text: () => t('event.medkit.open') },
@@ -1506,7 +1507,7 @@ export class GameScene extends Phaser.Scene {
     if (!c.revealed && c.marked) {
       if (this.confirmCell === k) {
         this.confirmCell = null;
-        w.apply({ type: 'toggleMark', x, y, clear: true }, this.me);
+        // The core lifts the mark itself: under «Опасно» the heroes dig carefully and defuse a mine (MVP_RULES §5.2).
         if (w.apply({ type: 'queueDig', x, y, force: true }, this.me).ok) this.guide?.notify('queued');
         return;
       }

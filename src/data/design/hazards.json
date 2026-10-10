@@ -1,26 +1,82 @@
 {
-  "_doc": "Mines, bonus capsules and medkits (batch04/future, art 213–215). Defaults by Программист 2 until the game designer moves them into design/data.",
+  "version": "0.1",
+  "_doc": "Мины, капсулы, аптечки (batch04, art 213–215). MVP_RULES §5.2. Принято с чисел Программиста 2 с правками геймдизайнера",
   "mine": {
-    "fuseSeconds": 1.2,
-    "radius": 1,
-    "damage": 25,
-    "buildingDamage": 25,
-    "status": {
-      "thermo": { "burnDps": 4, "seconds": 4 },
-      "toxin": { "poisonDps": 3, "seconds": 5, "defenseMinus": 1 },
-      "volt": { "stunSeconds": 2 },
-      "cryo": { "stunSeconds": 3 },
-      "impact": { "bareSeconds": 10 }
-    }
+    "channel": "threat",
+    "countByDifficulty": {
+      "intern": 2,
+      "shift": 3,
+      "crunch": 5
+    },
+    "quickMode": 2,
+    "coopFactor": 2,
+    "element": "zone element of its cell (mapgen.cellElements); safe radius never holds mines",
+    "unmarkedDig": {
+      "armSeconds": 1.2,
+      "radius": 1,
+      "damage": 25,
+      "hitsBuildings": true,
+      "status": {
+        "thermo": "burn",
+        "toxin": "poison",
+        "volt": {
+          "stunSeconds": 2
+        },
+        "cryo": {
+          "freezeSeconds": 3
+        },
+        "impact": {
+          "knockbackTiles": 1,
+          "defenseMinus": 2,
+          "seconds": 10
+        }
+      }
+    },
+    "markedDig": {
+      "defuse": true,
+      "energy": 15,
+      "tempoPoints": 1
+    },
+    "enemiesTrigger": false,
+    "afterUse": "ground",
+    "noGuess": "mines count as threats for the no-guess generator, same as nests"
   },
   "bonusCapsule": {
-    "types": {
-      "energy": { "amount": 40 },
-      "armor": { "plates": 1 },
-      "repair": { "percent": 30 },
-      "sync": { "charges": 1 },
-      "damage_resist": { "factor": 0.7, "seconds": 20 }
-    }
+    "channel": "finds",
+    "findValue": 2,
+    "count": 2,
+    "quickMode": 1,
+    "pool": {
+      "energy": {
+        "energy": 40
+      },
+      "armor": {
+        "armorPlateNearestHero": 1
+      },
+      "repair": {
+        "buildingsHealPercent": 30
+      },
+      "peek": {
+        "peekCharges": 1,
+        "_note": "сканера нет (MVP_RULES §3.1а): вместо +1 заряда сканера — 1 подсмотр 3×3 как у Вышки"
+      },
+      "damage_resist": {
+        "heroesDamageTakenFactor": 0.7,
+        "seconds": 20
+      }
+    },
+    "once": true,
+    "emptyStays": true
   },
-  "medkit": { "radius": 1, "hpPerSecond": 3, "seconds": 10, "doctorFactor": 1.5 }
+  "medkit": {
+    "channel": "finds",
+    "findValue": 1,
+    "count": 2,
+    "quickMode": 1,
+    "radius": 1,
+    "hpPerSecond": 3,
+    "seconds": 10,
+    "doctorFactor": 1.5,
+    "emptyStays": true
+  }
 }

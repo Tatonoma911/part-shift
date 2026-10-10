@@ -437,6 +437,12 @@ export class World {
         const c = this.cell(cmd.x, cmd.y);
         const k = cellKey(cmd.x, cmd.y);
         const harvestable = c.revealed && (c.content === 'rubble' || c.content === 'energy_vein') && (c.stock ?? 0) > 0;
+        // A forced dig on an «Опасно» mark goes in carefully: a mine there gets defused (MVP_RULES §5.2).
+        if (c.marked && cmd.force && !c.revealed && !p.queue.includes(k)) {
+          c.defuse = c.markKind === 'danger';
+          c.marked = false;
+          c.markKind = undefined;
+        }
         if ((c.revealed && !harvestable) || c.marked || p.queue.includes(k)) return bad();
         const known = this.visibleKnowledge(playerId).get(k);
         if (this.cfg.assist.blockSwipeOnKnownDanger && !cmd.force && (known === 'threat' || known === 'demon')) {
@@ -702,77 +708,90 @@ export class World {
     }
   }
 
-  /** One blast per mine: element damage and status to our units and buildings around it. */
+  /** One blast per mine: element damage and status to our units and buildings around it (hazards.json mine.unmarkedDig). */
   private mineBlast(x: number, y: number, c: Cell): void {
     const s = this.s;
-    const m = hazards.mine;
+    const m = hazards.mine.unmarkedDig;
     c.fuse = undefined;
     c.resolved = true;
     this.rev++;
     const tech = c.tech ?? 'impact';
-    const st = m.status[tech] ?? {};
+    const st = m.status[tech];
+    const fx = typeof st === 'object' ? st : {};
+    const sts = elements.statuses;
     let hits = 0;
     for (const u of s.units) {
       if (isEnemy(u) || u.hp <= 0 || cheb(Math.round(u.x), Math.round(u.y), x, y) > m.radius) continue;
       hits++;
-      if (st.burnDps) u.burn = { dps: st.burnDps, left: st.seconds ?? 4, source: -1 };
-      if (st.poisonDps) u.poison = { dps: st.poisonDps, left: st.seconds ?? 5, defense: st.defenseMinus ?? 0, source: -1 };
-      if (st.stunSeconds) u.stun = Math.max(u.stun ?? 0, st.stunSeconds);
-      if (st.bareSeconds) u.bare = Math.max(u.bare ?? 0, st.bareSeconds);
+      // Named statuses take the tier-2 numbers of elements.json.
+      if (st === 'burn') u.burn = { dps: sts.burn.dpsByTier[1] ?? sts.burn.dpsByTier[0], left: sts.burn.seconds, source: -1 };
+      if (st === 'poison') u.poison = { dps: sts.poison.dpsByTier[1] ?? sts.poison.dpsByTier[0], left: sts.poison.seconds, defense: sts.poison.defenseMinusByTier[1] ?? 0, source: -1 };
+      const stun = fx.stunSeconds ?? fx.freezeSeconds;
+      if (stun) u.stun = Math.max(u.stun ?? 0, stun);
+      if (fx.defenseMinus) u.bare = Math.max(u.bare ?? 0, fx.seconds ?? 10);
       this.damage(u, m.damage);
     }
-    for (const b of s.buildings) {
-      if (b.hp <= 0 || cheb(b.x, b.y, x, y) > m.radius || (b.type === 'command' && this.rules.commandInvulnerable)) continue;
-      b.hp -= m.buildingDamage;
-      if (b.type === 'command') this.emit('center_hit', { x: b.x, y: b.y, owner: b.owner });
+    if (m.hitsBuildings) {
+      for (const b of s.buildings) {
+        if (b.hp <= 0 || cheb(b.x, b.y, x, y) > m.radius || (b.type === 'command' && this.rules.commandInvulnerable)) continue;
+        b.hp -= m.damage;
+        if (b.type === 'command') this.emit('center_hit', { x: b.x, y: b.y, owner: b.owner });
+      }
     }
     this.emit('mine_blast', { x, y, text: tech, amount: hits });
   }
 
-  /** A bonus capsule gives one random bonus, once (hazards.json bonusCapsule). */
+  /** A bonus capsule gives one random bonus, once (hazards.json bonusCapsule.pool). */
   private openCapsule(player: Player, x: number, y: number): void {
     const s = this.s;
-    const types = hazards.bonusCapsule.types;
-    const ids = Object.keys(types);
+    const pool = hazards.bonusCapsule.pool;
+    const ids = Object.keys(pool);
     const id = ids[randIntOf(s, ids.length)];
-    const b = types[id];
+    const b = pool[id];
     this.cell(x, y).bonus = id;
     let amount = 0;
-    switch (id) {
-      case 'energy':
-        amount = b.amount ?? 40;
-        this.earn(player, amount);
-        break;
-      case 'armor': {
-        const near = s.units
-          .filter((u) => u.owner === player.id && (u.kind === 'ally' || u.kind === 'resident') && u.hp > 0 && (u.armorPlates ?? 0) < armorPlateDef.maxPerHero)
-          .sort((a, c) => dist(a.x, a.y, x, y) - dist(c.x, c.y, x, y));
-        const u = near[0];
-        if (u) {
-          const give = Math.min(b.plates ?? 1, armorPlateDef.maxPerHero - (u.armorPlates ?? 0));
-          u.armorPlates = (u.armorPlates ?? 0) + give;
-          u.base = { ...u.base, defense: u.base.defense + give * armorPlateDef.defenseAdd };
-          u.hp += give * armorPlateDef.hpAdd;
-          amount = give;
-        }
-        break;
+    if (b.energy) {
+      amount = b.energy;
+      this.earn(player, amount);
+    }
+    if (b.armorPlateNearestHero) {
+      const near = s.units
+        .filter((u) => u.owner === player.id && (u.kind === 'ally' || u.kind === 'resident') && u.hp > 0 && (u.armorPlates ?? 0) < armorPlateDef.maxPerHero)
+        .sort((a, c) => dist(a.x, a.y, x, y) - dist(c.x, c.y, x, y));
+      const u = near[0];
+      if (u) {
+        const give = Math.min(b.armorPlateNearestHero, armorPlateDef.maxPerHero - (u.armorPlates ?? 0));
+        u.armorPlates = (u.armorPlates ?? 0) + give;
+        u.base = { ...u.base, defense: u.base.defense + give * armorPlateDef.defenseAdd };
+        u.hp += give * armorPlateDef.hpAdd;
+        amount = give;
       }
-      case 'repair':
-        for (const bl of s.buildings) {
-          if (bl.owner !== player.id || bl.hp <= 0) continue;
-          const max = buildingDefs[bl.type].hp;
-          bl.hp = Math.min(max, bl.hp + (max * (b.percent ?? 30)) / 100);
+    }
+    if (b.buildingsHealPercent) {
+      for (const bl of s.buildings) {
+        if (bl.owner !== player.id || bl.hp <= 0) continue;
+        const max = buildingDefs[bl.type].hp;
+        bl.hp = Math.min(max, bl.hp + (max * b.buildingsHealPercent) / 100);
+      }
+      amount = b.buildingsHealPercent;
+    }
+    if (b.peekCharges) {
+      // A 3×3 peek around the capsule: every hidden danger there gets an «Опасно» mark.
+      for (let dy = -1; dy <= 1; dy++) {
+        for (let dx = -1; dx <= 1; dx++) {
+          if (!inBounds(s, x + dx, y + dy)) continue;
+          const n = this.cell(x + dx, y + dy);
+          if (n.revealed || n.marked || CHANNEL_OF[n.content] !== 'threat' && CHANNEL_OF[n.content] !== 'demon') continue;
+          n.marked = true;
+          n.markKind = 'danger';
+          amount++;
         }
-        amount = b.percent ?? 30;
-        break;
-      case 'sync':
-        amount = b.charges ?? 1;
-        player.assist.charges += amount;
-        break;
-      case 'damage_resist':
-        amount = b.seconds ?? 20;
-        player.resistUntil = s.time + amount;
-        break;
+      }
+      this.rev++;
+    }
+    if (b.heroesDamageTakenFactor) {
+      amount = b.seconds ?? 20;
+      player.resistUntil = s.time + amount;
     }
     this.emit('bonus_opened', { x, y, owner: player.id, text: id, amount });
   }
@@ -800,6 +819,8 @@ export class World {
     if (c.revealed) return;
     this.rev++;
     c.revealed = true;
+    const defusing = c.defuse === true;
+    c.defuse = undefined;
     c.marked = false;
     c.markKind = undefined;
     const k = cellKey(x, y);
@@ -835,8 +856,15 @@ export class World {
         break;
       }
       case 'mine':
-        // Opened by a dig: it arms and blows after the fuse (hazards.json mine).
-        c.fuse = hazards.mine.fuseSeconds;
+        // Dug under an «Опасно» mark: the heroes defuse it (hazards.json mine.markedDig).
+        if (defusing && hazards.mine.markedDig.defuse) {
+          c.resolved = true;
+          this.earn(player, hazards.mine.markedDig.energy);
+          this.emit('mine_defused', { x, y, owner, text: c.tech, amount: hazards.mine.markedDig.energy });
+          break;
+        }
+        // Dug blind: it arms and blows after the fuse.
+        c.fuse = hazards.mine.unmarkedDig.armSeconds;
         this.emit('mine_armed', { x, y, owner, text: c.tech });
         break;
       case 'bonus_capsule':
@@ -1583,7 +1611,7 @@ export class World {
     if (!isEnemy(v)) {
       amount *= this.allyGuard(v);
       const p = this.s.players[v.owner];
-      if (p?.resistUntil !== undefined && this.s.time < p.resistUntil) amount *= hazards.bonusCapsule.types.damage_resist?.factor ?? 1;
+      if (p?.resistUntil !== undefined && this.s.time < p.resistUntil) amount *= hazards.bonusCapsule.pool.damage_resist?.heroesDamageTakenFactor ?? 1;
     }
     v.hp -= amount;
     // Raiders keep to the buildings until a resident hits them (raidRules.raidersPreferBuildings).

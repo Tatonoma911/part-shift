@@ -41,6 +41,8 @@ export interface Cell {
   work?: number;
   /** Mine: seconds until an opened (armed) mine blows; undefined when hidden or spent. */
   fuse?: number;
+  /** Dug on purpose under an «Опасно» mark: a mine here is defused, not blown (MVP_RULES §5.2). */
+  defuse?: boolean;
   /** Bonus capsule: the bonus it gave (hazards.json bonusCapsule.types). */
   bonus?: string;
   /** Medkit: seconds of healing left after it was opened. */

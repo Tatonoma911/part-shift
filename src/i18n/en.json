@@ -407,7 +407,8 @@
   "event.bonus.armor": "Supply capsule: an armor plate for the nearest hero. One size fits all, as usual.",
   "event.bonus.armor_none": "Supply capsule with an armor plate, but no heroes are nearby. The plate stays on the books.",
   "event.bonus.repair": "Supply capsule: buildings patched up by {amount}%. Duct tape counts as a repair.",
-  "event.bonus.sync": "Supply capsule: +{amount} HeroOut scanner charge.",
   "event.bonus.damage_resist": "Supply capsule: heroes take less damage for the next {amount} s. Details in the fine print.",
-  "event.medkit.open": "A medkit is open. Stand next to it and wounds will close, unless the gel decides to run off again."
+  "event.medkit.open": "A medkit is open. Stand next to it and wounds will close, unless the gel decides to run off again.",
+  "event.mine.defused": "The mine under the Danger mark is defused, +{energy} Energy. Control logged it as scheduled maintenance.",
+  "event.bonus.peek": "Supply capsule: a 3×3 peek around it. Dangers found: {amount}, all marked Danger."
 }
