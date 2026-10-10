@@ -51,7 +51,8 @@ export function volumeSliders(scene: Phaser.Scene, x: number, y: number, w: numb
     let dragging = false;
     const set = (p: Phaser.Input.Pointer) => {
       const m = hit.getWorldTransformMatrix();
-      const v = Phaser.Math.Clamp((p.x - m.tx - KNOB) / w, 0, 1);
+      // m.a: the menu panel may be scaled down to fit the screen.
+      const v = Phaser.Math.Clamp(((p.x - m.tx) / m.a - KNOB) / w, 0, 1);
       // Snap to 5% steps; the far left is off.
       sound.setPrefs({ [ch]: Math.round(v * 20) / 20 });
       draw();

@@ -336,9 +336,13 @@ export class MenuScene extends Phaser.Scene {
     }
     const h = y - top + 24;
     plate(bg, x0, top, w, h, 28);
-    // Keep the panel on screen when it grows (settings has six rows).
-    const overflow = top + h + 24 - VIEW.height;
-    if (overflow > 0) c.y = -overflow;
+    // A panel taller than the screen shrinks to fit below its top edge (landscape is only 900 high), never scrolls off.
+    const room = VIEW.height - 24 - top;
+    if (h > room) {
+      const s = room / h;
+      c.setScale(s);
+      c.setPosition(cx * (1 - s), top * (1 - s));
+    }
   }
 
   /** Online screen over the menu (src/net/lobby.ts); the match opens the board. */
