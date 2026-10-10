@@ -1036,7 +1036,7 @@ export class GameScene extends Phaser.Scene {
     this.overlay?.destroy();
     this.overlay = this.sheet({
       // Comic illustration when the artist's screen is in (style per layer); until then the Command Center sprite, grey on a loss.
-      art: victory ? 'screen.win' : 'screen.lose',
+      art: victory ? 'screen.screen_win' : 'screen.screen_lose',
       portrait: 'portrait.bld_command',
       grey: !victory,
       badge,
@@ -1124,8 +1124,10 @@ export class GameScene extends Phaser.Scene {
     const shade = this.add.rectangle(0, 0, VIEW.width, VIEW.height, 0x0a1218, 0.55).setOrigin(0).setInteractive();
     shade.on('pointerdown', (_p: Phaser.Input.Pointer, _x: number, _y: number, ev: Ev) => ev.stopPropagation());
     c.add(shade);
-    const w = Math.min(VIEW.width - 56, 724);
-    const x = (VIEW.width - w) / 2;
+    // PC: a comic picture gets the left half and the sheet sits on the right, both centred (AR-12).
+    const side = LANDSCAPE && !!o.art && this.textures.exists(o.art);
+    const w = side ? Math.min(VIEW.width / 2 - 80, 640) : Math.min(VIEW.width - 56, 724);
+    const x = side ? VIEW.width / 2 + (VIEW.width / 2 - w) / 2 - 20 : (VIEW.width - w) / 2;
     const content: Phaser.GameObjects.GameObject[] = [];
     let y = 56;
     if (o.badge) {
@@ -1176,24 +1178,28 @@ export class GameScene extends Phaser.Scene {
     }
     if (col) y += 112;
     const h = y + 28;
-    const top = VIEW.height - h - 40;
+    const top = side ? Math.max(30, (VIEW.height - h) / 2) : VIEW.height - h - 40;
     const bg = this.add.graphics();
     plate(bg, 0, 0, w, h, 30);
     const body = this.add.container(x, top, [bg, ...content]);
     // Picture above the sheet, never under its edge (ART_REVIEW AR-12).
     const room = Math.min(380, top - 40);
-    if (o.art && this.textures.exists(o.art) && room > 120) {
+    if (o.art && this.textures.exists(o.art) && (side || room > 120)) {
       // Comic illustration: a framed panel with an ink border, like the intro comic.
-      const img = this.add.image(VIEW.width / 2, top - 14, o.art).setOrigin(0.5, 1);
-      img.setScale(Math.min((w - 24) / img.width, room / img.height));
+      const cx = side ? VIEW.width / 4 + 20 : VIEW.width / 2;
+      const bottom = side ? VIEW.height / 2 : top - 14;
+      const img = this.add.image(cx, bottom, o.art).setOrigin(0.5, side ? 0.5 : 1);
+      img.setScale(side ? Math.min((VIEW.width / 2 - 100) / img.width, (VIEW.height - 120) / img.height) : Math.min((w - 24) / img.width, room / img.height));
       const fw = img.displayWidth;
       const fh = img.displayHeight;
+      const fx = cx - fw / 2;
+      const fy = side ? bottom - fh / 2 : bottom - fh;
       const shadow = this.add.graphics();
       shadow.fillStyle(0x0b1117, 0.35);
-      shadow.fillRect(VIEW.width / 2 - fw / 2 + 6, top - 14 - fh + 8, fw, fh);
+      shadow.fillRect(fx + 6, fy + 8, fw, fh);
       const frame = this.add.graphics();
       frame.lineStyle(6, 0x10171c, 1);
-      frame.strokeRect(VIEW.width / 2 - fw / 2, top - 14 - fh, fw, fh);
+      frame.strokeRect(fx, fy, fw, fh);
       c.add([shadow, img, frame]);
     } else if (o.portrait && this.textures.exists(o.portrait) && room > 80) {
       // Pixel sprite: whole-number scale only and no rotation, so pixels stay square.
