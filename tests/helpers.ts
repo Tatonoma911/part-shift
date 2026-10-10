@@ -29,5 +29,5 @@ export function run(w: World, seconds: number): void {
 }
 
 export function residents(w: World, owner = 0) {
-  return w.s.units.filter((u) => u.owner === owner && u.kind === 'resident');
+  return w.s.units.filter((u) => u.owner === owner && (u.kind === 'resident' || u.kind === 'ally'));
 }

@@ -139,7 +139,7 @@ describe('nests and combat', () => {
     take('volt_arm', 2);
     expect(Object.values(r.parts).map((p) => p!.id)).toContain('volt_arm');
     take('runner_leg', 1);
-    expect(w.stats(r).hp).toBe(residentStats.hp + 10);
+    expect(w.stats(r).hp).toBe(r.base.hp + 10);
   });
 
   it('a part protects from its own element', () => {
@@ -193,7 +193,7 @@ describe('heroes and the call target', () => {
     const w = squad(['..........', '..........', '..........', '.........L'], 1);
     Object.assign(w.cell(9, 3), { hero: 'standard', heroTier: 1 });
     internals(w).reveal(9, 3, 0);
-    const copies = w.s.units.filter((u) => u.hero === 'standard');
+    const copies = w.s.units.filter((u) => u.hero === 'standard' && u.kind === 'hero');
     expect(copies).toHaveLength(3);
     expect(copies[0].base.hp).toBeCloseTo((heroes.standard.enemy.hp / 3) * w.difficulty.enemyHpFactor);
   });

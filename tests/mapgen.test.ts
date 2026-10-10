@@ -52,7 +52,7 @@ describe('field generation (mapgen.json)', () => {
   it('opens the 3×3 start and gives the first resident at once', () => {
     const w = generated(3);
     expect(w.s.cells.filter((c) => c.revealed).length).toBeGreaterThanOrEqual(9);
-    expect(w.s.units.filter((u) => u.kind === 'resident')).toHaveLength(config.population.initialResidents);
+    expect(w.s.units.filter((u) => u.kind === 'resident' || u.kind === 'ally')).toHaveLength(config.population.initialResidents);
     expect(w.player(0).energy).toBe(w.cfg.economy.startEnergy);
   });
 });

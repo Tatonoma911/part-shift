@@ -85,14 +85,14 @@ describe('cache bonuses (boons.json, META.md §8)', () => {
     const e0 = p.energy;
     grant('energy_cache');
     expect(p.energy - e0).toBe(120);
-    const r = w.s.units.find((u) => u.kind === 'resident')!;
+    const r = w.s.units.find((u) => u.kind === 'resident' || u.kind === 'ally')!;
     const d0 = w.stats(r).defense;
     grant('armor_plates');
     expect(w.stats(r).defense - d0).toBe(2);
-    const n0 = w.s.units.filter((u) => u.kind === 'resident').length;
+    const n0 = w.s.units.filter((u) => u.kind === 'resident' || u.kind === 'ally').length;
     const cap0 = w.residentCap(0);
     grant('reinforcements');
-    expect(w.s.units.filter((u) => u.kind === 'resident').length - n0).toBe(2);
+    expect(w.s.units.filter((u) => u.kind === 'resident' || u.kind === 'ally').length - n0).toBe(2);
     expect(w.residentCap(0) - cap0).toBe(2);
   });
 
@@ -125,6 +125,7 @@ describe('allies (heroes back on the team)', () => {
     const w = team(['seraph']);
     for (const site of w.s.sites) site.spawnTimer = Infinity;
     const seraph = w.s.units.find((u) => u.kind === 'ally')!;
+    (w as unknown as { spawnResident(o: number, x: number, y: number): void }).spawnResident(0, Math.round(seraph.x), Math.round(seraph.y));
     const r = w.s.units.find((u) => u.kind === 'resident')!;
     Object.assign(r, { x: seraph.x, y: seraph.y });
     r.hp = 1;
@@ -141,6 +142,7 @@ describe('allies (heroes back on the team)', () => {
   it('Килн: residents next to him take less damage', () => {
     const w = team(['kiln']);
     const kiln = w.s.units.find((u) => u.kind === 'ally')!;
+    (w as unknown as { spawnResident(o: number, x: number, y: number): void }).spawnResident(0, Math.round(kiln.x), Math.round(kiln.y));
     const r = w.s.units.find((u) => u.kind === 'resident')!;
     Object.assign(r, { x: kiln.x, y: kiln.y });
     const hp = r.hp;
