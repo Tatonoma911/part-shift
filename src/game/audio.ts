@@ -1,4 +1,5 @@
 import manifest from '../assets/audio/sounds.json';
+import { MENU_TRACKS, menuHold, nextMenuTrack } from './menuMusic';
 
 /**
  * Sound effects and music from audio/sounds.json (owner: sound designer).
@@ -103,6 +104,8 @@ class SoundBoard {
   private ducked = false;
   /** The guide's theme is playing; `back` is the track to return to. */
   private lore: { back: string | null } | null = null;
+  /** Title-screen rotation: the next theme fades in when this fires (menuMusic.ts). */
+  private menuTimer: ReturnType<typeof setTimeout> | null = null;
   private combo = { step: 0, at: -1e9 };
   prefs: SoundPrefs = { ...DEFAULT_PREFS };
 
@@ -247,7 +250,28 @@ class SoundBoard {
       this.lore.back = id;
       return;
     }
+    if (id === 'menu') {
+      // The title screen keeps the theme that is already rotating; otherwise it starts a random one.
+      if (this.wantMusic && (MENU_TRACKS as readonly string[]).includes(this.wantMusic)) return;
+      this.switchMusic(nextMenuTrack(null, Math.random()));
+      return;
+    }
     this.switchMusic(id);
+  }
+
+  /** On the title screen, one theme plays 1–2 minutes, then the next one crossfades in (never the same twice). */
+  private scheduleMenuRotate(): void {
+    this.clearMenuRotate();
+    this.menuTimer = setTimeout(() => {
+      this.menuTimer = null;
+      if (this.lore || !this.wantMusic || !(MENU_TRACKS as readonly string[]).includes(this.wantMusic)) return;
+      this.switchMusic(nextMenuTrack(this.wantMusic, Math.random()));
+    }, menuHold(Math.random()));
+  }
+
+  private clearMenuRotate(): void {
+    if (this.menuTimer !== null) clearTimeout(this.menuTimer);
+    this.menuTimer = null;
   }
 
   /** The guide (справочник) opened over the menu or a run: its theme crossfades in, undimmed by pause. */
@@ -270,6 +294,8 @@ class SoundBoard {
 
   private switchMusic(id: string): void {
     if (this.wantMusic === id && this.tracks.length) return;
+    this.clearMenuRotate();
+    if ((MENU_TRACKS as readonly string[]).includes(id)) this.scheduleMenuRotate();
     this.wantMusic = id;
     if (!this.ctx) return;
     const ctx = this.ctx;
@@ -393,6 +419,7 @@ class SoundBoard {
   stopMusic(fadeSeconds = 1.5): void {
     this.lore = null;
     this.wantMusic = null;
+    this.clearMenuRotate();
     this.musicToken++;
     this.fadeOut(this.tracks, fadeSeconds);
     this.tracks = [];

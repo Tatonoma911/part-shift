@@ -1440,6 +1440,39 @@
       "bars": 16,
       "loopSeconds": 54.8571,
       "barSync": false
+    },
+    "menu2": {
+      "files": [
+        "music/menu2"
+      ],
+      "volume": 1.0,
+      "loop": true,
+      "bpm": 96,
+      "bars": 32,
+      "loopSeconds": 80.0,
+      "barSync": false
+    },
+    "menu3": {
+      "files": [
+        "music/menu3"
+      ],
+      "volume": 1.0,
+      "loop": true,
+      "bpm": 112,
+      "bars": 32,
+      "loopSeconds": 68.5714,
+      "barSync": false
+    },
+    "menu4": {
+      "files": [
+        "music/menu4"
+      ],
+      "volume": 1.0,
+      "loop": true,
+      "bpm": 92,
+      "bars": 32,
+      "loopSeconds": 83.4783,
+      "barSync": false
     }
   },
   "musicRules": "audio/MUSIC.md"
