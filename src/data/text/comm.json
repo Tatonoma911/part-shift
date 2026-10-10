@@ -2,69 +2,6 @@
  "_doc": "Фразы героев для всплывающего портрета (комм-окно, левый верхний угол). lines: при появлении героя; build: когда игрок открыл/построил здание; defeat: последняя фраза. Ключи writer-а (hero.line.*, hero.defeat.*) взяты из text/ru.json. Владелец текстов: Сценарист. tech и weak (уязвимости, resist > 1, по убыванию) берутся из design/data/heroes.json.",
  "version": 1,
  "heroes": {
-  "standard": {
-   "name": {
-    "ru": "Стандарт",
-    "en": "Standard"
-   },
-   "tech": "kinetic",
-   "weak": [],
-   "portrait": "standard",
-   "voice": "voice_hero_standard",
-   "lines": [
-    {
-     "key": "hero.line.standard.1",
-     "ru": "Мы Стандарт. Мы Стандарт. Мы Стандарт.",
-     "en": "We are Standard. We are Standard. We are Standard."
-    },
-    {
-     "key": "hero.line.standard.2",
-     "ru": "Ваша модель устарела. Пройдите обновление.",
-     "en": "Your model is outdated. Please update."
-    },
-    {
-     "key": "hero.line.standard.3",
-     "ru": "Мы одинаковые. Это и есть индивидуальный подход.",
-     "en": "We're all the same. That IS the personal approach."
-    },
-    {
-     "key": "hero.line.standard.4",
-     "ru": "Один из нас лишний. Не скажем какой.",
-     "en": "One of us is extra. We won't say which."
-    },
-    {
-     "ru": "Не волнуйтесь, нас много. Гарантия на каждого — до первого удара.",
-     "en": "Don't worry, there are lots of us. Each comes with a warranty until the first punch."
-    },
-    {
-     "ru": "Мы пришли по вызову. По трём вызовам. Одновременно.",
-     "en": "We answered the call. Three calls. At once."
-    },
-    {
-     "ru": "Жалобы принимает Стандарт номер два. Он занят. Он всегда занят.",
-     "en": "Complaints go to Standard number two. He's busy. He's always busy."
-    },
-    {
-     "ru": "Вы тоже Стандарт? Нет? Это поправимо.",
-     "en": "Are you a Standard too? No? That's fixable."
-    }
-   ],
-   "build": [
-    {
-     "ru": "Новое здание. Тоже серийное? Нет? Жаль.",
-     "en": "A new building. Mass-produced too? No? Pity."
-    },
-    {
-     "ru": "Мы оценили постройку. Три раза. Оценка одинаковая.",
-     "en": "We rated the building. Three times. Same score."
-    }
-   ],
-   "defeat": {
-    "key": "hero.defeat.standard",
-    "ru": "Ошибка… серийного… номера…",
-    "en": "Error… serial… number…"
-   }
-  },
   "patch": {
    "name": {
     "ru": "Патч",

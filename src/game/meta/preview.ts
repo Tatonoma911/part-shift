@@ -13,7 +13,7 @@ import { emptyMeta, rollDistrict, type MetaSave } from './store';
 export function demoMeta(): MetaSave {
   const m = emptyMeta();
   m.tutorialDone = true;
-  m.unlocked = ['standard', 'patch', 'current', 'frostline'];
+  m.unlocked = ['patch', 'current', 'frostline', 'canopy'];
   m.seenHeroes = ['canopy', 'lineman', 'mason', 'sweep', 'kiln', 'demon', 'hive'];
   m.allyChoice = ['patch'];
   m.stats = {
@@ -69,7 +69,7 @@ export function metaDemo(scene: Phaser.Scene, which: string, meta: MetaSave): bo
     const m = {
       ...meta,
       unlocked: [...meta.unlocked, 'lineman', 'mason', 'kiln', 'hive'],
-      stats: { ...meta.stats, 'sync.standard': 34, 'sync.patch': 18, 'sync.current': 6, 'sync.frostline': 52, 'sync.kiln': 2 },
+      stats: { ...meta.stats, 'sync.patch': 18, 'sync.current': 6, 'sync.frostline': 52, 'sync.kiln': 2 },
     };
     root = shiftBrief(scene, m, rollDistrict(m), again, again);
     return true;
