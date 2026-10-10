@@ -15,7 +15,7 @@ import { chip, plate, TXT } from './ui';
  * Building the city the way mobile strategies do it (Clash of Clans, Kingdom Rush,
  * Bad North; Антон 10.10: «понятно, приятно и знакомо по играм жанра»):
  *   1. a big «Строить» button in the dock;
- *   2. it slides up a catalog: tabs by group and a swipeable row of cards
+ *   2. it slides up a catalog: one vertical grid of every building, with a scrollable list
  *      (picture, price in Energy, land it frees, and why it is closed: blueprint 2/4,
  *      «нужна Школа», «построено 2/2», not enough Energy);
  *   3. picking a card puts a ghost of the building on the board: green where it can stand,
@@ -297,8 +297,8 @@ interface Box {
 }
 
 /**
- * The catalog sheet: header (title, Energy, ✕), group tabs, a swipeable row of cards.
- * Mouse wheel scrolls the row on PC. Cards redraw live while it is open (Energy grows).
+ * The catalog sheet: header (title, Energy, ✕) and one vertical grid of every building.
+ * Drag or mouse wheel scrolls the list. Cards redraw live while it is open (Energy grows).
  */
 export class BuildDrawer {
   private root: Phaser.GameObjects.Container | null = null;
@@ -306,7 +306,6 @@ export class BuildDrawer {
   private cols = 3;
   private gap = 10;
   private cards: { o: BuildOption; c: Phaser.GameObjects.Container; x: number; y: number }[] = [];
-  private tabs: { group: BuildGroup; g: Phaser.GameObjects.Graphics; t: Phaser.GameObjects.Text; x: number; w: number }[] = [];
   private energyText: Phaser.GameObjects.Text | null = null;
   private scroll = 0;
   private maxScroll = 0;
@@ -368,25 +367,6 @@ export class BuildDrawer {
       this.on.close();
     });
     root.add([cg, ct, chit]);
-    // Tabs: one per group present; a tap scrolls the row to that group.
-    const groups = GROUPS.filter((gr) => options.some((o) => o.group === gr));
-    let tx = x + pad;
-    this.tabs = [];
-    for (const gr of groups) {
-      const label = s.add.text(0, y + 112, t(`build.group.${gr}`), TXT.body(LANDSCAPE ? 19 : 21, INK.graphite, '700')).setOrigin(0.5);
-      const tw = label.width + 36;
-      label.setX(tx + tw / 2);
-      const tg = s.add.graphics();
-      const hit = s.add.zone(tx, y + 88, tw, 48).setOrigin(0).setInteractive({ useHandCursor: true });
-      hit.on('pointerdown', (_p: Phaser.Input.Pointer, _x: number, _y: number, ev: Phaser.Types.Input.EventData) => {
-        ev.stopPropagation();
-        const first = this.cards.find((c) => c.o.group === gr);
-        if (first) this.scrollTo(first.y - 4, true);
-      });
-      root.add([tg, label, hit]);
-      this.tabs.push({ group: gr, g: tg, t: label, x: tx, w: tw });
-      tx += tw + 10;
-    }
     // Card row.
     const sy = y + 152;
     const sx = x + pad;
@@ -487,20 +467,6 @@ export class BuildDrawer {
     const sy = this.box.y + 152;
     if (ease) this.scene.tweens.add({ targets: this.strip, y: sy - to, duration: 220, ease: 'Cubic.easeOut' });
     else this.strip.y = sy - to;
-    this.drawTabs();
-  }
-
-  private drawTabs(): void {
-    // The active tab: the last group that starts in the upper half of the visible strip.
-    const at = this.scroll + (this.box.h - 196) / 2;
-    const starts = this.cards.filter((c, k) => k === 0 || this.cards[k - 1].o.group !== c.o.group);
-    const cur = [...starts].reverse().find((c) => c.y <= at)?.o.group ?? this.cards[0]?.o.group;
-    for (const tb of this.tabs) {
-      const on = tb.group === cur;
-      tb.g.clear();
-      chip(tb.g, tb.x, this.box.y + 88, tb.w, 48, on ? C.graphite : 0xe6eef0, 1, 10);
-      tb.t.setColor(on ? INK.white : INK.graphite);
-    }
   }
 
   private drawCards(options: BuildOption[]): void {
@@ -513,7 +479,6 @@ export class BuildDrawer {
       card.c.removeAll(true);
       drawCard(this.scene, card.c, o, this.cardW, this.cardH, this.highlight.includes(o.id), o.key === this.selected);
     }
-    this.drawTabs();
   }
 }
 
