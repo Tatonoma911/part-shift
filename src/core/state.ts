@@ -189,6 +189,10 @@ export interface Building {
   level?: number;
   /** Seconds remaining on the boost cooldown (0 or absent = ready). */
   boostCooldown?: number;
+  /** Seconds until the forge can recolor again (buildings.json forge.recolor.cooldownSeconds). */
+  recolorCooldown?: number;
+  /** Seconds until the rotation centre can swap again (buildings.json rotation_center.swap.cooldownSeconds). */
+  swapCooldown?: number;
   /** True while the building is in ruined state (damaged below 0 HP). */
   ruined?: boolean;
   /** Total energy spent building and upgrading this structure (for demolish refund). */
