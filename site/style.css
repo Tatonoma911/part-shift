@@ -541,3 +541,4 @@ footer .wrap { display: flex; gap: 18px; justify-content: space-between; flex-wr
 .support-card .jar { width: 100%; max-width: 320px; aspect-ratio: 1; object-fit: cover; justify-self: center; }
 .moods { grid-template-columns: repeat(5, minmax(0, 1fr)); }
 @media (max-width: 480px) { .moods { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+#story, #support { scroll-margin-top: 64px; }

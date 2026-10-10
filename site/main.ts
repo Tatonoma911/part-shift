@@ -107,14 +107,14 @@ function home(): string {
       <span class="caps">LUMEN CITY // ${R('СМЕНА 01', 'SHIFT 01')}</span>
       <h1>PART<b>SHIFT</b></h1>
       <p class="lead">${R(
-        'Сеть спасения сломалась и перестроила город под себя. Открывай кварталы, строй, защищай жителей и забирай у врагов их руки, ноги и хвосты.',
-        'The rescue network broke and rebuilt the city in its own image. Open blocks, build, protect residents and take your enemies’ arms, legs and tails.',
+        'Гель Splice свёл с ума спасателей Lumen City, и теперь они спасают всех так, что приходится убегать. Открывай кварталы, печатай своих героев и забирай у заражённых их руки, ноги и силу.',
+        'Splice gel drove Lumen City’s rescuers mad, and now they rescue everyone so hard that people run. Open blocks, print your own heroes and take the infected’s arms, legs and power.',
       )}</p>
-      <div class="row"><a class="btn btn-primary btn-lg" href="${playHref()}">${ICON.play}${u('playFree')}</a><a class="btn btn-ghost btn-lg" href="${APK_URL}" rel="noopener">${R('Скачать для Android', 'Download for Android')}</a><a class="btn btn-ghost btn-lg" href="#world">${R('Узнать историю', 'Read the story')}</a></div>
+      <div class="row"><a class="btn btn-primary btn-lg" href="${playHref()}">${ICON.play}${u('playFree')}</a><a class="btn btn-ghost btn-lg" href="${APK_URL}" rel="noopener">${R('Скачать для Android', 'Download for Android')}</a><a class="btn btn-ghost btn-lg" href="#story" data-scroll="story">${R('Узнать историю', 'Read the story')}</a></div>
     </div></div>
   </section>
 
-  <section class="section"><div class="wrap split">
+  <section class="section" id="story"><div class="wrap split">
     <div class="stack">
       ${head(R('КАНОН // ЧТО СЛУЧИЛОСЬ', 'CANON // WHAT HAPPENED'), R('Город, который любил своих героев', 'The city that loved its heroes'))}
       <div class="prose">
@@ -142,18 +142,18 @@ function home(): string {
   </div></section>
 
   <section class="section" style="padding-top:0"><div class="wrap">
-    ${head(R('ДОСЬЕ // HEROOUT', 'DOSSIERS // HEROOUT'), R('Герои, они же злодеи', 'Heroes, also the villains'), R('У каждого героя одна функция, один цвет, одна мания и одна часть тела, которую мечтает забрать любой житель.', 'Each hero has one function, one colour, one obsession and one body part every resident dreams of claiming.'))}
+    ${head(R('ДОСЬЕ // HEROOUT', 'DOSSIERS // HEROOUT'), R('Герои, они же злодеи', 'Heroes, also the villains'), R('У каждого героя одна функция, один цвет, одна мания и одна часть тела, которую мечтает забрать любой наш герой.', 'Each hero has one function, one colour, one obsession and one body part every hero on our side dreams of claiming.'))}
     <div class="grid">${canon.map(heroTile).join('')}</div>
     <div class="row" style="margin-top:22px"><a class="btn btn-ghost" href="#heroes">${u('all')} (${HEROES.length})</a></div>
   </div></section>
 
   <section class="section band"><div class="wrap split">
     <div class="stack">
-      ${head(R('ИГРА // СРОЧНЫЙ ВЫЗОВ', 'GAME // URGENT CALL'), R('Открой город квартал за кварталом', 'Reopen the city block by block'), R('Числа на открытых кварталах подсказывают, что прячется рядом. Галочки и подсветка сами покажут, где безопасно.', 'Numbers on opened blocks tell you what hides next door. Ticks and highlights show you where it’s safe.'))}
+      ${head(R('ИГРА // СРОЧНЫЙ ВЫЗОВ', 'GAME // URGENT CALL'), R('Открой город квартал за кварталом', 'Reopen the city block by block'), R('Датчики на открытых кварталах показывают, что прячется рядом. Считать придётся самому: игра за тебя не решает.', 'Sensors on opened blocks show what hides next door. The counting is up to you: the game won’t solve it for you.'))}
       <div class="howto">${howto(true)}</div>
       <div class="row"><a class="btn btn-primary btn-lg" href="${playHref()}">${ICON.play}${u('playFree')}</a></div>
     </div>
-    <figure><img src="${img('sprites-02.webp')}" alt="" loading="lazy"><figcaption>${R('Обычный житель забирает руку врага и меняется прямо на поле.', 'An ordinary resident takes an enemy’s arm and changes right on the board.')}</figcaption></figure>
+    <figure><img src="${img('sprites-02.webp')}" alt="" loading="lazy"><figcaption>${R('Герой забирает руку врага и меняется прямо на поле.', 'A hero takes an enemy’s arm and changes right on the board.')}</figcaption></figure>
   </div></section>
 
   <section class="section"><div class="wrap">
@@ -172,9 +172,9 @@ function home(): string {
 function howto(dark = false): string {
   const steps: [string, string, string, string, string][] = [
     ['⌂', 'Поставь Командный центр', 'Place the Command Center', 'Первое нажатие на поле. Это твоя база: потеряешь её — смена окончена.', 'Your first tap. It’s your base; lose it and the shift is over.'],
-    ['↘', 'Проведи по кварталам', 'Swipe across blocks', 'Жители сами пойдут копать. Открытые клетки дают Энергию и место для стройки.', 'Residents go and dig. Opened cells give Energy and room to build.'],
-    ['▲', 'Читай числа', 'Read the numbers', '▲ гнёзда врагов рядом, ◆ находки, ⬡ герой на вызове. Зелёная галочка — точно безопасно.', '▲ nests nearby, ◆ finds, ⬡ the hero on call. A green tick means safe for sure.'],
-    ['✚', 'Расти и забирай части', 'Grow and claim parts', 'Школа делает защитников. Победив врага, защитник сам прикрутит его руку или ногу.', 'The school trains defenders. After a win, a defender bolts on the enemy’s arm or leg.'],
+    ['↘', 'Проведи по кварталам', 'Swipe across blocks', 'Твои герои пойдут копать то, что ты отметил. Открытые кварталы дают Энергию и место для стройки.', 'Your heroes dig what you mark. Opened blocks give Energy and room to build.'],
+    ['▲', 'Читай датчики', 'Read the sensors', 'Красный показывает гнёзда рядом, фиолетовый показывает героя на вызове, голубой показывает находки. Где безопасно, решаешь ты.', 'Red shows nests nearby, violet shows the hero on call, blue shows finds. You decide where it’s safe.'],
+    ['✚', 'Строй и забирай части', 'Build and claim parts', 'Здания печатают героев из твоего отряда. Победив врага, герой сам прикрутит себе его руку или ногу.', 'Buildings print heroes from your squad. After a win, a hero bolts on the enemy’s arm or leg.'],
   ];
   return steps
     .map(
@@ -496,6 +496,8 @@ function route(): { view: string; active: string; anchor?: string } {
       return { view: comicsView(), active: 'comics' };
     case 'support':
       return { view: home(), active: 'home', anchor: 'support' };
+    case 'story':
+      return { view: home(), active: 'home', anchor: 'story' };
     case 'archive':
       return { view: villainsView(), active: 'villains', anchor: 'archive' };
     default:
@@ -537,6 +539,12 @@ app.addEventListener('click', (ev) => {
   if (t.closest('#burger')) return void (document.getElementById('drawer')!.hidden = false);
   if (t.closest('#drawer-close') || t.id === 'drawer') return void (document.getElementById('drawer')!.hidden = true);
   if (t.closest('#drawer a')) document.getElementById('drawer')!.hidden = true;
+  // «Узнать историю» just scrolls the home page down to the canon block instead of opening a new page.
+  const jump = t.closest<HTMLAnchorElement>('a[data-scroll]');
+  if (jump) {
+    ev.preventDefault();
+    return document.getElementById(jump.dataset.scroll!)?.scrollIntoView({ behavior: 'smooth' });
+  }
   const zoom = t.closest<HTMLButtonElement>('button.zoom');
   if (zoom) {
     const lb = document.getElementById('lightbox')!;
