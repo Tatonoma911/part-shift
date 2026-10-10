@@ -160,6 +160,9 @@ export interface Orb {
   x: number;
   y: number;
   amount: number;
+  /** Where the orb was born (view only: arc of the flight). */
+  x0?: number;
+  y0?: number;
 }
 
 export interface Player {
