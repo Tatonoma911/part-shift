@@ -14,6 +14,10 @@ describe('campaign shift settings', () => {
     expect(o.lairTotal).toBe(0);
   });
 
+  it('shift 1 uses its own enemy and start-energy factors', () => {
+    expect(getCampaignWorld(1).factors).toMatchObject({ enemyHpFactor: 0.6, enemyDamageFactor: 0.6, startEnergy: 150 });
+  });
+
   it('shift 3 places its one lair', () => {
     expect(getCampaignWorld(3).lairTotal).toBe(1);
   });
