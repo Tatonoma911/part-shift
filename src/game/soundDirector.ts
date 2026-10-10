@@ -55,6 +55,8 @@ export class SoundDirector {
   private stageAt = 0;
   private calmSince: number | null = null;
   private ambient = 0;
+  /** Construction progress already voiced per building: 0 = nothing, 1 = hammer, 2..4 = welds at 25/50/75 %. */
+  private buildSteps = new Map<number, number>();
 
   constructor(
     private world: World,
@@ -103,6 +105,14 @@ export class SoundDirector {
         return [`hero_spawn_${tech ?? 'impact'}`, 'quarantine_siren'];
       case 'hero_ability':
         return [`hero_ability_${tech ?? 'impact'}`];
+      case 'build_place':
+        // The dispatcher's radio click as the spot is confirmed, then the foundation clunk.
+        return ['radio_click', 'build_place'];
+      case 'build_done': {
+        // Every building finishes with its own sound (buildings.json feel.sfx.done).
+        const own = e.text ? `built_${e.text}` : '';
+        return [sound.has(own) ? own : 'build_done'];
+      }
       case 'hit': {
         // An enemy landing a blow on one of our residents.
         const by = e.unit !== undefined ? this.world.s.units.find((u) => u.id === e.unit) : undefined;
@@ -128,7 +138,24 @@ export class SoundDirector {
     const near = enemies.some((v) => ours.some((o) => Math.max(Math.abs(o.x - v.x), Math.abs(o.y - v.y)) < DANGER_RADIUS));
     if (near || s.time - this.lastAlarm < 8 || (s.boss.warned && !s.boss.awake)) this.dangerUntil = s.time + DANGER_HOLD;
     sound.setLayers(heroes, s.time < this.dangerUntil ? 1 : 0);
+    this.construction();
     this.pickStage();
+  }
+
+  /** Hammer when work on our building starts, a weld at 25, 50 and 75 % (buildings.json feel.sfx). */
+  private construction(): void {
+    const s = this.world.s;
+    for (const b of s.buildings) {
+      if (b.owner !== this.me || b.complete || b.hp <= 0) {
+        this.buildSteps.delete(b.id);
+        continue;
+      }
+      const p = b.built / Math.max(0.001, this.world.buildSeconds(b));
+      const step = p <= 0 ? 0 : 1 + Math.min(3, Math.floor(p * 4));
+      const was = this.buildSteps.get(b.id) ?? 0;
+      if (step > was) sound.play(was === 0 ? 'hammer' : 'hammer_weld');
+      this.buildSteps.set(b.id, Math.max(was, step));
+    }
   }
 
   /** The stage the board calls for right now (MUSIC.md, "Стадии"). */

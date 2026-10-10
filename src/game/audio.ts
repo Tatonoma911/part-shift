@@ -192,6 +192,11 @@ class SoundBoard {
     return p;
   }
 
+  /** The manifest has this sound (per-building variants fall back to a generic one). */
+  has(id: string): boolean {
+    return id in SFX;
+  }
+
   play(id: string): void {
     const def = SFX[id];
     if (!def || !this.ctx || this.prefs.master <= 0 || this.prefs[this.channelOf(def)] <= 0) return;
