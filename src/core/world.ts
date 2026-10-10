@@ -3229,6 +3229,10 @@ export class World {
     if (civ > 0) this.loseCivilians(p, civ, 'call');
     const sooner = num('nextRaidSooner');
     if (sooner > 0 && this.s.raidAt !== undefined) this.s.raidAt -= sooner;
+    const cmdMax = num('commandMaxHpFactor');
+    if (cmdMax) {
+      for (const b of this.s.buildings) if (b.owner === p.id && b.type === 'command' && b.hp > 0) b.hp = Math.round(b.hp * cmdMax);
+    }
     const cmdPct = num('commandHpPercent');
     if (cmdPct) {
       for (const b of this.s.buildings) if (b.owner === p.id && b.type === 'command' && b.hp > 0) b.hp = Math.max(1, Math.round(b.hp * (1 + cmdPct / 100)));
@@ -3287,7 +3291,7 @@ export class World {
 }
 
 /** Effects applyCallEffect and the campaign can carry out today; events with others stay out of the draw. */
-const CALL_EFFECTS = new Set(['energy', 'civiliansFromBalance', 'civiliansLose', 'nextRaidSooner', 'commandHpPercent', 'randomBuildingHpPercent']);
+const CALL_EFFECTS = new Set(['energy', 'civiliansFromBalance', 'civiliansLose', 'nextRaidSooner', 'commandHpPercent', 'commandMaxHpFactor', 'randomBuildingHpPercent']);
 const CALL_REQUIRES = new Set(['civiliansOnBalance']);
 function callEffectsSupported(ev: { a?: Record<string, unknown>; b?: Record<string, unknown>; requires?: Record<string, unknown> }): boolean {
   const keysOk = (o?: Record<string, unknown>) => Object.keys(o ?? {}).every((k) => CALL_EFFECTS.has(k));
