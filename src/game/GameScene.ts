@@ -46,6 +46,8 @@ export interface GameStart {
   fresh?: boolean;
   tutorial?: boolean;
   seed?: number;
+  /** difficulty.json level id; omit for the game's default. */
+  difficulty?: string;
   /** Online match (src/net): the state comes from the server, no pause, no save slot. */
   online?: OnlineSession;
   /** City of the day (UTC day id): the run also counts on today's board. */
@@ -304,7 +306,7 @@ export class GameScene extends Phaser.Scene {
         ? this.guide.world
         : saved
           ? new World({ state: saved })
-          : new World({ seed: st.seed || Math.floor(Math.random() * 1e9), assist, rules });
+          : new World({ seed: st.seed || Math.floor(Math.random() * 1e9), assist, rules, difficulty: st.difficulty });
     if (this.online) this.watchOnline(this.online);
     else if (!this.guide) {
       if (!saved) clearSlot(this.slot);
@@ -803,14 +805,18 @@ export class GameScene extends Phaser.Scene {
       goal = t('event.boss_warning');
       bg = C.violet;
     }
+    const showGoal = !this.guide;
     if (this.hud.goal.text !== goal) this.hud.goal.setText(goal);
+    this.hud.goal.setVisible(showGoal);
     const gb = this.hud.goalBg;
     gb.clear();
-    // The goal chip shares its row with «Темп» and the raid timer: long goals shrink.
-    const room = HUD.w - (LANDSCAPE ? 504 : 478);
-    this.hud.goal.setScale(this.hud.goal.width + 36 > room ? (room - 36) / this.hud.goal.width : 1);
-    const gw = this.hud.goal.displayWidth + 36;
-    chip(gb, HUD.x + HUD.w - 6 - gw, GOAL.y, gw, 44, bg, 1, 12);
+    if (showGoal) {
+      // The goal chip shares its row with «Темп» and the raid timer: long goals shrink.
+      const room = HUD.w - (LANDSCAPE ? 504 : 478);
+      this.hud.goal.setScale(this.hud.goal.width + 36 > room ? (room - 36) / this.hud.goal.width : 1);
+      const gw = this.hud.goal.displayWidth + 36;
+      chip(gb, HUD.x + HUD.w - 6 - gw, GOAL.y, gw, 44, bg, 1, 12);
+    }
   }
 
   /**
@@ -829,7 +835,7 @@ export class GameScene extends Phaser.Scene {
     // The raid: the core's `raid` when it has one, otherwise the countdown to `raidAt`. No raids on this map: no timer.
     const r = s.raid;
     const nextIn = r ? r.nextIn : s.raidAt !== undefined ? s.raidAt - s.time : null;
-    this.raidTimer.setVisible(nextIn !== null && w.started);
+    this.raidTimer.setVisible(nextIn !== null && w.started && !this.guide);
     if (nextIn !== null) {
       const left = Math.max(0, nextIn);
       // Calling early needs the core's `callRaidEarly` command, announced by `raid.canCallEarly`.
@@ -837,7 +843,7 @@ export class GameScene extends Phaser.Scene {
     }
     // Контроль calls: open the card when the core starts a call; solo waits for the answer, online keeps running.
     const pending = s.controlCall ?? null;
-    if (pending && !this.call && pending !== this.answeredCall) this.openCall(pending.id, pending);
+    if (pending && !this.call && pending !== this.answeredCall && !this.guide) this.openCall(pending.id, pending);
     if (this.call?.card.container.active) {
       this.call.card.update(now);
       const left = EVENTS.timeoutSeconds - (performance.now() - this.call.at) / 1000;
