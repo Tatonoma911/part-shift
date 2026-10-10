@@ -304,6 +304,42 @@ export const BARKS: [string, string][] = [
   ['Найдена бесхозная рука. Владельца просим пройти на склад. Вместе с остальным телом.', 'An unclaimed arm has been found. The owner is asked to come to the warehouse. With the rest of the body.'],
   ['Напоминаем: на смене находятся четырнадцать героев HeroOut. Все они вас любят.', 'A reminder: fourteen HeroOut heroes are on shift. They all love you.'],
 ];
+/** «Записи Контроля»: in-game Archive finds (lore/ARCHIVE_RECORDS.md, text/ru.json archive.<n>.*). [title, from, text] RU and EN. */
+export const ARCHIVE: { title: L; from: L; text: L }[] = (
+  [
+    ['О кошке', 'About the cat', 'Отдел инцидентов', 'Incident Department',
+      'Кошка на дереве по улице Солнечной зарегистрирована в 412-й раз. Кошка поставлена на баланс как многоразовый инцидент. Дерево тоже. Снимать кошку разрешается не чаще раза в неделю, чтобы не обесценить услугу.',
+      'The cat up the tree on Sunny Street has been logged for the 412th time. The cat is now on the books as a reusable incident. So is the tree. The cat may be retrieved no more than once a week, so as not to devalue the service.'],
+    ['Уведомление жителям Купола', 'Notice to Dome residents', 'Контроль', 'Control',
+      'Уважаемые жители! С понедельника небо над Куполом облагается абонентской платой. Дождь включён в тариф «Плюс». Солнце — в тариф «Премиум». Темнота бесплатна, пока.',
+      'Dear residents! Starting Monday, the sky over the Dome requires a subscription. Rain is included in the “Plus” plan. Sunshine is in “Premium”. Darkness is free, for now.'],
+    ['Кран № 14', 'Crane No. 14', 'Внутренняя переписка', 'Internal memo',
+      '— Кран № 14 сходит с ума в 9:14, патруль проезжает в 9:15. Прошу не путать время, в прошлый раз спасли не тех. — Принято. Предлагаю в 9:13 запустить рекламу «Краны безопасны».',
+      '“Crane No. 14 goes haywire at 9:14, the patrol drives by at 9:15. Please don’t mix up the times, last time we rescued the wrong people.” “Noted. Suggest running the ‘Cranes Are Safe’ ad at 9:13.”'],
+    ['Протокол EVERYONE IS ON CALL', 'Protocol EVERYONE IS ON CALL', 'Совет директоров', 'Board of Directors',
+      'Пункт 1. Каждый горожанин считается дежурным HeroOut. Пункт 2. Дежурный не может отказаться от дежурства. Пункт 3. Пункты 1 и 2 вступают в силу немедленно и задним числом.',
+      'Clause 1. Every citizen is considered on call for HeroOut. Clause 2. A person on call cannot decline the call. Clause 3. Clauses 1 and 2 take effect immediately and retroactively.'],
+    ['Гель Splice: отчёт маркетинга', 'Splice gel: marketing report', 'Отдел маркетинга', 'Marketing Department',
+      'Гель отращивает утраченные конечности. Иногда чужие. Иногда лишние. Предлагаемый слоган: «Иногда — бонус». Отдел безопасности против. Отдел безопасности переведён на склад.',
+      'The gel regrows lost limbs. Sometimes someone else’s. Sometimes extra ones. Proposed slogan: “Sometimes it’s a bonus.” The Safety Department objects. The Safety Department has been moved to the warehouse.'],
+    ['Памятка сменщику', 'Memo to the replacement', 'Отдел кадров', 'Human Resources',
+      'Вы не оригинал. Оригинал занят или заражён. Не ищите его, не разговаривайте с ним и не берите у него конечности без накладной. Ваша память — собственность компании, пользуйтесь бережно.',
+      'You are not the original. The original is busy or infected. Do not look for them, do not talk to them, and do not take limbs from them without a delivery note. Your memory is company property; handle with care.'],
+    ['Правила хранения горожан', 'Citizen storage guidelines', 'Склады Контроля', 'Control Warehouses',
+      'Горожан хранить при +18, в сухом месте, не кантовать. Разговоры на полках запрещены, кроме фразы «спасибо, HeroOut». Побег со склада считается порчей имущества.',
+      'Store citizens at +18 °C in a dry place. Do not tip over. Talking on the shelves is forbidden, except for “thank you, HeroOut”. Escaping the warehouse counts as damage to property.'],
+    ['Ответ 42-го этажа', 'Reply from floor 42', 'Переписка Контроля', 'Control correspondence',
+      '— Смена окончена? — Смена не заканчивается. — Тогда когда отдыхать сотрудникам? — Отдых предусмотрен в тарифе «Премиум». Сотрудники на тарифе «Базовый».',
+      '“Is the shift over?” “The shift never ends.” “Then when do employees rest?” “Rest is included in the Premium plan. Employees are on Basic.”'],
+    ['Подземный отдел', 'Underground division', 'Отчёт Undersun Works', 'Undersun Works report',
+      'Подземный спасатель перевыполнил план эвакуации вниз на 400 %. План эвакуации наверх в отдел не спускался. Рекомендация: спустить. Вниз.',
+      'The underground rescuer exceeded the downward evacuation target by 400%. The upward evacuation plan was never sent down to the division. Recommendation: send it down. Downward.'],
+    ['Инвентаризация S-01', 'S-01 inventory', 'Склад № 4', 'Warehouse No. 4',
+      'Резервных тел S-01 было 1200. Утром стало 1197. Днём три тела вернулись и привели ещё три, одинаковых. Пересчёт прекращён: тела просят их не нумеровать.',
+      'There were 1,200 spare S-01 bodies. By morning there were 1,197. In the afternoon three came back and brought three more, identical. The recount has been halted: the bodies ask not to be numbered.'],
+  ] as const
+).map(([tr, te, fr, fe, xr, xe]) => ({ title: { ru: tr, en: te }, from: { ru: fr, en: fe }, text: { ru: xr, en: xe } }));
+
 export const ADS: [string, string][] = [
   ['Потеряли руку? Не теряйте надежду! Гель Splice: отрастёт к понедельнику.', 'Lost an arm? Don’t lose hope! Splice gel: grows back by Monday.'],
   ['Купол Lumen. Небо, которое не протекает.', 'The Lumen Dome. A sky that never leaks.'],
