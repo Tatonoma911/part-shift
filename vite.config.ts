@@ -35,6 +35,7 @@ export default defineConfig({
   // The universe site's files are not part of the game preview.
   publicDir: artifact ? false : 'public',
   plugins: artifact ? [smallComic()] : [],
+  resolve: artifact ? { alias: { '@colyseus/sdk': resolve(__dirname, 'src/net/colyseus-stub.ts') } } : {},
   // The Artifact and learning previews never send analytics, so Firebase Analytics stays out of their one-file builds.
   define: { __ANALYTICS__: JSON.stringify(!artifact && !learning), __CLOUD__: JSON.stringify(!artifact && !learning) },
   build: {
