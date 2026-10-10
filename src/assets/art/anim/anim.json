@@ -920,20 +920,56 @@
      "fps": 10,
      "loop": true
     },
-    "knockout": {
+    "build": {
      "frames": [
       64,
       65,
       66,
-      67,
-      68
+      67
+     ],
+     "fps": 8,
+     "loop": true
+    },
+    "install_part": {
+     "frames": [
+      72,
+      73,
+      74,
+      75,
+      76,
+      77
+     ],
+     "fps": 10,
+     "loop": false
+    },
+    "walk_back": {
+     "frames": [
+      80,
+      81,
+      82,
+      83,
+      84,
+      85,
+      86,
+      87
+     ],
+     "fps": 10,
+     "loop": true
+    },
+    "knockout": {
+     "frames": [
+      88,
+      89,
+      90,
+      91,
+      92
      ],
      "fps": 10,
      "loop": false
     }
    },
    "faces": "right",
-   "note": "Из генератора: 031_anim_ally_standard.png + dig из 146_anim_ally_dig_standard_patch_canopy_current_lineman.png"
+   "note": "Из генератора: 031_anim_ally_standard.png + dig из 146_anim_ally_dig_standard_patch_canopy_current_lineman.png + build из 189_anim_ally_build_standard_patch_canopy_current_lineman.png + install_part из 192_anim_ally_install_part_standard_patch_canopy_current_lineman.png + walk_back из 195_anim_ally_walk_back_standard_patch_canopy_current_lineman.png"
   },
   "demon": {
    "sheet": "demon.png",
@@ -1089,7 +1125,7 @@
      "fps": 12,
      "loop": false
     },
-    "tail_swing": {
+    "walk_back": {
      "frames": [
       110,
       111,
@@ -1098,22 +1134,36 @@
       114,
       115,
       116,
-      117,
-      118,
-      119
+      117
+     ],
+     "fps": 10,
+     "loop": true
+    },
+    "tail_swing": {
+     "frames": [
+      120,
+      121,
+      122,
+      123,
+      124,
+      125,
+      126,
+      127,
+      128,
+      129
      ],
      "fps": 10,
      "loop": false
     }
    },
    "faces": "right",
-   "note": "Из генератора: 059_anim_enemy_demon.png"
+   "note": "Из генератора: 059_anim_enemy_demon.png + walk_back из 200_anim_enemy_walk_back_seraph_doctor_demon_n73.png"
   },
   "n73": {
    "sheet": "n73.png",
    "frameSize": [
     122,
-    72
+    74
    ],
    "cols": 9,
    "anchor": [
@@ -1206,21 +1256,35 @@
      ],
      "fps": 12,
      "loop": false
+    },
+    "walk_back": {
+     "frames": [
+      63,
+      64,
+      65,
+      66,
+      67,
+      68,
+      69,
+      70
+     ],
+     "fps": 10,
+     "loop": true
     }
    },
    "faces": "right",
-   "note": "Из генератора: 060_anim_enemy_n73.png"
+   "note": "Из генератора: 060_anim_enemy_n73.png + walk_back из 200_anim_enemy_walk_back_seraph_doctor_demon_n73.png"
   },
   "ally_n73": {
    "sheet": "ally_n73.png",
    "frameSize": [
     132,
-    76
+    84
    ],
    "cols": 8,
    "anchor": [
     66,
-    70
+    78
    ],
    "anims": {
     "idle": {
@@ -1318,20 +1382,55 @@
      "fps": 10,
      "loop": true
     },
-    "knockout": {
+    "build": {
      "frames": [
       64,
       65,
       66,
-      67,
-      68
+      67
+     ],
+     "fps": 8,
+     "loop": true
+    },
+    "install_part": {
+     "frames": [
+      72,
+      73,
+      74,
+      75,
+      76
+     ],
+     "fps": 10,
+     "loop": false
+    },
+    "walk_back": {
+     "frames": [
+      80,
+      81,
+      82,
+      83,
+      84,
+      85,
+      86,
+      87
+     ],
+     "fps": 10,
+     "loop": true
+    },
+    "knockout": {
+     "frames": [
+      88,
+      89,
+      90,
+      91,
+      92
      ],
      "fps": 10,
      "loop": false
     }
    },
    "faces": "right",
-   "note": "Из генератора: 045_anim_ally_n73.png + dig из 148_anim_ally_dig_kiln_seraph_doctor_demon_n73.png"
+   "note": "Из генератора: 045_anim_ally_n73.png + dig из 148_anim_ally_dig_kiln_seraph_doctor_demon_n73.png + build из 191_anim_ally_build_kiln_seraph_doctor_demon_n73.png + install_part из 194_anim_ally_install_part_kiln_seraph_doctor_demon_n73.png + walk_back из 197_anim_ally_walk_back_kiln_seraph_doctor_demon_n73.png"
   },
   "doctor": {
    "sheet": "doctor.png",
@@ -1429,21 +1528,35 @@
      ],
      "fps": 12,
      "loop": false
+    },
+    "walk_back": {
+     "frames": [
+      56,
+      57,
+      58,
+      59,
+      60,
+      61,
+      62,
+      63
+     ],
+     "fps": 10,
+     "loop": true
     }
    },
    "faces": "right",
-   "note": "Из генератора: 058_anim_enemy_doctor.png"
+   "note": "Из генератора: 058_anim_enemy_doctor.png + walk_back из 200_anim_enemy_walk_back_seraph_doctor_demon_n73.png"
   },
   "ally_doctor": {
    "sheet": "ally_doctor.png",
    "frameSize": [
-    84,
-    75
+    98,
+    90
    ],
    "cols": 8,
    "anchor": [
-    42,
-    70
+    49,
+    85
    ],
    "anims": {
     "idle": {
@@ -1541,20 +1654,56 @@
      "fps": 10,
      "loop": true
     },
-    "knockout": {
+    "build": {
      "frames": [
       64,
       65,
       66,
-      67,
-      68
+      67
+     ],
+     "fps": 8,
+     "loop": true
+    },
+    "install_part": {
+     "frames": [
+      72,
+      73,
+      74,
+      75,
+      76,
+      77
+     ],
+     "fps": 10,
+     "loop": false
+    },
+    "walk_back": {
+     "frames": [
+      80,
+      81,
+      82,
+      83,
+      84,
+      85,
+      86,
+      87
+     ],
+     "fps": 10,
+     "loop": true
+    },
+    "knockout": {
+     "frames": [
+      88,
+      89,
+      90,
+      91,
+      92
      ],
      "fps": 10,
      "loop": false
     }
    },
    "faces": "right",
-   "note": "Из генератора: 043_anim_ally_doctor.png + dig из 148_anim_ally_dig_kiln_seraph_doctor_demon_n73.png"
+   "note": "Из генератора: 043_anim_ally_doctor.png + dig из 148_anim_ally_dig_kiln_seraph_doctor_demon_n73.png + build из 191_anim_ally_build_kiln_seraph_doctor_demon_n73.png + install_part из 194_anim_ally_install_part_kiln_seraph_doctor_demon_n73.png + walk_back из 197_anim_ally_walk_back_kiln_seraph_doctor_demon_n73.png"
   },
   "kiln": {
    "sheet": "kiln.png",
@@ -1652,21 +1801,35 @@
      ],
      "fps": 12,
      "loop": false
+    },
+    "walk_back": {
+     "frames": [
+      56,
+      57,
+      58,
+      59,
+      60,
+      61,
+      62,
+      63
+     ],
+     "fps": 10,
+     "loop": true
     }
    },
    "faces": "right",
-   "note": "Из генератора: 056_anim_enemy_kiln.png"
+   "note": "Из генератора: 056_anim_enemy_kiln.png + walk_back из 199_anim_enemy_walk_back_mason_sweep_beacon_hive_kiln.png"
   },
   "ally_kiln": {
    "sheet": "ally_kiln.png",
    "frameSize": [
-    80,
-    78
+    126,
+    81
    ],
    "cols": 8,
    "anchor": [
-    40,
-    72
+    63,
+    75
    ],
    "anims": {
     "idle": {
@@ -1764,20 +1927,56 @@
      "fps": 10,
      "loop": true
     },
-    "knockout": {
+    "build": {
      "frames": [
       64,
       65,
       66,
-      67,
-      68
+      67
+     ],
+     "fps": 8,
+     "loop": true
+    },
+    "install_part": {
+     "frames": [
+      72,
+      73,
+      74,
+      75,
+      76,
+      77
+     ],
+     "fps": 10,
+     "loop": false
+    },
+    "walk_back": {
+     "frames": [
+      80,
+      81,
+      82,
+      83,
+      84,
+      85,
+      86,
+      87
+     ],
+     "fps": 10,
+     "loop": true
+    },
+    "knockout": {
+     "frames": [
+      88,
+      89,
+      90,
+      91,
+      92
      ],
      "fps": 10,
      "loop": false
     }
    },
    "faces": "right",
-   "note": "Из генератора: 041_anim_ally_kiln.png + dig из 148_anim_ally_dig_kiln_seraph_doctor_demon_n73.png"
+   "note": "Из генератора: 041_anim_ally_kiln.png + dig из 148_anim_ally_dig_kiln_seraph_doctor_demon_n73.png + build из 191_anim_ally_build_kiln_seraph_doctor_demon_n73.png + install_part из 194_anim_ally_install_part_kiln_seraph_doctor_demon_n73.png + walk_back из 197_anim_ally_walk_back_kiln_seraph_doctor_demon_n73.png"
   },
   "lineman": {
    "sheet": "lineman.png",
@@ -1888,10 +2087,24 @@
      ],
      "fps": 12,
      "loop": false
+    },
+    "walk_back": {
+     "frames": [
+      64,
+      65,
+      66,
+      67,
+      68,
+      69,
+      70,
+      71
+     ],
+     "fps": 10,
+     "loop": true
     }
    },
    "faces": "right",
-   "note": "Из генератора: 050_anim_enemy_lineman.png"
+   "note": "Из генератора: 050_anim_enemy_lineman.png + walk_back из 198_anim_enemy_walk_back_patch_canopy_current_lineman_frostline.png"
   },
   "ally_lineman": {
    "sheet": "ally_lineman.png",
@@ -2013,26 +2226,52 @@
      "fps": 10,
      "loop": true
     },
-    "knockout": {
+    "install_part": {
      "frames": [
       72,
       73,
       74,
       75,
-      76
+      76,
+      77
+     ],
+     "fps": 10,
+     "loop": false
+    },
+    "walk_back": {
+     "frames": [
+      80,
+      81,
+      82,
+      83,
+      84,
+      85,
+      86,
+      87
+     ],
+     "fps": 10,
+     "loop": true
+    },
+    "knockout": {
+     "frames": [
+      88,
+      89,
+      90,
+      91,
+      92
      ],
      "fps": 10,
      "loop": false
     }
    },
    "faces": "right",
-   "note": "Из генератора: 035_anim_ally_lineman.png + dig из 146_anim_ally_dig_standard_patch_canopy_current_lineman.png"
+   "note": "Из генератора: 035_anim_ally_lineman.png + dig из 146_anim_ally_dig_standard_patch_canopy_current_lineman.png + install_part из 192_anim_ally_install_part_standard_patch_canopy_current_lineman.png + walk_back из 195_anim_ally_walk_back_standard_patch_canopy_current_lineman.png"
   },
   "frostline": {
    "sheet": "frostline.png",
    "frameSize": [
     106,
-    72
+    73
    ],
    "cols": 8,
    "anchor": [
@@ -2138,16 +2377,30 @@
      ],
      "fps": 12,
      "loop": false
+    },
+    "walk_back": {
+     "frames": [
+      64,
+      65,
+      66,
+      67,
+      68,
+      69,
+      70,
+      71
+     ],
+     "fps": 10,
+     "loop": true
     }
    },
    "faces": "right",
-   "note": "Из генератора: 051_anim_enemy_frostline.png"
+   "note": "Из генератора: 051_anim_enemy_frostline.png + walk_back из 198_anim_enemy_walk_back_patch_canopy_current_lineman_frostline.png"
   },
   "ally_frostline": {
    "sheet": "ally_frostline.png",
    "frameSize": [
     122,
-    72
+    73
    ],
    "cols": 8,
    "anchor": [
@@ -2264,20 +2517,46 @@
      "fps": 10,
      "loop": true
     },
-    "knockout": {
+    "install_part": {
      "frames": [
       72,
       73,
       74,
       75,
-      76
+      76,
+      77
+     ],
+     "fps": 10,
+     "loop": false
+    },
+    "walk_back": {
+     "frames": [
+      80,
+      81,
+      82,
+      83,
+      84,
+      85,
+      86,
+      87
+     ],
+     "fps": 10,
+     "loop": true
+    },
+    "knockout": {
+     "frames": [
+      88,
+      89,
+      90,
+      91,
+      92
      ],
      "fps": 10,
      "loop": false
     }
    },
    "faces": "right",
-   "note": "Из генератора: 036_anim_ally_frostline.png + dig из 147_anim_ally_dig_frostline_mason_sweep_beacon_hive.png"
+   "note": "Из генератора: 036_anim_ally_frostline.png + dig из 147_anim_ally_dig_frostline_mason_sweep_beacon_hive.png + install_part из 193_anim_ally_install_part_frostline_mason_sweep_beacon_hive.png + walk_back из 196_anim_ally_walk_back_frostline_mason_sweep_beacon_hive.png"
   },
   "seraph": {
    "sheet": "seraph.png",
@@ -2387,21 +2666,35 @@
      ],
      "fps": 12,
      "loop": false
+    },
+    "walk_back": {
+     "frames": [
+      64,
+      65,
+      66,
+      67,
+      68,
+      69,
+      70,
+      71
+     ],
+     "fps": 10,
+     "loop": true
     }
    },
    "faces": "right",
-   "note": "Из генератора: 057_anim_enemy_seraph.png"
+   "note": "Из генератора: 057_anim_enemy_seraph.png + walk_back из 200_anim_enemy_walk_back_seraph_doctor_demon_n73.png"
   },
   "ally_seraph": {
    "sheet": "ally_seraph.png",
    "frameSize": [
-    94,
-    79
+    122,
+    80
    ],
    "cols": 8,
    "anchor": [
-    47,
-    70
+    61,
+    71
    ],
    "anims": {
     "idle": {
@@ -2510,20 +2803,56 @@
      "fps": 10,
      "loop": true
     },
-    "knockout": {
+    "build": {
      "frames": [
       72,
       73,
       74,
-      75,
-      76
+      75
+     ],
+     "fps": 8,
+     "loop": true
+    },
+    "install_part": {
+     "frames": [
+      80,
+      81,
+      82,
+      83,
+      84,
+      85
+     ],
+     "fps": 10,
+     "loop": false
+    },
+    "walk_back": {
+     "frames": [
+      88,
+      89,
+      90,
+      91,
+      92,
+      93,
+      94,
+      95
+     ],
+     "fps": 10,
+     "loop": true
+    },
+    "knockout": {
+     "frames": [
+      96,
+      97,
+      98,
+      99,
+      100
      ],
      "fps": 10,
      "loop": false
     }
    },
    "faces": "right",
-   "note": "Из генератора: 042_anim_ally_seraph.png + dig из 148_anim_ally_dig_kiln_seraph_doctor_demon_n73.png"
+   "note": "Из генератора: 042_anim_ally_seraph.png + dig из 148_anim_ally_dig_kiln_seraph_doctor_demon_n73.png + build из 191_anim_ally_build_kiln_seraph_doctor_demon_n73.png + install_part из 194_anim_ally_install_part_kiln_seraph_doctor_demon_n73.png + walk_back из 197_anim_ally_walk_back_kiln_seraph_doctor_demon_n73.png"
   },
   "current": {
    "sheet": "current.png",
@@ -2621,10 +2950,24 @@
      ],
      "fps": 12,
      "loop": false
+    },
+    "walk_back": {
+     "frames": [
+      56,
+      57,
+      58,
+      59,
+      60,
+      61,
+      62,
+      63
+     ],
+     "fps": 10,
+     "loop": true
     }
    },
    "faces": "right",
-   "note": "Из генератора: 049_anim_enemy_current.png"
+   "note": "Из генератора: 049_anim_enemy_current.png + walk_back из 198_anim_enemy_walk_back_patch_canopy_current_lineman_frostline.png"
   },
   "ally_current": {
    "sheet": "ally_current.png",
@@ -2733,26 +3076,52 @@
      "fps": 10,
      "loop": true
     },
-    "knockout": {
+    "install_part": {
      "frames": [
       64,
       65,
       66,
       67,
-      68
+      68,
+      69
+     ],
+     "fps": 10,
+     "loop": false
+    },
+    "walk_back": {
+     "frames": [
+      72,
+      73,
+      74,
+      75,
+      76,
+      77,
+      78,
+      79
+     ],
+     "fps": 10,
+     "loop": true
+    },
+    "knockout": {
+     "frames": [
+      80,
+      81,
+      82,
+      83,
+      84
      ],
      "fps": 10,
      "loop": false
     }
    },
    "faces": "right",
-   "note": "Из генератора: 034_anim_ally_current.png + dig из 146_anim_ally_dig_standard_patch_canopy_current_lineman.png"
+   "note": "Из генератора: 034_anim_ally_current.png + dig из 146_anim_ally_dig_standard_patch_canopy_current_lineman.png + install_part из 192_anim_ally_install_part_standard_patch_canopy_current_lineman.png + walk_back из 195_anim_ally_walk_back_standard_patch_canopy_current_lineman.png"
   },
   "mason": {
    "sheet": "mason.png",
    "frameSize": [
     92,
-    72
+    73
    ],
    "cols": 8,
    "anchor": [
@@ -2844,20 +3213,34 @@
      ],
      "fps": 12,
      "loop": false
+    },
+    "walk_back": {
+     "frames": [
+      56,
+      57,
+      58,
+      59,
+      60,
+      61,
+      62,
+      63
+     ],
+     "fps": 10,
+     "loop": true
     }
    },
    "faces": "right",
-   "note": "Из генератора: 052_anim_enemy_mason.png"
+   "note": "Из генератора: 052_anim_enemy_mason.png + walk_back из 199_anim_enemy_walk_back_mason_sweep_beacon_hive_kiln.png"
   },
   "ally_mason": {
    "sheet": "ally_mason.png",
    "frameSize": [
-    92,
-    72
+    112,
+    73
    ],
    "cols": 8,
    "anchor": [
-    46,
+    56,
     70
    ],
    "anims": {
@@ -2956,20 +3339,46 @@
      "fps": 10,
      "loop": true
     },
-    "knockout": {
+    "install_part": {
      "frames": [
       64,
       65,
       66,
       67,
-      68
+      68,
+      69
+     ],
+     "fps": 10,
+     "loop": false
+    },
+    "walk_back": {
+     "frames": [
+      72,
+      73,
+      74,
+      75,
+      76,
+      77,
+      78,
+      79
+     ],
+     "fps": 10,
+     "loop": true
+    },
+    "knockout": {
+     "frames": [
+      80,
+      81,
+      82,
+      83,
+      84
      ],
      "fps": 10,
      "loop": false
     }
    },
    "faces": "right",
-   "note": "Из генератора: 037_anim_ally_mason.png + dig из 147_anim_ally_dig_frostline_mason_sweep_beacon_hive.png"
+   "note": "Из генератора: 037_anim_ally_mason.png + dig из 147_anim_ally_dig_frostline_mason_sweep_beacon_hive.png + install_part из 193_anim_ally_install_part_frostline_mason_sweep_beacon_hive.png + walk_back из 196_anim_ally_walk_back_frostline_mason_sweep_beacon_hive.png"
   },
   "beacon": {
    "sheet": "beacon.png",
@@ -3068,10 +3477,24 @@
      ],
      "fps": 12,
      "loop": false
+    },
+    "walk_back": {
+     "frames": [
+      56,
+      57,
+      58,
+      59,
+      60,
+      61,
+      62,
+      63
+     ],
+     "fps": 10,
+     "loop": true
     }
    },
    "faces": "right",
-   "note": "Из генератора: 054_anim_enemy_beacon.png"
+   "note": "Из генератора: 054_anim_enemy_beacon.png + walk_back из 199_anim_enemy_walk_back_mason_sweep_beacon_hive_kiln.png"
   },
   "ally_beacon": {
    "sheet": "ally_beacon.png",
@@ -3180,20 +3603,46 @@
      "fps": 10,
      "loop": true
     },
-    "knockout": {
+    "install_part": {
      "frames": [
       64,
       65,
       66,
       67,
-      68
+      68,
+      69
+     ],
+     "fps": 10,
+     "loop": false
+    },
+    "walk_back": {
+     "frames": [
+      72,
+      73,
+      74,
+      75,
+      76,
+      77,
+      78,
+      79
+     ],
+     "fps": 10,
+     "loop": true
+    },
+    "knockout": {
+     "frames": [
+      80,
+      81,
+      82,
+      83,
+      84
      ],
      "fps": 10,
      "loop": false
     }
    },
    "faces": "right",
-   "note": "Из генератора: 039_anim_ally_beacon.png + dig из 147_anim_ally_dig_frostline_mason_sweep_beacon_hive.png"
+   "note": "Из генератора: 039_anim_ally_beacon.png + dig из 147_anim_ally_dig_frostline_mason_sweep_beacon_hive.png + install_part из 193_anim_ally_install_part_frostline_mason_sweep_beacon_hive.png + walk_back из 196_anim_ally_walk_back_frostline_mason_sweep_beacon_hive.png"
   },
   "canopy": {
    "sheet": "canopy.png",
@@ -3291,10 +3740,24 @@
      ],
      "fps": 12,
      "loop": false
+    },
+    "walk_back": {
+     "frames": [
+      56,
+      57,
+      58,
+      59,
+      60,
+      61,
+      62,
+      63
+     ],
+     "fps": 10,
+     "loop": true
     }
    },
    "faces": "right",
-   "note": "Из генератора: 048_anim_enemy_canopy.png"
+   "note": "Из генератора: 048_anim_enemy_canopy.png + walk_back из 198_anim_enemy_walk_back_patch_canopy_current_lineman_frostline.png"
   },
   "ally_canopy": {
    "sheet": "ally_canopy.png",
@@ -3403,26 +3866,52 @@
      "fps": 10,
      "loop": true
     },
-    "knockout": {
+    "install_part": {
      "frames": [
       64,
       65,
       66,
       67,
-      68
+      68,
+      69
+     ],
+     "fps": 10,
+     "loop": false
+    },
+    "walk_back": {
+     "frames": [
+      72,
+      73,
+      74,
+      75,
+      76,
+      77,
+      78,
+      79
+     ],
+     "fps": 10,
+     "loop": true
+    },
+    "knockout": {
+     "frames": [
+      80,
+      81,
+      82,
+      83,
+      84
      ],
      "fps": 10,
      "loop": false
     }
    },
    "faces": "right",
-   "note": "Из генератора: 033_anim_ally_canopy.png + dig из 146_anim_ally_dig_standard_patch_canopy_current_lineman.png"
+   "note": "Из генератора: 033_anim_ally_canopy.png + dig из 146_anim_ally_dig_standard_patch_canopy_current_lineman.png + install_part из 192_anim_ally_install_part_standard_patch_canopy_current_lineman.png + walk_back из 195_anim_ally_walk_back_standard_patch_canopy_current_lineman.png"
   },
   "sweep": {
    "sheet": "sweep.png",
    "frameSize": [
     112,
-    72
+    73
    ],
    "cols": 8,
    "anchor": [
@@ -3514,20 +4003,34 @@
      ],
      "fps": 12,
      "loop": false
+    },
+    "walk_back": {
+     "frames": [
+      56,
+      57,
+      58,
+      59,
+      60,
+      61,
+      62,
+      63
+     ],
+     "fps": 10,
+     "loop": true
     }
    },
    "faces": "right",
-   "note": "Из генератора: 053_anim_enemy_sweep.png"
+   "note": "Из генератора: 053_anim_enemy_sweep.png + walk_back из 199_anim_enemy_walk_back_mason_sweep_beacon_hive_kiln.png"
   },
   "ally_sweep": {
    "sheet": "ally_sweep.png",
    "frameSize": [
-    108,
+    114,
     72
    ],
    "cols": 8,
    "anchor": [
-    54,
+    57,
     70
    ],
    "anims": {
@@ -3614,20 +4117,46 @@
      "fps": 10,
      "loop": false
     },
-    "knockout": {
+    "install_part": {
      "frames": [
       56,
       57,
       58,
       59,
-      60
+      60,
+      61
+     ],
+     "fps": 10,
+     "loop": false
+    },
+    "walk_back": {
+     "frames": [
+      64,
+      65,
+      66,
+      67,
+      68,
+      69,
+      70,
+      71
+     ],
+     "fps": 10,
+     "loop": true
+    },
+    "knockout": {
+     "frames": [
+      72,
+      73,
+      74,
+      75,
+      76
      ],
      "fps": 10,
      "loop": false
     }
    },
    "faces": "right",
-   "note": "Из генератора: 038_anim_ally_sweep.png"
+   "note": "Из генератора: 038_anim_ally_sweep.png + install_part из 193_anim_ally_install_part_frostline_mason_sweep_beacon_hive.png + walk_back из 196_anim_ally_walk_back_frostline_mason_sweep_beacon_hive.png"
   },
   "patch": {
    "sheet": "patch.png",
@@ -3725,10 +4254,24 @@
      ],
      "fps": 12,
      "loop": false
+    },
+    "walk_back": {
+     "frames": [
+      56,
+      57,
+      58,
+      59,
+      60,
+      61,
+      62,
+      63
+     ],
+     "fps": 10,
+     "loop": true
     }
    },
    "faces": "right",
-   "note": "Из генератора: 047_anim_enemy_patch.png"
+   "note": "Из генератора: 047_anim_enemy_patch.png + walk_back из 198_anim_enemy_walk_back_patch_canopy_current_lineman_frostline.png"
   },
   "ally_patch": {
    "sheet": "ally_patch.png",
@@ -3837,20 +4380,46 @@
      "fps": 10,
      "loop": true
     },
-    "knockout": {
+    "install_part": {
      "frames": [
       64,
       65,
       66,
       67,
-      68
+      68,
+      69
+     ],
+     "fps": 10,
+     "loop": false
+    },
+    "walk_back": {
+     "frames": [
+      72,
+      73,
+      74,
+      75,
+      76,
+      77,
+      78,
+      79
+     ],
+     "fps": 10,
+     "loop": true
+    },
+    "knockout": {
+     "frames": [
+      80,
+      81,
+      82,
+      83,
+      84
      ],
      "fps": 10,
      "loop": false
     }
    },
    "faces": "right",
-   "note": "Из генератора: 032_anim_ally_patch.png + dig из 146_anim_ally_dig_standard_patch_canopy_current_lineman.png"
+   "note": "Из генератора: 032_anim_ally_patch.png + dig из 146_anim_ally_dig_standard_patch_canopy_current_lineman.png + install_part из 192_anim_ally_install_part_standard_patch_canopy_current_lineman.png + walk_back из 195_anim_ally_walk_back_standard_patch_canopy_current_lineman.png"
   },
   "hive": {
    "sheet": "hive.png",
@@ -3948,20 +4517,34 @@
      ],
      "fps": 12,
      "loop": false
+    },
+    "walk_back": {
+     "frames": [
+      56,
+      57,
+      58,
+      59,
+      60,
+      61,
+      62,
+      63
+     ],
+     "fps": 10,
+     "loop": true
     }
    },
    "faces": "right",
-   "note": "Из генератора: 055_anim_enemy_hive.png"
+   "note": "Из генератора: 055_anim_enemy_hive.png + walk_back из 199_anim_enemy_walk_back_mason_sweep_beacon_hive_kiln.png"
   },
   "ally_hive": {
    "sheet": "ally_hive.png",
    "frameSize": [
-    80,
+    98,
     73
    ],
    "cols": 8,
    "anchor": [
-    40,
+    49,
     70
    ],
    "anims": {
@@ -4059,20 +4642,46 @@
      "fps": 10,
      "loop": true
     },
-    "knockout": {
+    "install_part": {
      "frames": [
       64,
       65,
       66,
       67,
-      68
+      68,
+      69
+     ],
+     "fps": 10,
+     "loop": false
+    },
+    "walk_back": {
+     "frames": [
+      72,
+      73,
+      74,
+      75,
+      76,
+      77,
+      78,
+      79
+     ],
+     "fps": 10,
+     "loop": true
+    },
+    "knockout": {
+     "frames": [
+      80,
+      81,
+      82,
+      83,
+      84
      ],
      "fps": 10,
      "loop": false
     }
    },
    "faces": "right",
-   "note": "Из генератора: 040_anim_ally_hive.png + dig из 147_anim_ally_dig_frostline_mason_sweep_beacon_hive.png"
+   "note": "Из генератора: 040_anim_ally_hive.png + dig из 147_anim_ally_dig_frostline_mason_sweep_beacon_hive.png + install_part из 193_anim_ally_install_part_frostline_mason_sweep_beacon_hive.png + walk_back из 196_anim_ally_walk_back_frostline_mason_sweep_beacon_hive.png"
   },
   "nest": {
    "sheet": "nest.png",
@@ -4855,13 +5464,13 @@
   "ally_demon": {
    "sheet": "ally_demon.png",
    "frameSize": [
-    128,
-    93
+    130,
+    100
    ],
    "cols": 9,
    "anchor": [
-    64,
-    88
+    65,
+    95
    ],
    "anims": {
     "idle": {
@@ -4998,20 +5607,56 @@
      "fps": 10,
      "loop": true
     },
-    "knockout": {
+    "build": {
      "frames": [
       99,
       100,
       101,
-      102,
-      103
+      102
+     ],
+     "fps": 8,
+     "loop": true
+    },
+    "install_part": {
+     "frames": [
+      108,
+      109,
+      110,
+      111,
+      112,
+      113
+     ],
+     "fps": 10,
+     "loop": false
+    },
+    "walk_back": {
+     "frames": [
+      117,
+      118,
+      119,
+      120,
+      121,
+      122,
+      123,
+      124
+     ],
+     "fps": 10,
+     "loop": true
+    },
+    "knockout": {
+     "frames": [
+      126,
+      127,
+      128,
+      129,
+      130
      ],
      "fps": 10,
      "loop": false
     }
    },
    "faces": "right",
-   "note": "Из генератора: 044_anim_ally_demon.png + dig из 148_anim_ally_dig_kiln_seraph_doctor_demon_n73.png"
+   "note": "Из генератора: 044_anim_ally_demon.png + dig из 148_anim_ally_dig_kiln_seraph_doctor_demon_n73.png + build из 191_anim_ally_build_kiln_seraph_doctor_demon_n73.png + install_part из 194_anim_ally_install_part_kiln_seraph_doctor_demon_n73.png + walk_back из 197_anim_ally_walk_back_kiln_seraph_doctor_demon_n73.png"
   },
   "fx_explosions": {
    "sheet": "fx_explosions.png",
@@ -6279,67 +6924,67 @@
      "fps": 10,
      "loop": true
     },
-    "idle@arm_front": {
+    "build@arm_back": {
      "frames": [
       48,
       49,
       50,
       51
      ],
-     "fps": 4,
+     "fps": 8,
      "loop": true
     },
-    "walk@arm_front": {
+    "install_part@arm_back": {
      "frames": [
       56,
       57,
       58,
       59,
       60,
-      61,
-      62,
-      63
+      61
      ],
      "fps": 10,
-     "loop": true
+     "loop": false
     },
-    "attack@arm_front": {
+    "walk_back@arm_back": {
      "frames": [
       64,
       65,
       66,
       67,
       68,
-      69
+      69,
+      70,
+      71
      ],
-     "fps": 12,
-     "loop": false
+     "fps": 10,
+     "loop": true
     },
-    "fast_punch_combo@arm_front": {
+    "idle@arm_front": {
      "frames": [
       72,
       73,
       74,
-      75,
-      76,
-      77,
-      78,
-      79
+      75
      ],
-     "fps": 10,
-     "loop": false
+     "fps": 4,
+     "loop": true
     },
-    "victory_pose@arm_front": {
+    "walk@arm_front": {
      "frames": [
       80,
       81,
       82,
-      83
+      83,
+      84,
+      85,
+      86,
+      87
      ],
      "fps": 10,
-     "loop": false
+     "loop": true
     },
-    "dig@arm_front": {
+    "attack@arm_front": {
      "frames": [
       88,
       89,
@@ -6348,34 +6993,34 @@
       92,
       93
      ],
-     "fps": 10,
-     "loop": true
+     "fps": 12,
+     "loop": false
     },
-    "idle@leg_back": {
+    "fast_punch_combo@arm_front": {
      "frames": [
       96,
       97,
       98,
-      99
+      99,
+      100,
+      101,
+      102,
+      103
      ],
-     "fps": 4,
-     "loop": true
+     "fps": 10,
+     "loop": false
     },
-    "walk@leg_back": {
+    "victory_pose@arm_front": {
      "frames": [
       104,
       105,
       106,
-      107,
-      108,
-      109,
-      110,
-      111
+      107
      ],
      "fps": 10,
-     "loop": true
+     "loop": false
     },
-    "attack@leg_back": {
+    "dig@arm_front": {
      "frames": [
       112,
       113,
@@ -6384,46 +7029,46 @@
       116,
       117
      ],
-     "fps": 12,
-     "loop": false
+     "fps": 10,
+     "loop": true
     },
-    "fast_punch_combo@leg_back": {
+    "build@arm_front": {
      "frames": [
       120,
       121,
       122,
-      123,
-      124,
-      125,
-      126,
-      127
+      123
      ],
-     "fps": 10,
-     "loop": false
+     "fps": 8,
+     "loop": true
     },
-    "victory_pose@leg_back": {
+    "install_part@arm_front": {
      "frames": [
       128,
       129,
       130,
-      131
+      131,
+      132,
+      133
      ],
      "fps": 10,
      "loop": false
     },
-    "dig@leg_back": {
+    "walk_back@arm_front": {
      "frames": [
       136,
       137,
       138,
       139,
       140,
-      141
+      141,
+      142,
+      143
      ],
      "fps": 10,
      "loop": true
     },
-    "idle@leg_front": {
+    "idle@leg_back": {
      "frames": [
       144,
       145,
@@ -6433,7 +7078,7 @@
      "fps": 4,
      "loop": true
     },
-    "walk@leg_front": {
+    "walk@leg_back": {
      "frames": [
       152,
       153,
@@ -6447,7 +7092,7 @@
      "fps": 10,
      "loop": true
     },
-    "attack@leg_front": {
+    "attack@leg_back": {
      "frames": [
       160,
       161,
@@ -6459,7 +7104,7 @@
      "fps": 12,
      "loop": false
     },
-    "fast_punch_combo@leg_front": {
+    "fast_punch_combo@leg_back": {
      "frames": [
       168,
       169,
@@ -6473,7 +7118,7 @@
      "fps": 10,
      "loop": false
     },
-    "victory_pose@leg_front": {
+    "victory_pose@leg_back": {
      "frames": [
       176,
       177,
@@ -6483,7 +7128,7 @@
      "fps": 10,
      "loop": false
     },
-    "dig@leg_front": {
+    "dig@leg_back": {
      "frames": [
       184,
       185,
@@ -6491,6 +7136,150 @@
       187,
       188,
       189
+     ],
+     "fps": 10,
+     "loop": true
+    },
+    "build@leg_back": {
+     "frames": [
+      192,
+      193,
+      194,
+      195
+     ],
+     "fps": 8,
+     "loop": true
+    },
+    "install_part@leg_back": {
+     "frames": [
+      200,
+      201,
+      202,
+      203,
+      204,
+      205
+     ],
+     "fps": 10,
+     "loop": false
+    },
+    "walk_back@leg_back": {
+     "frames": [
+      208,
+      209,
+      210,
+      211,
+      212,
+      213,
+      214,
+      215
+     ],
+     "fps": 10,
+     "loop": true
+    },
+    "idle@leg_front": {
+     "frames": [
+      216,
+      217,
+      218,
+      219
+     ],
+     "fps": 4,
+     "loop": true
+    },
+    "walk@leg_front": {
+     "frames": [
+      224,
+      225,
+      226,
+      227,
+      228,
+      229,
+      230,
+      231
+     ],
+     "fps": 10,
+     "loop": true
+    },
+    "attack@leg_front": {
+     "frames": [
+      232,
+      233,
+      234,
+      235,
+      236,
+      237
+     ],
+     "fps": 12,
+     "loop": false
+    },
+    "fast_punch_combo@leg_front": {
+     "frames": [
+      240,
+      241,
+      242,
+      243,
+      244,
+      245,
+      246,
+      247
+     ],
+     "fps": 10,
+     "loop": false
+    },
+    "victory_pose@leg_front": {
+     "frames": [
+      248,
+      249,
+      250,
+      251
+     ],
+     "fps": 10,
+     "loop": false
+    },
+    "dig@leg_front": {
+     "frames": [
+      256,
+      257,
+      258,
+      259,
+      260,
+      261
+     ],
+     "fps": 10,
+     "loop": true
+    },
+    "build@leg_front": {
+     "frames": [
+      264,
+      265,
+      266,
+      267
+     ],
+     "fps": 8,
+     "loop": true
+    },
+    "install_part@leg_front": {
+     "frames": [
+      272,
+      273,
+      274,
+      275,
+      276,
+      277
+     ],
+     "fps": 10,
+     "loop": false
+    },
+    "walk_back@leg_front": {
+     "frames": [
+      280,
+      281,
+      282,
+      283,
+      284,
+      285,
+      286,
+      287
      ],
      "fps": 10,
      "loop": true
@@ -6589,17 +7378,19 @@
      "fps": 10,
      "loop": true
     },
-    "idle@arm_front": {
+    "install_part@arm_back": {
      "frames": [
       48,
       49,
       50,
-      51
+      51,
+      52,
+      53
      ],
-     "fps": 4,
-     "loop": true
+     "fps": 10,
+     "loop": false
     },
-    "walk@arm_front": {
+    "walk_back@arm_back": {
      "frames": [
       56,
       57,
@@ -6613,19 +7404,17 @@
      "fps": 10,
      "loop": true
     },
-    "attack@arm_front": {
+    "idle@arm_front": {
      "frames": [
       64,
       65,
       66,
-      67,
-      68,
-      69
+      67
      ],
-     "fps": 12,
-     "loop": false
+     "fps": 4,
+     "loop": true
     },
-    "dash_forward_kick@arm_front": {
+    "walk@arm_front": {
      "frames": [
       72,
       73,
@@ -6637,55 +7426,57 @@
       79
      ],
      "fps": 10,
-     "loop": false
+     "loop": true
     },
-    "victory_pose@arm_front": {
+    "attack@arm_front": {
      "frames": [
       80,
       81,
       82,
-      83
+      83,
+      84,
+      85
      ],
-     "fps": 10,
+     "fps": 12,
      "loop": false
     },
-    "dig@arm_front": {
+    "dash_forward_kick@arm_front": {
      "frames": [
       88,
       89,
       90,
       91,
       92,
-      93
+      93,
+      94,
+      95
      ],
      "fps": 10,
-     "loop": true
+     "loop": false
     },
-    "idle@leg_back": {
+    "victory_pose@arm_front": {
      "frames": [
       96,
       97,
       98,
       99
      ],
-     "fps": 4,
-     "loop": true
+     "fps": 10,
+     "loop": false
     },
-    "walk@leg_back": {
+    "dig@arm_front": {
      "frames": [
       104,
       105,
       106,
       107,
       108,
-      109,
-      110,
-      111
+      109
      ],
      "fps": 10,
      "loop": true
     },
-    "attack@leg_back": {
+    "install_part@arm_front": {
      "frames": [
       112,
       113,
@@ -6694,10 +7485,10 @@
       116,
       117
      ],
-     "fps": 12,
+     "fps": 10,
      "loop": false
     },
-    "dash_forward_kick@leg_back": {
+    "walk_back@arm_front": {
      "frames": [
       120,
       121,
@@ -6709,41 +7500,45 @@
       127
      ],
      "fps": 10,
-     "loop": false
+     "loop": true
     },
-    "victory_pose@leg_back": {
+    "idle@leg_back": {
      "frames": [
       128,
       129,
       130,
       131
      ],
-     "fps": 10,
-     "loop": false
+     "fps": 4,
+     "loop": true
     },
-    "dig@leg_back": {
+    "walk@leg_back": {
      "frames": [
       136,
       137,
       138,
       139,
       140,
-      141
+      141,
+      142,
+      143
      ],
      "fps": 10,
      "loop": true
     },
-    "idle@leg_front": {
+    "attack@leg_back": {
      "frames": [
       144,
       145,
       146,
-      147
+      147,
+      148,
+      149
      ],
-     "fps": 4,
-     "loop": true
+     "fps": 12,
+     "loop": false
     },
-    "walk@leg_front": {
+    "dash_forward_kick@leg_back": {
      "frames": [
       152,
       153,
@@ -6755,52 +7550,150 @@
       159
      ],
      "fps": 10,
-     "loop": true
+     "loop": false
     },
-    "attack@leg_front": {
+    "victory_pose@leg_back": {
      "frames": [
       160,
       161,
       162,
-      163,
-      164,
-      165
+      163
      ],
-     "fps": 12,
+     "fps": 10,
      "loop": false
     },
-    "dash_forward_kick@leg_front": {
+    "dig@leg_back": {
      "frames": [
       168,
       169,
       170,
       171,
       172,
-      173,
-      174,
-      175
+      173
      ],
      "fps": 10,
-     "loop": false
+     "loop": true
     },
-    "victory_pose@leg_front": {
+    "install_part@leg_back": {
      "frames": [
       176,
       177,
       178,
-      179
+      179,
+      180,
+      181
      ],
      "fps": 10,
      "loop": false
     },
-    "dig@leg_front": {
+    "walk_back@leg_back": {
      "frames": [
       184,
       185,
       186,
       187,
       188,
-      189
+      189,
+      190,
+      191
+     ],
+     "fps": 10,
+     "loop": true
+    },
+    "idle@leg_front": {
+     "frames": [
+      192,
+      193,
+      194,
+      195
+     ],
+     "fps": 4,
+     "loop": true
+    },
+    "walk@leg_front": {
+     "frames": [
+      200,
+      201,
+      202,
+      203,
+      204,
+      205,
+      206,
+      207
+     ],
+     "fps": 10,
+     "loop": true
+    },
+    "attack@leg_front": {
+     "frames": [
+      208,
+      209,
+      210,
+      211,
+      212,
+      213
+     ],
+     "fps": 12,
+     "loop": false
+    },
+    "dash_forward_kick@leg_front": {
+     "frames": [
+      216,
+      217,
+      218,
+      219,
+      220,
+      221,
+      222,
+      223
+     ],
+     "fps": 10,
+     "loop": false
+    },
+    "victory_pose@leg_front": {
+     "frames": [
+      224,
+      225,
+      226,
+      227
+     ],
+     "fps": 10,
+     "loop": false
+    },
+    "dig@leg_front": {
+     "frames": [
+      232,
+      233,
+      234,
+      235,
+      236,
+      237
+     ],
+     "fps": 10,
+     "loop": true
+    },
+    "install_part@leg_front": {
+     "frames": [
+      240,
+      241,
+      242,
+      243,
+      244,
+      245
+     ],
+     "fps": 10,
+     "loop": false
+    },
+    "walk_back@leg_front": {
+     "frames": [
+      248,
+      249,
+      250,
+      251,
+      252,
+      253,
+      254,
+      255
      ],
      "fps": 10,
      "loop": true
@@ -6900,17 +7793,19 @@
      "fps": 10,
      "loop": true
     },
-    "idle@arm_front": {
+    "install_part@arm_back": {
      "frames": [
       48,
       49,
       50,
-      51
+      51,
+      52,
+      53
      ],
-     "fps": 4,
-     "loop": true
+     "fps": 10,
+     "loop": false
     },
-    "walk@arm_front": {
+    "walk_back@arm_back": {
      "frames": [
       56,
       57,
@@ -6924,19 +7819,17 @@
      "fps": 10,
      "loop": true
     },
-    "attack@arm_front": {
+    "idle@arm_front": {
      "frames": [
       64,
       65,
       66,
-      67,
-      68,
-      69
+      67
      ],
-     "fps": 12,
-     "loop": false
+     "fps": 4,
+     "loop": true
     },
-    "vine_bursts_out@arm_front": {
+    "walk@arm_front": {
      "frames": [
       72,
       73,
@@ -6948,55 +7841,57 @@
       79
      ],
      "fps": 10,
-     "loop": false
+     "loop": true
     },
-    "victory_pose@arm_front": {
+    "attack@arm_front": {
      "frames": [
       80,
       81,
       82,
-      83
+      83,
+      84,
+      85
      ],
-     "fps": 10,
+     "fps": 12,
      "loop": false
     },
-    "dig@arm_front": {
+    "vine_bursts_out@arm_front": {
      "frames": [
       88,
       89,
       90,
       91,
       92,
-      93
+      93,
+      94,
+      95
      ],
      "fps": 10,
-     "loop": true
+     "loop": false
     },
-    "idle@leg_back": {
+    "victory_pose@arm_front": {
      "frames": [
       96,
       97,
       98,
       99
      ],
-     "fps": 4,
-     "loop": true
+     "fps": 10,
+     "loop": false
     },
-    "walk@leg_back": {
+    "dig@arm_front": {
      "frames": [
       104,
       105,
       106,
       107,
       108,
-      109,
-      110,
-      111
+      109
      ],
      "fps": 10,
      "loop": true
     },
-    "attack@leg_back": {
+    "install_part@arm_front": {
      "frames": [
       112,
       113,
@@ -7005,10 +7900,10 @@
       116,
       117
      ],
-     "fps": 12,
+     "fps": 10,
      "loop": false
     },
-    "vine_bursts_out@leg_back": {
+    "walk_back@arm_front": {
      "frames": [
       120,
       121,
@@ -7020,41 +7915,45 @@
       127
      ],
      "fps": 10,
-     "loop": false
+     "loop": true
     },
-    "victory_pose@leg_back": {
+    "idle@leg_back": {
      "frames": [
       128,
       129,
       130,
       131
      ],
-     "fps": 10,
-     "loop": false
+     "fps": 4,
+     "loop": true
     },
-    "dig@leg_back": {
+    "walk@leg_back": {
      "frames": [
       136,
       137,
       138,
       139,
       140,
-      141
+      141,
+      142,
+      143
      ],
      "fps": 10,
      "loop": true
     },
-    "idle@leg_front": {
+    "attack@leg_back": {
      "frames": [
       144,
       145,
       146,
-      147
+      147,
+      148,
+      149
      ],
-     "fps": 4,
-     "loop": true
+     "fps": 12,
+     "loop": false
     },
-    "walk@leg_front": {
+    "vine_bursts_out@leg_back": {
      "frames": [
       152,
       153,
@@ -7066,52 +7965,150 @@
       159
      ],
      "fps": 10,
-     "loop": true
+     "loop": false
     },
-    "attack@leg_front": {
+    "victory_pose@leg_back": {
      "frames": [
       160,
       161,
       162,
-      163,
-      164,
-      165
+      163
      ],
-     "fps": 12,
+     "fps": 10,
      "loop": false
     },
-    "vine_bursts_out@leg_front": {
+    "dig@leg_back": {
      "frames": [
       168,
       169,
       170,
       171,
       172,
-      173,
-      174,
-      175
+      173
      ],
      "fps": 10,
-     "loop": false
+     "loop": true
     },
-    "victory_pose@leg_front": {
+    "install_part@leg_back": {
      "frames": [
       176,
       177,
       178,
-      179
+      179,
+      180,
+      181
      ],
      "fps": 10,
      "loop": false
     },
-    "dig@leg_front": {
+    "walk_back@leg_back": {
      "frames": [
       184,
       185,
       186,
       187,
       188,
-      189
+      189,
+      190,
+      191
+     ],
+     "fps": 10,
+     "loop": true
+    },
+    "idle@leg_front": {
+     "frames": [
+      192,
+      193,
+      194,
+      195
+     ],
+     "fps": 4,
+     "loop": true
+    },
+    "walk@leg_front": {
+     "frames": [
+      200,
+      201,
+      202,
+      203,
+      204,
+      205,
+      206,
+      207
+     ],
+     "fps": 10,
+     "loop": true
+    },
+    "attack@leg_front": {
+     "frames": [
+      208,
+      209,
+      210,
+      211,
+      212,
+      213
+     ],
+     "fps": 12,
+     "loop": false
+    },
+    "vine_bursts_out@leg_front": {
+     "frames": [
+      216,
+      217,
+      218,
+      219,
+      220,
+      221,
+      222,
+      223
+     ],
+     "fps": 10,
+     "loop": false
+    },
+    "victory_pose@leg_front": {
+     "frames": [
+      224,
+      225,
+      226,
+      227
+     ],
+     "fps": 10,
+     "loop": false
+    },
+    "dig@leg_front": {
+     "frames": [
+      232,
+      233,
+      234,
+      235,
+      236,
+      237
+     ],
+     "fps": 10,
+     "loop": true
+    },
+    "install_part@leg_front": {
+     "frames": [
+      240,
+      241,
+      242,
+      243,
+      244,
+      245
+     ],
+     "fps": 10,
+     "loop": false
+    },
+    "walk_back@leg_front": {
+     "frames": [
+      248,
+      249,
+      250,
+      251,
+      252,
+      253,
+      254,
+      255
      ],
      "fps": 10,
      "loop": true
@@ -7210,17 +8207,19 @@
      "fps": 10,
      "loop": true
     },
-    "idle@arm_front": {
+    "install_part@arm_back": {
      "frames": [
       48,
       49,
       50,
-      51
+      51,
+      52,
+      53
      ],
-     "fps": 4,
-     "loop": true
+     "fps": 10,
+     "loop": false
     },
-    "walk@arm_front": {
+    "walk_back@arm_back": {
      "frames": [
       56,
       57,
@@ -7234,19 +8233,17 @@
      "fps": 10,
      "loop": true
     },
-    "attack@arm_front": {
+    "idle@arm_front": {
      "frames": [
       64,
       65,
       66,
-      67,
-      68,
-      69
+      67
      ],
-     "fps": 12,
-     "loop": false
+     "fps": 4,
+     "loop": true
     },
-    "water_jet_blast@arm_front": {
+    "walk@arm_front": {
      "frames": [
       72,
       73,
@@ -7258,55 +8255,57 @@
       79
      ],
      "fps": 10,
-     "loop": false
+     "loop": true
     },
-    "victory_pose@arm_front": {
+    "attack@arm_front": {
      "frames": [
       80,
       81,
       82,
-      83
+      83,
+      84,
+      85
      ],
-     "fps": 10,
+     "fps": 12,
      "loop": false
     },
-    "dig@arm_front": {
+    "water_jet_blast@arm_front": {
      "frames": [
       88,
       89,
       90,
       91,
       92,
-      93
+      93,
+      94,
+      95
      ],
      "fps": 10,
-     "loop": true
+     "loop": false
     },
-    "idle@leg_back": {
+    "victory_pose@arm_front": {
      "frames": [
       96,
       97,
       98,
       99
      ],
-     "fps": 4,
-     "loop": true
+     "fps": 10,
+     "loop": false
     },
-    "walk@leg_back": {
+    "dig@arm_front": {
      "frames": [
       104,
       105,
       106,
       107,
       108,
-      109,
-      110,
-      111
+      109
      ],
      "fps": 10,
      "loop": true
     },
-    "attack@leg_back": {
+    "install_part@arm_front": {
      "frames": [
       112,
       113,
@@ -7315,10 +8314,10 @@
       116,
       117
      ],
-     "fps": 12,
+     "fps": 10,
      "loop": false
     },
-    "water_jet_blast@leg_back": {
+    "walk_back@arm_front": {
      "frames": [
       120,
       121,
@@ -7330,41 +8329,45 @@
       127
      ],
      "fps": 10,
-     "loop": false
+     "loop": true
     },
-    "victory_pose@leg_back": {
+    "idle@leg_back": {
      "frames": [
       128,
       129,
       130,
       131
      ],
-     "fps": 10,
-     "loop": false
+     "fps": 4,
+     "loop": true
     },
-    "dig@leg_back": {
+    "walk@leg_back": {
      "frames": [
       136,
       137,
       138,
       139,
       140,
-      141
+      141,
+      142,
+      143
      ],
      "fps": 10,
      "loop": true
     },
-    "idle@leg_front": {
+    "attack@leg_back": {
      "frames": [
       144,
       145,
       146,
-      147
+      147,
+      148,
+      149
      ],
-     "fps": 4,
-     "loop": true
+     "fps": 12,
+     "loop": false
     },
-    "walk@leg_front": {
+    "water_jet_blast@leg_back": {
      "frames": [
       152,
       153,
@@ -7376,52 +8379,150 @@
       159
      ],
      "fps": 10,
-     "loop": true
+     "loop": false
     },
-    "attack@leg_front": {
+    "victory_pose@leg_back": {
      "frames": [
       160,
       161,
       162,
-      163,
-      164,
-      165
+      163
      ],
-     "fps": 12,
+     "fps": 10,
      "loop": false
     },
-    "water_jet_blast@leg_front": {
+    "dig@leg_back": {
      "frames": [
       168,
       169,
       170,
       171,
       172,
-      173,
-      174,
-      175
+      173
      ],
      "fps": 10,
-     "loop": false
+     "loop": true
     },
-    "victory_pose@leg_front": {
+    "install_part@leg_back": {
      "frames": [
       176,
       177,
       178,
-      179
+      179,
+      180,
+      181
      ],
      "fps": 10,
      "loop": false
     },
-    "dig@leg_front": {
+    "walk_back@leg_back": {
      "frames": [
       184,
       185,
       186,
       187,
       188,
-      189
+      189,
+      190,
+      191
+     ],
+     "fps": 10,
+     "loop": true
+    },
+    "idle@leg_front": {
+     "frames": [
+      192,
+      193,
+      194,
+      195
+     ],
+     "fps": 4,
+     "loop": true
+    },
+    "walk@leg_front": {
+     "frames": [
+      200,
+      201,
+      202,
+      203,
+      204,
+      205,
+      206,
+      207
+     ],
+     "fps": 10,
+     "loop": true
+    },
+    "attack@leg_front": {
+     "frames": [
+      208,
+      209,
+      210,
+      211,
+      212,
+      213
+     ],
+     "fps": 12,
+     "loop": false
+    },
+    "water_jet_blast@leg_front": {
+     "frames": [
+      216,
+      217,
+      218,
+      219,
+      220,
+      221,
+      222,
+      223
+     ],
+     "fps": 10,
+     "loop": false
+    },
+    "victory_pose@leg_front": {
+     "frames": [
+      224,
+      225,
+      226,
+      227
+     ],
+     "fps": 10,
+     "loop": false
+    },
+    "dig@leg_front": {
+     "frames": [
+      232,
+      233,
+      234,
+      235,
+      236,
+      237
+     ],
+     "fps": 10,
+     "loop": true
+    },
+    "install_part@leg_front": {
+     "frames": [
+      240,
+      241,
+      242,
+      243,
+      244,
+      245
+     ],
+     "fps": 10,
+     "loop": false
+    },
+    "walk_back@leg_front": {
+     "frames": [
+      248,
+      249,
+      250,
+      251,
+      252,
+      253,
+      254,
+      255
      ],
      "fps": 10,
      "loop": true
@@ -7533,17 +8634,19 @@
      "fps": 10,
      "loop": true
     },
-    "idle@arm_front": {
+    "install_part@arm_back": {
      "frames": [
       56,
       57,
       58,
-      59
+      59,
+      60,
+      61
      ],
-     "fps": 4,
-     "loop": true
+     "fps": 10,
+     "loop": false
     },
-    "walk@arm_front": {
+    "walk_back@arm_back": {
      "frames": [
       64,
       65,
@@ -7557,18 +8660,17 @@
      "fps": 10,
      "loop": true
     },
-    "attack@arm_front": {
+    "idle@arm_front": {
      "frames": [
       72,
       73,
       74,
-      75,
-      76
+      75
      ],
-     "fps": 12,
-     "loop": false
+     "fps": 4,
+     "loop": true
     },
-    "whip@arm_front": {
+    "walk@arm_front": {
      "frames": [
       80,
       81,
@@ -7580,80 +8682,82 @@
       87
      ],
      "fps": 10,
-     "loop": false
+     "loop": true
     },
-    "lasso_cable_loop@arm_front": {
+    "attack@arm_front": {
      "frames": [
       88,
       89,
       90,
       91,
-      92,
-      93,
-      94,
-      95
+      92
      ],
-     "fps": 10,
-     "loop": true
+     "fps": 12,
+     "loop": false
     },
-    "victory_pose@arm_front": {
+    "whip@arm_front": {
      "frames": [
       96,
       97,
       98,
-      99
+      99,
+      100,
+      101,
+      102,
+      103
      ],
      "fps": 10,
      "loop": false
     },
-    "dig@arm_front": {
+    "lasso_cable_loop@arm_front": {
      "frames": [
       104,
       105,
       106,
       107,
       108,
-      109
+      109,
+      110,
+      111
      ],
      "fps": 10,
      "loop": true
     },
-    "idle@leg_back": {
+    "victory_pose@arm_front": {
      "frames": [
       112,
       113,
       114,
       115
      ],
-     "fps": 4,
-     "loop": true
+     "fps": 10,
+     "loop": false
     },
-    "walk@leg_back": {
+    "dig@arm_front": {
      "frames": [
       120,
       121,
       122,
       123,
       124,
-      125,
-      126,
-      127
+      125
      ],
      "fps": 10,
      "loop": true
     },
-    "attack@leg_back": {
+    "install_part@arm_front": {
      "frames": [
       128,
       129,
       130,
       131,
-      132
+      132,
+      133
      ],
-     "fps": 12,
+     "fps": 10,
      "loop": false
     },
-    "whip@leg_back": {
+    "walk_back@arm_front": {
      "frames": [
       136,
       137,
@@ -7665,55 +8769,58 @@
       143
      ],
      "fps": 10,
-     "loop": false
+     "loop": true
     },
-    "lasso_cable_loop@leg_back": {
+    "idle@leg_back": {
      "frames": [
       144,
       145,
       146,
-      147,
-      148,
-      149,
-      150,
-      151
+      147
      ],
-     "fps": 10,
+     "fps": 4,
      "loop": true
     },
-    "victory_pose@leg_back": {
+    "walk@leg_back": {
      "frames": [
       152,
       153,
       154,
-      155
+      155,
+      156,
+      157,
+      158,
+      159
      ],
      "fps": 10,
-     "loop": false
+     "loop": true
     },
-    "dig@leg_back": {
+    "attack@leg_back": {
      "frames": [
       160,
       161,
       162,
       163,
-      164,
-      165
+      164
      ],
-     "fps": 10,
-     "loop": true
+     "fps": 12,
+     "loop": false
     },
-    "idle@leg_front": {
+    "whip@leg_back": {
      "frames": [
       168,
       169,
       170,
-      171
+      171,
+      172,
+      173,
+      174,
+      175
      ],
-     "fps": 4,
-     "loop": true
+     "fps": 10,
+     "loop": false
     },
-    "walk@leg_front": {
+    "lasso_cable_loop@leg_back": {
      "frames": [
       176,
       177,
@@ -7727,63 +8834,161 @@
      "fps": 10,
      "loop": true
     },
-    "attack@leg_front": {
+    "victory_pose@leg_back": {
      "frames": [
       184,
       185,
       186,
-      187,
-      188
+      187
      ],
-     "fps": 12,
+     "fps": 10,
      "loop": false
     },
-    "whip@leg_front": {
+    "dig@leg_back": {
      "frames": [
       192,
       193,
       194,
       195,
       196,
-      197,
-      198,
-      199
+      197
      ],
      "fps": 10,
-     "loop": false
+     "loop": true
     },
-    "lasso_cable_loop@leg_front": {
+    "install_part@leg_back": {
      "frames": [
       200,
       201,
       202,
       203,
       204,
-      205,
-      206,
-      207
+      205
+     ],
+     "fps": 10,
+     "loop": false
+    },
+    "walk_back@leg_back": {
+     "frames": [
+      208,
+      209,
+      210,
+      211,
+      212,
+      213,
+      214,
+      215
+     ],
+     "fps": 10,
+     "loop": true
+    },
+    "idle@leg_front": {
+     "frames": [
+      216,
+      217,
+      218,
+      219
+     ],
+     "fps": 4,
+     "loop": true
+    },
+    "walk@leg_front": {
+     "frames": [
+      224,
+      225,
+      226,
+      227,
+      228,
+      229,
+      230,
+      231
+     ],
+     "fps": 10,
+     "loop": true
+    },
+    "attack@leg_front": {
+     "frames": [
+      232,
+      233,
+      234,
+      235,
+      236
+     ],
+     "fps": 12,
+     "loop": false
+    },
+    "whip@leg_front": {
+     "frames": [
+      240,
+      241,
+      242,
+      243,
+      244,
+      245,
+      246,
+      247
+     ],
+     "fps": 10,
+     "loop": false
+    },
+    "lasso_cable_loop@leg_front": {
+     "frames": [
+      248,
+      249,
+      250,
+      251,
+      252,
+      253,
+      254,
+      255
      ],
      "fps": 10,
      "loop": true
     },
     "victory_pose@leg_front": {
      "frames": [
-      208,
-      209,
-      210,
-      211
+      256,
+      257,
+      258,
+      259
      ],
      "fps": 10,
      "loop": false
     },
     "dig@leg_front": {
      "frames": [
-      216,
-      217,
-      218,
-      219,
-      220,
-      221
+      264,
+      265,
+      266,
+      267,
+      268,
+      269
+     ],
+     "fps": 10,
+     "loop": true
+    },
+    "install_part@leg_front": {
+     "frames": [
+      272,
+      273,
+      274,
+      275,
+      276,
+      277
+     ],
+     "fps": 10,
+     "loop": false
+    },
+    "walk_back@leg_front": {
+     "frames": [
+      280,
+      281,
+      282,
+      283,
+      284,
+      285,
+      286,
+      287
      ],
      "fps": 10,
      "loop": true
@@ -7801,7 +9006,7 @@
    "sheet": "ally_frostline_limbs.png",
    "frameSize": [
     122,
-    72
+    73
    ],
    "cols": 8,
    "anchor": [
@@ -7896,17 +9101,19 @@
      "fps": 10,
      "loop": true
     },
-    "idle@arm_front": {
+    "install_part@arm_back": {
      "frames": [
       56,
       57,
       58,
-      59
+      59,
+      60,
+      61
      ],
-     "fps": 4,
-     "loop": true
+     "fps": 10,
+     "loop": false
     },
-    "walk@arm_front": {
+    "walk_back@arm_back": {
      "frames": [
       64,
       65,
@@ -7920,19 +9127,17 @@
      "fps": 10,
      "loop": true
     },
-    "attack@arm_front": {
+    "idle@arm_front": {
      "frames": [
       72,
       73,
       74,
-      75,
-      76,
-      77
+      75
      ],
-     "fps": 12,
-     "loop": false
+     "fps": 4,
+     "loop": true
     },
-    "spray@arm_front": {
+    "walk@arm_front": {
      "frames": [
       80,
       81,
@@ -7944,69 +9149,71 @@
       87
      ],
      "fps": 10,
-     "loop": false
+     "loop": true
     },
-    "ice_block_she@arm_front": {
+    "attack@arm_front": {
      "frames": [
       88,
       89,
       90,
       91,
       92,
-      93,
-      94,
-      95
+      93
      ],
-     "fps": 10,
+     "fps": 12,
      "loop": false
     },
-    "victory_pose@arm_front": {
+    "spray@arm_front": {
      "frames": [
       96,
       97,
       98,
-      99
+      99,
+      100,
+      101,
+      102,
+      103
      ],
      "fps": 10,
      "loop": false
     },
-    "dig@arm_front": {
+    "ice_block_she@arm_front": {
      "frames": [
       104,
       105,
       106,
       107,
       108,
-      109
+      109,
+      110,
+      111
      ],
      "fps": 10,
-     "loop": true
+     "loop": false
     },
-    "idle@leg_back": {
+    "victory_pose@arm_front": {
      "frames": [
       112,
       113,
       114,
       115
      ],
-     "fps": 4,
-     "loop": true
+     "fps": 10,
+     "loop": false
     },
-    "walk@leg_back": {
+    "dig@arm_front": {
      "frames": [
       120,
       121,
       122,
       123,
       124,
-      125,
-      126,
-      127
+      125
      ],
      "fps": 10,
      "loop": true
     },
-    "attack@leg_back": {
+    "install_part@arm_front": {
      "frames": [
       128,
       129,
@@ -8015,10 +9222,10 @@
       132,
       133
      ],
-     "fps": 12,
+     "fps": 10,
      "loop": false
     },
-    "spray@leg_back": {
+    "walk_back@arm_front": {
      "frames": [
       136,
       137,
@@ -8030,33 +9237,33 @@
       143
      ],
      "fps": 10,
-     "loop": false
+     "loop": true
     },
-    "ice_block_she@leg_back": {
+    "idle@leg_back": {
      "frames": [
       144,
       145,
       146,
-      147,
-      148,
-      149,
-      150,
-      151
+      147
      ],
-     "fps": 10,
-     "loop": false
+     "fps": 4,
+     "loop": true
     },
-    "victory_pose@leg_back": {
+    "walk@leg_back": {
      "frames": [
       152,
       153,
       154,
-      155
+      155,
+      156,
+      157,
+      158,
+      159
      ],
      "fps": 10,
-     "loop": false
+     "loop": true
     },
-    "dig@leg_back": {
+    "attack@leg_back": {
      "frames": [
       160,
       161,
@@ -8065,20 +9272,24 @@
       164,
       165
      ],
-     "fps": 10,
-     "loop": true
+     "fps": 12,
+     "loop": false
     },
-    "idle@leg_front": {
+    "spray@leg_back": {
      "frames": [
       168,
       169,
       170,
-      171
+      171,
+      172,
+      173,
+      174,
+      175
      ],
-     "fps": 4,
-     "loop": true
+     "fps": 10,
+     "loop": false
     },
-    "walk@leg_front": {
+    "ice_block_she@leg_back": {
      "frames": [
       176,
       177,
@@ -8090,66 +9301,164 @@
       183
      ],
      "fps": 10,
-     "loop": true
+     "loop": false
     },
-    "attack@leg_front": {
+    "victory_pose@leg_back": {
      "frames": [
       184,
       185,
       186,
-      187,
-      188,
-      189
+      187
      ],
-     "fps": 12,
+     "fps": 10,
      "loop": false
     },
-    "spray@leg_front": {
+    "dig@leg_back": {
      "frames": [
       192,
       193,
       194,
       195,
       196,
-      197,
-      198,
-      199
+      197
      ],
      "fps": 10,
-     "loop": false
+     "loop": true
     },
-    "ice_block_she@leg_front": {
+    "install_part@leg_back": {
      "frames": [
       200,
       201,
       202,
       203,
       204,
-      205,
-      206,
-      207
+      205
+     ],
+     "fps": 10,
+     "loop": false
+    },
+    "walk_back@leg_back": {
+     "frames": [
+      208,
+      209,
+      210,
+      211,
+      212,
+      213,
+      214,
+      215
+     ],
+     "fps": 10,
+     "loop": true
+    },
+    "idle@leg_front": {
+     "frames": [
+      216,
+      217,
+      218,
+      219
+     ],
+     "fps": 4,
+     "loop": true
+    },
+    "walk@leg_front": {
+     "frames": [
+      224,
+      225,
+      226,
+      227,
+      228,
+      229,
+      230,
+      231
+     ],
+     "fps": 10,
+     "loop": true
+    },
+    "attack@leg_front": {
+     "frames": [
+      232,
+      233,
+      234,
+      235,
+      236,
+      237
+     ],
+     "fps": 12,
+     "loop": false
+    },
+    "spray@leg_front": {
+     "frames": [
+      240,
+      241,
+      242,
+      243,
+      244,
+      245,
+      246,
+      247
+     ],
+     "fps": 10,
+     "loop": false
+    },
+    "ice_block_she@leg_front": {
+     "frames": [
+      248,
+      249,
+      250,
+      251,
+      252,
+      253,
+      254,
+      255
      ],
      "fps": 10,
      "loop": false
     },
     "victory_pose@leg_front": {
      "frames": [
-      208,
-      209,
-      210,
-      211
+      256,
+      257,
+      258,
+      259
      ],
      "fps": 10,
      "loop": false
     },
     "dig@leg_front": {
      "frames": [
-      216,
-      217,
-      218,
-      219,
-      220,
-      221
+      264,
+      265,
+      266,
+      267,
+      268,
+      269
+     ],
+     "fps": 10,
+     "loop": true
+    },
+    "install_part@leg_front": {
+     "frames": [
+      272,
+      273,
+      274,
+      275,
+      276,
+      277
+     ],
+     "fps": 10,
+     "loop": false
+    },
+    "walk_back@leg_front": {
+     "frames": [
+      280,
+      281,
+      282,
+      283,
+      284,
+      285,
+      286,
+      287
      ],
      "fps": 10,
      "loop": true
@@ -8166,12 +9475,12 @@
   "ally_mason_limbs": {
    "sheet": "ally_mason_limbs.png",
    "frameSize": [
-    92,
-    72
+    112,
+    73
    ],
    "cols": 8,
    "anchor": [
-    46,
+    56,
     70
    ],
    "faces": "right",
@@ -8248,17 +9557,19 @@
      "fps": 10,
      "loop": true
     },
-    "idle@arm_front": {
+    "install_part@arm_back": {
      "frames": [
       48,
       49,
       50,
-      51
+      51,
+      52,
+      53
      ],
-     "fps": 4,
-     "loop": true
+     "fps": 10,
+     "loop": false
     },
-    "walk@arm_front": {
+    "walk_back@arm_back": {
      "frames": [
       56,
       57,
@@ -8272,19 +9583,17 @@
      "fps": 10,
      "loop": true
     },
-    "attack@arm_front": {
+    "idle@arm_front": {
      "frames": [
       64,
       65,
       66,
-      67,
-      68,
-      69
+      67
      ],
-     "fps": 12,
-     "loop": false
+     "fps": 4,
+     "loop": true
     },
-    "slams_ground_stone@arm_front": {
+    "walk@arm_front": {
      "frames": [
       72,
       73,
@@ -8296,55 +9605,57 @@
       79
      ],
      "fps": 10,
-     "loop": false
+     "loop": true
     },
-    "victory_pose@arm_front": {
+    "attack@arm_front": {
      "frames": [
       80,
       81,
       82,
-      83
+      83,
+      84,
+      85
      ],
-     "fps": 10,
+     "fps": 12,
      "loop": false
     },
-    "dig@arm_front": {
+    "slams_ground_stone@arm_front": {
      "frames": [
       88,
       89,
       90,
       91,
       92,
-      93
+      93,
+      94,
+      95
      ],
      "fps": 10,
-     "loop": true
+     "loop": false
     },
-    "idle@leg_back": {
+    "victory_pose@arm_front": {
      "frames": [
       96,
       97,
       98,
       99
      ],
-     "fps": 4,
-     "loop": true
+     "fps": 10,
+     "loop": false
     },
-    "walk@leg_back": {
+    "dig@arm_front": {
      "frames": [
       104,
       105,
       106,
       107,
       108,
-      109,
-      110,
-      111
+      109
      ],
      "fps": 10,
      "loop": true
     },
-    "attack@leg_back": {
+    "install_part@arm_front": {
      "frames": [
       112,
       113,
@@ -8353,10 +9664,10 @@
       116,
       117
      ],
-     "fps": 12,
+     "fps": 10,
      "loop": false
     },
-    "slams_ground_stone@leg_back": {
+    "walk_back@arm_front": {
      "frames": [
       120,
       121,
@@ -8368,41 +9679,45 @@
       127
      ],
      "fps": 10,
-     "loop": false
+     "loop": true
     },
-    "victory_pose@leg_back": {
+    "idle@leg_back": {
      "frames": [
       128,
       129,
       130,
       131
      ],
-     "fps": 10,
-     "loop": false
+     "fps": 4,
+     "loop": true
     },
-    "dig@leg_back": {
+    "walk@leg_back": {
      "frames": [
       136,
       137,
       138,
       139,
       140,
-      141
+      141,
+      142,
+      143
      ],
      "fps": 10,
      "loop": true
     },
-    "idle@leg_front": {
+    "attack@leg_back": {
      "frames": [
       144,
       145,
       146,
-      147
+      147,
+      148,
+      149
      ],
-     "fps": 4,
-     "loop": true
+     "fps": 12,
+     "loop": false
     },
-    "walk@leg_front": {
+    "slams_ground_stone@leg_back": {
      "frames": [
       152,
       153,
@@ -8414,52 +9729,150 @@
       159
      ],
      "fps": 10,
-     "loop": true
+     "loop": false
     },
-    "attack@leg_front": {
+    "victory_pose@leg_back": {
      "frames": [
       160,
       161,
       162,
-      163,
-      164,
-      165
+      163
      ],
-     "fps": 12,
+     "fps": 10,
      "loop": false
     },
-    "slams_ground_stone@leg_front": {
+    "dig@leg_back": {
      "frames": [
       168,
       169,
       170,
       171,
       172,
-      173,
-      174,
-      175
+      173
      ],
      "fps": 10,
-     "loop": false
+     "loop": true
     },
-    "victory_pose@leg_front": {
+    "install_part@leg_back": {
      "frames": [
       176,
       177,
       178,
-      179
+      179,
+      180,
+      181
      ],
      "fps": 10,
      "loop": false
     },
-    "dig@leg_front": {
+    "walk_back@leg_back": {
      "frames": [
       184,
       185,
       186,
       187,
       188,
-      189
+      189,
+      190,
+      191
+     ],
+     "fps": 10,
+     "loop": true
+    },
+    "idle@leg_front": {
+     "frames": [
+      192,
+      193,
+      194,
+      195
+     ],
+     "fps": 4,
+     "loop": true
+    },
+    "walk@leg_front": {
+     "frames": [
+      200,
+      201,
+      202,
+      203,
+      204,
+      205,
+      206,
+      207
+     ],
+     "fps": 10,
+     "loop": true
+    },
+    "attack@leg_front": {
+     "frames": [
+      208,
+      209,
+      210,
+      211,
+      212,
+      213
+     ],
+     "fps": 12,
+     "loop": false
+    },
+    "slams_ground_stone@leg_front": {
+     "frames": [
+      216,
+      217,
+      218,
+      219,
+      220,
+      221,
+      222,
+      223
+     ],
+     "fps": 10,
+     "loop": false
+    },
+    "victory_pose@leg_front": {
+     "frames": [
+      224,
+      225,
+      226,
+      227
+     ],
+     "fps": 10,
+     "loop": false
+    },
+    "dig@leg_front": {
+     "frames": [
+      232,
+      233,
+      234,
+      235,
+      236,
+      237
+     ],
+     "fps": 10,
+     "loop": true
+    },
+    "install_part@leg_front": {
+     "frames": [
+      240,
+      241,
+      242,
+      243,
+      244,
+      245
+     ],
+     "fps": 10,
+     "loop": false
+    },
+    "walk_back@leg_front": {
+     "frames": [
+      248,
+      249,
+      250,
+      251,
+      252,
+      253,
+      254,
+      255
      ],
      "fps": 10,
      "loop": true
@@ -8476,12 +9889,12 @@
   "ally_sweep_limbs": {
    "sheet": "ally_sweep_limbs.png",
    "frameSize": [
-    108,
+    114,
     72
    ],
    "cols": 8,
    "anchor": [
-    54,
+    57,
     70
    ],
    "faces": "right",
@@ -8546,17 +9959,19 @@
      "fps": 10,
      "loop": false
     },
-    "idle@arm_front": {
+    "install_part@arm_back": {
      "frames": [
       40,
       41,
       42,
-      43
+      43,
+      44,
+      45
      ],
-     "fps": 4,
-     "loop": true
+     "fps": 10,
+     "loop": false
     },
-    "walk@arm_front": {
+    "walk_back@arm_back": {
      "frames": [
       48,
       49,
@@ -8570,19 +9985,17 @@
      "fps": 10,
      "loop": true
     },
-    "attack@arm_front": {
+    "idle@arm_front": {
      "frames": [
       56,
       57,
       58,
-      59,
-      60,
-      61
+      59
      ],
-     "fps": 12,
-     "loop": false
+     "fps": 4,
+     "loop": true
     },
-    "steam@arm_front": {
+    "walk@arm_front": {
      "frames": [
       64,
       65,
@@ -8594,43 +10007,45 @@
       71
      ],
      "fps": 10,
-     "loop": false
+     "loop": true
     },
-    "victory_pose@arm_front": {
+    "attack@arm_front": {
      "frames": [
       72,
       73,
       74,
-      75
+      75,
+      76,
+      77
      ],
-     "fps": 10,
+     "fps": 12,
      "loop": false
     },
-    "idle@leg_back": {
+    "steam@arm_front": {
      "frames": [
       80,
       81,
       82,
-      83
+      83,
+      84,
+      85,
+      86,
+      87
      ],
-     "fps": 4,
-     "loop": true
+     "fps": 10,
+     "loop": false
     },
-    "walk@leg_back": {
+    "victory_pose@arm_front": {
      "frames": [
       88,
       89,
       90,
-      91,
-      92,
-      93,
-      94,
-      95
+      91
      ],
      "fps": 10,
-     "loop": true
+     "loop": false
     },
-    "attack@leg_back": {
+    "install_part@arm_front": {
      "frames": [
       96,
       97,
@@ -8639,10 +10054,10 @@
       100,
       101
      ],
-     "fps": 12,
+     "fps": 10,
      "loop": false
     },
-    "steam@leg_back": {
+    "walk_back@arm_front": {
      "frames": [
       104,
       105,
@@ -8654,77 +10069,179 @@
       111
      ],
      "fps": 10,
-     "loop": false
+     "loop": true
     },
-    "victory_pose@leg_back": {
+    "idle@leg_back": {
      "frames": [
       112,
       113,
       114,
       115
      ],
-     "fps": 10,
-     "loop": false
+     "fps": 4,
+     "loop": true
     },
-    "idle@leg_front": {
+    "walk@leg_back": {
      "frames": [
       120,
       121,
       122,
-      123
+      123,
+      124,
+      125,
+      126,
+      127
      ],
-     "fps": 4,
+     "fps": 10,
      "loop": true
     },
-    "walk@leg_front": {
+    "attack@leg_back": {
      "frames": [
       128,
       129,
       130,
       131,
       132,
-      133,
-      134,
-      135
+      133
      ],
-     "fps": 10,
-     "loop": true
+     "fps": 12,
+     "loop": false
     },
-    "attack@leg_front": {
+    "steam@leg_back": {
      "frames": [
       136,
       137,
       138,
       139,
       140,
-      141
+      141,
+      142,
+      143
+     ],
+     "fps": 10,
+     "loop": false
+    },
+    "victory_pose@leg_back": {
+     "frames": [
+      144,
+      145,
+      146,
+      147
+     ],
+     "fps": 10,
+     "loop": false
+    },
+    "install_part@leg_back": {
+     "frames": [
+      152,
+      153,
+      154,
+      155,
+      156,
+      157
+     ],
+     "fps": 10,
+     "loop": false
+    },
+    "walk_back@leg_back": {
+     "frames": [
+      160,
+      161,
+      162,
+      163,
+      164,
+      165,
+      166,
+      167
+     ],
+     "fps": 10,
+     "loop": true
+    },
+    "idle@leg_front": {
+     "frames": [
+      168,
+      169,
+      170,
+      171
+     ],
+     "fps": 4,
+     "loop": true
+    },
+    "walk@leg_front": {
+     "frames": [
+      176,
+      177,
+      178,
+      179,
+      180,
+      181,
+      182,
+      183
+     ],
+     "fps": 10,
+     "loop": true
+    },
+    "attack@leg_front": {
+     "frames": [
+      184,
+      185,
+      186,
+      187,
+      188,
+      189
      ],
      "fps": 12,
      "loop": false
     },
     "steam@leg_front": {
      "frames": [
-      144,
-      145,
-      146,
-      147,
-      148,
-      149,
-      150,
-      151
+      192,
+      193,
+      194,
+      195,
+      196,
+      197,
+      198,
+      199
      ],
      "fps": 10,
      "loop": false
     },
     "victory_pose@leg_front": {
      "frames": [
-      152,
-      153,
-      154,
-      155
+      200,
+      201,
+      202,
+      203
      ],
      "fps": 10,
      "loop": false
+    },
+    "install_part@leg_front": {
+     "frames": [
+      208,
+      209,
+      210,
+      211,
+      212,
+      213
+     ],
+     "fps": 10,
+     "loop": false
+    },
+    "walk_back@leg_front": {
+     "frames": [
+      216,
+      217,
+      218,
+      219,
+      220,
+      221,
+      222,
+      223
+     ],
+     "fps": 10,
+     "loop": true
     }
    },
    "slots": {
@@ -8820,17 +10337,19 @@
      "fps": 10,
      "loop": true
     },
-    "idle@arm_front": {
+    "install_part@arm_back": {
      "frames": [
       48,
       49,
       50,
-      51
+      51,
+      52,
+      53
      ],
-     "fps": 4,
-     "loop": true
+     "fps": 10,
+     "loop": false
     },
-    "walk@arm_front": {
+    "walk_back@arm_back": {
      "frames": [
       56,
       57,
@@ -8844,19 +10363,17 @@
      "fps": 10,
      "loop": true
     },
-    "attack@arm_front": {
+    "idle@arm_front": {
      "frames": [
       64,
       65,
       66,
-      67,
-      68,
-      69
+      67
      ],
-     "fps": 12,
-     "loop": false
+     "fps": 4,
+     "loop": true
     },
-    "bright_amber_signal@arm_front": {
+    "walk@arm_front": {
      "frames": [
       72,
       73,
@@ -8868,55 +10385,57 @@
       79
      ],
      "fps": 10,
-     "loop": false
+     "loop": true
     },
-    "victory_pose@arm_front": {
+    "attack@arm_front": {
      "frames": [
       80,
       81,
       82,
-      83
+      83,
+      84,
+      85
      ],
-     "fps": 10,
+     "fps": 12,
      "loop": false
     },
-    "dig@arm_front": {
+    "bright_amber_signal@arm_front": {
      "frames": [
       88,
       89,
       90,
       91,
       92,
-      93
+      93,
+      94,
+      95
      ],
      "fps": 10,
-     "loop": true
+     "loop": false
     },
-    "idle@leg_back": {
+    "victory_pose@arm_front": {
      "frames": [
       96,
       97,
       98,
       99
      ],
-     "fps": 4,
-     "loop": true
+     "fps": 10,
+     "loop": false
     },
-    "walk@leg_back": {
+    "dig@arm_front": {
      "frames": [
       104,
       105,
       106,
       107,
       108,
-      109,
-      110,
-      111
+      109
      ],
      "fps": 10,
      "loop": true
     },
-    "attack@leg_back": {
+    "install_part@arm_front": {
      "frames": [
       112,
       113,
@@ -8925,10 +10444,10 @@
       116,
       117
      ],
-     "fps": 12,
+     "fps": 10,
      "loop": false
     },
-    "bright_amber_signal@leg_back": {
+    "walk_back@arm_front": {
      "frames": [
       120,
       121,
@@ -8940,41 +10459,45 @@
       127
      ],
      "fps": 10,
-     "loop": false
+     "loop": true
     },
-    "victory_pose@leg_back": {
+    "idle@leg_back": {
      "frames": [
       128,
       129,
       130,
       131
      ],
-     "fps": 10,
-     "loop": false
+     "fps": 4,
+     "loop": true
     },
-    "dig@leg_back": {
+    "walk@leg_back": {
      "frames": [
       136,
       137,
       138,
       139,
       140,
-      141
+      141,
+      142,
+      143
      ],
      "fps": 10,
      "loop": true
     },
-    "idle@leg_front": {
+    "attack@leg_back": {
      "frames": [
       144,
       145,
       146,
-      147
+      147,
+      148,
+      149
      ],
-     "fps": 4,
-     "loop": true
+     "fps": 12,
+     "loop": false
     },
-    "walk@leg_front": {
+    "bright_amber_signal@leg_back": {
      "frames": [
       152,
       153,
@@ -8986,52 +10509,150 @@
       159
      ],
      "fps": 10,
-     "loop": true
+     "loop": false
     },
-    "attack@leg_front": {
+    "victory_pose@leg_back": {
      "frames": [
       160,
       161,
       162,
-      163,
-      164,
-      165
+      163
      ],
-     "fps": 12,
+     "fps": 10,
      "loop": false
     },
-    "bright_amber_signal@leg_front": {
+    "dig@leg_back": {
      "frames": [
       168,
       169,
       170,
       171,
       172,
-      173,
-      174,
-      175
+      173
      ],
      "fps": 10,
-     "loop": false
+     "loop": true
     },
-    "victory_pose@leg_front": {
+    "install_part@leg_back": {
      "frames": [
       176,
       177,
       178,
-      179
+      179,
+      180,
+      181
      ],
      "fps": 10,
      "loop": false
     },
-    "dig@leg_front": {
+    "walk_back@leg_back": {
      "frames": [
       184,
       185,
       186,
       187,
       188,
-      189
+      189,
+      190,
+      191
+     ],
+     "fps": 10,
+     "loop": true
+    },
+    "idle@leg_front": {
+     "frames": [
+      192,
+      193,
+      194,
+      195
+     ],
+     "fps": 4,
+     "loop": true
+    },
+    "walk@leg_front": {
+     "frames": [
+      200,
+      201,
+      202,
+      203,
+      204,
+      205,
+      206,
+      207
+     ],
+     "fps": 10,
+     "loop": true
+    },
+    "attack@leg_front": {
+     "frames": [
+      208,
+      209,
+      210,
+      211,
+      212,
+      213
+     ],
+     "fps": 12,
+     "loop": false
+    },
+    "bright_amber_signal@leg_front": {
+     "frames": [
+      216,
+      217,
+      218,
+      219,
+      220,
+      221,
+      222,
+      223
+     ],
+     "fps": 10,
+     "loop": false
+    },
+    "victory_pose@leg_front": {
+     "frames": [
+      224,
+      225,
+      226,
+      227
+     ],
+     "fps": 10,
+     "loop": false
+    },
+    "dig@leg_front": {
+     "frames": [
+      232,
+      233,
+      234,
+      235,
+      236,
+      237
+     ],
+     "fps": 10,
+     "loop": true
+    },
+    "install_part@leg_front": {
+     "frames": [
+      240,
+      241,
+      242,
+      243,
+      244,
+      245
+     ],
+     "fps": 10,
+     "loop": false
+    },
+    "walk_back@leg_front": {
+     "frames": [
+      248,
+      249,
+      250,
+      251,
+      252,
+      253,
+      254,
+      255
      ],
      "fps": 10,
      "loop": true
@@ -9048,12 +10669,12 @@
   "ally_hive_limbs": {
    "sheet": "ally_hive_limbs.png",
    "frameSize": [
-    80,
+    98,
     73
    ],
    "cols": 8,
    "anchor": [
-    40,
+    49,
     70
    ],
    "faces": "right",
@@ -9130,17 +10751,19 @@
      "fps": 10,
      "loop": true
     },
-    "idle@arm_front": {
+    "install_part@arm_back": {
      "frames": [
       48,
       49,
       50,
-      51
+      51,
+      52,
+      53
      ],
-     "fps": 4,
-     "loop": true
+     "fps": 10,
+     "loop": false
     },
-    "walk@arm_front": {
+    "walk_back@arm_back": {
      "frames": [
       56,
       57,
@@ -9154,19 +10777,17 @@
      "fps": 10,
      "loop": true
     },
-    "attack@arm_front": {
+    "idle@arm_front": {
      "frames": [
       64,
       65,
       66,
-      67,
-      68,
-      69
+      67
      ],
-     "fps": 12,
-     "loop": false
+     "fps": 4,
+     "loop": true
     },
-    "releases_swarm_stinging@arm_front": {
+    "walk@arm_front": {
      "frames": [
       72,
       73,
@@ -9178,55 +10799,57 @@
       79
      ],
      "fps": 10,
-     "loop": false
+     "loop": true
     },
-    "victory_pose@arm_front": {
+    "attack@arm_front": {
      "frames": [
       80,
       81,
       82,
-      83
+      83,
+      84,
+      85
      ],
-     "fps": 10,
+     "fps": 12,
      "loop": false
     },
-    "dig@arm_front": {
+    "releases_swarm_stinging@arm_front": {
      "frames": [
       88,
       89,
       90,
       91,
       92,
-      93
+      93,
+      94,
+      95
      ],
      "fps": 10,
-     "loop": true
+     "loop": false
     },
-    "idle@leg_back": {
+    "victory_pose@arm_front": {
      "frames": [
       96,
       97,
       98,
       99
      ],
-     "fps": 4,
-     "loop": true
+     "fps": 10,
+     "loop": false
     },
-    "walk@leg_back": {
+    "dig@arm_front": {
      "frames": [
       104,
       105,
       106,
       107,
       108,
-      109,
-      110,
-      111
+      109
      ],
      "fps": 10,
      "loop": true
     },
-    "attack@leg_back": {
+    "install_part@arm_front": {
      "frames": [
       112,
       113,
@@ -9235,10 +10858,10 @@
       116,
       117
      ],
-     "fps": 12,
+     "fps": 10,
      "loop": false
     },
-    "releases_swarm_stinging@leg_back": {
+    "walk_back@arm_front": {
      "frames": [
       120,
       121,
@@ -9250,41 +10873,45 @@
       127
      ],
      "fps": 10,
-     "loop": false
+     "loop": true
     },
-    "victory_pose@leg_back": {
+    "idle@leg_back": {
      "frames": [
       128,
       129,
       130,
       131
      ],
-     "fps": 10,
-     "loop": false
+     "fps": 4,
+     "loop": true
     },
-    "dig@leg_back": {
+    "walk@leg_back": {
      "frames": [
       136,
       137,
       138,
       139,
       140,
-      141
+      141,
+      142,
+      143
      ],
      "fps": 10,
      "loop": true
     },
-    "idle@leg_front": {
+    "attack@leg_back": {
      "frames": [
       144,
       145,
       146,
-      147
+      147,
+      148,
+      149
      ],
-     "fps": 4,
-     "loop": true
+     "fps": 12,
+     "loop": false
     },
-    "walk@leg_front": {
+    "releases_swarm_stinging@leg_back": {
      "frames": [
       152,
       153,
@@ -9296,52 +10923,150 @@
       159
      ],
      "fps": 10,
-     "loop": true
+     "loop": false
     },
-    "attack@leg_front": {
+    "victory_pose@leg_back": {
      "frames": [
       160,
       161,
       162,
-      163,
-      164,
-      165
+      163
      ],
-     "fps": 12,
+     "fps": 10,
      "loop": false
     },
-    "releases_swarm_stinging@leg_front": {
+    "dig@leg_back": {
      "frames": [
       168,
       169,
       170,
       171,
       172,
-      173,
-      174,
-      175
+      173
      ],
      "fps": 10,
-     "loop": false
+     "loop": true
     },
-    "victory_pose@leg_front": {
+    "install_part@leg_back": {
      "frames": [
       176,
       177,
       178,
-      179
+      179,
+      180,
+      181
      ],
      "fps": 10,
      "loop": false
     },
-    "dig@leg_front": {
+    "walk_back@leg_back": {
      "frames": [
       184,
       185,
       186,
       187,
       188,
-      189
+      189,
+      190,
+      191
+     ],
+     "fps": 10,
+     "loop": true
+    },
+    "idle@leg_front": {
+     "frames": [
+      192,
+      193,
+      194,
+      195
+     ],
+     "fps": 4,
+     "loop": true
+    },
+    "walk@leg_front": {
+     "frames": [
+      200,
+      201,
+      202,
+      203,
+      204,
+      205,
+      206,
+      207
+     ],
+     "fps": 10,
+     "loop": true
+    },
+    "attack@leg_front": {
+     "frames": [
+      208,
+      209,
+      210,
+      211,
+      212,
+      213
+     ],
+     "fps": 12,
+     "loop": false
+    },
+    "releases_swarm_stinging@leg_front": {
+     "frames": [
+      216,
+      217,
+      218,
+      219,
+      220,
+      221,
+      222,
+      223
+     ],
+     "fps": 10,
+     "loop": false
+    },
+    "victory_pose@leg_front": {
+     "frames": [
+      224,
+      225,
+      226,
+      227
+     ],
+     "fps": 10,
+     "loop": false
+    },
+    "dig@leg_front": {
+     "frames": [
+      232,
+      233,
+      234,
+      235,
+      236,
+      237
+     ],
+     "fps": 10,
+     "loop": true
+    },
+    "install_part@leg_front": {
+     "frames": [
+      240,
+      241,
+      242,
+      243,
+      244,
+      245
+     ],
+     "fps": 10,
+     "loop": false
+    },
+    "walk_back@leg_front": {
+     "frames": [
+      248,
+      249,
+      250,
+      251,
+      252,
+      253,
+      254,
+      255
      ],
      "fps": 10,
      "loop": true
@@ -9358,13 +11083,13 @@
   "ally_kiln_limbs": {
    "sheet": "ally_kiln_limbs.png",
    "frameSize": [
-    80,
-    78
+    126,
+    81
    ],
    "cols": 8,
    "anchor": [
-    40,
-    72
+    63,
+    75
    ],
    "faces": "right",
    "anims": {
@@ -9440,67 +11165,67 @@
      "fps": 10,
      "loop": true
     },
-    "idle@arm_front": {
+    "build@arm_back": {
      "frames": [
       48,
       49,
       50,
       51
      ],
-     "fps": 4,
+     "fps": 8,
      "loop": true
     },
-    "walk@arm_front": {
+    "install_part@arm_back": {
      "frames": [
       56,
       57,
       58,
       59,
       60,
-      61,
-      62,
-      63
+      61
      ],
      "fps": 10,
-     "loop": true
+     "loop": false
     },
-    "attack@arm_front": {
+    "walk_back@arm_back": {
      "frames": [
       64,
       65,
       66,
       67,
       68,
-      69
+      69,
+      70,
+      71
      ],
-     "fps": 12,
-     "loop": false
+     "fps": 10,
+     "loop": true
     },
-    "ceramic_ram_gauntlet@arm_front": {
+    "idle@arm_front": {
      "frames": [
       72,
       73,
       74,
-      75,
-      76,
-      77,
-      78,
-      79
+      75
      ],
-     "fps": 10,
-     "loop": false
+     "fps": 4,
+     "loop": true
     },
-    "victory_pose@arm_front": {
+    "walk@arm_front": {
      "frames": [
       80,
       81,
       82,
-      83
+      83,
+      84,
+      85,
+      86,
+      87
      ],
      "fps": 10,
-     "loop": false
+     "loop": true
     },
-    "dig@arm_front": {
+    "attack@arm_front": {
      "frames": [
       88,
       89,
@@ -9509,34 +11234,34 @@
       92,
       93
      ],
-     "fps": 10,
-     "loop": true
+     "fps": 12,
+     "loop": false
     },
-    "idle@leg_back": {
+    "ceramic_ram_gauntlet@arm_front": {
      "frames": [
       96,
       97,
       98,
-      99
+      99,
+      100,
+      101,
+      102,
+      103
      ],
-     "fps": 4,
-     "loop": true
+     "fps": 10,
+     "loop": false
     },
-    "walk@leg_back": {
+    "victory_pose@arm_front": {
      "frames": [
       104,
       105,
       106,
-      107,
-      108,
-      109,
-      110,
-      111
+      107
      ],
      "fps": 10,
-     "loop": true
+     "loop": false
     },
-    "attack@leg_back": {
+    "dig@arm_front": {
      "frames": [
       112,
       113,
@@ -9545,46 +11270,46 @@
       116,
       117
      ],
-     "fps": 12,
-     "loop": false
+     "fps": 10,
+     "loop": true
     },
-    "ceramic_ram_gauntlet@leg_back": {
+    "build@arm_front": {
      "frames": [
       120,
       121,
       122,
-      123,
-      124,
-      125,
-      126,
-      127
+      123
      ],
-     "fps": 10,
-     "loop": false
+     "fps": 8,
+     "loop": true
     },
-    "victory_pose@leg_back": {
+    "install_part@arm_front": {
      "frames": [
       128,
       129,
       130,
-      131
+      131,
+      132,
+      133
      ],
      "fps": 10,
      "loop": false
     },
-    "dig@leg_back": {
+    "walk_back@arm_front": {
      "frames": [
       136,
       137,
       138,
       139,
       140,
-      141
+      141,
+      142,
+      143
      ],
      "fps": 10,
      "loop": true
     },
-    "idle@leg_front": {
+    "idle@leg_back": {
      "frames": [
       144,
       145,
@@ -9594,7 +11319,7 @@
      "fps": 4,
      "loop": true
     },
-    "walk@leg_front": {
+    "walk@leg_back": {
      "frames": [
       152,
       153,
@@ -9608,7 +11333,7 @@
      "fps": 10,
      "loop": true
     },
-    "attack@leg_front": {
+    "attack@leg_back": {
      "frames": [
       160,
       161,
@@ -9620,7 +11345,7 @@
      "fps": 12,
      "loop": false
     },
-    "ceramic_ram_gauntlet@leg_front": {
+    "ceramic_ram_gauntlet@leg_back": {
      "frames": [
       168,
       169,
@@ -9634,7 +11359,7 @@
      "fps": 10,
      "loop": false
     },
-    "victory_pose@leg_front": {
+    "victory_pose@leg_back": {
      "frames": [
       176,
       177,
@@ -9644,7 +11369,7 @@
      "fps": 10,
      "loop": false
     },
-    "dig@leg_front": {
+    "dig@leg_back": {
      "frames": [
       184,
       185,
@@ -9652,6 +11377,150 @@
       187,
       188,
       189
+     ],
+     "fps": 10,
+     "loop": true
+    },
+    "build@leg_back": {
+     "frames": [
+      192,
+      193,
+      194,
+      195
+     ],
+     "fps": 8,
+     "loop": true
+    },
+    "install_part@leg_back": {
+     "frames": [
+      200,
+      201,
+      202,
+      203,
+      204,
+      205
+     ],
+     "fps": 10,
+     "loop": false
+    },
+    "walk_back@leg_back": {
+     "frames": [
+      208,
+      209,
+      210,
+      211,
+      212,
+      213,
+      214,
+      215
+     ],
+     "fps": 10,
+     "loop": true
+    },
+    "idle@leg_front": {
+     "frames": [
+      216,
+      217,
+      218,
+      219
+     ],
+     "fps": 4,
+     "loop": true
+    },
+    "walk@leg_front": {
+     "frames": [
+      224,
+      225,
+      226,
+      227,
+      228,
+      229,
+      230,
+      231
+     ],
+     "fps": 10,
+     "loop": true
+    },
+    "attack@leg_front": {
+     "frames": [
+      232,
+      233,
+      234,
+      235,
+      236,
+      237
+     ],
+     "fps": 12,
+     "loop": false
+    },
+    "ceramic_ram_gauntlet@leg_front": {
+     "frames": [
+      240,
+      241,
+      242,
+      243,
+      244,
+      245,
+      246,
+      247
+     ],
+     "fps": 10,
+     "loop": false
+    },
+    "victory_pose@leg_front": {
+     "frames": [
+      248,
+      249,
+      250,
+      251
+     ],
+     "fps": 10,
+     "loop": false
+    },
+    "dig@leg_front": {
+     "frames": [
+      256,
+      257,
+      258,
+      259,
+      260,
+      261
+     ],
+     "fps": 10,
+     "loop": true
+    },
+    "build@leg_front": {
+     "frames": [
+      264,
+      265,
+      266,
+      267
+     ],
+     "fps": 8,
+     "loop": true
+    },
+    "install_part@leg_front": {
+     "frames": [
+      272,
+      273,
+      274,
+      275,
+      276,
+      277
+     ],
+     "fps": 10,
+     "loop": false
+    },
+    "walk_back@leg_front": {
+     "frames": [
+      280,
+      281,
+      282,
+      283,
+      284,
+      285,
+      286,
+      287
      ],
      "fps": 10,
      "loop": true
@@ -9668,13 +11537,13 @@
   "ally_seraph_limbs": {
    "sheet": "ally_seraph_limbs.png",
    "frameSize": [
-    94,
-    79
+    122,
+    80
    ],
    "cols": 8,
    "anchor": [
-    47,
-    70
+    61,
+    71
    ],
    "faces": "right",
    "anims": {
@@ -9762,115 +11631,115 @@
      "fps": 10,
      "loop": true
     },
-    "idle@arm_front": {
+    "build@arm_back": {
      "frames": [
       56,
       57,
       58,
       59
      ],
-     "fps": 4,
+     "fps": 8,
      "loop": true
     },
-    "walk@arm_front": {
+    "install_part@arm_back": {
      "frames": [
       64,
       65,
       66,
       67,
       68,
-      69,
-      70,
-      71
+      69
      ],
      "fps": 10,
-     "loop": true
+     "loop": false
     },
-    "attack@arm_front": {
+    "walk_back@arm_back": {
      "frames": [
       72,
       73,
       74,
       75,
       76,
-      77
+      77,
+      78,
+      79
      ],
-     "fps": 12,
-     "loop": false
+     "fps": 10,
+     "loop": true
     },
-    "beam@arm_front": {
+    "idle@arm_front": {
      "frames": [
       80,
       81,
       82,
-      83,
-      84,
-      85,
-      86,
-      87
+      83
      ],
-     "fps": 10,
-     "loop": false
+     "fps": 4,
+     "loop": true
     },
-    "wing_slash_while@arm_front": {
+    "walk@arm_front": {
      "frames": [
       88,
       89,
       90,
       91,
       92,
-      93
+      93,
+      94,
+      95
      ],
      "fps": 10,
-     "loop": false
+     "loop": true
     },
-    "victory_pose@arm_front": {
+    "attack@arm_front": {
      "frames": [
       96,
       97,
       98,
-      99
+      99,
+      100,
+      101
      ],
-     "fps": 10,
+     "fps": 12,
      "loop": false
     },
-    "dig@arm_front": {
+    "beam@arm_front": {
      "frames": [
       104,
       105,
       106,
       107,
       108,
-      109
+      109,
+      110,
+      111
      ],
      "fps": 10,
-     "loop": true
+     "loop": false
     },
-    "idle@leg_back": {
+    "wing_slash_while@arm_front": {
      "frames": [
       112,
       113,
       114,
-      115
+      115,
+      116,
+      117
      ],
-     "fps": 4,
-     "loop": true
+     "fps": 10,
+     "loop": false
     },
-    "walk@leg_back": {
+    "victory_pose@arm_front": {
      "frames": [
       120,
       121,
       122,
-      123,
-      124,
-      125,
-      126,
-      127
+      123
      ],
      "fps": 10,
-     "loop": true
+     "loop": false
     },
-    "attack@leg_back": {
+    "dig@arm_front": {
      "frames": [
       128,
       129,
@@ -9879,24 +11748,20 @@
       132,
       133
      ],
-     "fps": 12,
-     "loop": false
+     "fps": 10,
+     "loop": true
     },
-    "beam@leg_back": {
+    "build@arm_front": {
      "frames": [
       136,
       137,
       138,
-      139,
-      140,
-      141,
-      142,
-      143
+      139
      ],
-     "fps": 10,
-     "loop": false
+     "fps": 8,
+     "loop": true
     },
-    "wing_slash_while@leg_back": {
+    "install_part@arm_front": {
      "frames": [
       144,
       145,
@@ -9908,108 +11773,256 @@
      "fps": 10,
      "loop": false
     },
-    "victory_pose@leg_back": {
+    "walk_back@arm_front": {
      "frames": [
       152,
       153,
       154,
-      155
+      155,
+      156,
+      157,
+      158,
+      159
      ],
      "fps": 10,
-     "loop": false
+     "loop": true
     },
-    "dig@leg_back": {
+    "idle@leg_back": {
      "frames": [
       160,
       161,
       162,
-      163,
-      164,
-      165
-     ],
-     "fps": 10,
-     "loop": true
-    },
-    "idle@leg_front": {
-     "frames": [
-      168,
-      169,
-      170,
-      171
+      163
      ],
      "fps": 4,
      "loop": true
     },
-    "walk@leg_front": {
+    "walk@leg_back": {
+     "frames": [
+      168,
+      169,
+      170,
+      171,
+      172,
+      173,
+      174,
+      175
+     ],
+     "fps": 10,
+     "loop": true
+    },
+    "attack@leg_back": {
      "frames": [
       176,
       177,
       178,
       179,
       180,
-      181,
-      182,
-      183
+      181
      ],
-     "fps": 10,
-     "loop": true
+     "fps": 12,
+     "loop": false
     },
-    "attack@leg_front": {
+    "beam@leg_back": {
      "frames": [
       184,
       185,
       186,
       187,
       188,
-      189
+      189,
+      190,
+      191
      ],
-     "fps": 12,
+     "fps": 10,
      "loop": false
     },
-    "beam@leg_front": {
+    "wing_slash_while@leg_back": {
      "frames": [
       192,
       193,
       194,
       195,
       196,
-      197,
-      198,
-      199
+      197
+     ],
+     "fps": 10,
+     "loop": false
+    },
+    "victory_pose@leg_back": {
+     "frames": [
+      200,
+      201,
+      202,
+      203
+     ],
+     "fps": 10,
+     "loop": false
+    },
+    "dig@leg_back": {
+     "frames": [
+      208,
+      209,
+      210,
+      211,
+      212,
+      213
+     ],
+     "fps": 10,
+     "loop": true
+    },
+    "build@leg_back": {
+     "frames": [
+      216,
+      217,
+      218,
+      219
+     ],
+     "fps": 8,
+     "loop": true
+    },
+    "install_part@leg_back": {
+     "frames": [
+      224,
+      225,
+      226,
+      227,
+      228,
+      229
+     ],
+     "fps": 10,
+     "loop": false
+    },
+    "walk_back@leg_back": {
+     "frames": [
+      232,
+      233,
+      234,
+      235,
+      236,
+      237,
+      238,
+      239
+     ],
+     "fps": 10,
+     "loop": true
+    },
+    "idle@leg_front": {
+     "frames": [
+      240,
+      241,
+      242,
+      243
+     ],
+     "fps": 4,
+     "loop": true
+    },
+    "walk@leg_front": {
+     "frames": [
+      248,
+      249,
+      250,
+      251,
+      252,
+      253,
+      254,
+      255
+     ],
+     "fps": 10,
+     "loop": true
+    },
+    "attack@leg_front": {
+     "frames": [
+      256,
+      257,
+      258,
+      259,
+      260,
+      261
+     ],
+     "fps": 12,
+     "loop": false
+    },
+    "beam@leg_front": {
+     "frames": [
+      264,
+      265,
+      266,
+      267,
+      268,
+      269,
+      270,
+      271
      ],
      "fps": 10,
      "loop": false
     },
     "wing_slash_while@leg_front": {
      "frames": [
-      200,
-      201,
-      202,
-      203,
-      204,
-      205
+      272,
+      273,
+      274,
+      275,
+      276,
+      277
      ],
      "fps": 10,
      "loop": false
     },
     "victory_pose@leg_front": {
      "frames": [
-      208,
-      209,
-      210,
-      211
+      280,
+      281,
+      282,
+      283
      ],
      "fps": 10,
      "loop": false
     },
     "dig@leg_front": {
      "frames": [
-      216,
-      217,
-      218,
-      219,
-      220,
-      221
+      288,
+      289,
+      290,
+      291,
+      292,
+      293
+     ],
+     "fps": 10,
+     "loop": true
+    },
+    "build@leg_front": {
+     "frames": [
+      296,
+      297,
+      298,
+      299
+     ],
+     "fps": 8,
+     "loop": true
+    },
+    "install_part@leg_front": {
+     "frames": [
+      304,
+      305,
+      306,
+      307,
+      308,
+      309
+     ],
+     "fps": 10,
+     "loop": false
+    },
+    "walk_back@leg_front": {
+     "frames": [
+      312,
+      313,
+      314,
+      315,
+      316,
+      317,
+      318,
+      319
      ],
      "fps": 10,
      "loop": true
@@ -10026,13 +12039,13 @@
   "ally_doctor_limbs": {
    "sheet": "ally_doctor_limbs.png",
    "frameSize": [
-    84,
-    75
+    98,
+    90
    ],
    "cols": 8,
    "anchor": [
-    42,
-    70
+    49,
+    85
    ],
    "faces": "right",
    "anims": {
@@ -10108,67 +12121,67 @@
      "fps": 10,
      "loop": true
     },
-    "idle@arm_front": {
+    "build@arm_back": {
      "frames": [
       48,
       49,
       50,
       51
      ],
-     "fps": 4,
+     "fps": 8,
      "loop": true
     },
-    "walk@arm_front": {
+    "install_part@arm_back": {
      "frames": [
       56,
       57,
       58,
       59,
       60,
-      61,
-      62,
-      63
+      61
      ],
      "fps": 10,
-     "loop": true
+     "loop": false
     },
-    "attack@arm_front": {
+    "walk_back@arm_back": {
      "frames": [
       64,
       65,
       66,
       67,
       68,
-      69
+      69,
+      70,
+      71
      ],
-     "fps": 12,
-     "loop": false
+     "fps": 10,
+     "loop": true
     },
-    "inject@arm_front": {
+    "idle@arm_front": {
      "frames": [
       72,
       73,
       74,
-      75,
-      76,
-      77,
-      78,
-      79
+      75
      ],
-     "fps": 10,
-     "loop": false
+     "fps": 4,
+     "loop": true
     },
-    "victory_pose@arm_front": {
+    "walk@arm_front": {
      "frames": [
       80,
       81,
       82,
-      83
+      83,
+      84,
+      85,
+      86,
+      87
      ],
      "fps": 10,
-     "loop": false
+     "loop": true
     },
-    "dig@arm_front": {
+    "attack@arm_front": {
      "frames": [
       88,
       89,
@@ -10177,34 +12190,34 @@
       92,
       93
      ],
-     "fps": 10,
-     "loop": true
+     "fps": 12,
+     "loop": false
     },
-    "idle@leg_back": {
+    "inject@arm_front": {
      "frames": [
       96,
       97,
       98,
-      99
+      99,
+      100,
+      101,
+      102,
+      103
      ],
-     "fps": 4,
-     "loop": true
+     "fps": 10,
+     "loop": false
     },
-    "walk@leg_back": {
+    "victory_pose@arm_front": {
      "frames": [
       104,
       105,
       106,
-      107,
-      108,
-      109,
-      110,
-      111
+      107
      ],
      "fps": 10,
-     "loop": true
+     "loop": false
     },
-    "attack@leg_back": {
+    "dig@arm_front": {
      "frames": [
       112,
       113,
@@ -10213,46 +12226,46 @@
       116,
       117
      ],
-     "fps": 12,
-     "loop": false
+     "fps": 10,
+     "loop": true
     },
-    "inject@leg_back": {
+    "build@arm_front": {
      "frames": [
       120,
       121,
       122,
-      123,
-      124,
-      125,
-      126,
-      127
+      123
      ],
-     "fps": 10,
-     "loop": false
+     "fps": 8,
+     "loop": true
     },
-    "victory_pose@leg_back": {
+    "install_part@arm_front": {
      "frames": [
       128,
       129,
       130,
-      131
+      131,
+      132,
+      133
      ],
      "fps": 10,
      "loop": false
     },
-    "dig@leg_back": {
+    "walk_back@arm_front": {
      "frames": [
       136,
       137,
       138,
       139,
       140,
-      141
+      141,
+      142,
+      143
      ],
      "fps": 10,
      "loop": true
     },
-    "idle@leg_front": {
+    "idle@leg_back": {
      "frames": [
       144,
       145,
@@ -10262,7 +12275,7 @@
      "fps": 4,
      "loop": true
     },
-    "walk@leg_front": {
+    "walk@leg_back": {
      "frames": [
       152,
       153,
@@ -10276,7 +12289,7 @@
      "fps": 10,
      "loop": true
     },
-    "attack@leg_front": {
+    "attack@leg_back": {
      "frames": [
       160,
       161,
@@ -10288,7 +12301,7 @@
      "fps": 12,
      "loop": false
     },
-    "inject@leg_front": {
+    "inject@leg_back": {
      "frames": [
       168,
       169,
@@ -10302,7 +12315,7 @@
      "fps": 10,
      "loop": false
     },
-    "victory_pose@leg_front": {
+    "victory_pose@leg_back": {
      "frames": [
       176,
       177,
@@ -10312,7 +12325,7 @@
      "fps": 10,
      "loop": false
     },
-    "dig@leg_front": {
+    "dig@leg_back": {
      "frames": [
       184,
       185,
@@ -10320,6 +12333,150 @@
       187,
       188,
       189
+     ],
+     "fps": 10,
+     "loop": true
+    },
+    "build@leg_back": {
+     "frames": [
+      192,
+      193,
+      194,
+      195
+     ],
+     "fps": 8,
+     "loop": true
+    },
+    "install_part@leg_back": {
+     "frames": [
+      200,
+      201,
+      202,
+      203,
+      204,
+      205
+     ],
+     "fps": 10,
+     "loop": false
+    },
+    "walk_back@leg_back": {
+     "frames": [
+      208,
+      209,
+      210,
+      211,
+      212,
+      213,
+      214,
+      215
+     ],
+     "fps": 10,
+     "loop": true
+    },
+    "idle@leg_front": {
+     "frames": [
+      216,
+      217,
+      218,
+      219
+     ],
+     "fps": 4,
+     "loop": true
+    },
+    "walk@leg_front": {
+     "frames": [
+      224,
+      225,
+      226,
+      227,
+      228,
+      229,
+      230,
+      231
+     ],
+     "fps": 10,
+     "loop": true
+    },
+    "attack@leg_front": {
+     "frames": [
+      232,
+      233,
+      234,
+      235,
+      236,
+      237
+     ],
+     "fps": 12,
+     "loop": false
+    },
+    "inject@leg_front": {
+     "frames": [
+      240,
+      241,
+      242,
+      243,
+      244,
+      245,
+      246,
+      247
+     ],
+     "fps": 10,
+     "loop": false
+    },
+    "victory_pose@leg_front": {
+     "frames": [
+      248,
+      249,
+      250,
+      251
+     ],
+     "fps": 10,
+     "loop": false
+    },
+    "dig@leg_front": {
+     "frames": [
+      256,
+      257,
+      258,
+      259,
+      260,
+      261
+     ],
+     "fps": 10,
+     "loop": true
+    },
+    "build@leg_front": {
+     "frames": [
+      264,
+      265,
+      266,
+      267
+     ],
+     "fps": 8,
+     "loop": true
+    },
+    "install_part@leg_front": {
+     "frames": [
+      272,
+      273,
+      274,
+      275,
+      276,
+      277
+     ],
+     "fps": 10,
+     "loop": false
+    },
+    "walk_back@leg_front": {
+     "frames": [
+      280,
+      281,
+      282,
+      283,
+      284,
+      285,
+      286,
+      287
      ],
      "fps": 10,
      "loop": true
@@ -10336,13 +12493,13 @@
   "ally_demon_limbs": {
    "sheet": "ally_demon_limbs.png",
    "frameSize": [
-    128,
-    93
+    130,
+    100
    ],
    "cols": 9,
    "anchor": [
-    64,
-    88
+    65,
+    95
    ],
    "faces": "right",
    "anims": {
@@ -10456,57 +12613,53 @@
      "fps": 10,
      "loop": true
     },
-    "idle@arm_front": {
+    "build@arm_back": {
      "frames": [
       81,
       82,
       83,
       84
      ],
-     "fps": 4,
+     "fps": 8,
      "loop": true
     },
-    "walk@arm_front": {
+    "install_part@arm_back": {
      "frames": [
       90,
       91,
       92,
       93,
       94,
-      95,
-      96,
-      97
+      95
      ],
      "fps": 10,
-     "loop": true
+     "loop": false
     },
-    "attack@arm_front": {
+    "walk_back@arm_back": {
      "frames": [
       99,
       100,
       101,
       102,
       103,
-      104
+      104,
+      105,
+      106
      ],
-     "fps": 12,
-     "loop": false
+     "fps": 10,
+     "loop": true
     },
-    "claw_combo@arm_front": {
+    "idle@arm_front": {
      "frames": [
       108,
       109,
       110,
-      111,
-      112,
-      113,
-      114,
-      115
+      111
      ],
-     "fps": 10,
-     "loop": false
+     "fps": 4,
+     "loop": true
     },
-    "tail_drill@arm_front": {
+    "walk@arm_front": {
      "frames": [
       117,
       118,
@@ -10515,82 +12668,86 @@
       121,
       122,
       123,
-      124,
-      125
+      124
      ],
      "fps": 10,
-     "loop": false
+     "loop": true
     },
-    "steam@arm_front": {
+    "attack@arm_front": {
      "frames": [
       126,
       127,
       128,
       129,
-      130
+      130,
+      131
      ],
-     "fps": 10,
+     "fps": 12,
      "loop": false
     },
-    "roar@arm_front": {
+    "claw_combo@arm_front": {
      "frames": [
       135,
       136,
       137,
       138,
       139,
-      140
+      140,
+      141,
+      142
+     ],
+     "fps": 10,
+     "loop": false
+    },
+    "tail_drill@arm_front": {
+     "frames": [
+      144,
+      145,
+      146,
+      147,
+      148,
+      149,
+      150,
+      151,
+      152
+     ],
+     "fps": 10,
+     "loop": false
+    },
+    "steam@arm_front": {
+     "frames": [
+      153,
+      154,
+      155,
+      156,
+      157
+     ],
+     "fps": 10,
+     "loop": false
+    },
+    "roar@arm_front": {
+     "frames": [
+      162,
+      163,
+      164,
+      165,
+      166,
+      167
      ],
      "fps": 10,
      "loop": false
     },
     "victory_pose@arm_front": {
      "frames": [
-      144,
-      145,
-      146,
-      147
+      171,
+      172,
+      173,
+      174
      ],
      "fps": 10,
      "loop": false
     },
     "dig@arm_front": {
-     "frames": [
-      153,
-      154,
-      155,
-      156,
-      157,
-      158
-     ],
-     "fps": 10,
-     "loop": true
-    },
-    "idle@leg_back": {
-     "frames": [
-      162,
-      163,
-      164,
-      165
-     ],
-     "fps": 4,
-     "loop": true
-    },
-    "walk@leg_back": {
-     "frames": [
-      171,
-      172,
-      173,
-      174,
-      175,
-      176,
-      177,
-      178
-     ],
-     "fps": 10,
-     "loop": true
-    },
-    "attack@leg_back": {
      "frames": [
       180,
       181,
@@ -10599,72 +12756,70 @@
       184,
       185
      ],
-     "fps": 12,
-     "loop": false
+     "fps": 10,
+     "loop": true
     },
-    "claw_combo@leg_back": {
+    "build@arm_front": {
      "frames": [
       189,
       190,
       191,
-      192,
-      193,
-      194,
-      195,
-      196
+      192
      ],
-     "fps": 10,
-     "loop": false
+     "fps": 8,
+     "loop": true
     },
-    "tail_drill@leg_back": {
+    "install_part@arm_front": {
      "frames": [
       198,
       199,
       200,
       201,
       202,
-      203,
-      204,
-      205,
-      206
+      203
      ],
      "fps": 10,
      "loop": false
     },
-    "steam@leg_back": {
+    "walk_back@arm_front": {
      "frames": [
       207,
       208,
       209,
       210,
-      211
+      211,
+      212,
+      213,
+      214
      ],
      "fps": 10,
-     "loop": false
+     "loop": true
     },
-    "roar@leg_back": {
+    "idle@leg_back": {
      "frames": [
       216,
       217,
       218,
-      219,
-      220,
-      221
+      219
      ],
-     "fps": 10,
-     "loop": false
+     "fps": 4,
+     "loop": true
     },
-    "victory_pose@leg_back": {
+    "walk@leg_back": {
      "frames": [
       225,
       226,
       227,
-      228
+      228,
+      229,
+      230,
+      231,
+      232
      ],
      "fps": 10,
-     "loop": false
+     "loop": true
     },
-    "dig@leg_back": {
+    "attack@leg_back": {
      "frames": [
       234,
       235,
@@ -10673,20 +12828,24 @@
       238,
       239
      ],
-     "fps": 10,
-     "loop": true
+     "fps": 12,
+     "loop": false
     },
-    "idle@leg_front": {
+    "claw_combo@leg_back": {
      "frames": [
       243,
       244,
       245,
-      246
+      246,
+      247,
+      248,
+      249,
+      250
      ],
-     "fps": 4,
-     "loop": true
+     "fps": 10,
+     "loop": false
     },
-    "walk@leg_front": {
+    "tail_drill@leg_back": {
      "frames": [
       252,
       253,
@@ -10695,93 +12854,235 @@
       256,
       257,
       258,
-      259
+      259,
+      260
      ],
      "fps": 10,
-     "loop": true
+     "loop": false
     },
-    "attack@leg_front": {
+    "steam@leg_back": {
      "frames": [
       261,
       262,
       263,
       264,
-      265,
-      266
+      265
      ],
-     "fps": 12,
+     "fps": 10,
      "loop": false
     },
-    "claw_combo@leg_front": {
+    "roar@leg_back": {
      "frames": [
       270,
       271,
       272,
       273,
       274,
-      275,
-      276,
-      277
+      275
      ],
      "fps": 10,
      "loop": false
     },
-    "tail_drill@leg_front": {
+    "victory_pose@leg_back": {
      "frames": [
       279,
       280,
       281,
-      282,
-      283,
-      284,
-      285,
-      286,
-      287
+      282
      ],
      "fps": 10,
      "loop": false
     },
-    "steam@leg_front": {
+    "dig@leg_back": {
      "frames": [
       288,
       289,
       290,
       291,
-      292
+      292,
+      293
      ],
      "fps": 10,
-     "loop": false
+     "loop": true
     },
-    "roar@leg_front": {
+    "build@leg_back": {
      "frames": [
       297,
       298,
       299,
-      300,
-      301,
-      302
+      300
      ],
-     "fps": 10,
-     "loop": false
+     "fps": 8,
+     "loop": true
     },
-    "victory_pose@leg_front": {
+    "install_part@leg_back": {
      "frames": [
       306,
       307,
       308,
-      309
+      309,
+      310,
+      311
      ],
      "fps": 10,
      "loop": false
     },
-    "dig@leg_front": {
+    "walk_back@leg_back": {
      "frames": [
       315,
       316,
       317,
       318,
       319,
-      320
+      320,
+      321,
+      322
+     ],
+     "fps": 10,
+     "loop": true
+    },
+    "idle@leg_front": {
+     "frames": [
+      324,
+      325,
+      326,
+      327
+     ],
+     "fps": 4,
+     "loop": true
+    },
+    "walk@leg_front": {
+     "frames": [
+      333,
+      334,
+      335,
+      336,
+      337,
+      338,
+      339,
+      340
+     ],
+     "fps": 10,
+     "loop": true
+    },
+    "attack@leg_front": {
+     "frames": [
+      342,
+      343,
+      344,
+      345,
+      346,
+      347
+     ],
+     "fps": 12,
+     "loop": false
+    },
+    "claw_combo@leg_front": {
+     "frames": [
+      351,
+      352,
+      353,
+      354,
+      355,
+      356,
+      357,
+      358
+     ],
+     "fps": 10,
+     "loop": false
+    },
+    "tail_drill@leg_front": {
+     "frames": [
+      360,
+      361,
+      362,
+      363,
+      364,
+      365,
+      366,
+      367,
+      368
+     ],
+     "fps": 10,
+     "loop": false
+    },
+    "steam@leg_front": {
+     "frames": [
+      369,
+      370,
+      371,
+      372,
+      373
+     ],
+     "fps": 10,
+     "loop": false
+    },
+    "roar@leg_front": {
+     "frames": [
+      378,
+      379,
+      380,
+      381,
+      382,
+      383
+     ],
+     "fps": 10,
+     "loop": false
+    },
+    "victory_pose@leg_front": {
+     "frames": [
+      387,
+      388,
+      389,
+      390
+     ],
+     "fps": 10,
+     "loop": false
+    },
+    "dig@leg_front": {
+     "frames": [
+      396,
+      397,
+      398,
+      399,
+      400,
+      401
+     ],
+     "fps": 10,
+     "loop": true
+    },
+    "build@leg_front": {
+     "frames": [
+      405,
+      406,
+      407,
+      408
+     ],
+     "fps": 8,
+     "loop": true
+    },
+    "install_part@leg_front": {
+     "frames": [
+      414,
+      415,
+      416,
+      417,
+      418,
+      419
+     ],
+     "fps": 10,
+     "loop": false
+    },
+    "walk_back@leg_front": {
+     "frames": [
+      423,
+      424,
+      425,
+      426,
+      427,
+      428,
+      429,
+      430
      ],
      "fps": 10,
      "loop": true
@@ -10799,12 +13100,12 @@
    "sheet": "ally_n73_limbs.png",
    "frameSize": [
     132,
-    76
+    84
    ],
    "cols": 8,
    "anchor": [
     66,
-    70
+    78
    ],
    "faces": "right",
    "anims": {
@@ -10880,67 +13181,66 @@
      "fps": 10,
      "loop": true
     },
-    "idle@arm_front": {
+    "build@arm_back": {
      "frames": [
       48,
       49,
       50,
       51
      ],
-     "fps": 4,
+     "fps": 8,
      "loop": true
     },
-    "walk@arm_front": {
+    "install_part@arm_back": {
      "frames": [
       56,
       57,
       58,
       59,
-      60,
-      61,
-      62,
-      63
+      60
      ],
      "fps": 10,
-     "loop": true
+     "loop": false
     },
-    "attack@arm_front": {
+    "walk_back@arm_back": {
      "frames": [
       64,
       65,
       66,
       67,
       68,
-      69
+      69,
+      70,
+      71
      ],
-     "fps": 12,
-     "loop": false
+     "fps": 10,
+     "loop": true
     },
-    "neuro_pulse@arm_front": {
+    "idle@arm_front": {
      "frames": [
       72,
       73,
       74,
-      75,
-      76,
-      77,
-      78,
-      79
+      75
      ],
-     "fps": 10,
-     "loop": false
+     "fps": 4,
+     "loop": true
     },
-    "victory_pose@arm_front": {
+    "walk@arm_front": {
      "frames": [
       80,
       81,
       82,
-      83
+      83,
+      84,
+      85,
+      86,
+      87
      ],
      "fps": 10,
-     "loop": false
+     "loop": true
     },
-    "dig@arm_front": {
+    "attack@arm_front": {
      "frames": [
       88,
       89,
@@ -10949,34 +13249,34 @@
       92,
       93
      ],
-     "fps": 10,
-     "loop": true
+     "fps": 12,
+     "loop": false
     },
-    "idle@leg_back": {
+    "neuro_pulse@arm_front": {
      "frames": [
       96,
       97,
       98,
-      99
+      99,
+      100,
+      101,
+      102,
+      103
      ],
-     "fps": 4,
-     "loop": true
+     "fps": 10,
+     "loop": false
     },
-    "walk@leg_back": {
+    "victory_pose@arm_front": {
      "frames": [
       104,
       105,
       106,
-      107,
-      108,
-      109,
-      110,
-      111
+      107
      ],
      "fps": 10,
-     "loop": true
+     "loop": false
     },
-    "attack@leg_back": {
+    "dig@arm_front": {
      "frames": [
       112,
       113,
@@ -10985,46 +13285,45 @@
       116,
       117
      ],
-     "fps": 12,
-     "loop": false
+     "fps": 10,
+     "loop": true
     },
-    "neuro_pulse@leg_back": {
+    "build@arm_front": {
      "frames": [
       120,
       121,
       122,
-      123,
-      124,
-      125,
-      126,
-      127
+      123
      ],
-     "fps": 10,
-     "loop": false
+     "fps": 8,
+     "loop": true
     },
-    "victory_pose@leg_back": {
+    "install_part@arm_front": {
      "frames": [
       128,
       129,
       130,
-      131
+      131,
+      132
      ],
      "fps": 10,
      "loop": false
     },
-    "dig@leg_back": {
+    "walk_back@arm_front": {
      "frames": [
       136,
       137,
       138,
       139,
       140,
-      141
+      141,
+      142,
+      143
      ],
      "fps": 10,
      "loop": true
     },
-    "idle@leg_front": {
+    "idle@leg_back": {
      "frames": [
       144,
       145,
@@ -11034,7 +13333,7 @@
      "fps": 4,
      "loop": true
     },
-    "walk@leg_front": {
+    "walk@leg_back": {
      "frames": [
       152,
       153,
@@ -11048,7 +13347,7 @@
      "fps": 10,
      "loop": true
     },
-    "attack@leg_front": {
+    "attack@leg_back": {
      "frames": [
       160,
       161,
@@ -11060,7 +13359,7 @@
      "fps": 12,
      "loop": false
     },
-    "neuro_pulse@leg_front": {
+    "neuro_pulse@leg_back": {
      "frames": [
       168,
       169,
@@ -11074,7 +13373,7 @@
      "fps": 10,
      "loop": false
     },
-    "victory_pose@leg_front": {
+    "victory_pose@leg_back": {
      "frames": [
       176,
       177,
@@ -11084,7 +13383,7 @@
      "fps": 10,
      "loop": false
     },
-    "dig@leg_front": {
+    "dig@leg_back": {
      "frames": [
       184,
       185,
@@ -11092,6 +13391,148 @@
       187,
       188,
       189
+     ],
+     "fps": 10,
+     "loop": true
+    },
+    "build@leg_back": {
+     "frames": [
+      192,
+      193,
+      194,
+      195
+     ],
+     "fps": 8,
+     "loop": true
+    },
+    "install_part@leg_back": {
+     "frames": [
+      200,
+      201,
+      202,
+      203,
+      204
+     ],
+     "fps": 10,
+     "loop": false
+    },
+    "walk_back@leg_back": {
+     "frames": [
+      208,
+      209,
+      210,
+      211,
+      212,
+      213,
+      214,
+      215
+     ],
+     "fps": 10,
+     "loop": true
+    },
+    "idle@leg_front": {
+     "frames": [
+      216,
+      217,
+      218,
+      219
+     ],
+     "fps": 4,
+     "loop": true
+    },
+    "walk@leg_front": {
+     "frames": [
+      224,
+      225,
+      226,
+      227,
+      228,
+      229,
+      230,
+      231
+     ],
+     "fps": 10,
+     "loop": true
+    },
+    "attack@leg_front": {
+     "frames": [
+      232,
+      233,
+      234,
+      235,
+      236,
+      237
+     ],
+     "fps": 12,
+     "loop": false
+    },
+    "neuro_pulse@leg_front": {
+     "frames": [
+      240,
+      241,
+      242,
+      243,
+      244,
+      245,
+      246,
+      247
+     ],
+     "fps": 10,
+     "loop": false
+    },
+    "victory_pose@leg_front": {
+     "frames": [
+      248,
+      249,
+      250,
+      251
+     ],
+     "fps": 10,
+     "loop": false
+    },
+    "dig@leg_front": {
+     "frames": [
+      256,
+      257,
+      258,
+      259,
+      260,
+      261
+     ],
+     "fps": 10,
+     "loop": true
+    },
+    "build@leg_front": {
+     "frames": [
+      264,
+      265,
+      266,
+      267
+     ],
+     "fps": 8,
+     "loop": true
+    },
+    "install_part@leg_front": {
+     "frames": [
+      272,
+      273,
+      274,
+      275,
+      276
+     ],
+     "fps": 10,
+     "loop": false
+    },
+    "walk_back@leg_front": {
+     "frames": [
+      280,
+      281,
+      282,
+      283,
+      284,
+      285,
+      286,
+      287
      ],
      "fps": 10,
      "loop": true
@@ -11562,6 +14003,565 @@
     }
    },
    "note": "Сбор энергии, покадрово из листов 071 и 075: spawn — вспышка на месте, fly — шарик в полёте (цикл), trail — искра шлейфа (разово, ставить по пути), arrive_ring + arrive_burst — поглощение у штаба."
+  },
+  "cache_fx": {
+   "sheet": "cache_fx.png",
+   "frameSize": [
+    126,
+    120
+   ],
+   "cols": 8,
+   "anchor": [
+    63,
+    116
+   ],
+   "anims": {
+    "rare": {
+     "frames": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7
+     ],
+     "fps": 10,
+     "loop": false
+    },
+    "control_safe": {
+     "frames": [
+      8,
+      9,
+      10,
+      11,
+      12,
+      13,
+      14,
+      15
+     ],
+     "fps": 10,
+     "loop": false
+    },
+    "supply_drop": {
+     "frames": [
+      16,
+      17,
+      18,
+      19,
+      20,
+      21,
+      22,
+      23
+     ],
+     "fps": 10,
+     "loop": false
+    }
+   },
+   "note": "Из генератора: 178. Тайники (178): rare — золотой тайник открывается, control_safe — сейф Контроля вскрыт, supply_drop — сброс на парашюте. Якорь — низ предмета в клетке."
+  },
+  "command_v2": {
+   "sheet": "command_v2.png",
+   "frameSize": [
+    224,
+    183
+   ],
+   "cols": 11,
+   "anchor": [
+    112,
+    179
+   ],
+   "anims": {
+    "idle": {
+     "frames": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8
+     ],
+     "fps": 4,
+     "loop": true
+    },
+    "absorb": {
+     "frames": [
+      11,
+      12,
+      13,
+      14,
+      15,
+      16,
+      17,
+      18,
+      19
+     ],
+     "fps": 10,
+     "loop": false
+    },
+    "construct": {
+     "frames": [
+      22,
+      23,
+      24,
+      25,
+      26,
+      27,
+      28,
+      29,
+      30,
+      31
+     ],
+     "fps": 8,
+     "loop": false
+    },
+    "damaged": {
+     "frames": [
+      33,
+      34,
+      35,
+      36,
+      37,
+      38,
+      39,
+      40,
+      41,
+      42
+     ],
+     "fps": 6,
+     "loop": true
+    },
+    "collapse": {
+     "frames": [
+      44,
+      45,
+      46,
+      47,
+      48,
+      49,
+      50,
+      51,
+      52,
+      53,
+      54
+     ],
+     "fps": 10,
+     "loop": false
+    }
+   },
+   "note": "Из генератора: 180. Штаб v2 (180), 2×2 клетки: idle (цикл), absorb — принимает энергию, construct, damaged (цикл), collapse. Якорь — низ здания по центру."
+  },
+  "build_fx": {
+   "sheet": "build_fx.png",
+   "frameSize": [
+    154,
+    120
+   ],
+   "cols": 10,
+   "anchor": [
+    77,
+    116
+   ],
+   "anims": {
+    "construct": {
+     "frames": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9
+     ],
+     "fps": 8,
+     "loop": true
+    },
+    "done": {
+     "frames": [
+      10,
+      11,
+      12,
+      13,
+      14,
+      15,
+      16,
+      17
+     ],
+     "fps": 10,
+     "loop": false
+    },
+    "collapse": {
+     "frames": [
+      20,
+      21,
+      22,
+      23,
+      24,
+      25,
+      26,
+      27,
+      28
+     ],
+     "fps": 10,
+     "loop": false
+    },
+    "upgrade": {
+     "frames": [
+      30,
+      31,
+      32,
+      33,
+      34,
+      35,
+      36,
+      37,
+      38
+     ],
+     "fps": 10,
+     "loop": true
+    }
+   },
+   "note": "Из генератора: 183. Стройка поверх здания в 1 клетку (183): construct (цикл), done, collapse, upgrade — леса улучшения (цикл). Здание нарисовано внутри кадров."
+  },
+  "fx_coop": {
+   "sheet": "fx_coop.png",
+   "frameSize": [
+    104,
+    104
+   ],
+   "cols": 9,
+   "anchor": [
+    0,
+    0
+   ],
+   "anims": {
+    "jammer": {
+     "frames": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8
+     ],
+     "fps": 10,
+     "loop": true
+    },
+    "shield": {
+     "frames": [
+      9,
+      10,
+      11,
+      12,
+      13,
+      14,
+      15,
+      16,
+      17
+     ],
+     "fps": 10,
+     "loop": false
+    },
+    "teamwork": {
+     "frames": [
+      18,
+      19,
+      20,
+      21,
+      22,
+      23,
+      24,
+      25,
+      26
+     ],
+     "fps": 10,
+     "loop": false
+    },
+    "drone_scan": {
+     "frames": [
+      27,
+      28,
+      29,
+      30,
+      31,
+      32,
+      33,
+      34,
+      35
+     ],
+     "fps": 10,
+     "loop": false
+    }
+   },
+   "note": "Из генератора: 171_fx_coop_scan.png. Кооператив (171): jammer — поле глушилки 5×5 (цикл), shield — гелевый щит на злодее, teamwork — искра совместного удара, drone_scan — дрон сканирует 3×3."
+  },
+  "fx_energy2": {
+   "sheet": "fx_energy2.png",
+   "frameSize": [
+    104,
+    104
+   ],
+   "cols": 9,
+   "anchor": [
+    0,
+    0
+   ],
+   "anims": {
+    "release": {
+     "frames": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8
+     ],
+     "fps": 10,
+     "loop": false
+    },
+    "absorb": {
+     "frames": [
+      18,
+      19,
+      20,
+      21,
+      22,
+      23,
+      24,
+      25,
+      26
+     ],
+     "fps": 10,
+     "loop": false
+    },
+    "plus": {
+     "frames": [
+      27,
+      28,
+      29,
+      30,
+      31,
+      32,
+      33,
+      34,
+      35
+     ],
+     "fps": 10,
+     "loop": false
+    },
+    "fly": {
+     "frames": [
+      9,
+      10,
+      11,
+      12,
+      13,
+      14
+     ],
+     "fps": 12,
+     "loop": true
+    }
+   },
+   "note": "Из генератора: 175_fx_energy_collect_v2.png. Сбор энергии v2 (175): release — выброс из вскрытого квартала, fly — сгусток-комета (цикл, хвост слева, поворачивать по полёту), absorb — поглощение у штаба, plus — искра «+» у счётчика."
+  },
+  "nest_burst": {
+   "sheet": "nest_burst.png",
+   "frameSize": [
+    104,
+    104
+   ],
+   "cols": 8,
+   "anchor": [
+    0,
+    0
+   ],
+   "anims": {
+    "thermo": {
+     "frames": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7
+     ],
+     "fps": 10,
+     "loop": false
+    },
+    "cryo": {
+     "frames": [
+      8,
+      9,
+      10,
+      11,
+      12,
+      13,
+      14,
+      15
+     ],
+     "fps": 10,
+     "loop": false
+    },
+    "volt": {
+     "frames": [
+      16,
+      17,
+      18,
+      19,
+      20,
+      21,
+      22,
+      23
+     ],
+     "fps": 10,
+     "loop": false
+    },
+    "toxin": {
+     "frames": [
+      24,
+      25,
+      26,
+      27,
+      28,
+      29,
+      30,
+      31
+     ],
+     "fps": 10,
+     "loop": false
+    },
+    "impact": {
+     "frames": [
+      32,
+      33,
+      34,
+      35,
+      36,
+      37,
+      38,
+      39
+     ],
+     "fps": 10,
+     "loop": false
+    }
+   },
+   "note": "Из генератора: 176_fx_nest_bursts.png. Взрыв вскрытого гнезда по стихии (176): thermo, cryo, volt, toxin, impact."
+  },
+  "loading_run": {
+   "sheet": "loading_run.png",
+   "frameSize": [
+    148,
+    149
+   ],
+   "cols": 8,
+   "anchor": [
+    74,
+    140
+   ],
+   "anims": {
+    "standard": {
+     "frames": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7
+     ],
+     "fps": 10,
+     "loop": true
+    },
+    "patch": {
+     "frames": [
+      8,
+      9,
+      10,
+      11,
+      12,
+      13,
+      14,
+      15
+     ],
+     "fps": 10,
+     "loop": true
+    }
+   },
+   "faces": "right",
+   "note": "Из генератора: 186_loading_run_loop.png, бег для экрана загрузки. Экран загрузки (186): standard и patch бегут вправо (цикл)."
+  },
+  "demon_canon": {
+   "sheet": "demon_canon.png",
+   "frameSize": [
+    142,
+    89
+   ],
+   "cols": 8,
+   "anchor": [
+    71,
+    86
+   ],
+   "anims": {
+    "walk": {
+     "frames": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7
+     ],
+     "fps": 10,
+     "loop": true
+    },
+    "attack": {
+     "frames": [
+      8,
+      9,
+      10,
+      11,
+      12,
+      13,
+      14
+     ],
+     "fps": 12,
+     "loop": false
+    },
+    "death": {
+     "frames": [
+      16,
+      17,
+      18,
+      19,
+      20,
+      21,
+      22,
+      23
+     ],
+     "fps": 10,
+     "loop": false
+    }
+   },
+   "faces": "right",
+   "note": "Демон-эталон (217): 4 руки, хвост-бур. walk (цикл), attack — удар хвостом, death — падает и встаёт. Разворот из 217 — только в справочник. Пока не заменяет ally_demon/demon: ждёт решения Антона."
   }
  }
 }
