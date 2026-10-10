@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 import { C } from '../layout';
+import { preloadAwards } from './Awards';
 import type { HeroState } from './store';
 
 /**
@@ -22,6 +23,7 @@ export function preloadMetaArt(scene: Phaser.Scene): void {
     const id = path.match(/([\w-]+)\.png$/)?.[1];
     if (id && !scene.textures.exists(`trophy.${id}`)) scene.load.image(`trophy.${id}`, url);
   }
+  preloadAwards(scene);
 }
 
 type G = Phaser.GameObjects.Graphics;

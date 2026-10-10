@@ -15,7 +15,7 @@ export interface MetaSave {
   allyChoice: string[];
   /** Last squad picked on «Сводка смены» (MVP_RULES §4.5), offered again next time. */
   lastSquad?: string[];
-  records: Record<string, { bestSeconds?: number; bestScore?: number; bestEnergy?: number }>;
+  records: Record<string, { bestSeconds?: number; bestScore?: number; bestEnergy?: number; bestStars?: number }>;
   daily?: { date: string; bestScore: number; streak: number };
   tutorialDone?: boolean;
   /** Blueprint fragments collected across runs; key = blueprint site id (future: building ids). */
@@ -26,6 +26,10 @@ export interface MetaSave {
   fragments?: Record<string, number>;
   /** Control record ids found in order (Досье → «Архив»). */
   archive?: string[];
+  /** Medals (ACHIEVEMENTS.md §4): tier 1–3 (special: 1) and the date it was earned. */
+  medals?: Record<string, { tier: number; at: string }>;
+  /** Up to 3 medal ids the player shows in the leaderboard and the co-op lobby. */
+  showcase?: string[];
 }
 
 export interface Rank {

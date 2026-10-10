@@ -4,7 +4,8 @@ import { sound } from '../audio';
 import { C, FONT, INK, LANDSCAPE, VIEW } from '../layout';
 import { chip, plate, TXT } from '../ui';
 import { drawWeakOrbs, TECH_HEX, weaknessesOf } from '../Vitals';
-import { portrait, preloadMetaArt, rankBadge } from './art';
+import { portrait, preloadMetaArt } from './art';
+import { bestStars, closestMedal, difficultyIcon, medalCard, medalCup, medalName, medalState, medalTile, MEDALS, modeIcon, rankCup, showcaseOf, SHOWCASE_MAX } from './Awards';
 import { bar, button, fmtNum, fmtTime, onTap, plural, shade } from './kit';
 import { demoMeta, metaDemo } from './preview';
 import { allySlots, FEMALE, HEROES, heroProgress, heroState, loadMeta, pickAllies, RANKS, rankAt, rankFraction, stat, type HeroInfo, type MetaSave } from './store';
@@ -15,8 +16,10 @@ import { allySlots, FEMALE, HEROES, heroProgress, heroState, loadMeta, pickAllie
  * scrolling. Tapping a hero opens their file: enemy card, how to bring them
  * back, ally bonus, Control's notes.
  */
-type Tab = 'heroes' | 'stats' | 'records' | 'rank';
-const TABS: Tab[] = ['heroes', 'stats', 'records', 'rank'];
+type Tab = 'heroes' | 'stats' | 'awards' | 'records' | 'rank';
+const TABS: Tab[] = ['heroes', 'stats', 'awards', 'records', 'rank'];
+/** Pages start under one row of tabs here (the patch's two-row phone layout comes with the blueprint tabs). */
+const SHIFT = 0;
 const DEMO = !!import.meta.env.VITE_META_DEMO;
 
 export class DossierScene extends Phaser.Scene {
@@ -102,7 +105,7 @@ export class DossierScene extends Phaser.Scene {
     this.drawTabs();
     this.page?.destroy();
     this.page = this.add.container(0, 0);
-    ({ heroes: () => this.heroes(), stats: () => this.stats(), records: () => this.records(), rank: () => this.rank() })[tab]();
+    ({ heroes: () => this.heroes(), stats: () => this.stats(), awards: () => this.awards(), records: () => this.records(), rank: () => this.rank() })[tab]();
     this.page.setAlpha(0);
     this.tweens.add({ targets: this.page, alpha: 1, duration: 160 });
   }
@@ -387,11 +390,11 @@ export class DossierScene extends Phaser.Scene {
     const m = this.meta;
     const x0 = this.x0();
     const cw = this.cw();
-    const rows: [string, string][] = [
-      [t('difficulty.intern.name'), 'call.intern'],
-      [t('difficulty.shift.name'), 'call.shift'],
-      [t('difficulty.rush.name'), 'call.rush'],
-      [t('mode.quick.name'), 'quick'],
+    const rows: [string, string, (x: number, y: number) => Phaser.GameObjects.Image][] = [
+      [t('difficulty.intern.name'), 'call.intern', (x, y) => difficultyIcon(this, x, y, 64, 1)],
+      [t('difficulty.shift.name'), 'call.shift', (x, y) => difficultyIcon(this, x, y, 64, 2)],
+      [t('difficulty.rush.name'), 'call.rush', (x, y) => difficultyIcon(this, x, y, 64, 3)],
+      [t('mode.quick.name'), 'quick', (x, y) => modeIcon(this, x, y, 60, 'quick')],
     ];
     const any = Object.keys(m.records).length > 0 || stat(m, 'best_run_energy') > 0;
     let y = 250;
@@ -400,21 +403,26 @@ export class DossierScene extends Phaser.Scene {
       return;
     }
     // Column heads, then one plate per mode.
-    const c1 = x0 + cw * 0.5;
+    const c1 = x0 + cw * (LANDSCAPE ? 0.5 : 0.64);
     const c2 = x0 + cw - 30;
     this.page!.add([
       this.add.text(c1, y, t('dossier.records.best_time').toUpperCase(), { ...TXT.caps(), fontSize: '14px' }).setOrigin(1, 0),
       this.add.text(c2, y, t('dossier.records.best_score').toUpperCase(), { ...TXT.caps(), fontSize: '14px' }).setOrigin(1, 0),
     ]);
     y += 36;
-    for (const [label, key] of rows) {
+    for (const [label, key, icon] of rows) {
       const r = m.records[key];
       const g = this.add.graphics();
       plate(g, x0, y, cw, 118, 18);
-      const l = this.add.text(x0 + 32, y + 59, label, TXT.num(LANDSCAPE ? 28 : 24, INK.graphite)).setOrigin(0, 0.5);
+      const l = this.add.text(x0 + 100, y + 42, label, TXT.num(LANDSCAPE ? 28 : 24, INK.graphite)).setOrigin(0, 0.5);
+      const room = c1 - (LANDSCAPE ? 200 : 104) - (x0 + 100);
+      if (l.width > room) l.setScale(room / l.width);
       const tv = this.add.text(c1, y + 59, r?.bestSeconds ? fmtTime(r.bestSeconds) : '—', TXT.num(30, INK.teal)).setOrigin(1, 0.5);
       const sv = this.add.text(c2, y + 59, r?.bestScore ? fmtNum(r.bestScore) : '—', TXT.num(30, INK.graphite)).setOrigin(1, 0.5);
       this.page!.add([g, l, tv, sv]);
+      // Mode / difficulty icon (art 173) on the left, the best rating in stars under the name.
+      this.page!.add(icon(x0 + 56, y + 59));
+      bestStars(this, this.page!, x0 + 100, y + 84, 26, r?.bestStars ?? 0);
       y += 134;
     }
     y += 20;
@@ -439,8 +447,8 @@ export class DossierScene extends Phaser.Scene {
     // Current rank plate.
     const g = this.add.graphics();
     plate(g, x0, 246, cw, 250, 24);
-    rankBadge(g, x0 + 110, 360, 150, cur.index);
     p.add(g);
+    p.add(rankCup(this, x0 + 110, 470, 190, cur.index));
     p.add(this.add.text(x0 + 220, 278, t(`rank.${cur.rank.id}`), { ...TXT.num(34, INK.graphite), wordWrap: { width: cw - 260 } }));
     const desc = this.add.text(x0 + 222, 330, t(`rank.${cur.rank.id}.desc`), { ...TXT.body(20, INK.dim, '500'), wordWrap: { width: cw - 260 } });
     p.add(desc);
@@ -456,14 +464,102 @@ export class DossierScene extends Phaser.Scene {
       const reached = i <= cur.index;
       const rg = this.add.graphics();
       chip(rg, x0, y, cw, rowH - 10, i === cur.index ? C.seam : C.paper, i === cur.index ? 0.22 : reached ? 0.9 : 0.5, 14, i === cur.index ? { color: C.teal, width: 2 } : undefined);
-      rankBadge(rg, x0 + 52, y + (rowH - 10) / 2, Math.min(64, rowH - 30), i);
-      if (!reached) rg.setAlpha(0.6);
+      const cup = rankCup(this, x0 + 52, y + rowH - 16, Math.min(84, rowH - 22), i);
+      if (!reached) cup.setTint(0xb7c2c7).setAlpha(0.6);
       const name = this.add.text(x0 + 104, y + 14, t(`rank.${r.id}`), TXT.num(LANDSCAPE ? 22 : 21, reached ? INK.graphite : INK.dim));
       const from = this.add.text(x0 + cw - 24, y + 16, fmtNum(r.from), TXT.num(18, INK.dim)).setOrigin(1, 0);
       const list = r.unlocksBoons.map((b) => t(`boon.${b}.name`)).join(', ');
       const unl = this.add.text(x0 + 104, y + 48, list ? t('rank.unlocks', { list }) : t('rank.unlocks_none'), { ...TXT.body(18, INK.dim, '500'), wordWrap: { width: cw - 140 } });
       if (unl.height > rowH - 64) unl.setScale(Math.max(0.75, (rowH - 64) / unl.height));
-      p.add([rg, name, from, unl]);
+      p.add([rg, cup, name, from, unl]);
+    });
+  }
+
+  // ----------------------------------------------------------------- awards
+
+  /**
+   * «Награды» (ACHIEVEMENTS.md §3): rank cup with the bar to the next rank and the profile showcase on top,
+   * then all 28 medals. Phone: 4 × 7 under the rank; PC: rank on the left, 7 × 4 on the right.
+   */
+  private awards(): void {
+    const p = this.page!;
+    const m = this.meta;
+    const x0 = this.x0();
+    const cw = this.cw();
+    const score = stat(m, 'total_score');
+    const cur = rankAt(score);
+    const top = 246;
+    const headW = LANDSCAPE ? 400 : cw;
+    // PC: the rank column is as tall as the 7 × 4 grid next to it.
+    const pcRow = Math.min(170, (VIEW.height - top - 30 - 30) / 4);
+    const headH = LANDSCAPE ? pcRow * 4 + 30 : 270;
+    const g = this.add.graphics();
+    plate(g, x0, top, headW, headH, 24);
+    p.add(g);
+    // Rank: big cup, name, bar.
+    const cupH = LANDSCAPE ? 220 : 150;
+    const cupX = LANDSCAPE ? x0 + headW / 2 : x0 + 96;
+    const cupY = LANDSCAPE ? top + 30 + cupH : top + 22 + cupH;
+    p.add(rankCup(this, cupX, cupY, cupH, cur.index));
+    const tx = LANDSCAPE ? x0 + 32 : x0 + 196;
+    const tw = LANDSCAPE ? headW - 64 : cw - 220;
+    let ty = LANDSCAPE ? cupY + 18 : top + 30;
+    p.add(this.add.text(tx, ty, t('results.rank.title').toUpperCase(), TXT.caps()));
+    const rn = this.add.text(tx, ty + 26, t(`rank.${cur.rank.id}`), { ...TXT.num(LANDSCAPE ? 30 : 28, INK.graphite), wordWrap: { width: tw } });
+    p.add(rn);
+    ty += 26 + rn.height + 14;
+    const bg = this.add.graphics();
+    bar(bg, tx, ty, tw, 12, rankFraction(score), C.teal);
+    p.add(bg);
+    const nl = this.add.text(tx, ty + 22, cur.next ? t('rank.next', { rank: t(`rank.${cur.next.id}`), value: fmtNum(cur.next.from - score) }) : t('rank.max'), { ...TXT.body(18, INK.dim, '600'), wordWrap: { width: tw } });
+    p.add(nl);
+    // Showcase: up to three medals the player picked (tap a medal → «В витрину»).
+    const sx = LANDSCAPE ? x0 + 32 : x0 + 196;
+    let sy = LANDSCAPE ? ty + 22 + nl.height + 40 : top + headH - 92;
+    if (LANDSCAPE) {
+      const sep = this.add.graphics();
+      sep.fillStyle(C.graphite, 0.1);
+      sep.fillRect(x0 + 32, sy - 20, headW - 64, 2);
+      p.add(sep);
+    }
+    p.add(this.add.text(sx, sy, t('medal.showcase').toUpperCase(), TXT.caps(INK.amber)));
+    const shown = showcaseOf(m);
+    const slot = 64;
+    for (let k = 0; k < SHOWCASE_MAX; k++) {
+      const x = sx + k * (slot + 12);
+      const sg = this.add.graphics();
+      chip(sg, x, sy + 26, slot, slot, shown[k] ? 0xfff6d6 : C.paper2, 1, 10, { color: shown[k] ? C.amber : C.sky2, width: 2 });
+      p.add(sg);
+      if (shown[k]) {
+        const def = MEDALS.find((d) => d.id === shown[k])!;
+        p.add(medalCup(this, x + slot / 2, sy + 26 + slot - 4, slot - 10, medalState(m, def).tier));
+      } else {
+        p.add(this.add.text(x + slot / 2, sy + 26 + slot / 2, '+', TXT.num(28, INK.dim)).setOrigin(0.5).setAlpha(0.5));
+      }
+    }
+    const hint = this.add.text(LANDSCAPE ? sx : sx + SHOWCASE_MAX * (slot + 12) + 4, LANDSCAPE ? sy + 26 + slot + 14 : sy + 30, t('medal.showcase_hint'), { ...TXT.body(LANDSCAPE ? 17 : 15, INK.dim, '500'), wordWrap: { width: LANDSCAPE ? headW - 64 : cw - 220 - SHOWCASE_MAX * (slot + 12) - 4 } });
+    p.add(hint);
+    if (LANDSCAPE) {
+      sy = sy + 26 + slot + 14 + hint.height + 30;
+      const cl = closestMedal(m);
+      if (cl && sy < top + headH - 70) {
+        p.add(this.add.text(sx, sy, t('results.medals_closest', { name: medalName(cl.def.id), cur: fmtNum(cl.cur), max: fmtNum(cl.max) }), { ...TXT.body(18, INK.deep, '700'), wordWrap: { width: headW - 64 } }));
+      }
+    }
+    // The grid.
+    const gx = LANDSCAPE ? x0 + headW + 24 : x0;
+    const gy = LANDSCAPE ? top : top + headH + 16;
+    const gw = LANDSCAPE ? cw - headW - 24 : cw;
+    const gh = VIEW.height - gy - (LANDSCAPE ? 30 : 30) - SHIFT;
+    const cols = LANDSCAPE ? 7 : 4;
+    const rows = Math.ceil(MEDALS.length / cols);
+    const gap = 10;
+    const tw2 = (gw - gap * (cols - 1)) / cols;
+    const th2 = Math.min(LANDSCAPE ? 170 : 160, (gh - gap * (rows - 1)) / rows);
+    const cased = new Set(shown);
+    MEDALS.forEach((def, k) => {
+      const st = medalState(m, def);
+      p.add(medalTile(this, gx + (k % cols) * (tw2 + gap), gy + Math.floor(k / cols) * (th2 + gap), tw2, th2, st, cased.has(def.id), () => medalCard(this, m, def, () => this.show('awards'))));
     });
   }
 }

@@ -3,6 +3,7 @@
  * except the account's own bookkeeping. New saved things (comic seen, settings...) sync automatically.
  * Pure functions here; Account (cloud.ts) does the I/O.
  */
+import { mergeMedals } from '../game/meta/mergeMedals';
 export type Snapshot = Record<string, string>;
 
 export const PREFIX = 'partshift.';
@@ -18,6 +19,7 @@ export function runsOf(data: Snapshot): string {
 }
 const BEST_KEY = 'partshift.best.v1';
 const TUTORIAL_KEY = 'partshift.tutorialDone.v1';
+const META_KEY = 'partshift.meta.v1';
 
 export interface Side {
   data: Snapshot;
@@ -69,6 +71,17 @@ export function merge(local: Side, cloud: Side | null): MergeResult {
   const bests = [local.data[BEST_KEY], cloud.data[BEST_KEY]].map(Number).filter((n) => n > 0 && Number.isFinite(n));
   if (bests.length) data[BEST_KEY] = String(Math.min(...bests));
   if (local.data[TUTORIAL_KEY] === '1' || cloud.data[TUTORIAL_KEY] === '1') data[TUTORIAL_KEY] = '1';
+  // Medals: the higher tier per medal wins, whichever side is newer (ACHIEVEMENTS.md §4).
+  const metas = [local.data[META_KEY], cloud.data[META_KEY]];
+  if (metas[0] && metas[1] && data[META_KEY]) {
+    try {
+      const [a, b, m] = [...metas, data[META_KEY]].map((x) => JSON.parse(x) as { medals?: Parameters<typeof mergeMedals>[0] });
+      const medals = mergeMedals(a.medals, b.medals);
+      if (Object.keys(medals).length) data[META_KEY] = JSON.stringify({ ...m, medals });
+    } catch {
+      /* a broken save stays as the newer side has it */
+    }
+  }
 
   const fp = fingerprint(data);
   return {
