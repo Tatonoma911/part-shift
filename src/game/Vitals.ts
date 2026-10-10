@@ -120,18 +120,18 @@ export function drawTechOrb(g: G, tech: string, x: number, y: number, r: number)
 export function drawWeakOrbs(g: G, x: number, y: number, weak: Weakness[], max = 3): number {
   const list = weak.slice(0, max);
   if (!list.length) return 0;
-  const sizes = list.map((w) => (w.strong ? 11 : 9));
-  const gap = 4;
+  const sizes = list.map((w) => (w.strong ? 16 : 13));
+  const gap = 5;
   const total = sizes.reduce((s, r) => s + r * 2, 0) + gap * (list.length - 1);
   let cx = x - total / 2;
   list.forEach((w, i) => {
     const r = sizes[i];
     cx += r;
-    g.fillStyle(0x0b1117, 0.55);
-    g.fillCircle(cx + 1, y + 2, r + 1.5);
+    g.fillStyle(0x0b1117, 0.65);
+    g.fillCircle(cx + 1, y + 2, r + 2);
     g.fillStyle(TECH_HEX[w.tech] ?? 0xffffff, 1);
     g.fillCircle(cx, y, r);
-    g.lineStyle(w.strong ? 2.5 : 1.5, 0xffffff, w.strong ? 1 : 0.8);
+    g.lineStyle(w.strong ? 3 : 2, 0xffffff, w.strong ? 1 : 0.85);
     g.strokeCircle(cx, y, r);
     techGlyph(g, w.tech, cx, y, r);
     cx += r + gap;

@@ -24,6 +24,7 @@ import { BOARD, C, CELL, DOCK, GOAL, GUIDE, HUD, INK, LANDSCAPE, STEP, VIEW } fr
 import { markTutorialDone, TutorialGuide } from './Tutorial';
 import { analytics } from '../analytics';
 import { brackets, chip, plate, TXT } from './ui';
+import { BuildDrawer, buildOptions, type BuildOption } from './BuildMenu';
 import { buzz } from './comfort';
 import { drawLamp, drawMark, type Channel } from './Sensor';
 import { setBackHandler } from '../platform/native';
@@ -165,6 +166,7 @@ export class GameScene extends Phaser.Scene {
   private buildType: string = BUILDABLE[0];
   private ghost: { x: number; y: number } | null = null;
   private ghostButtons: Phaser.GameObjects.Container | null = null;
+  private drawer!: BuildDrawer;
   private spotlight: { x: number; y: number; until: number } | null = null;
   /** Cell the scanner flagged on the last tap; a second tap there confirms digging it. */
   private confirmCell: string | null = null;
@@ -697,8 +699,8 @@ export class GameScene extends Phaser.Scene {
     const buildBtnTx = this.add.text(bx + bw / 2, midY + 22, t('hud.mode_build'), TXT.body(15, INK.white, '700')).setOrigin(0.5).setDepth(20);
     const buildBtnHit = this.add.zone(bx, midY - bh / 2, bw, bh).setOrigin(0).setDepth(20).setInteractive({ useHandCursor: true });
     buildBtnHit.on('pointerdown', stop(() => {
-      if (this.mode === 'build') this.setGhost(null);
-      else { this.setGhost(null); this.setMode('build'); }
+      if (this.drawer.isOpen) this.closeCatalog();
+      else this.openCatalog();
     }));
     const buildBtn = this.add.container(0, 0, [buildBtnBg, buildIcon, buildBtnTx, buildBtnHit]).setDepth(20);
 
@@ -859,6 +861,11 @@ export class GameScene extends Phaser.Scene {
     });
 
     this.dock = { head: { text: headText, cancel }, panes: { dig, build }, queue, cards };
+
+    this.drawer = new BuildDrawer(this, DOCK, UI_DEPTH + 10, {
+      pick: (o: BuildOption) => this.pickBuilding(o),
+      close: () => this.closeCatalog(),
+    });
   }
 
   /** 'build' switches the dock to the build catalog; 'dig' restores normal digging view. */
@@ -882,6 +889,37 @@ export class GameScene extends Phaser.Scene {
 
   private tutorialWantsBuild(): boolean {
     return (this.guide?.step?.highlightBuild ?? []).length > 0;
+  }
+
+  private openCatalog(): void {
+    const meta = loadMeta();
+    const allies = this.start.allies ?? meta.allyChoice;
+    const opts = buildOptions(this.world, meta, this.me, allies);
+    const energy = this.world.player(this.me).energy;
+    const selected = this.buildType ?? null;
+    this.drawer.open(opts, energy, this.guide?.step?.highlightBuild ?? [], selected);
+    // Highlight the build button while catalog is open.
+    if (this.hud?.buildBtnBg) {
+      this.hud.buildBtnBg.clear();
+      chip(this.hud.buildBtnBg, HUD.x + HUD.w - 156, HUD.y + HUD.h / 2 - 40, 78, 80, C.cobalt, 1, 12);
+    }
+  }
+
+  private closeCatalog(): void {
+    this.drawer.close();
+    if (this.hud?.buildBtnBg) {
+      this.hud.buildBtnBg.clear();
+      chip(this.hud.buildBtnBg, HUD.x + HUD.w - 156, HUD.y + HUD.h / 2 - 40, 78, 80, C.graphite, 1, 12);
+    }
+  }
+
+  /** Called when the player picks a building from the catalog drawer. */
+  private pickBuilding(o: BuildOption): void {
+    this.buildType = o.id;
+    this.closeCatalog();
+    if (o.state !== 'ok' && o.state !== 'energy') return; // locked buildings can't be ghost-placed
+    this.setMode('build');
+    if (!this.guide && !this.coachedBuild) this.coachedBuild = learning().coach('build');
   }
 
   /** Tap on liberated land: show the ghost of the selected building there and the building cards. */
@@ -918,6 +956,12 @@ export class GameScene extends Phaser.Scene {
   private updateDock(): void {
     const w = this.world;
     const p = w.player(this.me);
+    // Live-refresh the catalog drawer energy and states while it's open.
+    if (this.drawer?.isOpen) {
+      const meta = loadMeta();
+      const allies = this.start.allies ?? meta.allyChoice;
+      this.drawer.refresh(buildOptions(w, meta, this.me, allies), p.energy, this.guide?.step?.highlightBuild ?? []);
+    }
     if (this.mode === 'dig') {
       this.dock.queue.setText(t('hud.queue', { count: p.queue.length + p.autoQueue.length }));
     } else {
