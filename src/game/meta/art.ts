@@ -8,7 +8,7 @@ import type { HeroState } from './store';
  * Style per layer: these screens belong to the comic/menu layer, so portraits
  * are the comic ones, never the pixel sprites.
  */
-const urls = import.meta.glob('../../assets/art/comm/*.webp', { eager: true, query: '?url', import: 'default' }) as Record<string, string>;
+const urls = import.meta.glob('../../assets/comm/*.webp', { eager: true, query: '?url', import: 'default' }) as Record<string, string>;
 
 /** Hero parts as drawn by the artist (art/export/trophies/<partId>.png, first pose of each sheet). */
 const trophies = import.meta.glob('../../assets/art/trophies/*.png', { eager: true, query: '?url', import: 'default' }) as Record<string, string>;
