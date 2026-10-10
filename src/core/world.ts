@@ -2285,7 +2285,7 @@ export class World {
   }
 
   private spawnOrb(owner: number, x: number, y: number, amount: number): void {
-    if (amount > 0) this.s.orbs.push({ owner, x, y, amount });
+    if (amount > 0) this.s.orbs.push({ owner, x, y, amount, x0: x, y0: y });
   }
 
   private orbs(dt: number): void {
