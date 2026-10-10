@@ -398,7 +398,7 @@ export class GameScene extends Phaser.Scene {
     this.music.start();
     this.setMode('dig');
     // The tutorial teaches by itself; coach cards and the guide come with free play.
-    setLearningHooks({ pause: () => (this.overlayPaused = true), resume: () => (this.overlayPaused = false), busy: () => this.inFight() });
+    setLearningHooks({ pause: () => (this.overlayPaused = true), resume: () => (this.overlayPaused = false), busy: () => this.inFight() || this.ended });
     this.events.once('shutdown', () => setLearningHooks(null));
     if (this.start.shiftN && !this.guide && !this.online) this.showShiftCard(this.start.shiftN);
   }
