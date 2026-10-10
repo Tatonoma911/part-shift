@@ -970,7 +970,11 @@ export class GameScene extends Phaser.Scene {
     this.add.image(buildBx + 40, btnY + btnH / 2, 'icon.build').setScale(1.6).setDepth(20).setTintFill(0xffffff);
     this.add.text(buildBx + 72, btnY + btnH / 2, t('hud.mode_build'), TXT.body(26, INK.white, '700')).setOrigin(0, 0.5).setDepth(20);
     const buildHit = this.add.zone(buildBx, btnY, btnW, btnH).setOrigin(0).setDepth(20).setInteractive({ useHandCursor: true });
+    // One tap toggles once: a second pointerdown within the window (a double fire from the same press) is ignored.
+    let lastCatalogTap = -1000;
     buildHit.on('pointerdown', stop(() => {
+      if (this.time.now - lastCatalogTap < 350) return;
+      lastCatalogTap = this.time.now;
       if (this.drawer.isOpen) this.closeCatalog();
       else this.openCatalog();
     }));
