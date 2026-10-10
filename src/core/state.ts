@@ -146,6 +146,8 @@ export interface Unit {
   armorPlates?: number;
   /** Ally: limbs torn off on knockout (MVP_RULES §4.1а). 'arm' = -20% damage, 'leg' = -25% speed each. */
   lostLimbs?: ('arm' | 'leg')[];
+  /** Seconds spent next to a medcenter with a stump; a limb regrows at buildings.json medcenter.regrowLimbSeconds. */
+  regrowTimer?: number;
   /** Hero star tier (0 = base, 1–3 = upgraded via meta). */
   stars?: number;
   /** Super-charge meter 0–100; full charge triggers the hero's super ability. */

@@ -100,6 +100,8 @@ export interface BuildingDef {
   healAura?: { radius: number; hpPerSecond: number };
   /** Relay: +N to our hero cap, up to +2 in total over the difficulty cap (buildings.json relay). */
   heroCapAdd?: number;
+  /** Medcenter: a hero standing in its heal aura regrows one lost limb after this many seconds. */
+  regrowLimbSeconds?: number;
 }
 
 export interface UnitStats {

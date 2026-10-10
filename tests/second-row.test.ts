@@ -73,4 +73,20 @@ describe('second-row buildings (buildings.json)', () => {
     inner(w).addBuilding(0, 'relay', 5, 0, false);
     expect(w.residentCap(0)).toBe(base + 2);
   });
+
+  it('a hero that stays next to a medcenter for 60 s regrows one lost limb', () => {
+    const w = handWorld(['.......', '.......', '......n']);
+    w.apply({ type: 'placeCommand', x: 0, y: 1 });
+    const hero = w.s.units.find((x) => x.kind === 'ally') as Unit;
+    Object.assign(hero, { x: 2, y: 1, path: [], task: { type: 'idle' } });
+    hero.lostLimbs = ['arm'];
+    hero.base = { ...hero.base, damage: Math.round(hero.base.damage * 0.8) };
+    inner(w).addBuilding(0, 'medcenter', 2, 0, true);
+    const seconds = buildingDefs.medcenter.regrowLimbSeconds!;
+    expect(seconds).toBe(60);
+    for (let t = 0; t < seconds - 1; t += 0.05) w.step(0.05);
+    expect(hero.lostLimbs).toEqual(['arm']);
+    for (let t = 0; t < 2; t += 0.05) w.step(0.05);
+    expect(hero.lostLimbs).toBeUndefined();
+  });
 });
