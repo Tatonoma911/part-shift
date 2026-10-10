@@ -368,6 +368,7 @@ function villainsView(): string {
         <div class="bark slab"><span class="caps">${R('КОНТРОЛЬ:', 'CONTROL:')}</span>${R('Если вы видите обезумевшего героя, не паникуйте. Он на смене.', 'If you see a deranged hero, do not panic. They are on shift.')}</div>
       </div>
     </div>
+    <figure class="banner slab" style="margin-top:32px"><img src="${img('lineup-infected.webp')}" alt="${esc(R('Четверо героев HeroOut с заражёнными гелем руками и ногами', 'Four HeroOut heroes with gel-infected arms and legs'))}" loading="lazy"><figcaption class="caps">${R('Опознание: гель отрастил каждому чужую руку или ногу', 'Line-up: the gel grew each of them someone else’s arm or leg')}</figcaption></figure>
     <div class="grid">${mad.map(madTile).join('')}</div>
 
     <figure class="billboard slab" style="margin-top:56px"><img src="${img('control-billboard.webp')}" alt="${esc(R('Маска Контроля на билборде HeroOut', 'Control’s mask on a HeroOut billboard'))}" loading="lazy"><figcaption><span class="caps">HERO | OUT</span><b>${R('Всегда на смене.', 'Always on call.')}</b><span>${R('Даже когда вас об этом не просили.', 'Even when you didn’t ask.')}</span></figcaption></figure>
@@ -391,6 +392,7 @@ function villainsView(): string {
         <div class="stack" style="gap:10px">${BARKS.map(([ru, en]) => `<div class="bark slab"><span class="caps">${R('КОНТРОЛЬ:', 'CONTROL:')}</span>${R(ru, en)}</div>`).join('')}</div>
       </div>
     </div>
+    <figure class="banner slab" style="margin-top:40px"><img src="${img('control-warehouse.webp')}" alt="${esc(R('Очередь жителей на склад Контроля', 'Residents queueing for the Control warehouse'))}" loading="lazy"><figcaption class="caps">${R('«Вы спасены. Пройдите на склад.» Очередь на склад Контроля', '“You have been rescued. Proceed to the warehouse.” The queue at the Control warehouse')}</figcaption></figure>
 
     <div class="villain">
       <figure class="art slab shot"><img src="${img('floor42.webp')}" alt="${R('Совет директоров на 42-м этаже', 'The board on floor 42')}" loading="lazy"><span class="floor-no">42</span></figure>

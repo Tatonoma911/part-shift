@@ -120,6 +120,9 @@ def main():
     webp(f'{INC}/site_archive_desk.png', 'archive-desk', 1600)
     webp(f'{INC}/site_world_dome.png', 'world-dome', 1900)
     webp(f'{INC}/site_support_jar.png', 'support-jar', 900)
+    B04 = f'{PF}/art/batch04_final/generated'
+    webp(f'{B04}/202_comic_11_control_warehouse.png', 'control-warehouse', 1600)
+    webp(f'{B04}/204_comic_13_dossier_infected.png', 'lineup-infected', 1600)
     for lang in ('ru', 'en'):
         webp(f'{INC}/site_comic_cat_record-{lang}.png', f'comics/cat-record-{lang}', 1054)
     os.makedirs(os.path.join(OUT, 'portraits'), exist_ok=True)
