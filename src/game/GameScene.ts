@@ -815,7 +815,7 @@ export class GameScene extends Phaser.Scene {
     const s = w.s as typeof w.s & PaceState;
     const now = this.time.now;
     const steps = (config as unknown as { tempo?: { levels?: number[] } }).tempo?.levels ?? [0, 4, 9, 15];
-    const tp = s.tempo ?? { points: 0, level: 0 };
+    const tp = s.tempo ?? { points: 0, level: 0, stagnant: false };
     const lo = steps[tp.level] ?? 0;
     const hi = steps[tp.level + 1] ?? lo + 6;
     this.tempo.update(tp.level, tp.level >= 3 ? 1 : (tp.points - lo) / Math.max(1, hi - lo), !!tp.stagnant, now);
