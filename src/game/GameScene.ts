@@ -551,7 +551,9 @@ export class GameScene extends Phaser.Scene {
       const b = this.world.s.buildings.find((x) => x.x === e.x && x.y === e.y);
       if (b) this.say(t('build.done', { building: b.hero ? t('building.station.name', { hero: heroName(b.hero) }) : t(`building.${b.type}.name`) }));
     } else if (TOASTS[e.type]) {
-      this.say(TOASTS[e.type].text(e), 2800, TOASTS[e.type].bad);
+      // An empty text means the event is silent (hero_spawn with amount 1, QA-050).
+      const msg = TOASTS[e.type].text(e);
+      if (msg) this.say(msg, 2800, TOASTS[e.type].bad);
     }
     if (e.type === 'build_place') this.nextTutorialBuilding();
     // However the center went down (tap, restore), the "place the Command Center" line gives way (AR-06).
