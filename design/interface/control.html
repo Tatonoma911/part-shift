@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PARTSHIFT · Контроль и тайники</title>
+<link rel="stylesheet" href="system.css">
+<link rel="stylesheet" href="gallery.css">
+<style>
+.bg-field { position: absolute; inset: 0; background: repeating-linear-gradient(90deg,#1d3445 0 28px,#23404f 28px 56px); opacity: .7; }
+.call { position: absolute; left: 14px; right: 14px; top: 110px; z-index: 11; background: linear-gradient(180deg,#fff,var(--paper)); color: var(--ink); border-radius: 18px; padding: 16px; clip-path: polygon(16px 0,100% 0,100% calc(100% - 16px),calc(100% - 16px) 100%,0 100%,0 16px); box-shadow: 0 14px 40px rgba(0,0,0,.45); }
+.call .choice { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 12px; }
+.radio { position: absolute; left: 14px; right: 14px; bottom: 30px; z-index: 11; background: rgba(11,17,23,.92); color: var(--paper); border-radius: 14px; padding: 12px; box-shadow: inset 0 0 0 1px rgba(159,244,255,.25); display: grid; grid-template-columns: 56px 1fr; gap: 10px; align-items: center; }
+.radio .portrait { width: 56px; height: 56px; }
+.boon-stack { position: absolute; inset: 0; background: rgba(8,14,19,.78); display: grid; align-content: center; justify-items: center; gap: 12px; padding: 24px 16px; z-index: 11; }
+.boon { width: 100%; max-width: 330px; background: linear-gradient(180deg,#fff,var(--paper)); color: var(--ink); border-radius: 14px; padding: 14px; display: grid; grid-template-columns: 64px 1fr; gap: 12px; align-items: center; box-shadow: 0 8px 22px rgba(0,0,0,.35); }
+.boon .ico { width: 64px; height: 64px; border-radius: 12px; background: var(--graphite); display: grid; place-items: center; font-size: 28px; color: var(--seam); }
+.boon.rare { box-shadow: inset 0 0 0 2px var(--amber), 0 8px 22px rgba(0,0,0,.35); }
+.boon.rare .ico { background: #3a2a0a; color: var(--amber); }
+.timer { color: var(--paper); font: 800 13px var(--f-body); }
+.timer.red { color: var(--coral); }
+@container (min-width: 720px) {
+  .call { left: 50%; transform: translateX(-50%); width: 560px; top: 90px; }
+  .radio { left: auto; right: 16px; width: 360px; bottom: 16px; }
+  .boon-stack { flex-direction: row; align-items: stretch; }
+  .boon { flex-direction: column; grid-template-columns: none; max-width: 240px; text-align: center; }
+  .boon .ico { margin: 0 auto; }
+}
+</style>
+</head>
+<body>
+<div class="page">
+  <nav class="nav" aria-label="Экраны">
+    <a href="index.html">Все экраны</a><a href="shift.html">Смена</a><a href="build.html">Строить</a><a href="control.html" aria-current="page">Контроль и тайники</a><a href="results.html">Итоги и концовки</a><a href="dossier.html">Досье</a><a href="menu.html">Меню</a><a href="settings.html">Настройки</a><a href="learn.html">Обучение и онлайн</a><a href="system.html">Компоненты и состояния</a>
+  </nav>
+  <header>
+    <h1>Контроль, рация и тайник</h1>
+    <p>Три вида «говорящих» экранов. Звонок Контроля даёт выбор из двух, рация показывает героя, который пришёл на помощь, тайник предлагает одну из трёх наград. Тексты Контроля всегда в белой плите с меткой «HERO | OUT».</p>
+  </header>
+
+  <section class="stage" data-show="phone pc">
+    <h2>1. Звонок Контроля: выбор из двух</h2>
+    <p class="lede">Контроль предлагает вариант, а игрок решает. Кнопки одинакового размера, у каждой одна строка последствий. Таймер только в онлайне; в одиночной игре смена ставится на паузу.</p>
+    <div class="devices"></div>
+    <template>
+      <div style="position:absolute;inset:0"><div class="bg-field"></div><div class="scrim"></div>
+        <div class="call" role="dialog" aria-labelledby="call-t">
+          <span class="control-plate" style="display:inline-block;padding:0;box-shadow:none;background:none;clip-path:none"><span class="label" style="font-size:10px"><b>HERO</b> | OUT · КОНТРОЛЬ</span></span>
+          <h2 id="call-t" class="h2" style="margin-top:6px">Заражённый Килн у квартала 4. Что делаем?</h2>
+          <p class="small muted" style="margin-top:4px">Срочно: без решения гнездо откроется на 1 клетку шире.</p>
+          <div class="choice">
+            <button class="btn primary xl"><span class="t">Вскрыть сейчас</span><span class="s">Быстрее, но риск для героев</span></button>
+            <button class="btn ghost xl"><span class="t">Отвести героев</span><span class="s">Медленнее, без потерь</span></button>
+          </div>
+        </div>
+        <div class="toast" style="position:absolute;z-index:11;left:16px;right:16px;bottom:30px;background:rgba(11,17,23,.92)">КОНТРОЛЬ: решение за вами. Ваш выбор записан в журнал.</div>
+      </div>
+    </template>
+    <ul class="notes"><li>Тексты звонков пишет сценарист в text/ru.json. Здесь примеры, не утверждённые формулировки.</li><li>Отмена звонка не предусмотрена: решение обязательно, но можно не спешить (одиночная игра на паузе).</li></ul>
+  </section>
+
+  <section class="stage" data-show="phone pc">
+    <h2>2. Рация героев: кто пришёл на помощь</h2>
+    <p class="lede">Портрет героя в комиксном стиле, одна реплика, без блокировки поля. Исчезает сам через 4 секунды или по тапу.</p>
+    <div class="devices"></div>
+    <template>
+      <div style="position:absolute;inset:0"><div class="bg-field"></div>
+        <div class="radio" role="status">
+          <div class="portrait won" aria-label="Портрет героя">Ш</div>
+          <div><p class="cap on-dark" style="font-size:10px">Рация · Серафим</p><p style="font-size:14px;margin-top:4px">«Не стойте под огнём. Я не успеваю лечить вас и философию.»</p></div>
+        </div>
+      </div>
+    </template>
+    <ul class="notes"><li>Портреты только комиксные, те же круги, что в рации из UI_SPEC §11. Пиксель-спрайтов в интерфейсе нет.</li><li>Серафим: женщина (решение Антона). В коде и текстах она так и называется.</li></ul>
+  </section>
+
+  <section class="stage" data-show="phone pc">
+    <h2>3. Тайник: выбор одной из трёх наград</h2>
+    <p class="lede">Три карточки, брать одну. Редкая карточка отмечена янтарём и ярлыком «РЕДКОЕ», но не важнее по цвету: ярлык несёт смысл. Если карточка уже есть, стоит «×2».</p>
+    <div class="devices"></div>
+    <template>
+      <div style="position:absolute;inset:0;background:#0b1117">
+        <div class="boon-stack">
+          <p class="cap on-dark" style="width:100%;text-align:center">Тайник HeroOut: возьмите одно</p>
+          <div class="boon"><div class="ico">◆</div><div><div class="h2" style="font-size:15px">Щит Сплайса</div><div class="small muted">Герои получают +1 к защите на смену.</div><div class="small" style="font-style:italic;margin-top:4px">«Лучше сразу, чем потом в отчёте.»</div></div></div>
+          <div class="boon rare"><div class="ico">✦</div><div><span class="tag" style="background:var(--amber);color:var(--amber-ink)">РЕДКОЕ</span><div class="h2" style="font-size:15px;margin-top:4px">Аварийный маячок</div><div class="small muted">Гнёзда в радиусе 2 видны сразу. ×2, если уже есть.</div></div></div>
+          <div class="boon"><div class="ico">⚡</div><div><div class="h2" style="font-size:15px">Премия за смену</div><div class="small muted">+60 ⚡ сразу в начале смены.</div></div></div>
+          <p class="timer" style="text-align:center">На выбор: <span class="red timer red">12 с</span></p>
+        </div>
+      </div>
+    </template>
+    <ul class="notes"><li>Таймер только в онлайне. По нулю берётся первая карточка, и это показывается текстом: «Выбрано автоматически».</li><li>Значки нарисованы кодом, пока художник не даст icon.boon_&lt;id&gt;. Тогда подхватятся сами.</li></ul>
+  </section>
+
+  <ul class="notes"><li><b>Что проверить тестировщику.</b> Звонок и тайник не перекрывают кнопку паузы; у текста Контроля хватает места при крупном шрифте (до 130%).</li></ul>
+</div>
+<script src="gallery.js"></script>
+</body>
+</html>

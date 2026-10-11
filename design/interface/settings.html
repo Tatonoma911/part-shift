@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PARTSHIFT · Настройки</title>
+<link rel="stylesheet" href="system.css">
+<link rel="stylesheet" href="gallery.css">
+<style>
+.set { position: absolute; inset: 0; padding: 47px 14px 24px; display: flex; flex-direction: column; gap: 10px; background: linear-gradient(180deg,#f4f7f7,#e8f0f2); color: var(--ink); overflow: hidden; }
+.set .list { background: var(--white); border-radius: 12px; padding: 0 12px; box-shadow: inset 0 0 0 1px var(--line); }
+.set .list .row { min-height: 52px; }
+.set .sec { margin-top: 6px; }
+.swatches { display: grid; grid-template-columns: repeat(4,1fr); gap: 6px; }
+.swatches button { min-height: 48px; border-radius: 10px; border: 2px solid transparent; font: 700 12px var(--f-body); background: var(--mist); color: var(--ink); }
+.swatches button[aria-pressed="true"] { border-color: var(--ink); }
+.seg { display: flex; gap: 4px; }
+.seg button { flex: 1; min-height: 44px; border-radius: 8px; border: 0; background: var(--mist); font: 700 13px var(--f-body); color: var(--ink); }
+.seg button[aria-pressed="true"] { background: var(--graphite); color: var(--paper); }
+@container (min-width: 720px) {
+  .set { padding: 24px 40px; }
+  .set .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+}
+</style>
+</head>
+<body>
+<div class="page">
+  <nav class="nav" aria-label="Экраны">
+    <a href="index.html">Все экраны</a><a href="shift.html">Смена</a><a href="build.html">Строить</a><a href="control.html">Контроль и тайники</a><a href="results.html">Итоги и концовки</a><a href="dossier.html">Досье</a><a href="menu.html">Меню</a><a href="settings.html" aria-current="page">Настройки</a><a href="learn.html">Обучение и онлайн</a><a href="system.html">Компоненты и состояния</a>
+  </nav>
+  <header>
+    <h1>Настройки, удобство, сброс прогресса</h1>
+    <p>Строки настроек: всё целиком кликабельно, справа переключатель или значение. Удобство вынесено отдельным экраном: цвета для дальтоников, меньше вспышек, текст крупнее. Сброс прогресса защищён удержанием 2,5 с.</p>
+  </header>
+
+  <section class="stage" data-show="phone pc">
+    <h2>1. Настройки (главный список)</h2>
+    <p class="lede">Группы: Звук, Язык, Удобство, Данные, Помощь. Подпись под названием показывает текущее значение, чтобы не открывать строку ради одного слова.</p>
+    <div class="devices"></div>
+    <template>
+      <div class="set">
+        <div class="row" style="justify-content:space-between"><div><p class="cap">Настройки</p><h1 class="h1" style="font-size:22px">Настройки</h1></div><button class="btn ghost">Назад</button></div>
+        <p class="cap sec">Звук</p>
+        <div class="list">
+          <div class="row"><div class="grow">Звуки<div class="small muted">Включены</div></div><span class="switch" role="switch" aria-checked="true" aria-label="Звуки"></span></div>
+          <div class="row"><div class="grow">Музыка<div class="small muted">Включена</div></div><span class="switch" role="switch" aria-checked="true" aria-label="Музыка"></span></div>
+          <div class="row"><div class="grow">Вибро<div class="small muted">Выключено, на устройстве нет</div></div><span class="switch" role="switch" aria-checked="false" aria-label="Вибро" style="opacity:.5"></span></div>
+        </div>
+        <p class="cap sec">Игра</p>
+        <div class="list">
+          <div class="row"><div class="grow">Язык<div class="small muted">Русский</div></div><span class="value">›</span></div>
+          <div class="row"><div class="grow">Удобство<div class="small muted">Цвета, вспышки, текст</div></div><span class="value">›</span></div>
+          <div class="row"><div class="grow">Статистика<div class="small muted">Помогаем игре анонимно</div></div><span class="switch" role="switch" aria-checked="true" aria-label="Статистика"></span></div>
+        </div>
+        <p class="cap sec">Данные</p>
+        <div class="list">
+          <div class="row"><div class="grow" style="color:#a8253c;font-weight:700">Сбросить весь прогресс</div><span class="value">›</span></div>
+        </div>
+      </div>
+    </template>
+    <ul class="notes"><li>Строка вибро серая, если устройство не умеет вибрировать. Серый здесь значит «недоступно», а не «выключено»: поэтому текст подписи меняется.</li></ul>
+  </section>
+
+  <section class="stage" data-show="phone pc">
+    <h2>2. Удобство</h2>
+    <p class="lede">Каждая строка меняет значение сразу, без кнопки «Сохранить». Выбор цветов показывает живую пару: безопасно и опасно.</p>
+    <div class="devices"></div>
+    <template>
+      <div class="set">
+        <div class="row" style="justify-content:space-between"><div><p class="cap">Настройки</p><h1 class="h1" style="font-size:22px">Удобство</h1></div><button class="btn ghost">Назад</button></div>
+        <p class="cap sec">Цвета</p>
+        <div class="list" style="padding:12px"><div class="swatches">
+          <button aria-pressed="true">Обычные</button><button aria-pressed="false">Дейтер.</button><button aria-pressed="false">Протан.</button><button aria-pressed="false">Тританоп.</button>
+        </div>
+          <div class="row" style="margin-top:8px"><span class="chip ok" style="background:#56b4e9;color:#0b1117">✓ безопасно</span><span class="chip" style="background:#d55e00;color:#fff">▲ опасно</span></div>
+        </div>
+        <p class="cap sec">Движение и текст</p>
+        <div class="list">
+          <div class="row"><div class="grow">Меньше вспышек<div class="small muted">Без вращения маячков и мерцания</div></div><span class="switch" role="switch" aria-checked="false" aria-label="Меньше вспышек"></span></div>
+          <div class="row"><div class="grow">Тряска экрана</div><span class="switch" role="switch" aria-checked="true" aria-label="Тряска"></span></div>
+          <div class="row"><div class="grow">Размер текста<div class="small muted">Цифры поля не меняются</div></div>
+            <div class="seg" role="group" aria-label="Размер текста" style="width:200px"><button aria-pressed="true">100</button><button aria-pressed="false">115</button><button aria-pressed="false">130</button></div></div>
+        </div>
+      </div>
+    </template>
+    <ul class="notes"><li>Цвета для дальтоников меняют всё сразу: цифры гнёзд, метки, тосты, полоски. Форма (✓, ▲, ◆) всегда остаётся. Значения из ui/code/comfort.ts.</li></ul>
+  </section>
+
+  <section class="stage" data-show="phone pc">
+    <h2>3. Сбросить весь прогресс: окно подтверждения</h2>
+    <p class="lede">Показаны две колонки: что сотрётся и что останется. Удаление только удержанием красной кнопки 2,5 с. Пока держите, кнопка заполняется. Отпустили раньше, ничего не происходит. Большая «Отмена» стоит рядом.</p>
+    <div class="devices"></div>
+    <template>
+      <div class="set" style="background:#0b1117">
+        <div class="scrim" style="background:rgba(10,18,24,.6)"></div>
+        <div class="sheet center" role="alertdialog" aria-modal="true" aria-labelledby="rs-t" style="left:14px;right:14px">
+          <p class="cap" style="color:var(--coral-text)">Это нельзя отменить</p>
+          <h2 id="rs-t" class="h1" style="font-size:20px;margin-top:6px">Сбросить весь прогресс?</h2>
+          <div class="grid2" style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px;font-size:13px">
+            <div><p class="cap">Сотрётся</p><ul style="padding-left:16px;margin:6px 0 0;display:grid;gap:3px"><li>Герои и чертежи</li><li>Архив и Досье</li><li>Статистика и сохранения</li><li>Обучение и комикс</li></ul></div>
+            <div><p class="cap">Останется</p><ul style="padding-left:16px;margin:6px 0 0;display:grid;gap:3px"><li>Язык и громкость</li><li>Удобство</li><li>Результаты в мировом рейтинге</li></ul></div>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:16px">
+            <button class="btn ghost">Отмена</button>
+            <button class="btn hold" style="--hold:60%">Держите 2,5 с</button>
+          </div>
+        </div>
+      </div>
+    </template>
+    <ul class="notes"><li>Кнопка «Отмена» не меньше основной, стоит слева: так её легче нажать большим пальцем.</li></ul>
+  </section>
+
+  <ul class="notes"><li><b>Что решено.</b> Нет отдельного экрана «Сохранить»: настройки сохраняются сразу. Удаление прогресса никогда не одним тапом.</li></ul>
+</div>
+<script src="gallery.js"></script>
+</body>
+</html>
