@@ -2,6 +2,7 @@ import { openAccountPanel } from '../account/panel';
 import { BUILDABLE, boons, buildings as buildingDefs, config } from '../core/data';
 import { cellKey } from '../core/grid';
 import { World, type GameEvent } from '../core/world';
+import type { CellContent } from '../core/state';
 import { t } from '../i18n';
 import { sound } from './audio';
 import { SoundDirector } from './soundDirector';
@@ -181,6 +182,19 @@ function stop(fn: () => void) {
  * (ui/BRAND_UI.md, ui/UI_SPEC.md). Rules live in core/World; this scene only
  * reads its state and turns touches into commands.
  */
+/** Opened cells the player can tap: highlight colour and the i18n key of the what / why / how text. */
+const INTERACTIVE_INFO: Partial<Record<CellContent, { tint: number; key: string }>> = {
+  energy_vein: { tint: C.seam, key: 'cell.info.energy_vein' },
+  rubble: { tint: C.green, key: 'cell.info.rubble' },
+  cache: { tint: C.violet, key: 'cell.info.cache' },
+  survivor: { tint: C.glow, key: 'cell.info.survivor' },
+  blueprint: { tint: C.cobalt, key: 'cell.info.blueprint' },
+  armor_crate: { tint: C.teal, key: 'cell.info.armor_crate' },
+  lore_record: { tint: C.deep, key: 'cell.info.lore_record' },
+  mine: { tint: C.coralInk, key: 'cell.info.mine' },
+  bonus_capsule: { tint: C.amber, key: 'cell.info.bonus_capsule' },
+};
+
 const FLAG_HINT_KEY = 'partshift.flagHint.v1';
 function flagHintSeen(): boolean {
   try {
@@ -229,7 +243,7 @@ export class GameScene extends Phaser.Scene {
   private ghost: { x: number; y: number } | null = null;
   private ghostButtons: Phaser.GameObjects.Container | null = null;
   private drawer!: BuildDrawer;
-  private spotlight: { x: number; y: number; until: number } | null = null;
+  private spotlight: { x: number; y: number; until: number; tint?: number } | null = null;
   /** Pace of the shift (Pulse.ts): «Темп», the raid timer, Контроль's call. */
   private tempo!: TempoMeter;
   private raidTimer!: RaidTimer;
@@ -1936,6 +1950,12 @@ export class GameScene extends Phaser.Scene {
       return;
     }
     this.confirmCell = null;
+    // Opened interactive cells say what they are, what they are for and how to use them, in their own colour (Антон 2026-10-11).
+    const info = c.revealed && c.content !== 'medkit' ? INTERACTIVE_INFO[c.content] : undefined;
+    if (info) {
+      this.spotlight = { x, y, until: this.time.now + 6000, tint: info.tint };
+      this.say(t(info.key), 6000);
+    }
     // An opened medkit asks first: «Использовать» heals the heroes around it (hazards.json medkit).
     if (c.revealed && c.content === 'medkit') {
       if (c.stock && c.heal === undefined) { this.board.tapFlash(x, y); this.askMedkit(x, y); }
@@ -1964,7 +1984,9 @@ export class GameScene extends Phaser.Scene {
       if (this.dragMode === 'queue') w.apply({ type: 'cancelDig', x, y }, this.me);
       w.apply({ type: 'toggleMark', x, y }, this.me);
       const kind = w.cell(x, y).markKind;
-      this.say(kind ? t(`cell.mark.${kind}`) : t('cell.mark.hint'), 1800);
+      // Setting a mark names it; lifting one stays quiet, and the how-to shows once per device.
+      if (kind) this.say(t(`cell.mark.${kind}`), 1800);
+      else if (!flagHintSeen()) { markFlagHintSeen(); this.say(t('cell.mark.hint'), 1800); }
       buzz(20);
       this.dragMode = null;
     });
