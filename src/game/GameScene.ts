@@ -180,6 +180,22 @@ function stop(fn: () => void) {
  * (ui/BRAND_UI.md, ui/UI_SPEC.md). Rules live in core/World; this scene only
  * reads its state and turns touches into commands.
  */
+const FLAG_HINT_KEY = 'partshift.flagHint.v1';
+function flagHintSeen(): boolean {
+  try {
+    return localStorage.getItem(FLAG_HINT_KEY) === '1';
+  } catch {
+    return true;
+  }
+}
+function markFlagHintSeen(): void {
+  try {
+    localStorage.setItem(FLAG_HINT_KEY, '1');
+  } catch {
+    /* private mode: the hint just shows again next time */
+  }
+}
+
 export class GameScene extends Phaser.Scene {
   private world!: World;
   private board!: BoardView;
@@ -245,6 +261,7 @@ export class GameScene extends Phaser.Scene {
     cards: { id: string; g: Phaser.GameObjects.Graphics; cost: Phaser.GameObjects.Text; x: number; y: number; w: number; h: number }[];
   };
   private toasts: Phaser.GameObjects.Container[] = [];
+  private medkitCard: Phaser.GameObjects.Container | null = null;
   /** «Землекоп: серебро» plates from the top (ACHIEVEMENTS.md §3), one after another. */
   private medals!: MedalToasts;
   private overlay: Phaser.GameObjects.Container | null = null;
@@ -639,6 +656,33 @@ export class GameScene extends Phaser.Scene {
         this.overlayPaused = false;
       },
     );
+  }
+
+  /** A tapped medkit: a plate in the toast strip with the one button that heals (Антон 2026-10-11). */
+  private askMedkit(x: number, y: number): void {
+    this.medkitCard?.destroy();
+    const width = DOCK.w - 16;
+    const label = this.add.text(0, 0, t('medkit.use.hint'), { ...TXT.body(22, INK.graphite, '600'), align: 'center', lineSpacing: 2, wordWrap: { width: width - 36 } }).setOrigin(0.5, 0);
+    const btnW = width - 48, btnH = 56;
+    const h = 16 + label.height + 14 + btnH + 14;
+    const g = this.add.graphics();
+    chip(g, -width / 2, -h / 2, width, h, C.paper, 0.97, 14, { color: C.seam, width: 2 });
+    label.setPosition(0, -h / 2 + 16);
+    const bx = -btnW / 2, by = h / 2 - 14 - btnH;
+    const btn = this.add.graphics();
+    chip(btn, bx, by, btnW, btnH, C.teal, 1, 14);
+    const btnLabel = this.add.text(0, by + btnH / 2, t('medkit.use.button'), { ...TXT.body(24, INK.white, '800') }).setOrigin(0.5);
+    const hit = this.add.zone(bx, by, btnW, btnH).setOrigin(0).setInteractive({ useHandCursor: true });
+    const yIdeal = DOCK.y - 8 - h / 2;
+    const yPos = LANDSCAPE ? yIdeal : Math.max(yIdeal, BOARD.y + BOARD.h + 4 + h / 2);
+    const box = this.add.container(DOCK.x + DOCK.w / 2, yPos, [g, label, btn, btnLabel, hit]).setDepth(21);
+    const close = () => { if (this.medkitCard === box) this.medkitCard = null; box.destroy(); };
+    hit.on('pointerdown', () => {
+      close();
+      if (this.world.apply({ type: 'useMedkit', x, y }, this.me).ok) this.say(t('event.medkit.open'), 1800);
+    });
+    this.medkitCard = box;
+    this.time.delayedCall(6000, () => { if (this.medkitCard === box) close(); });
   }
 
   /** Toast plate in the strip between the board and the dock; a new one replaces the old (UI_SPEC §2). */
@@ -1861,15 +1905,18 @@ export class GameScene extends Phaser.Scene {
       return;
     }
     this.confirmCell = null;
-    // An opened medkit is used by a tap: it heals the heroes around it (hazards.json medkit).
+    // An opened medkit asks first: «Использовать» heals the heroes around it (hazards.json medkit).
     if (c.revealed && c.content === 'medkit') {
-      if (w.apply({ type: 'useMedkit', x, y }, this.me).ok) this.say(t('event.medkit.open'), 1800);
+      if (c.stock && c.heal === undefined) this.askMedkit(x, y);
+      else if (w.apply({ type: 'useMedkit', x, y }, this.me).ok) this.say(t('event.medkit.open'), 1800);
       return;
     }
     // Swiping over auto-queued cells promotes them to the player's own queue; only own orders get cancelled.
     const own = w.player(this.me).queue.includes(k);
     const r = !c.revealed && !own ? w.apply({ type: 'queueDig', x, y }, this.me) : null;
     if (r?.ok) this.guide?.notify('queued');
+    // Once per device: the first dig explains the flag, so nobody opens a suspicious block by accident.
+    if (r?.ok && !flagHintSeen()) { markFlagHintSeen(); this.say(t('cell.mark.hint'), 6000); }
     if (r && !r.ok && r.reason === 'dig.unreachable') this.say(t('dig.unreachable'), 3000, true);
     if (r && !r.ok && r.reason === 'assist.known_danger') {
       this.confirmCell = k;
