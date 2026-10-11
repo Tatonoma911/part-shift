@@ -271,16 +271,29 @@ export function controlCall(scene: Phaser.Scene, spec: CallSpec, depth: number, 
   const bh = 112;
   const voteT: Phaser.GameObjects.Text[] = [];
   let picked = false;
+  // The answer this player picked stays outlined (co-op: moving the vote moves the outline).
+  let mine: 'a' | 'b' | null = null;
+  const paints: Record<'a' | 'b', (sel: boolean) => void> = { a: () => {}, b: () => {} };
   (['a', 'b'] as const).forEach((id, k) => {
     const ch = spec[id];
     const bx = pad + k * (bw + gap);
     const bg = scene.add.graphics();
-    chip(bg, bx, y, bw, bh, id === 'a' ? C.violet : C.white, 1, 14, id === 'b' ? { color: C.graphite, width: 3 } : undefined);
+    const paint = (sel: boolean) => {
+      bg.clear();
+      chip(bg, bx, y, bw, bh, id === 'a' ? C.violet : C.white, 1, 14, id === 'b' ? { color: C.graphite, width: 3 } : undefined);
+      if (sel) {
+        bg.lineStyle(5, C.amber, 1);
+        bg.strokeRect(bx - 3, y - 3, bw + 6, bh + 6);
+      }
+    };
+    paint(false);
+    paints[id] = paint;
     const ink = id === 'a' ? INK.white : INK.graphite;
     const lab = scene.add.text(bx + bw / 2, y + 38, ch.label, { ...TXT.body(22, ink, '800'), align: 'center', wordWrap: { width: bw - 20 } }).setOrigin(0.5);
     if (lab.height > 56) lab.setScale(56 / lab.height);
     const cost = costLine(ch.effect);
-    const ct = scene.add.text(bx + bw / 2, y + 86, cost, { ...TXT.body(18, id === 'a' ? '#E9DDFF' : INK.dim, '700'), align: 'center' }).setOrigin(0.5);
+    // White on violet passes AA (4.6:1); the lilac this line used before did not (3.5:1).
+    const ct = scene.add.text(bx + bw / 2, y + 86, cost, { ...TXT.body(18, id === 'a' ? INK.white : INK.dim, '700'), align: 'center' }).setOrigin(0.5);
     if (ct.width > bw - 16) ct.setScale((bw - 16) / ct.width);
     const vt = scene.add.text(bx + bw - 10, y - 8, '', { ...TXT.num(15, INK.white), backgroundColor: '#10171C', padding: { x: 8, y: 3 } }).setOrigin(1, 0.5).setVisible(false);
     voteT.push(vt);
@@ -291,8 +304,9 @@ export function controlCall(scene: Phaser.Scene, spec: CallSpec, depth: number, 
         if (picked && !spec.coop) return;
         picked = true;
         sound.play('ui_tap');
-        bg.lineStyle(5, C.amber, 1);
-        bg.strokeRect(bx - 3, y - 3, bw + 6, bh + 6);
+        if (mine && mine !== id) paints[mine](false);
+        mine = id;
+        paint(true);
         pick(id);
       }),
     );
