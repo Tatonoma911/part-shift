@@ -11,6 +11,7 @@ import { drawMenuBackdrop } from './MenuBackdrop';
 import { FOLLOW } from '../social/config';
 import { chip, plate, TXT } from './ui';
 import { drawTechOrb } from './Vitals';
+import { enterScene } from './motion';
 
 /**
  * «Познакомиться со вселенной» (Антон 10.10 11:22: «чтобы люди влюблялись в этих персонажей, в этот город,
@@ -76,6 +77,7 @@ export class UniverseScene extends Phaser.Scene {
   }
 
   create(): void {
+    enterScene(this);
     const W = VIEW.width;
     const H = VIEW.height;
     drawMenuBackdrop(this);

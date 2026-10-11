@@ -31,6 +31,7 @@ import { drawMenuBackdrop, drawMenuHeroes } from './MenuBackdrop';
 import { resetDialog } from './ResetProgress';
 import { universeButton } from './UniverseScene';
 import { dailySeed, dayId, heroOfWeek, invite, openBoard, openDonate, openFeedback, readChallenge } from '../social';
+import { enterScene } from './motion';
 
 type Ev = Phaser.Types.Input.EventData;
 type Page = 'main' | 'slots' | 'settings' | 'comfort';
@@ -62,6 +63,7 @@ export class MenuScene extends Phaser.Scene {
   }
 
   create(): void {
+    enterScene(this);
     this.input.enabled = true;
     this.allyUi = null;
     if (!this.anims.exists('resident.idle')) createArt(this);

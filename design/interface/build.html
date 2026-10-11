@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PARTSHIFT · Строительство</title>
+<link rel="stylesheet" href="system.css">
+<link rel="stylesheet" href="gallery.css">
+<style>
+.catalog { position: absolute; left: 0; right: 0; bottom: 0; height: 500px; z-index: 12; padding: 14px 14px 0; border-radius: 22px 22px 0 0; background: linear-gradient(180deg,#fff,var(--paper)); color: var(--ink); display: flex; flex-direction: column; gap: 10px; box-shadow: 0 -10px 40px rgba(0,0,0,.35); }
+.catalog .head { display: flex; align-items: center; gap: 8px; }
+.catalog .head .h1 { flex: 1; }
+.catalog .cards { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; overflow-y: auto; overflow-x: hidden; padding: 4px 2px 12px; align-content: start; -webkit-overflow-scrolling: touch; }
+.catalog .cards .catalog-card { width: auto; }
+.catalog .foot { margin-top: auto; padding-bottom: 28px; }
+.ghost-tip { position: absolute; left: 50%; top: 40%; transform: translateX(-50%); background: var(--white); color: var(--ink); padding: 10px 12px; border-radius: 10px; font-size: 13px; width: 250px; box-shadow: 0 6px 18px rgba(0,0,0,.3); }
+.ghost-tip .r { display: flex; gap: 8px; margin-top: 8px; }
+.ghost-tip .r .btn { flex: 1; }
+.dock-install { position: absolute; left: 12px; right: 12px; bottom: 30px; background: linear-gradient(180deg,#fff,var(--paper)); color: var(--ink); border-radius: 16px; padding: 12px; display: grid; grid-template-columns: 72px 1fr; gap: 10px; box-shadow: 0 -6px 22px rgba(0,0,0,.35); }
+.dock-install .art { width: 72px; height: 60px; border-radius: 10px; background: var(--mist); display: grid; place-items: center; font-size: 30px; }
+.card-sheet .stat2 { display: flex; gap: 6px; flex-wrap: wrap; }
+.blue-sheet { background: #1e3b52; color: #d9f8ff; }
+.bld-ico { font-size: 34px; line-height: 1; }
+@container (min-width: 720px) {
+  .catalog { left: auto; top: 0; width: 360px; height: auto; bottom: 0; border-radius: 0; padding: 16px; }
+  .catalog .cards { grid-template-columns: 1fr 1fr; overflow: visible; }
+  .catalog .cards .catalog-card { display: grid; grid-template-columns: 1fr; gap: 8px; }
+  .catalog .cards .catalog-card .art { height: 72px; }
+  .catalog .cards .catalog-card .ribbon { top: 4px; left: 4px; right: auto; }
+  .dock-install { left: auto; right: 340px; width: 360px; bottom: 16px; }
+}
+</style>
+</head>
+<body>
+<div class="page">
+  <nav class="nav" aria-label="Экраны">
+    <a href="index.html">Все экраны</a><a href="shift.html">Смена</a><a href="build.html" aria-current="page">Строить</a><a href="control.html">Контроль и тайники</a><a href="results.html">Итоги и концовки</a><a href="dossier.html">Досье</a><a href="menu.html">Меню</a><a href="settings.html">Настройки</a><a href="learn.html">Обучение и онлайн</a><a href="system.html">Компоненты и состояния</a>
+  </nav>
+  <header>
+    <h1>Строительство: каталог, призрак, карточка здания</h1>
+    <p>Схема жанра (Clash of Clans, Kingdom Rush): кнопка «Строить» в доке, каталог выезжает снизу, здание ставится как призрак и подтверждается ✓. Тап по своему зданию открывает карточку. Все числа ниже из buildings.json и могут поменяться после баланса.</p>
+  </header>
+
+  <section class="stage" data-show="phone pc">
+    <h2>1. Каталог строек</h2>
+    <p class="lede">Открывается из дока. Свободная земля светится, закрытые карточки объясняют, что сделать. Цена красная, если Энергии не хватает. Тап по открытой карточке закрывает каталог и ставит призрак.</p>
+    <div class="devices"></div>
+    <template>
+      <div style="position:absolute;inset:0;background:linear-gradient(180deg,#13212b,#0b1117)">
+        <div style="position:absolute;left:16px;top:52px;right:16px;display:flex;gap:8px;align-items:center" class="pc-hide">
+          <span class="chip" style="background:var(--seam);color:var(--graphite)">Энергия 1 240 ⚡</span>
+        </div>
+        <div class="catalog" role="dialog" aria-label="Строительство">
+          <div class="grip" style="width:40px;height:4px;background:rgba(16,23,28,.2);border-radius:2px;margin:0 auto"></div>
+          <div class="head"><h2 class="h1">Стройка</h2><span class="chip info">⚡ 1 240</span><button class="btn icon" aria-label="Закрыть">✕</button></div>
+          <div class="tabs" role="tablist" aria-label="Группы">
+            <button class="tab" role="tab" aria-selected="true">Основа</button><button class="tab" role="tab" aria-selected="false">Поддержка</button><button class="tab" role="tab" aria-selected="false">Прокачка</button><button class="tab" role="tab" aria-selected="false">Герои</button>
+          </div>
+          <div class="cards">
+            <div class="catalog-card"><div class="art">🏠</div><div><div class="h2" style="font-size:14px">Жилой блок</div><div class="small muted">Земля +1</div><div class="cost">40 ⚡</div></div></div>
+            <div class="catalog-card"><div class="art">⚛</div><div><div class="h2" style="font-size:14px">Микрореактор</div><div class="small muted">Энергия без жителей</div><div class="cost">50 ⚡</div></div></div>
+            <div class="catalog-card short"><div class="art">❄</div><div><div class="h2" style="font-size:14px">Станция охлаждения</div><div class="small muted">Земля +2</div><div class="cost">Не хватает 0</div></div></div>
+            <div class="catalog-card locked"><div class="art">🏫</div><div class="ribbon">Нужна Школа</div><div><div class="h2" style="font-size:14px">Медцентр</div><div class="small muted">Лечит героев</div><div class="cost">120 ⚡</div></div></div>
+          </div>
+          <div class="foot"><p class="small muted">Сначала освободите землю: строить можно только рядом со своими зданиями.</p></div>
+        </div>
+      </div>
+    </template>
+    <ul class="notes"><li>Карточки листаются свайпом; на ПК колонка справа, колесо мыши.</li><li>Закрытая карточка: синий лист с силуэтом и «Чертёж 2/4». Полоска показывает фрагменты, а не замок.</li><li>«Не хватает N» пишется в карточке, а не только красной ценой: цвет один не несёт смысла.</li></ul>
+  </section>
+
+  <section class="stage" data-show="phone pc">
+    <h2>2. Призрак: ставим здание</h2>
+    <p class="lede">Полупрозрачное здание на поле. Зелёная клетка значит «можно», красная «нельзя». Причина написана в доке. Тап или протяжка переносит призрак. ✓ ставит, ✕ отменяет. Отмена всегда видна.</p>
+    <div class="devices"></div>
+    <template>
+      <div style="position:absolute;inset:0;background:linear-gradient(180deg,#13212b,#0b1117)">
+        <div style="position:absolute;left:0;right:0;top:110px;display:grid;justify-items:center">
+          <div style="width:4px"></div>
+          <div style="display:grid;grid-template-columns:repeat(6,40px);gap:2px;background:var(--night);padding:2px">
+            <div class="cell" style="width:40px;height:40px;aspect-ratio:auto"></div><div class="cell" style="width:40px;height:40px;aspect-ratio:auto;background:var(--ground)"></div><div class="cell" style="width:40px;height:40px;aspect-ratio:auto;background:var(--ground)"></div><div class="cell" style="width:40px;height:40px;aspect-ratio:auto;background:var(--ground)"></div><div class="cell" style="width:40px;height:40px;aspect-ratio:auto;background:var(--ground)"></div><div class="cell" style="width:40px;height:40px;aspect-ratio:auto"></div>
+            <div class="cell" style="width:40px;height:40px;aspect-ratio:auto;background:var(--ground)"></div><div class="cell" style="width:40px;height:40px;aspect-ratio:auto;background:var(--ground)"></div><div class="cell safe" style="width:40px;height:40px;aspect-ratio:auto;background:rgba(0,126,137,.35)"></div><div class="cell safe" style="width:40px;height:40px;aspect-ratio:auto;background:rgba(0,126,137,.35)"></div><div class="cell" style="width:40px;height:40px;aspect-ratio:auto;background:var(--ground)"></div><div class="cell" style="width:40px;height:40px;aspect-ratio:auto;background:var(--ground)"></div>
+            <div class="cell" style="width:40px;height:40px;aspect-ratio:auto;background:var(--ground)"></div><div class="cell danger" style="width:40px;height:40px;aspect-ratio:auto;background:rgba(239,92,115,.35)"></div><div class="cell danger" style="width:40px;height:40px;aspect-ratio:auto;background:rgba(239,92,115,.35)"></div><div class="cell" style="width:40px;height:40px;aspect-ratio:auto;background:var(--ground)"></div><div class="cell" style="width:40px;height:40px;aspect-ratio:auto;background:var(--ground)"></div><div class="cell" style="width:40px;height:40px;aspect-ratio:auto;background:var(--ground)"></div>
+          </div>
+        </div>
+        <div class="ghost-tip" style="top:300px">
+          <b>Станция охлаждения</b><div class="small muted">Земля +2 · 100 ⚡</div>
+          <div class="small" style="color:#7a1426;margin-top:6px">Здесь рядом враги: строить опасно.</div>
+          <div class="r"><button class="btn ghost" aria-label="Не ставить">✕</button><button class="btn ghost" disabled aria-label="Поставить, нельзя">✓</button></div>
+        </div>
+        <div class="toast" style="position:absolute;left:16px;right:16px;bottom:120px;background:#fff;color:var(--ink);box-shadow:inset 3px 0 0 var(--coral)">Рядом враги, строить опасно. Сначала вскройте соседние гнёзда.</div>
+        <div class="dock-install" style="bottom:34px">
+          <div class="art">❄</div>
+          <div><div class="h2" style="font-size:15px">Станция охлаждения</div><div class="small muted">Земля +2 · 100 ⚡ · Не хватает 0 ⚡</div><div class="small" style="margin-top:6px">Ставится на пунктир: земля, которую здание освободит.</div><button class="btn ghost block">Отмена</button></div>
+        </div>
+      </div>
+    </template>
+    <ul class="notes"><li>Причина отказа одна и короткая. Если причин несколько, показывается первая по важности: враги, затем Энергия, затем земля.</li><li>Назад на Android: сначала закрывает каталог, потом снимает призрак.</li></ul>
+  </section>
+
+  <section class="stage" data-show="phone pc">
+    <h2>3. Карточка своего здания</h2>
+    <p class="lede">Тап по своему зданию. Улучшить, Усилить героев, Снести. Снос спрашивает вторым тапом, Командный центр не сносится. Поле за карточкой остаётся видно.</p>
+    <div class="devices"></div>
+    <template>
+      <div style="position:absolute;inset:0;background:linear-gradient(180deg,#13212b,#0b1117)">
+        <div class="scrim" style="background:rgba(10,18,24,.35)"></div>
+        <div class="sheet" role="dialog" aria-labelledby="bc-title">
+          <div class="grip"></div>
+          <div style="display:grid;grid-template-columns:72px 1fr;gap:12px;align-items:center">
+            <div class="bld-ico" style="width:72px;height:64px;border-radius:12px;background:var(--mist);display:grid;place-items:center">⚛</div>
+            <div><p class="cap">Здание · уровень 2</p><h2 id="bc-title" class="h1" style="font-size:18px">Микрореактор</h2><p class="small muted">Энергия без жителей: 22 ⚡ в минуту</p></div>
+          </div>
+          <div class="row" style="margin-top:8px"><div class="grow small">Улучшить до 3 · 80 ⚡</div><button class="btn primary">Улучшить</button></div>
+          <div class="row"><div class="grow small">Усилить героев рядом: +10% урона</div><button class="btn ghost">Усилить</button></div>
+          <div class="row"><div class="grow small">Снести: вернётся 50% Энергии</div><button class="btn danger">Снести</button></div>
+          <p class="small muted" style="margin-top:6px">Снос спросит второй тап: «Точно снести?».</p>
+        </div>
+      </div>
+    </template>
+    <ul class="notes"><li>Числа пока условные. Геймдизайнер даёт их в buildings.json, до этого в коде стоят значения по умолчанию.</li><li>Школа здесь же: переключатель обучения (строка «Обучать героев», 56 × 32).</li></ul>
+  </section>
+
+  <section class="stage" data-show="phone">
+    <h2>4. Пусто и ошибка в каталоге</h2>
+    <p class="lede">Что видит игрок, если все здания построены или земли нет. Пустое состояние всегда говорит, что сделать дальше.</p>
+    <div class="devices"></div>
+    <template>
+      <div style="position:absolute;inset:0;background:#0b1117"><div class="catalog" style="height:340px">
+        <div class="head"><h2 class="h1">Стройка</h2><button class="btn icon" aria-label="Закрыть">✕</button></div>
+        <div class="empty" style="margin-top:8px"><p class="h2" style="font-size:15px;color:var(--ink)">Земли пока нет</p><p class="small" style="margin-top:6px">Вскройте квартал рядом со своим зданием. Земля вокруг каждого здания уже ваша.</p></div>
+        <div class="error" style="margin-top:12px"><span>⚠</span><span>Каталог не загрузился. <b>Повторить</b></span></div>
+      </div></div>
+    </template>
+  </section>
+
+  <ul class="notes"><li><b>Что решено здесь.</b> Каталог и призрак работают без режимов: одна кнопка «Строить». Подтверждение в два касания (✓ ставит) защищает от случайного тапа на 27-пиксельной клетке.</li></ul>
+</div>
+<script src="gallery.js"></script>
+</body>
+</html>

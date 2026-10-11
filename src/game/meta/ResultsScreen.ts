@@ -6,6 +6,7 @@ import { C, FONT, INK, LANDSCAPE, VIEW } from '../layout';
 import { chip, plate, TXT } from '../ui';
 import { portrait } from './art';
 import { rankCup, resultsMedals, resultsStars, type ShiftStars, type Tier } from './Awards';
+import { sheetIn } from '../motion';
 import { bar, button, fmtNum, fmtTime, shade } from './kit';
 import { FEMALE, rankAt, rankFraction } from './store';
 
@@ -354,8 +355,7 @@ export function showResults(scene: Phaser.Scene, v: ResultsView, act: ResultsAct
   body.setScale(s);
   body.x = (W() - pw * s) / 2;
   body.y = Math.max(30, (H() - y * s) / 2);
-  body.setAlpha(0);
-  tween({ targets: body, alpha: 1, duration: 200 });
+  sheetIn(scene, [body]);
 
   // Run the steps on their own clock so a tap can speed it up.
   steps.sort((a, b) => a.at - b.at);
