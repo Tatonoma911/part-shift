@@ -67,15 +67,17 @@ describe('digging', () => {
     expect(residents(w).length).toBeGreaterThanOrEqual(3);
   });
 
-  it('rubble is cleared for energy when the player marks it', () => {
+  it('a pile opened by the start frees the person under it, who reaches the center', () => {
     const w = handWorld(['.r.....', '.......', '......n']);
     w.apply({ type: 'placeCommand', x: 0, y: 1 });
     expect(w.cell(1, 0).revealed).toBe(true);
-    const e0 = w.player(0).energy;
-    expect(w.apply({ type: 'queueDig', x: 1, y: 0 }).ok).toBe(true);
-    run(w, mapgen.rubble.workSeconds + 4);
     expect(w.cell(1, 0).content).toBe('ground');
-    expect(w.player(0).energy).toBeGreaterThanOrEqual(e0 + 30);
+    expect(w.s.runners).toHaveLength(1);
+    const e0 = w.player(0).energy;
+    run(w, 30);
+    expect(w.s.runners ?? []).toHaveLength(0);
+    expect(w.player(0).civilians).toBe(mapgen.rubble.rescue.onOpen.balance);
+    expect(w.player(0).energy).toBeGreaterThanOrEqual(e0 + mapgen.rubble.rescue.onOpen.energy);
   });
 });
 

@@ -1,5 +1,5 @@
 {
-  "version": "0.5",
+  "version": "0.6",
   "mode": "call",
   "seedable": true,
   "generateAfterCommandCenterPlaced": true,
@@ -35,7 +35,24 @@
   },
   "rubble": {
     "energy": 30,
-    "workSeconds": 24
+    "workSeconds": 24,
+    "durability": {
+      "workSeconds": 24,
+      "_note": "прочность завала = 24 с работы одного героя; двое и больше — по формуле копки (MVP_RULES §4); Инженер ×0,5 (heroes.json rubbleWorkFactor)"
+    },
+    "rescue": {
+      "personPerRubble": 1,
+      "onOpen": {
+        "personRunsTo": "command",
+        "balance": 1,
+        "energy": 10,
+        "score": 25
+      },
+      "personAttackable": false,
+      "runSpeedTiles": 3.2,
+      "leaveIfNoPathSeconds": 20,
+      "_note": "[2026-10-11 Антон] из раскопанного завала выбегает житель, бежит к Командному центру, ценится как спасённый (баланс +1). Бег визуальный, без боя: житель не атакуется. Нет пути — ждёт до 20 с, потом уходит на место (как §4.4). Иконка завала пропадает при вскрытии."
+    }
   },
   "water": {
     "fraction": 0.1,

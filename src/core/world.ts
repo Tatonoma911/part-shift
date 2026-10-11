@@ -50,7 +50,7 @@ import { generateField } from './mapgen';
 import { solvable } from './noguess';
 import { findPath } from './pathfind';
 import { rand, randIntOf } from './rng';
-import type { AssistMode, Building, Cell, ClueChannel, GameState, PartInstance, Player, RuleOverrides, SiteState, Task, Unit, UnitKind } from './state';
+import type { AssistMode, Building, Cell, ClueChannel, GameState, PartInstance, Player, RuleOverrides, Runner, SiteState, Task, Unit, UnitKind } from './state';
 
 export const STEP = 0.05;
 
@@ -1251,6 +1251,16 @@ export class World {
         this.addTempo(owner, 'survivor');
         break;
       }
+      case 'rubble': {
+        // Opened rubble becomes open ground, and the person it hid runs to the command center (MVP_RULES §22.13).
+        c.content = 'ground';
+        c.resolved = true;
+        c.stock = undefined;
+        s.runners = s.runners ?? [];
+        s.runners.push({ id: s.nextId++, owner, x, y, path: [], repath: 0, wait: 0 });
+        this.emit('rubble_opened', { x, y, owner });
+        break;
+      }
       case 'mine':
         // Dug under an «Опасно» mark: the heroes defuse it (hazards.json mine.markedDig).
         if (defusing && hazards.mine.markedDig.defuse) {
@@ -1473,7 +1483,11 @@ export class World {
         const digMul = this.digSpeedOf(u, c.element as Tech | undefined) * (u.concussed ? hazards.mine.unmarkedDig.concussion.digSpeedFactor : 1);
         c.dig = (c.dig ?? 0) + this.workShare(u, (o) => o.task.type === 'dig' && o.task.x === t.x && o.task.y === t.y) * dt * digMul;
         t.progress = Math.max(c.dig, 1e-6);
-        if (c.dig >= this.cfg.dig.digSeconds * this.boonFactor(u.owner, 'sharp_shovels') * this.allyFactor(u.owner, 'drillDig', 'digTimeFactor')) {
+        // Rubble is dug like a closed cell, but its durability is mapgen.rubble.durability (Инженер ×0,5).
+        const need = c.content === 'rubble'
+          ? mapgen.rubble.durability.workSeconds * this.allyFactor(u.owner, 'rubbleWorkFactor')
+          : this.cfg.dig.digSeconds * this.boonFactor(u.owner, 'sharp_shovels') * this.allyFactor(u.owner, 'drillDig', 'digTimeFactor');
+        if (c.dig >= need) {
           c.dig = undefined;
           this.setTask(u, { type: 'idle' });
           this.reveal(t.x, t.y, u.owner);
@@ -3251,6 +3265,7 @@ export class World {
 
   private production(dt: number): void {
     const s = this.s;
+    this.runners(dt);
     for (const b of s.buildings) {
       // Boost, recolor and swap cooldowns count down whatever the building is doing.
       if (b.boostCooldown) b.boostCooldown = Math.max(0, b.boostCooldown - dt) || undefined;
@@ -3427,12 +3442,61 @@ export class World {
   }
 
   /** A townsperson reaches the command center: score, Energy and +1 on the balance (civilian.onReachCommand). */
-  private rescueCivilian(p: Player, x: number, y: number): void {
-    const r = civilianRules.onReachCommand;
+  private rescueCivilian(p: Player, x: number, y: number, r: { score: number; energy: number; addToBalance: number } = civilianRules.onReachCommand): void {
     this.earn(p, r.energy);
     p.civilians = (p.civilians ?? 0) + r.addToBalance;
     p.stats.civiliansRescued = (p.stats.civiliansRescued ?? 0) + 1;
     this.emit('civilian_rescued', { x, y, owner: p.id, amount: r.score });
+  }
+
+  /**
+   * Freed people run to the command center over open ground. They never fight and need no path to start:
+   * with none they wait, and after rescue.leaveIfNoPathSeconds they stay hidden in place until one opens.
+   */
+  private runners(dt: number): void {
+    const s = this.s;
+    if (!s.runners?.length) return;
+    const r = mapgen.rubble.rescue;
+    s.runners = s.runners.filter((n: Runner) => {
+      const p = s.players[n.owner];
+      const cmd = p?.command !== null && p?.command !== undefined ? this.building(p.command) : undefined;
+      if (!p?.alive || !cmd) return false;
+      if (cheb(Math.round(n.x), Math.round(n.y), cmd.x, cmd.y) <= 1) {
+        this.rescueCivilian(p, n.x, n.y, { score: r.onOpen.score, energy: r.onOpen.energy, addToBalance: r.onOpen.balance });
+        return false;
+      }
+      if (n.path.length === 0) {
+        n.repath -= dt;
+        if (n.repath <= 0) {
+          n.repath = 0.5;
+          const path = findPath(s.width, s.height, { x: Math.round(n.x), y: Math.round(n.y) }, (x, y) => walkableForPlayer(s, x, y), (x, y) => cheb(x, y, cmd.x, cmd.y) <= 1);
+          n.path = path ? path.slice(1) : [];
+          if (!path) n.wait += 0.5;
+          if (n.wait >= r.leaveIfNoPathSeconds) n.hidden = true;
+          if (path) {
+            n.wait = 0;
+            n.hidden = undefined;
+          }
+        }
+        if (n.path.length === 0) return true;
+      }
+      let budget = r.runSpeedTiles * dt;
+      while (budget > 0 && n.path.length > 0) {
+        const next = n.path[0];
+        const d = dist(n.x, n.y, next.x, next.y);
+        if (d <= budget) {
+          n.x = next.x;
+          n.y = next.y;
+          n.path.shift();
+          budget -= d;
+        } else {
+          n.x += ((next.x - n.x) / d) * budget;
+          n.y += ((next.y - n.y) / d) * budget;
+          budget = 0;
+        }
+      }
+      return true;
+    });
   }
 
   /** Townsfolk leave the balance (a lost building, a battered center, a Контроль call). Returns how many left. */

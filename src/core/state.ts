@@ -313,6 +313,20 @@ export interface RuleOverrides {
   raids?: { enabled: boolean; firstAfterSeconds?: number; everySeconds?: number; size?: number; maxSize?: number };
 }
 
+/** A person freed from a rubble pile (mapgen.json rubble.rescue): runs to the command center, never fights. */
+export interface Runner {
+  id: number;
+  owner: number;
+  x: number;
+  y: number;
+  path: { x: number; y: number }[];
+  /** Seconds until the next route check. */
+  repath: number;
+  /** Seconds spent with no way to the center; past rescue.leaveIfNoPathSeconds the runner waits hidden in place. */
+  wait: number;
+  hidden?: boolean;
+}
+
 export interface GameState {
   version: 2;
   seed: number;
@@ -327,6 +341,8 @@ export interface GameState {
   buildings: Building[];
   sites: SiteState[];
   orbs: Orb[];
+  /** Freed people running from opened rubble to the command center (absent in older saves). */
+  runners?: Runner[];
   nextId: number;
   /** The call target: the strongest hero of the district (boss_hatch). */
   boss: { hero: string; awake: boolean; warned: boolean; dead: boolean; hpScale: number;
