@@ -1968,7 +1968,9 @@ export class GameScene extends Phaser.Scene {
       if (this.dragMode === 'queue') w.apply({ type: 'cancelDig', x, y }, this.me);
       w.apply({ type: 'toggleMark', x, y }, this.me);
       const kind = w.cell(x, y).markKind;
-      this.say(kind ? t(`cell.mark.${kind}`) : t('cell.mark.hint'), 1800);
+      // Setting a mark names it; lifting one stays quiet, and the how-to shows once per device.
+      if (kind) this.say(t(`cell.mark.${kind}`), 1800);
+      else if (!flagHintSeen()) { markFlagHintSeen(); this.say(t('cell.mark.hint'), 1800); }
       buzz(20);
       this.dragMode = null;
     });
