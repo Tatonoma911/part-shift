@@ -490,7 +490,7 @@ export class GameScene extends Phaser.Scene {
     }
     this.music.tick();
     this.voice?.update();
-    if (this.guide?.update()) this.showGuideStep();
+    if (this.guide?.update() && !this.ended) this.showGuideStep();
     if (this.spotlight && time > this.spotlight.until) this.spotlight = null;
     if (this.pointTo && time > this.pointTo.until) this.pointTo = null;
     if (this.selected && time > this.selected.until) this.selected = null;
@@ -789,6 +789,8 @@ export class GameScene extends Phaser.Scene {
       if (g.finished) analytics.track('tutorial_complete', { seconds: this.world.s.time });
       else analytics.track('tutorial_step', { step: g.stepIndex, step_id: g.step!.id, seconds: this.world.s.time });
     }
+    // A won or lost shift has its own sheet; the guide's last card must not cover it.
+    if (this.ended) return;
     if (g.finished) {
       box.text.setVisible(false);
       box.g.clear();
@@ -1511,6 +1513,7 @@ export class GameScene extends Phaser.Scene {
     closeCoach();
     this.trackEnd(victory ? 'victory' : 'defeat');
     if (!this.guide) clearSlot(this.slot);
+    else if (victory) markTutorialDone();
     const shiftN = this.start.shiftN;
     // Campaign victory: flash "СМЕНА ЗАКРЫТА" for 1.5 s, then show the results sheet.
     if (victory && shiftN) {
@@ -1609,7 +1612,8 @@ export class GameScene extends Phaser.Scene {
         }),
     };
     // Campaign: primary button is "Следующая смена"; shift 12 leads back to menu.
-    const nextShiftAction = victory && shiftN && shiftN < CAMPAIGN_TOTAL ? () => this.nextShift(shiftN + 1) : null;
+    // The tutorial's win goes on to the campaign's first uncleared shift, like the guide's last card.
+    const nextShiftAction = victory && shiftN && shiftN < CAMPAIGN_TOTAL ? () => this.nextShift(shiftN + 1) : victory && this.guide ? () => this.nextShift(getFirstUncleared()) : null;
     this.overlay?.destroy();
     this.overlay = this.sheet({
       // Comic illustration when the artist's screen is in (style per layer); until then the Command Center sprite, grey on a loss.

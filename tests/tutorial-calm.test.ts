@@ -32,13 +32,22 @@ describe('First Shift stays calm (FEEL_AUDIT F-05)', () => {
   });
 });
 
-describe('First Shift keeps its last steps (FEEL_AUDIT F-15)', () => {
-  it('a cleared nest does not end the tutorial match, so steps 8–9 still reach the player', () => {
+describe('First Shift never blocks the win (coordinator relay 2026-10-11)', () => {
+  it('clearing every nest wins the tutorial match even with its steps unfinished', () => {
     const w = createTutorialWorld();
     w.apply({ type: 'placeCommand', x: 3, y: 8 });
     for (const c of w.s.cells) if (c.content === 'nest') c.resolved = true;
     run(w, 1);
-    expect(w.s.outcome).toBe('playing');
-    expect(w.s.cells.some((c) => c.content === 'nest')).toBe(true);
+    expect(w.s.outcome).toBe('victory');
+  });
+
+  it('skipping every step and winning the board ends the match; the guide never gates it', () => {
+    const g = new TutorialGuide();
+    const w = g.world;
+    w.apply({ type: 'placeCommand', x: 3, y: 8 });
+    for (const c of w.s.cells) if (c.content === 'nest') c.resolved = true;
+    run(w, 1);
+    expect(w.s.outcome).toBe('victory');
+    expect(g.finished).toBe(false);
   });
 });
