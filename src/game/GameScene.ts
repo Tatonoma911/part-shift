@@ -416,6 +416,7 @@ export class GameScene extends Phaser.Scene {
     this.ended = false;
     this.boonUi = null;
     this.music.start();
+    sound.play('shift_start');
     this.setMode('dig');
     // The tutorial teaches by itself; coach cards and the guide come with free play.
     setLearningHooks({ pause: () => (this.overlayPaused = true), resume: () => (this.overlayPaused = false), busy: () => this.inFight() || this.ended });
@@ -1829,6 +1830,8 @@ export class GameScene extends Phaser.Scene {
       return;
     }
     if (p.middleButtonDown()) return;
+    // An opened interactive cell (resource, mine, capsule, medkit, nest, survivor) answers the tap.
+    if (c.revealed && c.content !== 'ground' && c.content !== 'rubble' && c.content !== 'water') sound.play('cell_tap');
     // Tap an enemy or an opened nest: all residents attack it (any mode).
     const foe = this.board.enemyAt(wp.x, wp.y);
     if (foe) {
