@@ -1848,12 +1848,12 @@ export class GameScene extends Phaser.Scene {
     // Tap an enemy or an opened nest: all residents attack it (any mode).
     const foe = this.board.enemyAt(wp.x, wp.y);
     if (foe) {
-      if (w.apply({ type: 'attack', target: `u:${foe.id}` }, this.me).ok) this.orderSaid();
+      if (w.apply({ type: 'attack', target: `u:${foe.id}` }, this.me).ok) { this.orderSaid(); this.board.tapFlash(x, y); }
       return;
     }
     const site = c.revealed ? w.site(x, y) : undefined;
     if (site && !site.destroyed) {
-      if (w.apply({ type: 'attack', target: `s:${x},${y}` }, this.me).ok) this.orderSaid();
+      if (w.apply({ type: 'attack', target: `s:${x},${y}` }, this.me).ok) { this.orderSaid(); this.board.tapFlash(x, y); }
       return;
     }
     // A tap that just missed a running enemy must not drop the order (QA-037): only a tap well away
@@ -1923,7 +1923,7 @@ export class GameScene extends Phaser.Scene {
       if (this.confirmCell === k) {
         this.confirmCell = null;
         // The core lifts the mark itself: under «Опасно» the heroes dig carefully and defuse a mine (MVP_RULES §5.2).
-        if (w.apply({ type: 'queueDig', x, y, force: true }, this.me).ok) this.guide?.notify('queued');
+        if (w.apply({ type: 'queueDig', x, y, force: true }, this.me).ok) { this.guide?.notify('queued'); this.board.tapFlash(x, y); }
         return;
       }
       this.confirmCell = k;
@@ -1932,20 +1932,20 @@ export class GameScene extends Phaser.Scene {
     }
     if (this.confirmCell === k) {
       this.confirmCell = null;
-      if (w.apply({ type: 'queueDig', x, y, force: true }, this.me).ok) this.guide?.notify('queued');
+      if (w.apply({ type: 'queueDig', x, y, force: true }, this.me).ok) { this.guide?.notify('queued'); this.board.tapFlash(x, y); }
       return;
     }
     this.confirmCell = null;
     // An opened medkit asks first: «Использовать» heals the heroes around it (hazards.json medkit).
     if (c.revealed && c.content === 'medkit') {
-      if (c.stock && c.heal === undefined) this.askMedkit(x, y);
-      else if (w.apply({ type: 'useMedkit', x, y }, this.me).ok) this.say(t('event.medkit.open'), 1800);
+      if (c.stock && c.heal === undefined) { this.board.tapFlash(x, y); this.askMedkit(x, y); }
+      else if (w.apply({ type: 'useMedkit', x, y }, this.me).ok) { this.say(t('event.medkit.open'), 1800); this.board.tapFlash(x, y); }
       return;
     }
     // Swiping over auto-queued cells promotes them to the player's own queue; only own orders get cancelled.
     const own = w.player(this.me).queue.includes(k);
     const r = !c.revealed && !own ? w.apply({ type: 'queueDig', x, y }, this.me) : null;
-    if (r?.ok) this.guide?.notify('queued');
+    if (r?.ok) { this.guide?.notify('queued'); this.board.tapFlash(x, y); }
     // Once per device: the first dig explains the flag, so nobody opens a suspicious block by accident.
     if (r?.ok && !flagHintSeen()) { markFlagHintSeen(); this.say(t('cell.mark.hint'), 6000); }
     if (r && !r.ok && r.reason === 'dig.unreachable') this.say(t('dig.unreachable'), 3000, true);

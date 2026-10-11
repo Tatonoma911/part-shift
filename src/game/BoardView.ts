@@ -268,6 +268,16 @@ export class BoardView {
     return best;
   }
 
+  /** Brief white flash on cell (x, y) confirming a tap action (dig queued, attack issued, item used). */
+  tapFlash(x: number, y: number): void {
+    const px = this.bx + x * STEP;
+    const py = this.by + y * STEP;
+    const g = this.scene.add.graphics().setDepth(D.top + 1);
+    g.fillStyle(C.white, 0.45).fillRect(px, py, CELL, CELL);
+    g.lineStyle(3, C.seam, 0.9).strokeRect(px + 1, py + 1, CELL - 2, CELL - 2);
+    this.scene.tweens.add({ targets: g, alpha: 0, duration: 220, ease: 'Quad.Out', onComplete: () => g.destroy() });
+  }
+
 
   // ----------------------------------------------------------------- events
 
