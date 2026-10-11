@@ -221,7 +221,7 @@ export function buildingInfo(world: World, raw: Building, me: number): BuildingI
     info.upgrade = { label: t('building.card.level_max'), next: '', enabled: false, reason: t('building.card.disabled.max_level') };
   } else {
     const to = level + 1;
-    const { cost, seconds } = upgradeCost(b.type, to, b.hero);
+    const { cost } = upgradeCost(b.type, to, b.hero);
     const command = own.find((o) => o.type === 'command');
     const rule = UP.perBuilding[b.type]?.levels?.[String(to)];
     const schools = own.filter((o) => o.type === 'school' && o.complete).length;
@@ -232,7 +232,7 @@ export function buildingInfo(world: World, raw: Building, me: number): BuildingI
     else if (energy < cost) reason = short(cost);
     const effect = levelLine(b.type, to);
     info.upgrade = {
-      label: t('building.card.upgrade', { cost, time: seconds }),
+      label: t('building.card.upgrade', { cost }),
       next: effect ? t('building.card.upgrade_next', { effect }) : '',
       enabled: !reason,
       reason,
