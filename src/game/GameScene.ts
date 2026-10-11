@@ -401,6 +401,8 @@ export class GameScene extends Phaser.Scene {
     // Online fields are bigger than the screen: start at the normal cell size over our own center.
     const home = this.online ? this.world.building(this.world.player(this.me).command) : undefined;
     if (home) this.cams.focus(bx + home.x * STEP + CELL / 2, by + home.y * STEP + CELL / 2, 1);
+    // Sweep intro: zoom to comfortable tap size, pan out to show full board, return.
+    if (!this.guide && !home) this.cams.sweep(2.0);
     this.edge = new EdgePointer(this, this.world, this.cams.board, (x, y) => this.board.center(x, y));
     this.dmg = new DamageNumbers(this, (x, y) => this.board.center(x, y), this.cams.board);
     this.events.once('shutdown', () => this.dmg.destroy());

@@ -243,6 +243,9 @@ export interface HazardRules {
 }
 export const hazards = hazardsJson as unknown as HazardRules;
 
+/** Hero medkits: one slot per hero, stock from Medcenters (heroes.json medkits, MVP_RULES §22.19). */
+export const heroMedkits = (heroesJson as unknown as { medkits: { slotsPerHero: number; chargeSeconds: number; capPerMedcenter: number; useBelowFraction?: number } }).medkits;
+
 /**
  * A by-difficulty row of the design tables. hazards.json says «crunch» for Аврал, difficulty.json says «rush»:
  * both names are accepted; unknown levels fall back to «shift».

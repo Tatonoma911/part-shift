@@ -40,6 +40,7 @@ import {
   boons as boonDefs,
   armorPlateDef,
   hazards,
+  heroMedkits,
   byDifficulty,
   civilianRules,
   CIVILIANS_PER_SITE_DEFAULT,
@@ -983,6 +984,8 @@ export class World {
       for (const n of [{ x, y }, ...neighbors(s, x, y)]) this.reveal(n.x, n.y, player, false);
       const first = this.cfg.population.firstResidentImmediate ? this.cfg.population.initialResidents : 0;
       for (let i = 0; i < first; i++) this.spawnAllyFromPool(s.players[player], x, y);
+      // The next birth comes one spawn interval later, not on the start timer (tutorial: MVP_RULES §22.21).
+      s.players[player].spawnTimer = this.cfg.population.spawnSeconds;
     }
   }
 
@@ -1025,6 +1028,7 @@ export class World {
     this.boonClock(dt);
     this.allyClock(dt);
     this.production(dt);
+    this.medkitClock(dt);
     this.orbs(dt);
     this.hotGround(dt);
     this.hazardClock(dt);
@@ -1526,6 +1530,7 @@ export class World {
         const need = c.revealed && c.rubble
           ? mapgen.rubble.durability.workSeconds * this.allyFactor(u.owner, 'rubbleWorkFactor')
           : this.cfg.dig.digSeconds * this.boonFactor(u.owner, 'sharp_shovels') * this.allyFactor(u.owner, 'drillDig', 'digTimeFactor');
+        c.digNeed = need;
         if (c.dig >= need) {
           c.dig = undefined;
           this.setTask(u, { type: 'idle' });
@@ -1538,6 +1543,14 @@ export class World {
         const c = this.cell(t.x, t.y);
         if (!s.players[u.owner].queue.includes(cellKey(t.x, t.y)) || !(c.stock && c.stock > 0)) return this.setTask(u, { type: 'idle' });
         if (u.path.length > 0) return this.move(u, dt);
+        // A player's new dig order on a closed cell comes before crystals: the harvester drops out and digs it, the crystals stay queued.
+        if (u.repathTimer <= 0 && this.hasUnclaimedDig(u)) {
+          u.repathTimer = 1;
+          this.setTask(u, { type: 'idle' });
+          this.findJob(u);
+          return;
+        }
+        u.repathTimer = Math.max(0, u.repathTimer - dt);
         t.progress += dt;
         if (c.content === 'rubble') {
           if (t.progress >= mapgen.rubble.workSeconds * this.allyFactor(u.owner, 'rubbleWorkFactor')) {
@@ -1728,6 +1741,17 @@ export class World {
   private setTask(u: Unit, task: Task): void {
     u.task = task;
     u.path = [];
+  }
+
+  /** A queued closed cell that nobody digs yet (the player's own dig order, not auto digs). */
+  private hasUnclaimedDig(u: Unit): boolean {
+    const s = this.s;
+    return s.players[u.owner].queue.some((k) => {
+      const { x, y } = parseKey(k);
+      const c = this.cell(x, y);
+      if (c.revealed && !c.rubble) return false;
+      return !s.units.some((o) => o !== u && o.owner === u.owner && o.task.type === 'dig' && o.task.x === x && o.task.y === y);
+    });
   }
 
   /**
@@ -3758,6 +3782,44 @@ export class World {
     const cs = config.cleanStreak;
     this.cleanSteps = this.cleanSteps.filter((t) => this.s.time - t < cs.bonusDurationSeconds);
     return Math.min(cs.maxBonus, this.cleanSteps.length * cs.bonusPerStep);
+  }
+
+  /**
+   * Hero medkits (MVP_RULES §22.19): each completed Medcenter adds a charge to its owner's stock every chargeSeconds,
+   * up to capPerMedcenter per Medcenter. A unit with no medkit takes one from the stock. A unit that falls below 25 %
+   * HP eats its medkit and is healed to full.
+   */
+  private medkitClock(dt: number): void {
+    const s = this.s;
+    const rules = heroMedkits;
+    for (const p of s.players) {
+      if (!p.alive) continue;
+      const centers = s.buildings.filter((b) => b.owner === p.id && b.complete && !b.ruined && b.type === 'medcenter').length;
+      const cap = centers * rules.capPerMedcenter;
+      p.medkits = Math.min(p.medkits ?? 0, cap);
+      if (centers > 0 && (p.medkits ?? 0) < cap) {
+        p.medkitTimer = (p.medkitTimer ?? 0) + dt;
+        if (p.medkitTimer >= rules.chargeSeconds) {
+          p.medkitTimer = 0;
+          p.medkits = (p.medkits ?? 0) + 1;
+        }
+      } else {
+        p.medkitTimer = 0;
+      }
+      for (const u of s.units) {
+        // Only our heroes (allies from the squad) carry medkits; residents do not.
+        if (u.owner !== p.id || u.kind !== 'ally' || u.hp <= 0) continue;
+        if (!u.medkit && (p.medkits ?? 0) > 0) {
+          u.medkit = true;
+          p.medkits = (p.medkits ?? 0) - 1;
+        }
+        if (u.medkit && u.hp < this.maxHp(u) * (rules.useBelowFraction ?? 0.25)) {
+          u.medkit = false;
+          u.hp = this.maxHp(u);
+          this.emit('medkit_carried_use', { owner: p.id, unit: u.id });
+        }
+      }
+    }
   }
 
   /** Streak state for the HUD: quarters in a row, and the bonus now. */
