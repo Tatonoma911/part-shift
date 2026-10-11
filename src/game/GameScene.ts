@@ -1069,21 +1069,24 @@ export class GameScene extends Phaser.Scene {
     ];
     // «Первая смена» has no call target: no violet lamp in its legend.
     if (this.guide) legend.splice(2, 1);
+    // Legend: single vertical column on the left; queue chip fills the right side beside it.
+    const legendColW = 210;
     legend.forEach(([key, kind], k) => {
-      const lx = DOCK.x + pad + 14 + (k % 2) * 200;
-      const ly = top + 24 + Math.floor(k / 2) * 40;
+      const lx = DOCK.x + pad + 14;
+      const ly = top + 20 + k * 40;
       const ig = this.add.graphics().setPosition(lx, ly);
       if (kind === 'mark') drawMark(ig.setScale(0.6), 0, 0, 'danger');
       else drawLamp(ig.setScale(2), kind, -7, -5, 14, 10);
       dig.add(ig);
       dig.add(this.add.text(lx + 22, ly, t(key), TXT.body(23, INK.graphite, '500')).setOrigin(0, 0.5));
     });
-    const qx = DOCK.x + pad + leftW - 250;
+    const qx = DOCK.x + pad + legendColW;
+    const qw = leftW - legendColW - 10;
     const qg = this.add.graphics();
-    chip(qg, qx, top + 4, 250, 60, 0xd9f3f8, 1, 12);
-    const queue = this.add.text(qx + 22, top + 34, '', TXT.body(23, INK.deep, '700')).setOrigin(0, 0.5);
-    const qx2 = this.add.text(qx + 226, top + 34, '✕', TXT.body(26, INK.deep, '700')).setOrigin(1, 0.5);
-    const qhit = this.add.zone(qx, top + 4, 250, 60).setOrigin(0).setInteractive({ useHandCursor: true });
+    chip(qg, qx, top + 8, qw, 68, 0xd9f3f8, 1, 12);
+    const queue = this.add.text(qx + 16, top + 42, '', TXT.body(23, INK.deep, '700')).setOrigin(0, 0.5);
+    const qx2 = this.add.text(qx + qw - 14, top + 42, '✕', TXT.body(26, INK.deep, '700')).setOrigin(1, 0.5);
+    const qhit = this.add.zone(qx, top + 8, qw, 68).setOrigin(0).setInteractive({ useHandCursor: true });
     qhit.on(
       'pointerdown',
       stop(() => {
