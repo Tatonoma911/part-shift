@@ -20,6 +20,7 @@
   "build.invalid_cell": "You can only build on your own territory",
   "build.cell_occupied": "There is a building here already",
   "build.enemies_near": "Enemies nearby, too dangerous to build",
+  "build.outpost_edge": "The checkpoint goes only on the edge of our land",
   "build.unreachable": "Residents can't get there",
   "build.done": "{building}: done",
   "unit.trained": "A new defender is ready",

@@ -401,6 +401,7 @@
   "building.upgrade.not_complete": "Сначала достройте здание",
   "building.upgrade.enemies_near": "Рядом враги. Сначала отбейтесь.",
   "building.upgrade.not_enough_energy": "Мало Энергии для улучшения",
+  "build.outpost_edge": "Блокпост ставится только на краю своей земли",
   "building.upgrade.busy": "Здание уже улучшается",
   "building.upgrade.needs_command_2": "Нужен Командный центр 2 уровня",
   "building.upgrade.needs_school": "Нужна Школа спасателей"

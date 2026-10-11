@@ -363,6 +363,16 @@ export class World {
     return path !== null;
   }
 
+  /** A cell of our land with at least one of its eight neighbours outside our land (the board edge does not count). */
+  onTerritoryEdge(playerId: number, x: number, y: number): boolean {
+    for (let dy = -1; dy <= 1; dy++)
+      for (let dx = -1; dx <= 1; dx++) {
+        const nx = x + dx, ny = y + dy;
+        if ((dx || dy) && inBounds(this.s, nx, ny) && !this.inTerritory(playerId, nx, ny)) return true;
+      }
+    return false;
+  }
+
   /** Cells where this player may build (own territory, not claimed by a rival). */
   inTerritory(playerId: number, x: number, y: number): boolean {
     const owns = (pid: number) =>
@@ -889,6 +899,8 @@ export class World {
     const c = this.cell(x, y);
     if (!c.revealed || c.content !== 'ground' || !this.inTerritory(playerId, x, y)) return 'build.invalid_cell';
     if (c.building !== undefined) return 'build.cell_occupied';
+    // The checkpoint goes only on the edge of our land: a cell of ours with a neighbour outside it (buildings.json outpost).
+    if (type === 'outpost' && !this.onTerritoryEdge(playerId, x, y)) return 'build.outpost_edge';
     if (p.energy < this.buildCost(type, x, y)) return 'build.not_enough_energy';
     if (this.s.units.some((u) => isEnemy(u) && cheb(Math.round(u.x), Math.round(u.y), x, y) <= 2)) return 'build.enemies_near';
     const cmd = this.building(p.command)!;
@@ -3299,14 +3311,17 @@ export class World {
         }
       }
       if (def.produce) {
-        // Reactors work by themselves [Антон]; a cooler next door doubles the pace.
-        const cooled = s.buildings.some((o) => {
+        // Reactors work by themselves [Антон]; a cooler next door speeds the pace up (its level sets how much).
+        let pace = 1;
+        for (const o of s.buildings) {
           const a = buildingDefs[o.type].aura;
-          return o.complete && o.owner === b.owner && a?.targets.includes(b.type) && cheb(o.x, o.y, b.x, b.y) <= a.radius;
-        });
-        b.produceTimer += dt * (cooled ? 2 : 1);
-        if (b.produceTimer >= def.produce.everySeconds) {
-          b.produceTimer -= def.produce.everySeconds;
+          if (!o.complete || o.owner !== b.owner || !a?.targets.includes(b.type)) continue;
+          if (cheb(o.x, o.y, b.x, b.y) <= this.levelValue(o, 'auraRadius', a.radius)) pace = Math.max(pace, this.levelValue(o, 'productionSpeedMultiplier', a.productionSpeedMultiplier ?? 2));
+        }
+        b.produceTimer += dt * pace;
+        const every = this.levelValue(b, 'everySeconds', def.produce.everySeconds);
+        if (b.produceTimer >= every) {
+          b.produceTimer -= every;
           this.spawnOrb(b.owner, b.x, b.y, Math.round(def.produce.energy * (b.type === 'reactor' ? this.boonFactor(b.owner, 'reactor_overclock') * this.allyFactor(b.owner, 'energyProductionFactor', 'value') : 1)));
         }
       }
@@ -3315,16 +3330,31 @@ export class World {
         b.healTimer += dt;
         if (b.healTimer >= (aura.healEverySeconds ?? 2)) {
           b.healTimer = 0;
+          const radius = this.levelValue(b, 'auraRadius', aura.radius);
+          const heal = this.levelValue(b, 'healAmount', aura.healAmount);
           for (const u of s.units) {
             if (u.owner !== b.owner || (u.kind !== 'resident' && u.kind !== 'ally') || u.hp <= 0) continue;
-            if (cheb(Math.round(u.x), Math.round(u.y), b.x, b.y) <= aura.radius && u.hp < this.maxHp(u)) {
-              u.hp = Math.min(this.maxHp(u), u.hp + aura.healAmount);
+            if (cheb(Math.round(u.x), Math.round(u.y), b.x, b.y) <= radius && u.hp < this.maxHp(u)) {
+              u.hp = Math.min(this.maxHp(u), u.hp + heal);
               this.emit('healed', { x: u.x, y: u.y, owner: u.owner, unit: u.id });
             }
           }
         }
       }
     }
+  }
+
+  /**
+   * A building's value at its level (buildings.json upgrades.perBuilding[type].levels): the newest level that sets
+   * the key wins, otherwise the base value. The level counts only once its upgrade is finished.
+   */
+  levelValue(b: Building, key: string, base: number): number {
+    const levels = (upgradeRules.perBuilding[b.type]?.levels ?? {}) as Record<string, Record<string, number> | undefined>;
+    for (let l = b.level ?? 1; l >= 2; l--) {
+      const v = levels[String(l)]?.[key];
+      if (v !== undefined) return v;
+    }
+    return base;
   }
 
   private spawnOrb(owner: number, x: number, y: number, amount: number): void {

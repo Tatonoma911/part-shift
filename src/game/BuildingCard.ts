@@ -401,9 +401,27 @@ export function buildingCard(scene: Phaser.Scene, box: Box, info: BuildingInfo, 
       gg.fillRect(bx + 3, y + 3, (bwid - 6) * Math.min(1, progress), h - 6);
     }
     const ink = tone === 'grey' && progress < 0 ? INK.dim : INK.white;
-    const lab = scene.add.text(bx + bwid / 2, y + h / 2, label, { ...TXT.body(fs(23), ink, '800'), align: 'center' }).setOrigin(0.5);
-    if (lab.width > bwid - 24) lab.setScale((bwid - 24) / lab.width);
-    body.add([gg, lab]);
+    const parts = label.split('⚡');
+    if (parts.length === 2 && scene.textures.exists('icon.energy')) {
+      // The energy symbol is the HUD's battery icon, not the ⚡ glyph, so the card and the HUD show one energy.
+      const style = TXT.body(fs(23), ink, '800');
+      const before = scene.add.text(0, y + h / 2, parts[0], style).setOrigin(0, 0.5);
+      const after = scene.add.text(0, y + h / 2, parts[1], style).setOrigin(0, 0.5);
+      const icon = scene.add.image(0, y + h / 2, 'icon.energy').setDisplaySize(fs(23) * 1.3, fs(23) * 1.3).setOrigin(0, 0.5);
+      const total = before.width + icon.displayWidth + after.width;
+      const k = total > bwid - 24 ? (bwid - 24) / total : 1;
+      let cx = bx + bwid / 2 - (total * k) / 2;
+      for (const o of [before, icon, after]) {
+        o.setScale(k);
+        o.x = cx;
+        cx += (o === icon ? o.displayWidth : o.width) * k;
+      }
+      body.add([gg, before, icon, after]);
+    } else {
+      const lab = scene.add.text(bx + bwid / 2, y + h / 2, label, { ...TXT.body(fs(23), ink, '800'), align: 'center' }).setOrigin(0.5);
+      if (lab.width > bwid - 24) lab.setScale((bwid - 24) / lab.width);
+      body.add([gg, lab]);
+    }
     if (id) {
       const hit = scene.add.zone(bx, y, bwid, h).setOrigin(0).setInteractive({ useHandCursor: true });
       hit.on('pointerdown', (_p: Phaser.Input.Pointer, _x: number, _y: number, ev: Ev) => {
