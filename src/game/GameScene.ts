@@ -9,7 +9,8 @@ import { Voice } from './voice';
 import { MedalToasts, type Tier } from './meta/Awards';
 import { RunTally } from './meta/record';
 import { showResults } from './meta/ResultsScreen';
-import { boonPoolFor, loadMeta, pickAllies, roster } from './meta/store';
+import { boonPoolFor, loadMeta, offerHero, roster } from './meta/store';
+import { beforeShift } from './meta/beforeShift';
 import { pickBoon } from './meta/BoonPick';
 import { closeCoach, learning, openGuide, setLearningHooks } from './learn';
 import { volumeHeight, volumeSliders } from './volume';
@@ -1546,7 +1547,8 @@ export class GameScene extends Phaser.Scene {
           this.scene.start('dossier');
         },
         menu: () => this.toMenu(),
-        takeNext: (id) => pickAllies(loadMeta(), [id]),
+        takeNext: (id) => offerHero(loadMeta(), id),
+        nextShift: victory && shiftN && shiftN < CAMPAIGN_TOTAL ? () => this.nextShift(shiftN + 1) : undefined,
         extra: [
           ...(rec ? [{ label: t('end.share'), act: () => void this.shareShot() }, { label: t('end.board'), act: () => openBoard({ tab: this.start.daily ? 'day' : 'week' }) }] : []),
           { label: t('end.coffee'), act: () => openDonate(victory ? 'win' : 'lose') },
@@ -1564,10 +1566,7 @@ export class GameScene extends Phaser.Scene {
         }),
     };
     // Campaign: primary button is "Следующая смена"; shift 12 leads back to menu.
-    const nextShiftAction =
-      victory && shiftN && shiftN < CAMPAIGN_TOTAL
-        ? () => this.scene.start('game', { slot: this.start.slot ?? 0, fresh: true, shiftN: shiftN + 1 } as typeof this.start)
-        : null;
+    const nextShiftAction = victory && shiftN && shiftN < CAMPAIGN_TOTAL ? () => this.nextShift(shiftN + 1) : null;
     this.overlay?.destroy();
     this.overlay = this.sheet({
       // Comic illustration when the artist's screen is in (style per layer); until then the Command Center sprite, grey on a loss.
@@ -1586,6 +1585,19 @@ export class GameScene extends Phaser.Scene {
         { label: t('menu.quit_to_menu'), act: () => this.toMenu(), half: true },
       ],
     });
+  }
+
+  /** «Следующая смена»: the squad screen opens first, as it does from the menu, then the shift starts with the squad picked. */
+  private nextShift(n: number): void {
+    this.overlay?.destroy();
+    this.overlay = beforeShift(
+      this,
+      (squad) => {
+        this.overlay = null;
+        this.scene.start('game', { slot: this.start.slot ?? 0, fresh: true, shiftN: n, allies: squad });
+      },
+      () => this.toMenu(),
+    );
   }
 
   private showOnlineEnd(victory: boolean, watch: boolean): void {
