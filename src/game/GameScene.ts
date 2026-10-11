@@ -912,7 +912,10 @@ export class GameScene extends Phaser.Scene {
     g.beginPath();
     g.arc(0, 0, 38, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * Math.max(0.001, 1 - w.threatProgress), false);
     g.strokePath();
+    // White on coral is 3.3:1, too low; graphite on coral is 5.6:1 (design/INTERFACE_SYSTEM.md §3.2).
     this.hud.threat.setText(String(level));
+    const threatInk = w.s.boss.awake ? INK.white : INK.graphite;
+    if (this.hud.threat.style.color !== threatInk) this.hud.threat.setColor(threatInk);
     this.updatePace();
     // Medal tiers earned this frame: `world.s.medalEvents` [{id, tier}] (tier 1–3, special 4). The UI empties the list.
     const earned = (this.world.s as MedalEvents).medalEvents;
@@ -937,6 +940,9 @@ export class GameScene extends Phaser.Scene {
     if (streak.count > 0 && streak.bonus > 0) goal += `  ·  ${t('hud.clean_streak', { p: Math.round(streak.bonus * 100) })}`;
     const showGoal = !this.guide;
     if (this.hud.goal.text !== goal) this.hud.goal.setText(goal);
+    // White on amber is about 2.4:1; the pause banner takes graphite text instead.
+    const goalInk = bg === C.amber ? INK.graphite : INK.white;
+    if (this.hud.goal.style.color !== goalInk) this.hud.goal.setColor(goalInk);
     this.hud.goal.setVisible(showGoal);
     const gb = this.hud.goalBg;
     gb.clear();

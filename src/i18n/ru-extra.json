@@ -371,7 +371,7 @@
   "results.stars.team": "Каждый вложился в цель",
   "campaign.next_shift": "Следующая смена",
   "campaign.closed": "СМЕНА ЗАКРЫТА",
-  "hud.nests_left": "Гнёзд: {n}",
+  "hud.nests_left": "Гнёзд осталось: {n}",
   "end.last_chance": "Два провала подряд. Попробуйте начать с Командного центра и не спешить с раздачей героев.",
   "building.card.trophy": "Трофеи",
   "building.card.disabled.no_trophy_near": "Рядом нет героя с трофеем",

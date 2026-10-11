@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PARTSHIFT · Итоги смены</title>
+<link rel="stylesheet" href="system.css">
+<link rel="stylesheet" href="gallery.css">
+<style>
+.res { position: absolute; inset: 0; background: rgba(8,14,19,.85); overflow: hidden; }
+.res .card { position: absolute; left: 12px; right: 12px; top: 40px; bottom: 30px; overflow: auto; background: linear-gradient(180deg,#fff,var(--paper)); color: var(--ink); clip-path: polygon(14px 0,100% 0,100% calc(100% - 14px),calc(100% - 14px) 100%,0 100%,0 14px); padding: 16px; display: grid; align-content: start; gap: 12px; }
+.res .band { position: absolute; left: 0; top: 0; bottom: 0; width: 6px; }
+.res .rank { display: grid; grid-template-columns: 56px 1fr; gap: 10px; align-items: center; }
+.res .rank .badge { width: 56px; height: 56px; display: grid; place-items: center; background: var(--graphite); color: var(--seam); clip-path: polygon(50% 0,100% 20%,100% 80%,50% 100%,0 80%,0 20%); font-size: 20px; }
+.res .score { display: grid; gap: 4px; font-size: 14px; }
+.res .score div { display: flex; justify-content: space-between; }
+.res .total { font: 900 22px var(--f-display); color: var(--ink); }
+.res .actions { display: grid; gap: 8px; margin-top: auto; }
+.res .actions .pair { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.hero-ret { position: absolute; inset: 0; background: radial-gradient(circle at 50% 35%, #1d4a5e 0%, #0b1117 70%); color: var(--paper); display: grid; align-content: center; justify-items: center; gap: 10px; padding: 24px; text-align: center; }
+.hero-ret .portrait { width: 200px; height: 200px; font-size: 52px; box-shadow: 0 0 0 6px var(--seam), 0 0 30px rgba(87,216,242,.5); }
+.hero-ret .bonus { background: var(--seam); color: var(--graphite); padding: 6px 12px; font: 700 13px var(--f-body); border-radius: 6px; }
+@container (min-width: 720px) {
+  .res .card { left: 50%; transform: translateX(-50%); width: 760px; right: auto; top: 28px; bottom: 28px; display: grid; grid-template-columns: 1fr 1fr; gap: 16px 24px; }
+  .res .card .col-r { display: grid; gap: 12px; align-content: start; }
+  .res .actions { grid-column: 1 / -1; margin-top: 0; }
+}
+.end-art { width: 100%; aspect-ratio: 16/9; border-radius: 10px; background: linear-gradient(160deg,#2f4f60,#0b1117); display: grid; place-items: center; color: var(--seam); font: 800 13px var(--f-body); letter-spacing: .1em; }
+</style>
+</head>
+<body>
+<div class="page">
+  <nav class="nav" aria-label="Экраны">
+    <a href="index.html">Все экраны</a><a href="shift.html">Смена</a><a href="build.html">Строить</a><a href="control.html">Контроль и тайники</a><a href="results.html" aria-current="page">Итоги и концовки</a><a href="dossier.html">Досье</a><a href="menu.html">Меню</a><a href="settings.html">Настройки</a><a href="learn.html">Обучение и онлайн</a><a href="system.html">Компоненты и состояния</a>
+  </nav>
+  <header>
+    <h1>Итоги смены, победа, поражение, герой вернулся</h1>
+    <p>Итоги появляются по блокам: очки, звание, кто ближе к возвращению, реплика, кнопки. Тап ускоряет показ. Победа и поражение используют картинку из комикс-слоя и ту же плиту. Кнопка «Ещё смена» всегда первая.</p>
+  </header>
+
+  <section class="stage" data-show="phone pc">
+    <h2>1. Итоги смены: победа</h2>
+    <p class="lede">Плита с цветной полосой слева (бирюза победа, коралл поражение, графит выход). На ПК две колонки: очки слева, звание и герои справа.</p>
+    <div class="devices"></div>
+    <template>
+      <div class="res">
+        <div class="card">
+          <div class="band" style="background:var(--teal)"></div>
+          <div class="col-l" style="display:grid;gap:12px;align-content:start">
+            <div class="row" style="justify-content:space-between"><span class="cap">Вызов закрыт</span><span class="chip warn">Новый рекорд!</span></div>
+            <h2 class="display" style="font-size:26px">Вызов закрыт</h2>
+            <p class="small muted">Время 14:20 · Сложность: Смена</p>
+            <div class="score">
+              <div><span>Энергия</span><b>+840</b></div><div><span>Гнёзда</span><b>+300</b></div><div><span>Герои</span><b>+120</b></div><div><span>Победа</span><b>+500</b></div>
+              <div><span class="muted">Сложность «Смена» ×1,5</span><span></span></div>
+              <div class="row" style="border-top:1px solid var(--line);padding-top:8px"><span class="total">Итого</span><span class="total">2 040</span></div>
+            </div>
+          </div>
+          <div class="col-r" style="display:grid;gap:12px;align-content:start">
+            <div class="plate" style="padding:12px">
+              <div class="rank"><div class="badge">★</div><div><p class="cap">Звание: Дежурный</p><div class="bar teal" style="margin:6px 0"><i style="--v:62%"></i></div><p class="small">До звания «Старший дежурный»: 640 очков</p></div></div>
+              <div class="chip warn" style="margin-top:8px">Новое звание: Старший дежурный. В тайниках теперь: редкие карточки.</div>
+            </div>
+            <div><p class="cap">Кто ближе к возвращению</p>
+              <div class="row"><span class="portrait" style="width:44px;height:44px;font-size:14px">Ки</span><div class="grow"><div class="small">Килн: 12 → 13 / 50</div><div class="bar gain"><i style="--v:26%"></i></div></div></div>
+            </div>
+            <p class="small" style="font-style:italic">КОНТРОЛЬ: Инцидент закрыт. Счёт за спасение направлен пострадавшим.</p>
+          </div>
+          <div class="actions">
+            <button class="btn primary block">Ещё смена</button>
+            <div class="pair"><button class="btn ghost">Досье</button><button class="btn ghost">Меню</button></div>
+          </div>
+        </div>
+      </div>
+    </template>
+    <ul class="notes"><li>Блоки выезжают по очереди, тап ускоряет остаток ×8. В режиме «Меньше вспышек» ×4 сразу, без выезда.</li><li>Строка звания под полосой зарезервирована, чтобы при повышении ничего не прыгало.</li></ul>
+  </section>
+
+  <section class="stage" data-show="phone pc">
+    <h2>2. Поражение</h2>
+    <p class="lede">Тон честный и без паники: что случилось, что осталось, что попробовать. Очки засчитываются и без победы; это написано прямо.</p>
+    <div class="devices"></div>
+    <template>
+      <div class="res">
+        <div class="card">
+          <div class="band" style="background:var(--coral)"></div>
+          <div class="end-art" aria-hidden="true">КАРТИНКА: КОМАНДНЫЙ ЦЕНТР (screen_lose)</div>
+          <div><p class="cap" style="color:var(--coral-text)">Смена прервана</p><h2 class="display" style="font-size:24px">Центр потерян</h2>
+          <p class="small">Командный центр утрачен. Стоимость вычтена из зарплаты героев.</p>
+          <p class="small muted">Очки засчитаны и без победы. HeroOut ценит усилия. Оплачивает только результат.</p></div>
+          <div class="chip" style="justify-self:start">Подсказка: сначала вскрывайте квартал рядом с гнездом, не после.</div>
+          <div class="actions"><button class="btn primary block">Попробовать снова</button><button class="btn ghost block">В главное меню</button></div>
+        </div>
+      </div>
+    </template>
+  </section>
+
+  <section class="stage" data-show="phone pc">
+    <h2>3. Герой вернулся</h2>
+    <p class="lede">Поверх итогов. Один герой, один бонус, два выбора. Звук и лучи мягче в «Меньше вспышек».</p>
+    <div class="devices"></div>
+    <template>
+      <div class="res">
+        <div class="hero-ret">
+          <p class="cap on-dark">Герой вернулся</p>
+          <div class="portrait won" aria-label="Портрет Килна">Ки</div>
+          <h2 class="display" style="font-size:24px">Килн</h2>
+          <p class="small" style="max-width:300px">Тяжёлый пожарно-спасательный оператор. Самый большой и самый добрый человек в части.</p>
+          <span class="bonus">Бонус союзника: герои рядом получают на 20% меньше урона</span>
+          <p style="font-style:italic;max-width:300px">«Держитесь за мной. Я широкий.»</p>
+          <div style="display:grid;gap:8px;width:100%;max-width:320px;margin-top:8px"><button class="btn primary block">Принять в команду</button><button class="btn on-dark-ghost block">Взять в следующую смену</button></div>
+        </div>
+      </div>
+    </template>
+    <ul class="notes"><li>Цитата героя в кавычках, как в досье. Имена из ally.*.bio и ally.line.* уже есть в ru.json.</li></ul>
+  </section>
+
+  <ul class="notes"><li><b>Проверка для Тестировщика.</b> При крупном шрифте (130%) кнопки «Ещё смена» и «Досье» переносят текст, а не обрезают его. На 360 px плита итогов прокручивается внутри себя, страница не прокручивается.</li></ul>
+</div>
+<script src="gallery.js"></script>
+</body>
+</html>

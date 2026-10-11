@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PARTSHIFT · Компоненты и состояния</title>
+<link rel="stylesheet" href="system.css">
+<link rel="stylesheet" href="gallery.css">
+<style>
+.sheet-grid { display: grid; gap: 14px; grid-template-columns: 1fr; }
+.sheet-grid .cell-card { background: var(--paper); color: var(--ink); border-radius: 12px; padding: 14px; display: grid; gap: 10px; }
+.sheet-grid .cell-card h3 { font: 800 14px var(--f-display); }
+.sheet-grid .cell-card .row2 { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.state-lbl { font: 700 11px var(--f-body); color: var(--muted); min-width: 92px; }
+.sheet-grid .sw { width: 64px; height: 64px; border-radius: 10px; }
+.sw-row { display: flex; flex-wrap: wrap; gap: 8px; }
+.sw-row > div { display: grid; gap: 4px; font: 700 11px var(--f-body); color: var(--ink); }
+@media (min-width: 760px) { .sheet-grid { grid-template-columns: 1fr 1fr; } }
+</style>
+</head>
+<body>
+<div class="page">
+  <nav class="nav" aria-label="Экраны">
+    <a href="index.html">Все экраны</a><a href="shift.html">Смена</a><a href="build.html">Строить</a><a href="control.html">Контроль и тайники</a><a href="results.html">Итоги и концовки</a><a href="dossier.html">Досье</a><a href="menu.html">Меню</a><a href="settings.html">Настройки</a><a href="learn.html">Обучение и онлайн</a><a href="system.html" aria-current="page">Компоненты и состояния</a>
+  </nav>
+  <header>
+    <h1>Компоненты и состояния</h1>
+    <p>Каждый компонент в каждом состоянии, из которого собраны экраны: обычное, нажато, отключено, пусто, ошибка, фокус. Здесь же цвета с проверкой контраста, которые по расчёту проходят WCAG AA.</p>
+  </header>
+
+  <h2 class="stage" style="font:800 17px var(--f-display);color:var(--paper);margin:0 0 10px">Цвета и контраст (WCAG 2.1 AA, расчёт)</h2>
+  <div class="sw-row" style="margin-bottom:28px">
+    <div><span class="sw" style="display:block;width:64px;height:64px;border-radius:10px;background:var(--graphite)"></span>Графит #10171C · текст 16,8</div>
+    <div><span style="display:block;width:64px;height:64px;border-radius:10px;background:var(--paper)"></span>Бумага #F4F7F7 · фон плит</div>
+    <div><span style="display:block;width:64px;height:64px;border-radius:10px;background:var(--muted)"></span>Приглушённый #5D7079 · 4,8 на бумаге</div>
+    <div><span style="display:block;width:64px;height:64px;border-radius:10px;background:var(--teal)"></span>Бирюза #007E89 · кнопка, белый текст 4,8</div>
+    <div><span style="display:block;width:64px;height:64px;border-radius:10px;background:var(--coral)"></span>Коралл #EF5C73 · только фон, текст графит 5,6</div>
+    <div><span style="display:block;width:64px;height:64px;border-radius:10px;background:var(--coral-text)"></span>Коралл-текст #C8243F · 5,2 на бумаге</div>
+    <div><span style="display:block;width:64px;height:64px;border-radius:10px;background:var(--amber)"></span>Янтарь #E8A33A · графит 8,4</div>
+    <div><span style="display:block;width:64px;height:64px;border-radius:10px;background:var(--cobalt)"></span>Кобальт #2E55C8 · Энергия 6,0</div>
+    <div><span style="display:block;width:64px;height:64px;border-radius:10px;background:var(--seam)"></span>Шов #57D8F2 · на графите 10,8</div>
+    <div><span style="display:block;width:64px;height:64px;border-radius:10px;background:var(--demon)"></span>Демон #8A4DFF · только для текста Демона на тёмном</div>
+  </div>
+
+  <div class="sheet-grid">
+    <section class="cell-card">
+      <h3>Кнопки</h3>
+      <div class="row2"><span class="state-lbl">основная</span><button class="btn primary">Вернуться</button><button class="btn primary" disabled>Вернуться</button></div>
+      <div class="row2"><span class="state-lbl">нажато</span><button class="btn primary">Нажато</button></div>
+      <div class="row2"><span class="state-lbl">вторичная</span><button class="btn ghost">Досье</button><button class="btn ghost" disabled>Досье</button></div>
+      <div class="row2"><span class="state-lbl">опасная</span><button class="btn danger">Снести</button><button class="btn hold" style="--hold:45%">Держите 2,5 с</button></div>
+      <div class="row2"><span class="state-lbl">золотая</span><button class="btn gold block">Купить разработчику кофе</button></div>
+      <div class="row2"><span class="state-lbl">фокус</span><button class="btn ghost">Фокус клавиатуры</button></div>
+    </section>
+    <section class="cell-card">
+      <h3>Чипы, бирки, счётчик, переключатели</h3>
+      <div class="row2"><span class="state-lbl">статусы</span><span class="chip">нейтрально</span><span class="chip ok">ок</span><span class="chip warn">внимание</span><span class="chip bad">опасность</span><span class="chip info">Энергия</span></div>
+      <div class="row2"><span class="state-lbl">бирки</span><span class="tag">5 МИН</span><span class="tag" style="background:var(--amber);color:var(--amber-ink)">РЕДКОЕ</span></div>
+      <div class="row2"><span class="state-lbl">счётчик</span><span style="position:relative;display:inline-block;width:44px;height:44px"><span class="btn">⚒</span><span class="count-badge">3</span></span></div>
+      <div class="row2"><span class="state-lbl">переключатель</span><span class="switch" role="switch" aria-checked="true"></span><span class="switch" role="switch" aria-checked="false"></span><span class="switch" role="switch" aria-checked="true" style="opacity:.4"></span><span class="small muted">недоступно</span></div>
+      <div class="row2"><span class="state-lbl">вкладки</span><div class="tabs" style="flex:1"><button class="tab" aria-selected="true">Герои</button><button class="tab" aria-selected="false">Статистика</button><button class="tab" disabled>Чертежи</button></div></div>
+    </section>
+    <section class="cell-card">
+      <h3>Полосы и плитки</h3>
+      <div class="row2"><span class="state-lbl">полосы</span><div style="flex:1;display:grid;gap:6px"><div class="bar"><i style="--v:70%"></i></div><div class="bar coral"><i style="--v:35%"></i></div><div class="bar teal"><i style="--v:50%"></i></div><div class="bar gain"><i style="--v:60%"></i></div></div></div>
+      <div class="row2"><span class="state-lbl">плитка</span><div class="tile" style="width:160px"><div class="num">2 040</div><div class="cap">Очки смены</div></div></div>
+    </section>
+    <section class="cell-card">
+      <h3>Тосты, Контроль, лист</h3>
+      <div class="row2" style="display:grid"><span class="state-lbl">тост</span><div class="toast">Обычный тост, 2,8 с</div><div class="toast warn">Внимание</div><div class="toast bad">Опасность или отказ</div></div>
+      <div class="row2" style="display:grid"><span class="state-lbl">Контроль</span><div class="control-plate"><span class="label">HERO | <b>OUT</b> · КОНТРОЛЬ</span><br>Объявление белой плитой. Текст из text/ru.json.</div></div>
+    </section>
+    <section class="cell-card">
+      <h3>Карточки и портреты</h3>
+      <div class="row2"><span class="state-lbl">каталог</span><div class="catalog-card" style="width:130px"><div class="art">🏠</div><div class="h2" style="font-size:13px">Жилой блок</div><div class="cost">40 ⚡</div></div><div class="catalog-card short" style="width:130px"><div class="art">❄</div><div class="h2" style="font-size:13px">Станция</div><div class="cost">Не хватает 20</div></div><div class="catalog-card locked" style="width:130px"><div class="art">🔒</div><div class="ribbon">Нужна Школа</div><div class="h2" style="font-size:13px">Медцентр</div></div></div>
+      <div class="row2"><span class="state-lbl">портреты</span><span class="portrait">Д</span><span class="portrait won">Ш</span><span class="portrait unknown">?</span><span class="portrait lg">Ки</span></div>
+    </section>
+    <section class="cell-card">
+      <h3>Пусто, ошибка, клетки поля</h3>
+      <div class="empty">Пусто: одна фраза, что сделать дальше.</div>
+      <div class="error"><span>⚠</span><span>Ошибка: что случилось и что делать. <b>Повторить</b></span></div>
+      <div class="row2"><span class="state-lbl">клетки</span>
+        <div class="board" style="grid-template-columns:repeat(8,26px);width:max-content">
+          <div class="cell closed"></div><div class="cell closed"></div><div class="cell"><span>1</span></div><div class="cell"><span class="n-find">2</span></div><div class="cell nest">▲</div><div class="cell safe"></div><div class="cell danger">!</div><div class="cell queue"></div>
+          <div class="cell sel"><span>3</span></div><div class="cell"><span class="n-demon">8</span></div><div class="cell"><span class="work"></span></div><div class="cell" style="opacity:.55">✕</div><div class="cell closed"><span class="beacon"></span></div><div class="cell closed"></div><div class="cell"></div><div class="cell"><span>1</span></div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <ul class="notes" style="margin-top:24px">
+    <li><b>Состояния, которых нет в макете, но они есть в коде.</b> Пустой список и ошибка загрузки описаны в build.html; ошибка связи в learn.html.</li>
+    <li><b>Ограничения.</b> Портреты здесь заглушки: настоящие комикс-портреты даёт Художник. Пиксельные клетки и иконки зданий тоже заглушки; рисовать по ним не надо.</li>
+  </ul>
+</div>
+<script src="gallery.js"></script>
+</body>
+</html>
