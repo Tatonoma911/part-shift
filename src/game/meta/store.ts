@@ -329,9 +329,12 @@ export function pickAllies(m: MetaSave, ids: string[]): void {
 
 /** «Взять в следующую смену» on the unlock card: the returned hero joins the offered squad if there is room. */
 export function offerHero(m: MetaSave, id: string): void {
+  // Room is counted on the heroes who go in (allyChoice); benched heroes stay in the offered squad and come back.
   const cur = m.lastSquad ?? m.allyChoice;
-  if (cur.includes(id) || cur.length >= squadSlots(m).slots) return;
-  pickAllies(m, [...cur, id]);
+  if (cur.includes(id) || m.allyChoice.length >= squadSlots(m).slots) return;
+  m.allyChoice = [...m.allyChoice, id];
+  m.lastSquad = [...cur, id];
+  saveMeta(m);
 }
 
 /** Cache bonuses opened by every rank up to the player's (meta.json ranks[].unlocksBoons, cumulative). */
