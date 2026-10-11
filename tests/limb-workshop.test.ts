@@ -42,13 +42,13 @@ describe('limb workshop (buildings.json limbMaker)', () => {
     expect(bld.id).toBeGreaterThan(0);
   });
 
-  it('spreads limbs over time and falls back to arms while the elemental legs are not in the data', () => {
+  it('spreads arms and legs over time; each element has its own legs now (QA-053)', () => {
     const { w, a, b, bld } = world();
     w.apply({ type: 'setLimbTech', building: bld.id, tech: 'impact' });
     const every = buildingDefs.limb_workshop.limbMaker!.everySeconds;
     run(w, every * 3 + 1);
     const got = [...Object.values(a.parts), ...Object.values(b.parts)];
-    expect(got.map((p) => p!.id)).toEqual(['impact_arm', 'impact_arm']);
+    expect(got.map((p) => p!.id).sort()).toEqual(['impact_arm', 'impact_arm', 'impact_leg']);
     expect(got.every((p) => p!.tier === 2)).toBe(true);
   });
 });
