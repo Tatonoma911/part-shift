@@ -21,6 +21,7 @@ const GROUND = ['ground_0', 'ground_1', 'ground_0', 'ground_grass_0', 'ground_1'
 const FEET = 46;
 
 /** Depths, bottom to top (UI_SPEC §2.3). */
+const RUBBLE_FULL = 30;
 const D = { backdrop: 0, tile: 1, site: 2, film: 3, overlay: 4, clue: 5, building: 10, arc: 11.9, unit: 12, top: 14, float: 15 };
 
 interface UnitView {
@@ -696,6 +697,7 @@ export class BoardView {
             og.fillRect(px, py, CELL, CELL);
           }
         }
+        this.drawRubble(og, c, px, py, now);
         if (view.buildType && w.canBuild(this.me, view.buildType, x, y) === null) {
           const pulse = 0.35 + 0.25 * Math.sin(now / 200);
           og.fillStyle(C.seam, pulse * 0.6);
@@ -758,6 +760,17 @@ export class BoardView {
       }
     }
     return out;
+  }
+
+  private drawRubble(g: Phaser.GameObjects.Graphics, c: Cell, px: number, py: number, now: number): void {
+    if (c.content !== 'rubble' || (c.stock ?? 0) <= 0) return;
+    const left = Math.min(1, (c.stock ?? 0) / RUBBLE_FULL);
+    g.lineStyle(2, C.amber, 0.5 + 0.35 * Math.sin(now / 260));
+    g.strokeRect(px + 2, py + 2, CELL - 4, CELL - 4);
+    g.fillStyle(C.night, 0.7);
+    g.fillRect(px + 4, py + CELL - 7, CELL - 8, 3);
+    g.fillStyle(left > 0.5 ? C.green : left > 0.2 ? C.amber : C.coral, 1);
+    g.fillRect(px + 4, py + CELL - 7, (CELL - 8) * left, 3);
   }
 
   private drawClosed(
