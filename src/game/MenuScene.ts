@@ -16,8 +16,8 @@ import { C, INK, LANDSCAPE, VIEW } from './layout';
 import { menuIcon, type MenuIconId } from './menuIcons';
 import { preloadMetaArt } from './meta/art';
 import { bestStars, modeIcon, type ModeId } from './meta/Awards';
-import { loadMeta, pickAllies, rollDistrict } from './meta/store';
-import { shiftBrief } from './meta/ShiftBrief';
+import { beforeShift } from './meta/beforeShift';
+import { loadMeta } from './meta/store';
 import { metaPreview } from './meta/preview';
 import { clearSlot, lastSlot, loadSettings, loadSlot, saveSettings, SLOTS } from './saves';
 import { tutorialDone } from './Tutorial';
@@ -461,15 +461,10 @@ export class MenuScene extends Phaser.Scene {
   private play(start: GameStart): void {
     closeConsent();
     // Before each shift: show «Сводка смены» (MVP_RULES §4.5) to pick the squad.
-    const meta = loadMeta();
     if (start.fresh && !start.tutorial && !this.allyUi) {
-      const enemies = rollDistrict(meta);
-      this.allyUi = shiftBrief(
+      this.allyUi = beforeShift(
         this,
-        meta,
-        enemies,
         (squad) => {
-          pickAllies(meta, squad);
           this.allyUi = null;
           this.scene.start('game', { ...start, allies: squad });
         },

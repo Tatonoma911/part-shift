@@ -47,6 +47,8 @@ export interface ResultsActions {
   again: () => void;
   dossier: () => void;
   menu: () => void;
+  /** Campaign win: «Следующая смена» as the main button. */
+  nextShift?: () => void;
   /** "Взять в следующую смену" on the unlock card. */
   takeNext?: (heroId: string) => void;
   /** Smaller buttons under the main ones, two per row (share, ranking, donation). */
@@ -321,7 +323,9 @@ export function showResults(scene: Phaser.Scene, v: ResultsView, act: ResultsAct
   reveal([ctl], (at += 260), 6);
   y += ctl.height + 34;
   const btns = [
-    ...button(scene, pad, y, iw, 100, t('results.again'), () => leave(act.again), true, 31),
+    ...(act.nextShift
+      ? button(scene, pad, y, iw, 100, t('campaign.next_shift'), () => leave(act.nextShift!), true, 31)
+      : button(scene, pad, y, iw, 100, t('results.again'), () => leave(act.again), true, 31)),
     ...button(scene, pad, y + 116, iw / 2 - 8, 84, t('results.dossier'), () => leave(act.dossier)),
     ...button(scene, pad + iw / 2 + 8, y + 116, iw / 2 - 8, 84, t('results.menu'), () => leave(act.menu)),
   ];

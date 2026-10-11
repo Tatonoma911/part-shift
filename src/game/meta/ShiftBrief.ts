@@ -447,7 +447,8 @@ export function shiftBrief(
 
   const go = () => {
     if (!squad.length) return say(t('squad.auto.desc'));
-    saveSquad(meta, squad);
+    const benched = (meta.lastSquad ?? []).filter((id) => taken.has(id) && !squad.includes(id));
+    saveSquad(meta, squad, benched);
     sound.play('ui_tap');
     root.destroy();
     onGo(squad);
