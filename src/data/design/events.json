@@ -1,5 +1,5 @@
 {
-  "version": "0.6",
+  "version": "0.8",
   "_doc": "Звонок Контроля. MVP_RULES §17.7. ИТОГ (= 0.4): 19 id, тексты call.<id>.title/line/a/b/a_result/b_result, служебные call.incoming/choose/timeout/unavailable (ru.json 0.35).",
   "perRun": [
     2,
@@ -40,12 +40,13 @@
     {
       "id": "dome_check",
       "a": {
-        "reactorsOffSeconds": 30,
-        "buildingsDefenseAdd": 2
+        "energy": 40,
+        "nextRaidSooner": 30
       },
       "b": {
-        "commandHpPercent": -10
-      }
+        "energy": -30
+      },
+      "_balance": "2026-10-11, Антон: выключить реакторы даёт энергию и рейд раньше; не мешать работать даёт минус энергию. Защита здания и HP центра убраны из этого события."
     },
     {
       "id": "ad_shoot",
@@ -227,5 +228,6 @@
       "b": {}
     }
   ],
-  "_effectsVocabulary": "energy (never below 0; option grey if unaffordable), civiliansLose, nextRaidSooner, reactorsOffSeconds, buildingsDefenseAdd, commandHpPercent, randomHeroAwaySeconds, randomBoon, allHeroesIdleSeconds, blueprintFragment, spawnEnemiesNearestNest, healAllHeroesFull, heroesMoveSpeedFactor/heroesDamageFactor + durationSeconds, then, removeRandomTrophy (holder gets own limb back), spawnEnemyNearHero (adaptant reskin, normal adaptant stats), allHeroesToShelterSeconds, returnsWithStar, buildingsMaxHpFactor, nextRaidTarget, randomHeroMutatedArm, heroMaxHpFactor, backupIntegrityPercent (meta, lowest-integrity squad hero), nextRaidExtraEnemies, randomBuildingHpPercent (not command), allyStandardSeconds, spawnSurvivorSite (closed, away from territory), civiliansRunToCommand + spawnEnemiesFollowing, randomHeroNoTrophySeconds, commandMaxHpFactor, removeRandomHeroForRun, otherHeroesStars, nextBuildingCostFactor, scoreBonus, nextCallCostFactor (energy costs ×1.5 on next call). requires unmet → event skipped, armorPlateAllHeroes, threatAdvanceSeconds, demolishCheapestBuilding, freeUpgradeCheapest, buildCostFactor, peekCharges, nextNestRewardFactor, nextNestSpawnFactor, heroesDigSpeedFactor"
+  "_effectsVocabulary": "energy (never below 0; option grey if unaffordable), civiliansLose, nextRaidSooner, reactorsOffSeconds, buildingsDefenseAdd, commandHpPercent, randomHeroAwaySeconds, randomBoon, allHeroesIdleSeconds, blueprintFragment, spawnEnemiesNearestNest, healAllHeroesFull, heroesMoveSpeedFactor/heroesDamageFactor + durationSeconds, then, removeRandomTrophy (holder gets own limb back), spawnEnemyNearHero (adaptant reskin, normal adaptant stats), allHeroesToShelterSeconds, returnsWithStar, buildingsMaxHpFactor, nextRaidTarget, randomHeroMutatedArm, heroMaxHpFactor, backupIntegrityPercent (meta, lowest-integrity squad hero), nextRaidExtraEnemies, randomBuildingHpPercent (not command), allyStandardSeconds, spawnSurvivorSite (closed, away from territory), civiliansRunToCommand + spawnEnemiesFollowing, randomHeroNoTrophySeconds, commandMaxHpFactor, removeRandomHeroForRun, otherHeroesStars, nextBuildingCostFactor, scoreBonus, nextCallCostFactor (energy costs ×1.5 on next call). requires unmet → event skipped, armorPlateAllHeroes, threatAdvanceSeconds, demolishCheapestBuilding, freeUpgradeCheapest, buildCostFactor, peekCharges, nextNestRewardFactor, nextNestSpawnFactor, heroesDigSpeedFactor. Добавлено 0.7: civiliansFromBalance: N — списать N спасённых с баланса (не ниже 0); healWhileSheltered: true — укрытые герои лечатся 3 HP/с, пока длится укрытие (как у Командного центра).",
+  "_conditionsVocabulary": "requires (условия, событие пропускается, если не выполнено): anyTrophy: true — у игрока есть хотя бы один трофей (металлическая деталь); civiliansOnBalance: N — на балансе не меньше N спасённых; heroesAlive: N — в отряде жив не меньше N героев."
 }
