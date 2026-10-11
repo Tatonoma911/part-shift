@@ -184,7 +184,11 @@ export interface CallSpec {
   coop?: boolean;
 }
 
-/** The price of an answer in a few words (Сценарист: call.cost.*). Unknown effects stay silent: the line says them. */
+/**
+ * The price of an answer in a few words (Сценарист: call.cost.*). Unknown effects stay silent: the line says them.
+ * The numbers come from events.json, and the Проверка Купола values (energy +40 / −30, raid 30 s sooner) are estimates
+ * from Геймдизайнер's v0.8 pass, not balanced yet: check them in playtests before they are final.
+ */
 export function costLine(effect: Record<string, unknown>): string {
   const out: string[] = [];
   const n = (k: string) => (typeof effect[k] === 'number' ? (effect[k] as number) : null);
