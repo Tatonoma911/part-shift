@@ -867,7 +867,8 @@ export class World {
       case 'attack': {
         // A tap on an opened lair or hatch means its hero.
         const lair = cmd.target.startsWith('s:') ? this.site(parseKey(cmd.target.slice(2)).x, parseKey(cmd.target.slice(2)).y) : undefined;
-        if (lair && (lair.kind === 'hero_lair' || lair.kind === 'boss_hatch')) {
+        // The call target's hatch has its own durability (boss_hatch in enemies.json): while it stands, a tap orders the hatch.
+        if (lair && (lair.kind === 'hero_lair' || (lair.kind === 'boss_hatch' && lair.destroyed))) {
           const hero = lair.alive.map((id) => this.unit(id)).find((h) => h && h.hp > 0);
           if (!hero) return bad();
           if (p.order !== `u:${hero.id}`) this.startRally(hero.x, hero.y, playerId, true);
@@ -2078,7 +2079,7 @@ export class World {
     if (t.startsWith('s:')) {
       const { x, y } = parseKey(t.slice(2));
       const site = this.site(x, y);
-      return !!site && !site.destroyed && (site.kind === 'nest' || site.kind === 'heavy_nest');
+      return !!site && !site.destroyed && (site.kind === 'nest' || site.kind === 'heavy_nest' || site.kind === 'boss_hatch');
     }
     if (t.startsWith('b:')) {
       const b = this.building(Number(t.slice(2)));
@@ -2646,7 +2647,9 @@ export class World {
   private openHeroSite(x: number, y: number, kind: 'hero_lair' | 'boss_hatch', heroId: string): void {
     const s = this.s;
     if (this.site(x, y)) return;
-    const site: SiteState = { x, y, kind, hp: 0, maxHp: 0, spawnTimer: Infinity, alive: [], destroyed: false };
+    // A lair has no walls; the call target's hatch has hit points and can be broken (enemies.json boss_hatch).
+    const hatchHp = kind === 'boss_hatch' ? (this.siteDef(kind).hp ?? 0) : 0;
+    const site: SiteState = { x, y, kind, hp: hatchHp, maxHp: hatchHp, spawnTimer: Infinity, alive: [], destroyed: false };
     s.sites.push(site);
     const hero = heroDefs[heroId];
     const copies = hero.enemy.ability.id === 'serial_copies' ? HERO_ABILITY.serial_copies.count! : 1;
