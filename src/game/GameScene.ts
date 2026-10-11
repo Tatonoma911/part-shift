@@ -1832,6 +1832,8 @@ export class GameScene extends Phaser.Scene {
 
   private onDown(p: Phaser.Input.Pointer): void {
     if (this.overlay || this.overlayPaused || !this.cams.inBoardView(p) || this.cams.busy) return;
+    // The medkit card sits over the board in landscape: its button must not also tap the cell beneath it.
+    if (this.medkitCard?.getBounds().contains(p.x, p.y)) return;
     const wp = this.cams.worldAt(p);
     const at = this.board.cellAt(wp.x, wp.y);
     if (!at) return;
