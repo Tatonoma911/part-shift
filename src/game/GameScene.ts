@@ -425,6 +425,7 @@ export class GameScene extends Phaser.Scene {
     this.voice = this.guide ? null : new Voice(this, this.world, this.me, (at) => this.board.speakerAt(at), () => this.toasts.some((b) => b.active));
     this.voice?.start(!saved);
     if (!this.guide && !saved) this.maybeShowHowToPlay();
+    if (!this.guide && !saved) this.showTapHint(bx + Math.round(bw / 2), by + Math.round(bh / 2));
     this.tally = this.guide ? null : new RunTally(this.me);
     // A medal tier earned mid-run: a 2 s plate from the top, the game keeps going (ACHIEVEMENTS.md §3).
     // The tally writes into `world.s.medalEvents`; the HUD drains it into MedalToasts (Awards.ts).
@@ -1718,6 +1719,36 @@ export class GameScene extends Phaser.Scene {
   }
 
   /** First launch: a quick 3-line «How to play» sheet (shown once, persisted in localStorage). */
+  private showTapHint(cx: number, cy: number): void {
+    const KEY = 'partshift.tapHint.v1';
+    try { if (localStorage.getItem(KEY)) return; } catch { return; }
+    const r = 46;
+    const circle = this.add.graphics().setDepth(19);
+    const drawCircle = (alpha: number) => {
+      circle.clear();
+      circle.lineStyle(3, 0x57d8f2, alpha);
+      circle.strokeCircle(cx, cy, r);
+      circle.fillStyle(0x57d8f2, alpha * 0.25);
+      circle.fillCircle(cx, cy, r);
+    };
+    drawCircle(0.9);
+    const icon = this.add.text(cx, cy - 6, '👆', { fontSize: '52px' }).setOrigin(0.5).setDepth(20);
+    this.tweens.add({
+      targets: [circle, icon],
+      alpha: { from: 0.35, to: 1 },
+      duration: 650,
+      yoyo: true,
+      repeat: -1,
+      ease: 'Sine.easeInOut',
+    });
+    const dismiss = () => {
+      circle.destroy();
+      icon.destroy();
+      try { localStorage.setItem(KEY, '1'); } catch { /* ok */ }
+    };
+    this.input.once('pointerdown', dismiss);
+  }
+
   private maybeShowHowToPlay(): void {
     const KEY = 'partshift.howToPlay.v1';
     try { if (localStorage.getItem(KEY)) return; } catch { return; }
