@@ -4,7 +4,7 @@ import voiceJson from '../data/text/voice.json';
 import { hasLangText, lang, t } from '../i18n';
 import { sound } from './audio';
 import { UI_DEPTH } from './cameras';
-import { C, DOCK, INK } from './layout';
+import { BOARD, C, DOCK, INK, LANDSCAPE } from './layout';
 import { chip, TXT } from './ui';
 
 /**
@@ -214,7 +214,7 @@ export class Voice {
     const prefix = ad ? '' : `${t('voice.control_prefix')} `;
     const full = prefix + text;
     // Measure the whole line first so the strip has its final height while the text types out.
-    const body = s.add.text(left, 0, full, { ...TXT.body(21, ad ? INK.graphite : INK.white, '600'), lineSpacing: 2, wordWrap: { width: w / 2 - 18 - left, useAdvancedWrap: true } });
+    const body = s.add.text(left, 0, full, { ...TXT.body(26, ad ? INK.graphite : INK.white, '600'), lineSpacing: 2, wordWrap: { width: w / 2 - 18 - left, useAdvancedWrap: true } });
     const h = Math.max(BAR_H, body.height + 24);
     body.setY(-body.height / 2);
     const g = s.add.graphics();
@@ -231,7 +231,9 @@ export class Voice {
       items.push(m);
     }
     items.push(body);
-    const y = DOCK.y - 8 - h / 2;
+    // Mirror the toast clamping (GameScene toast(): never overlap the board on portrait).
+    const yIdeal = DOCK.y - 8 - h / 2;
+    const y = LANDSCAPE ? yIdeal : Math.max(yIdeal, BOARD.y + BOARD.h + 4 + h / 2);
     const box = s.add.container(x, y + 20, items).setDepth(DEPTH).setAlpha(0);
     this.bar = box;
     s.tweens.add({ targets: box, y, alpha: 1, duration: 200 });
@@ -252,7 +254,7 @@ export class Voice {
   /** Comic speech bubble over a sprite on the board (board camera). */
   private bubble(text: string, x: number, y: number, seconds: number, villain: boolean): void {
     const s = this.scene;
-    const body = s.add.text(0, 0, text, { ...TXT.body(20, INK.graphite, '700'), align: 'center', wordWrap: { width: 300, useAdvancedWrap: true } }).setOrigin(0.5);
+    const body = s.add.text(0, 0, text, { ...TXT.body(24, INK.graphite, '700'), align: 'center', wordWrap: { width: 300, useAdvancedWrap: true } }).setOrigin(0.5);
     const bw = body.width + 28;
     const bh = body.height + 20;
     const g = s.add.graphics();
