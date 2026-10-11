@@ -10,6 +10,8 @@ const jobs = [
   { from: join(root, 'design/data'), to: 'src/data/design', pick: (f) => f.endsWith('.json') },
   { from: join(root, 'text'), to: 'src/data/text', pick: (f) => /^[a-z]{2}\.json$/.test(f) },
   { from: join(root, 'art/export/x2/tiles'), to: 'src/assets/art/tiles', pick: (f) => f.endsWith('.png') },
+  // batch 6 square paving for open ground (AR-38): tile_NN.png becomes ground_b6_NN.png
+  { from: join(root, 'art/export/x2/board_b6'), to: 'src/assets/art/tiles', pick: (f) => /^tile_\d+\.png$/.test(f), rename: (f) => f.replace('tile_', 'ground_b6_') },
   // objects_gpt: GPT-drawn tile objects — replace matching tile keys (nest, cache, etc.)
   { from: join(root, 'art/export/x2/objects_gpt'), to: 'src/assets/art/tiles', pick: (f) => f.endsWith('.png') && f !== 'objects_gpt.json' },
   // batch 4 find cells (ground + drawn find, slice_gpt_b4.py): tile.find_blueprint / find_armor / find_record / cache_v2
