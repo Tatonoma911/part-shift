@@ -107,6 +107,8 @@ export interface BuildingDef {
   unlockProgressFactorThisRun?: number;
   /** Forge: change one trophy's element; strength and slot stay (buildings.json forge.recolor). */
   recolor?: { radius: number; cooldownSeconds: number; energyCost: number };
+  /** Limb workshop: one arm or leg with the element the player picked, every everySeconds, for a hero in radius (buildings.json limbMaker). */
+  limbMaker?: { everySeconds: number; radius: number; tier: number; slots: string[] };
   /** Rotation centre: move or swap trophies between our heroes in range (buildings.json rotation_center.swap). */
   swap?: { radius: number; cooldownSeconds: number; energyCost: number; respectsMaxTrophies: number };
 }

@@ -1179,6 +1179,7 @@ export class GameScene extends Phaser.Scene {
       : a === 'cancel' ? { type: 'cancelBuild', building: id }
       : a.startsWith('boost:') ? { type: 'heroBoost', building: id }
       : a.startsWith('recolor:') && bld ? recolorCommand(this.world, bld, this.me, a.slice('recolor:'.length))
+      : a.startsWith('limb:') ? { type: 'setLimbTech', building: id, tech: a.slice('limb:'.length) }
       : a === 'swap' && bld ? swapCommand(this.world, bld, this.me)
       : null;
     if (!cmd) {

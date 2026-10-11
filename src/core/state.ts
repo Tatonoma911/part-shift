@@ -191,6 +191,11 @@ export interface Building {
   boostCooldown?: number;
   /** Seconds until the forge can recolor again (buildings.json forge.recolor.cooldownSeconds). */
   recolorCooldown?: number;
+  /** Limb workshop: the element the player picked for the limbs it makes; absent until picked. */
+  limbTech?: string;
+  /** Limb workshop: seconds toward the next limb, and how many limbs it has made (arm, leg, arm...). */
+  limbTimer?: number;
+  limbCount?: number;
   /** Seconds until the rotation centre can swap again (buildings.json rotation_center.swap.cooldownSeconds). */
   swapCooldown?: number;
   /** True while the building is in ruined state (damaged below 0 HP). */

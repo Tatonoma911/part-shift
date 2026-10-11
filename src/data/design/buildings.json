@@ -525,6 +525,39 @@
           "done": "built_repair"
         }
       }
+    },
+    {
+      "id": "limb_workshop",
+      "name_ru": "Мастерская конечностей",
+      "sheet": null,
+      "buildable": true,
+      "cost": 260,
+      "buildSeconds": 14,
+      "hp": 350,
+      "defense": 5,
+      "territoryRadius": 2,
+      "maxCount": 1,
+      "requires": {
+        "schools": 1
+      },
+      "limbMaker": {
+        "everySeconds": 90,
+        "radius": 2,
+        "tier": 2,
+        "slots": [
+          "arm",
+          "leg"
+        ],
+        "techChoice": "player_picks_one_of_5",
+        "strength": "level2_part",
+        "_role": "[Антон 2026-10-11, без согласования] выпускает руку или ногу с прокачкой и стихийным уроном, стихию выбирает игрок"
+      },
+      "feel": {
+        "groundTint": "#C0C6D0",
+        "tintRadius": 2,
+        "tintOverClosedCells": false,
+        "textKeyOnBuilt": "building.built.limb_workshop"
+      }
     }
   ],
   "territory": {
@@ -545,6 +578,7 @@
       "rotation_center": 2,
       "station": 1,
       "forge": 2,
+      "limb_workshop": 2,
       "civ_shelter": 1,
       "repair": 1
     },
