@@ -20,6 +20,7 @@
   "build.invalid_cell": "You can only build on your own territory",
   "build.cell_occupied": "There is a building here already",
   "build.enemies_near": "Enemies nearby, too dangerous to build",
+  "build.outpost_edge": "The checkpoint goes only on the edge of our land",
   "build.unreachable": "Residents can't get there",
   "build.done": "{building}: done",
   "unit.trained": "A new defender is ready",
@@ -534,5 +535,12 @@
   "building.limb.next_hint": "Next limb in {s} s.",
   "building.limb_workshop.name": "Limb Workshop",
   "building.limb_workshop.desc": "Every 90 s makes an arm or a leg for a hero nearby. You pick the element. Needs a Rescue School.",
-  "hud.clean_streak": "Clean streak: +{p}%"
+  "hud.clean_streak": "Clean streak: +{p}%",
+  "building.upgrade.max_level": "This building is already at its maximum",
+  "building.upgrade.not_complete": "Finish building it first",
+  "building.upgrade.enemies_near": "Enemies nearby. Beat them off first.",
+  "building.upgrade.not_enough_energy": "Not enough Energy to upgrade",
+  "building.upgrade.busy": "The building is already upgrading",
+  "building.upgrade.needs_command_2": "Needs a level-2 Command Center",
+  "building.upgrade.needs_school": "Needs a Rescue School"
 }

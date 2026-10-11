@@ -290,6 +290,17 @@ export const controlSchedule = {
 };
 export const multiplayer = multiplayerJson;
 
+/** Upgrade rules (buildings.json upgrades): level prices, times, requirements, HP per level. */
+export const upgradeRules = buildingsJson.upgrades as unknown as {
+  maxLevel: number;
+  level3RequiresCommandLevel: number;
+  blockedIfEnemyWithin: number;
+  defaultCostFactorByLevel: Record<string, number>;
+  defaultSecondsFactorByLevel: Record<string, number>;
+  hpFactorPerLevel: number;
+  perBuilding: Record<string, { maxLevel?: number; levels?: Record<string, { cost?: number; seconds?: number; hp?: number; requires?: { school?: number } }> }>;
+};
+
 export const buildings: Record<string, BuildingDef> = Object.fromEntries(
   (buildingsJson.buildings as BuildingDef[]).map((b) => [b.id, b]),
 );

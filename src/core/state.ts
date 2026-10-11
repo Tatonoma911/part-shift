@@ -187,6 +187,10 @@ export interface Building {
   attackCd?: number;
   /** Current upgrade level (1 = base, 2 = upgraded once, 3 = max). */
   level?: number;
+  /** Upgrade in progress: the level it goes to, seconds left and the total (buildings.json upgrades). Absent when idle. */
+  upgradeTo?: number;
+  upgradeLeft?: number;
+  upgradeTotal?: number;
   /** Seconds remaining on the boost cooldown (0 or absent = ready). */
   boostCooldown?: number;
   /** Seconds until the forge can recolor again (buildings.json forge.recolor.cooldownSeconds). */
