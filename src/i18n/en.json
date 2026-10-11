@@ -91,6 +91,7 @@
   "tutorial.step4": "A number counts only the 8 blocks around it. Tap it: only one neighbor is closed, so the nest is there. Hold that block and mark it «Danger».",
   "tutorial.step5": "Tap both numbers. They share one closed neighbor, and the nest can only be there. So the other block is safe. Dig it.",
   "tutorial.step6": "Before going near the nest, stock up on Energy. Build a Microreactor: it makes Energy by itself, no hero has to sit inside.",
+  "tutorial.step6b": "Tap your Microreactor to open its card: Upgrade, Boost heroes, Demolish. Demolishing returns part of the cost, so a mistake can be fixed.",
   "tutorial.step7": "Your heroes are ready. Tap the red mark to open the nest. It is not a loss, it is the start of a fight: heroes fight by themselves.",
   "tutorial.step8": "The hero won and took the adaptant's arm. The more trophies, the stronger they get.",
   "tutorial.step9": "A light-blue number means a find nearby. Clear a block next to it and open the cache.",
@@ -515,5 +516,11 @@
   "trophy.same_element": "The trophy already has that element.",
   "trophy.slot_mismatch": "Trophies only trade places in a matching slot type.",
   "trophy.max_reached": "This hero already carries the most trophies.",
+  "building.limb.title": "Limb output",
+  "building.limb.pick_hint": "Pick an element: then the workshop starts making arms and legs for heroes nearby.",
+  "building.limb.wait_hint": "A limb is ready, waiting for a hero nearby with a free slot.",
+  "building.limb.next_hint": "Next limb in {s} s.",
+  "building.limb_workshop.name": "Limb Workshop",
+  "building.limb_workshop.desc": "Every 90 s makes an arm or a leg for a hero nearby. You pick the element. Needs a Rescue School.",
   "hud.clean_streak": "Clean streak: +{p}%"
 }

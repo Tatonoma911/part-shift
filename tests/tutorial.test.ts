@@ -65,7 +65,7 @@ describe('First Shift steps', () => {
     const g = new TutorialGuide();
     const w = g.world;
     w.apply({ type: 'placeCommand', x: 3, y: 8 });
-    (g as unknown as { index: number }).index = 7; // step 8: "the hero took the arm"
+    (g as unknown as { index: number }).index = 8; // step 8: "the hero took the arm" (after step 6b)
     const cache = w.cell(6, 2);
     expect(cache.content).toBe('cache');
     cache.revealed = true;
@@ -74,7 +74,7 @@ describe('First Shift steps', () => {
     g.onEvent({ type: 'part_attached' } as never);
     w.s.time += 10;
     expect(g.update()).toBe(true);
-    expect(g.stepIndex).toBe(8);
+    expect(g.stepIndex).toBe(9);
     w.s.time += 10;
     g.update();
     expect(g.step).toBe(null);

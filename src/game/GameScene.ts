@@ -1161,6 +1161,7 @@ export class GameScene extends Phaser.Scene {
 
   /** Shows the card of one of our buildings (upgrade, boost, demolish, rebuild, cancel). */
   private openBuildingCard(id: number, armed: CardActionId | null = null, armedAt = 0): void {
+    this.guide?.notify('building_card_opened');
     const w = this.world;
     const b = w.s.buildings.find((x) => x.id === id && x.owner === this.me);
     if (!b) return this.closeBuildingCard();
