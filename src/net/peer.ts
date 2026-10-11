@@ -32,13 +32,27 @@ type ToGuest =
   | { t: 'lobby'; d: LobbyInfo }
   | { t: 'full'; d: { me: number; state: GameState; tick: number } }
   | { t: 'tick'; d: { n: number; p?: unknown; e?: unknown[] } }
-  | { t: 'presence'; d: { connected: boolean[] } };
+  | { t: 'presence'; d: { connected: boolean[] } }
+  /** Host broadcasts that a cooperative vote has started (Звонок Контроля). */
+  | { t: 'vote_open'; d: { callId: string } }
+  /** Host broadcasts the resolved vote result; all clients apply the winning choice. */
+  | { t: 'vote_result'; d: { choice: 'a' | 'b'; tally: { a: number; b: number } } };
 
 type ToHost =
   | { t: 'hello'; d: { name: string; assist: AssistMode } }
   | { t: 'cmd'; d: { cmd: Command } }
   | { t: 'start' }
-  | { t: 'mode'; d: { mode: MatchMode } };
+  | { t: 'mode'; d: { mode: MatchMode } }
+  /** Guest sends their vote for the active cooperative call. */
+  | { t: 'vote'; d: { choice: 'a' | 'b'; callId: string } };
+
+/** Resolved vote outcome, emitted to the voteResult listener on all peers. */
+export interface VoteResult {
+  choice: 'a' | 'b';
+  tally: { a: number; b: number };
+}
+
+const VOTE_TIMEOUT_MS = 15_000;
 
 function send(conn: DataConnection, msg: ToGuest | ToHost): void {
   if (conn.open) conn.send(JSON.stringify(msg));
@@ -99,6 +113,10 @@ type Listener = {
   presence?: (connected: boolean[]) => void;
   refused?: (reason: string) => void;
   closed?: (code: number) => void;
+  /** Fired when the host opens a cooperative vote (show vote UI, start 15s countdown). */
+  voteOpen?: (callId: string) => void;
+  /** Fired on all peers when the vote resolves (hide vote UI, apply the winning choice). */
+  voteResult?: (result: VoteResult) => void;
 };
 
 // ── PeerSession ───────────────────────────────────────────────────────────────
@@ -159,6 +177,13 @@ function openPeer(id?: string): Promise<Peer> {
   });
 }
 
+interface ActiveVote {
+  callId: string;
+  /** Votes collected by the host: guestIndex (1-based) → choice. Index 0 = host. */
+  votes: Map<number, 'a' | 'b'>;
+  timer: ReturnType<typeof setTimeout>;
+}
+
 export class PeerSession {
   me = -1;
   world: HostWorld | OnlineWorld | null = null;
@@ -168,6 +193,8 @@ export class PeerSession {
   private peer!: Peer;
   private _code = '';
   private gone = false;
+  /** Active cooperative vote (host only while vote is open). */
+  private _vote: ActiveVote | null = null;
 
   private constructor() {}
 
@@ -238,6 +265,11 @@ export class PeerSession {
         if (msg.t === 'cmd' && s.world instanceof HostWorld) {
           (s.world as HostWorld).guestCmd((msg as { t: 'cmd'; d: { cmd: Command } }).d.cmd, guestIdx + 1);
         }
+
+        if (msg.t === 'vote') {
+          const vm = msg as { t: 'vote'; d: { choice: 'a' | 'b'; callId: string } };
+          s._recordVote(guestIdx + 1, vm.d.choice, vm.d.callId, seats.length, guestConns);
+        }
       });
 
       conn.on('close', () => {
@@ -278,6 +310,24 @@ export class PeerSession {
 
     s._setModeFn = (m: MatchMode) => {
       if (!s.world) { currentMode = m; refreshLobby(); }
+    };
+
+    // Host opens a cooperative vote for Звонок Контроля.
+    s._openVoteFn = (callId: string) => {
+      if (s._vote) return; // vote already in progress
+      const votes = new Map<number, 'a' | 'b'>();
+      const timer = setTimeout(() => {
+        s._resolveVote(callId, votes, seats.length, guestConns);
+      }, VOTE_TIMEOUT_MS);
+      s._vote = { callId, votes, timer };
+      for (const c of guestConns) send(c, { t: 'vote_open', d: { callId } });
+      s.listeners.voteOpen?.(callId);
+    };
+
+    // Host casts their own vote (player index 0).
+    s._castVoteFn = (choice: 'a' | 'b') => {
+      if (!s._vote) return;
+      s._recordVote(0, choice, s._vote.callId, seats.length, guestConns);
     };
 
     return s;
@@ -329,6 +379,15 @@ export class PeerSession {
         s.connected = msg.d.connected;
         s.listeners.presence?.(msg.d.connected);
       }
+      if (msg.t === 'vote_open') {
+        // Track the active callId so castVote can include it in the message to host.
+        s._vote = { callId: msg.d.callId, votes: new Map(), timer: 0 as unknown as ReturnType<typeof setTimeout> };
+        s.listeners.voteOpen?.(msg.d.callId);
+      }
+      if (msg.t === 'vote_result') {
+        s._vote = null;
+        s.listeners.voteResult?.(msg.d);
+      }
     });
 
     conn.on('close', () => {
@@ -345,6 +404,9 @@ export class PeerSession {
 
     s._startFn = () => send(conn, { t: 'start' });
     s._setModeFn = (m: MatchMode) => send(conn, { t: 'mode', d: { mode: m } });
+    s._castVoteFn = (choice: 'a' | 'b') => {
+      if (s._vote) send(conn, { t: 'vote', d: { choice, callId: s._vote.callId } });
+    };
 
     return s;
   }
@@ -358,13 +420,91 @@ export class PeerSession {
 
   private _startFn: () => void = () => {};
   private _setModeFn: (m: MatchMode) => void = () => {};
+  private _openVoteFn: (callId: string) => void = () => {};
+  private _castVoteFn: (choice: 'a' | 'b') => void = () => {};
 
   start(): void { this._startFn(); }
   setMode(m: MatchMode): void { this._setModeFn(m); }
 
+  /**
+   * Host only: open a cooperative vote for the active Звонок Контроля.
+   * Broadcasts `vote_open` to all guests and starts the 15s resolution timer.
+   * Call this when `controlCall` becomes active in the host's World.
+   */
+  openVote(callId: string): void { this._openVoteFn(callId); }
+
+  /**
+   * Any player: cast a vote for the active call.
+   * Host resolves when all connected players have voted or the 15s timer fires.
+   * Guests send their choice to the host; the host votes locally.
+   */
+  castVote(choice: 'a' | 'b'): void { this._castVoteFn(choice); }
+
+  /**
+   * Host-side: record one vote. Resolves immediately when all connected players
+   * have cast a choice (or waits for the 15s timeout).
+   * @internal exposed for test access
+   */
+  _recordVote(
+    pid: number,
+    choice: 'a' | 'b',
+    callId: string,
+    totalSeats: number,
+    guestConns: DataConnection[],
+  ): void {
+    const v = this._vote;
+    if (!v || v.callId !== callId) return;
+    v.votes.set(pid, choice);
+    // Resolve early once everyone who is currently connected has voted.
+    const connectedCount = 1 + guestConns.filter((c) => c.open).length;
+    if (v.votes.size >= connectedCount) {
+      clearTimeout(v.timer);
+      this._resolveVote(callId, v.votes, totalSeats, guestConns);
+    }
+  }
+
+  /**
+   * Host-side: tally votes and broadcast the result.
+   * Rules: simple majority of those who voted; host (pid 0) breaks ties;
+   * nobody voted → 'b' (timeoutChoice).
+   * @internal exposed for test access
+   */
+  _resolveVote(
+    callId: string,
+    votes: Map<number, 'a' | 'b'>,
+    _totalSeats: number,
+    guestConns: DataConnection[],
+  ): void {
+    if (!this._vote || this._vote.callId !== callId) return;
+    clearTimeout(this._vote.timer);
+    this._vote = null;
+
+    let a = 0;
+    let b = 0;
+    for (const choice of votes.values()) {
+      if (choice === 'a') a++;
+      else b++;
+    }
+
+    let winner: 'a' | 'b';
+    if (a === 0 && b === 0) {
+      winner = 'b'; // nobody voted → timeout choice
+    } else if (a === b) {
+      winner = votes.get(0) ?? 'b'; // tie → host's vote (or 'b' if host abstained)
+    } else {
+      winner = a > b ? 'a' : 'b';
+    }
+
+    const result: VoteResult = { choice: winner, tally: { a, b } };
+    const msg: ToGuest = { t: 'vote_result', d: result };
+    for (const c of guestConns) send(c, msg);
+    this.listeners.voteResult?.(result);
+  }
+
   leave(): void {
     if (this.gone) return;
     this.gone = true;
+    if (this._vote) { clearTimeout(this._vote.timer); this._vote = null; }
     try { this.peer.destroy(); } catch { /* ignore */ }
   }
 }

@@ -191,3 +191,90 @@ describe('PeerSession P2P protocol', () => {
     expect(closedCodes.length).toBeGreaterThan(0);
   });
 });
+
+// ── Cooperative voting tests ─────────────────────────────────────────────────
+
+describe('PeerSession cooperative voting', () => {
+  beforeEach(() => { FakePeer._registry.clear(); });
+  afterEach(() => { FakePeer._registry.clear(); vi.restoreAllMocks(); });
+
+  /** Sets up a 2-player session connected and started. */
+  async function setupCoop() {
+    const host = await PeerSession.create({ name: 'Аня', assist: 'full' }, 'coop');
+    const guest = await PeerSession.join({ name: 'Боря', assist: 'off' }, host.code);
+    await until(() => (host.lobby?.seats.length ?? 0) >= 2);
+    host.start();
+    await until(() => !!host.world && !!guest.world);
+    return { host, guest };
+  }
+
+  it('host openVote broadcasts vote_open to guest; guest fires voteOpen listener', async () => {
+    const { host, guest } = await setupCoop();
+
+    const guestOpened: string[] = [];
+    guest.on({ voteOpen: (id) => guestOpened.push(id) });
+
+    host.openVote('boss-serafim');
+
+    await until(() => guestOpened.length > 0, 2000);
+    expect(guestOpened[0]).toBe('boss-serafim');
+
+    host.leave(); guest.leave();
+  });
+
+  it('simple majority (2:0) → winner is a', async () => {
+    const { host, guest } = await setupCoop();
+
+    const results: import('../src/net/peer').VoteResult[] = [];
+    host.on({ voteResult: (r) => results.push(r) });
+
+    host.openVote('boss-patchwork');
+
+    // Both players vote 'a'; host receives last guest vote and resolves
+    host.castVote('a');
+    await until(() => !!host['_vote'], 1000); // vote is open
+    guest.castVote('a');
+
+    await until(() => results.length > 0, 2000);
+    expect(results[0].choice).toBe('a');
+    expect(results[0].tally).toEqual({ a: 2, b: 0 });
+
+    host.leave(); guest.leave();
+  });
+
+  it('tie (1:1) → host choice wins', async () => {
+    const { host, guest } = await setupCoop();
+
+    const results: import('../src/net/peer').VoteResult[] = [];
+    host.on({ voteResult: (r) => results.push(r) });
+
+    host.openVote('boss-flow');
+    host.castVote('a'); // host picks 'a'
+    await until(() => !!host['_vote'], 1000);
+    guest.castVote('b'); // guest picks 'b' → 1:1 tie
+
+    await until(() => results.length > 0, 2000);
+    expect(results[0].choice).toBe('a'); // host breaks tie
+    expect(results[0].tally).toEqual({ a: 1, b: 1 });
+
+    host.leave(); guest.leave();
+  });
+
+  it('nobody votes → timeout resolves to b', () => {
+    // Test the resolution logic directly without waiting for the real 15s timer.
+    // openVote starts the timer; _resolveVote can be called early for the test.
+    const results: import('../src/net/peer').VoteResult[] = [];
+    // We need a host-only session for this (no guest needed).
+    // Create a minimal host session via the public API and test _resolveVote.
+    const emptyVotes = new Map<number, 'a' | 'b'>();
+    const fakeSession = Object.assign(Object.create(PeerSession.prototype) as PeerSession, {
+      _vote: { callId: 'boss-current', votes: emptyVotes, timer: 0 },
+      listeners: { voteResult: (r: import('../src/net/peer').VoteResult) => results.push(r) },
+      gone: false,
+    });
+    fakeSession._resolveVote('boss-current', emptyVotes, 2, []);
+    expect(results.length).toBe(1);
+    expect(results[0].choice).toBe('b'); // nobody voted → timeoutChoice
+    expect(results[0].tally).toEqual({ a: 0, b: 0 });
+  });
+});
