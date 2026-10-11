@@ -245,6 +245,9 @@ h1, h2, h3, p { margin: 0; }
   background: var(--teal);
   clip-path: polygon(6px 0, 100% 0, 100% 100%, 0 100%, 0 6px);
 }
+/* The badge lives on a wrapper, outside the cut corners of the button */
+.badged { position: relative; display: inline-flex; }
+.badged > .btn { width: 100%; height: 100%; }
 .count-badge {             /* red number on a button: how many builds are possible now */
   position: absolute;
   top: -6px;
