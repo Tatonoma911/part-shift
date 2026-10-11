@@ -311,14 +311,27 @@ export function backupFactors(m: MetaSave, id: string): { hp: number; damage: nu
   return f[Math.min(syncLevel(m, id), f.length - 1)];
 }
 
-export function saveSquad(m: MetaSave, ids: string[]): void {
-  m.lastSquad = [...ids];
+/** The squad the player takes into the shift. `benched` = heroes an infected roll took this time; they come back on the next squad screen. */
+export function saveSquad(m: MetaSave, ids: string[], benched: string[] = []): void {
+  const list = ids.slice(0, squadSlots(m).slots);
+  m.lastSquad = [...list, ...benched];
+  m.allyChoice = list;
   saveMeta(m);
 }
 
+/** Remember a squad (Dossier «взять»). Capped by the squad screen's slots, not the old ally table. */
 export function pickAllies(m: MetaSave, ids: string[]): void {
-  m.allyChoice = ids.slice(0, allySlots(m).slots);
+  const list = ids.slice(0, squadSlots(m).slots);
+  m.allyChoice = list;
+  m.lastSquad = [...list];
   saveMeta(m);
+}
+
+/** «Взять в следующую смену» on the unlock card: the returned hero joins the offered squad if there is room. */
+export function offerHero(m: MetaSave, id: string): void {
+  const cur = m.lastSquad ?? m.allyChoice;
+  if (cur.includes(id) || cur.length >= squadSlots(m).slots) return;
+  pickAllies(m, [...cur, id]);
 }
 
 /** Cache bonuses opened by every rank up to the player's (meta.json ranks[].unlocksBoons, cumulative). */

@@ -8,7 +8,7 @@ import { portrait, preloadMetaArt } from './art';
 import { bestStars, closestMedal, difficultyIcon, medalCard, medalCup, medalName, medalState, medalTile, MEDALS, modeIcon, rankCup, showcaseOf, SHOWCASE_MAX } from './Awards';
 import { bar, button, fmtNum, fmtTime, onTap, plural, shade } from './kit';
 import { demoMeta, metaDemo } from './preview';
-import { allySlots, FEMALE, HEROES, heroProgress, heroState, loadMeta, pickAllies, RANKS, rankAt, rankFraction, stat, type HeroInfo, type MetaSave } from './store';
+import { FEMALE, HEROES, heroProgress, heroState, loadMeta, pickAllies, RANKS, rankAt, rankFraction, squadSlots, stat, type HeroInfo, type MetaSave } from './store';
 
 /**
  * "Досье" from the main menu (design/META.md §6, UI_SPEC §11.2): four tabs,
@@ -119,8 +119,7 @@ export class DossierScene extends Phaser.Scene {
     const cw = this.cw();
     const back = m.unlocked.length;
     p.add(this.add.text(x0, 246, t('dossier.returned', { have: back, need: HEROES.length }), TXT.num(26, INK.graphite)));
-    const slots = allySlots(m);
-    const slotLine = slots.nextAt ? t('dossier.slots', { value: slots.slots, need: slots.nextAt }) : t('ally.select.slots', { value: slots.slots });
+    const slotLine = t('ally.select.slots', { value: squadSlots(m).slots });
     p.add(this.add.text(x0, 286, slotLine, { ...TXT.body(20, INK.dim, '500'), wordWrap: { width: cw } }));
 
     const order = [...HEROES].sort((a, b) => a.tier - b.tier);
