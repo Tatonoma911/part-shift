@@ -45,6 +45,14 @@ describe('the squad carries from shift to shift', () => {
     expect(m.lastSquad).toEqual(['standard', 'canopy', 'patch']);
   });
 
+  it('a benched hero does not block a returned hero when a slot is free (QA-057)', () => {
+    const m: MetaSave = emptyMeta();
+    saveSquad(m, ['standard', 'canopy'], ['patch']);
+    offerHero(m, 'lineman');
+    expect(m.allyChoice).toEqual(['standard', 'canopy', 'lineman']);
+    expect(m.lastSquad).toEqual(['standard', 'canopy', 'patch', 'lineman']);
+  });
+
   it('shift 2 starts with every hero of the chosen squad on the board', () => {
     const o = getCampaignWorld(2);
     const w = new World({

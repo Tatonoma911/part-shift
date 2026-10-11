@@ -1,0 +1,291 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PARTSHIFT · Герои и стихии</title>
+<style>
+/* Токены — те же значения, что в design/INTERFACE_SYSTEM.md §3 */
+:root{--night:#0B1117;--graphite:#10171C;--paper:#F4F7F7;--white:#FFFFFF;--seam:#57D8F2;--deep:#115A80;--teal:#007E89;--teal-text:#006A74;--cobalt:#2E55C8;--coral:#EF5C73;--coral-text:#C8243F;--amber:#E8A33A;--demon:#8A4DFF;--muted:#5D7079;--line:#C9D6D9;--f-head:"Unbounded",system-ui,sans-serif;--f-body:"Golos Text",system-ui,sans-serif}
+*{box-sizing:border-box}
+body{margin:0;background:#dfe7ea;color:var(--graphite);font:15px/22px var(--f-body);padding:24px}
+h1{font:800 22px/28px var(--f-head);margin:0 0 6px}
+.lead{color:var(--muted);margin:0 0 28px;max-width:70ch}
+.sec{margin:0 0 40px}
+.sec h2{font:800 16px/21px var(--f-head);margin:0 0 4px}
+.sec p.note{color:var(--muted);margin:0 0 14px;font-size:13px;line-height:18px}
+.pair{display:flex;gap:24px;align-items:flex-start;flex-wrap:wrap}
+.phone{width:390px;height:844px;background:var(--paper);border-radius:28px;box-shadow:inset 0 0 0 10px #1b242b;position:relative;overflow:hidden;flex:none}
+.pc{width:1024px;height:576px;background:var(--paper);border-radius:10px;box-shadow:inset 0 0 0 1px var(--line);position:relative;overflow:hidden;flex:none;zoom:.6}
+.frame-label{font:700 11px/14px var(--f-head);color:var(--deep);text-transform:uppercase;letter-spacing:.06em;margin:0 0 6px}
+.scr{position:absolute;inset:0;padding:44px 16px 16px;display:flex;flex-direction:column;gap:12px}
+.top{display:flex;align-items:center;justify-content:space-between;gap:8px;min-height:48px}
+.h1{font:800 20px/24px var(--f-head);margin:0}
+.cap{font:800 10px/13px var(--f-head);letter-spacing:.08em;text-transform:uppercase;color:var(--deep)}
+.btn{min-height:48px;padding:12px 16px;border:0;border-radius:8px;font:700 15px/22px var(--f-body);display:inline-flex;align-items:center;justify-content:center;gap:8px;text-align:center;cursor:pointer;clip-path:polygon(8px 0,100% 0,100% calc(100% - 8px),calc(100% - 8px) 100%,0 100%,0 8px)}
+.btn.main{background:var(--teal);color:#fff;min-height:56px}
+.btn.ghost{background:var(--white);color:var(--graphite);box-shadow:inset 0 0 0 2px var(--graphite)}
+.btn.gold{background:var(--amber);color:var(--graphite)}
+.btn:focus-visible{outline:3px solid var(--amber);outline-offset:-3px}
+.dock{margin-top:auto;display:grid;gap:8px;padding-top:8px}
+.plate{background:var(--white);border-radius:12px;padding:12px;box-shadow:inset 0 0 0 1px var(--line);clip-path:polygon(12px 0,100% 0,100% calc(100% - 12px),calc(100% - 12px) 100%,0 100%,0 12px)}
+.tag{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:6px;font:700 13px/16px var(--f-body);background:var(--white);box-shadow:inset 0 0 0 1px var(--graphite)}
+.tag.safe{background:var(--teal);color:#fff;box-shadow:none}
+.tag.dang{background:var(--coral);color:var(--graphite);box-shadow:none}
+.sym{font-weight:800}
+.portrait{width:56px;height:56px;border-radius:50%;background:var(--graphite);color:var(--seam);display:grid;place-items:center;font:800 16px var(--f-head);flex:none;box-shadow:0 0 0 3px var(--white)}
+.portrait.big{width:132px;height:132px;font-size:36px;box-shadow:0 0 0 5px var(--white),0 0 0 8px var(--graphite)}
+.el{display:inline-flex;align-items:center;gap:6px;font:700 13px/16px var(--f-body)}
+.orb{width:14px;height:14px;display:inline-block;flex:none}
+.o-volt{background:#2F6BFF;border-radius:50%}
+.o-cryo{background:#BDF3FF;border-radius:50%;box-shadow:inset 0 0 0 1px var(--graphite)}
+.o-thermo{background:#E53935;clip-path:polygon(50% 0,100% 100%,0 100%)}
+.o-toxin{background:#8CE04A;clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%)}
+.o-impact{background:#C9B8A3;clip-path:polygon(25% 0,75% 0,100% 50%,75% 100%,25% 100%,0 50%)}
+/* отряд */
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.hc{background:var(--white);border-radius:12px;padding:10px;display:grid;gap:6px;justify-items:start;min-height:112px;box-shadow:inset 0 0 0 1px var(--line);text-align:left;border:0;font:inherit;color:inherit;cursor:pointer;position:relative}
+.hc.in{box-shadow:inset 0 0 0 3px var(--teal)}
+.hc.lock{background:var(--graphite);color:var(--seam);box-shadow:none}
+.hc .n{font:700 15px/20px var(--f-body)}
+.hc .chk{position:absolute;top:8px;right:8px;width:24px;height:24px;border-radius:6px;display:grid;place-items:center;font:800 14px/1 var(--f-body);background:var(--teal);color:#fff}
+.hc .chk.off{background:var(--white);color:var(--graphite);box-shadow:inset 0 0 0 2px var(--graphite)}
+.slots{display:flex;gap:6px}
+.slot{flex:1;min-height:48px;border-radius:8px;display:grid;place-items:center;font:700 13px/16px var(--f-body);background:var(--white);box-shadow:inset 0 0 0 2px var(--line);color:var(--muted)}
+.slot.full{background:var(--teal);color:#fff;box-shadow:none}
+.slot.lock{color:var(--muted);background:var(--paper)}
+/* карточка */
+.hero-hd{display:flex;gap:12px;align-items:center}
+.stats{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.stat{background:var(--white);border-radius:8px;padding:8px 10px;box-shadow:inset 0 0 0 1px var(--line)}
+.stat b{display:block;font:800 18px/24px var(--f-head)}
+.stat span{font:700 11px/14px var(--f-body);color:var(--muted)}
+.pass p{margin:4px 0 0}
+.lines{display:grid;gap:6px;margin:0;padding:0;list-style:none}
+.lines li{display:flex;gap:8px;align-items:center}
+/* поп-ап */
+.scrim{position:absolute;inset:0;background:rgba(11,17,23,.72)}
+.pop{position:absolute;left:16px;right:16px;top:150px;background:var(--white);border-radius:12px;padding:20px 16px 16px;display:grid;gap:12px;justify-items:center;text-align:center;clip-path:polygon(12px 0,100% 0,100% calc(100% - 12px),calc(100% - 12px) 100%,0 100%,0 12px)}
+.bubble{position:relative;background:var(--white);border:3px solid var(--graphite);border-radius:14px;padding:12px 14px;font:700 16px/22px var(--f-body);color:var(--graphite);max-width:300px}
+.bubble:before{content:"";position:absolute;left:50%;top:-14px;margin-left:-8px;border:8px solid transparent;border-top:0;border-bottom:14px solid var(--graphite)}
+.ill{width:100%;height:150px;border-radius:8px;background:repeating-linear-gradient(135deg,#e2e9eb 0 10px,#d3dde0 10px 20px);display:grid;place-items:center;color:var(--muted);font:700 11px/14px var(--f-body);text-transform:uppercase;letter-spacing:.06em}
+/* таблица */
+.tbl{display:grid;grid-template-columns:72px repeat(5,1fr);gap:3px;background:var(--white);border-radius:12px;padding:6px;box-shadow:inset 0 0 0 1px var(--line)}
+.tbl .h{display:grid;place-items:center;gap:2px;padding:4px 2px;font:700 12px/14px var(--f-body);text-align:center}
+.tbl .c{min-height:48px;display:grid;place-items:center;border-radius:6px;font:800 14px/16px var(--f-body)}
+.tbl .c small{display:block;font:600 10px/12px var(--f-body);color:var(--muted)}
+.tbl .x2{background:#CFEFF2;color:var(--graphite)}
+.tbl .x075{background:#FBE3B6;color:var(--graphite)}
+.tbl .x05{background:var(--paper);color:var(--muted)}
+.tbl .diag{background:var(--paper);color:var(--muted)}
+.legend{display:grid;gap:6px;font:600 13px/18px var(--f-body)}
+.legend div{display:flex;gap:8px;align-items:center}
+.legend i{display:inline-block;width:28px;height:20px;border-radius:4px;flex:none;font:800 12px/20px var(--f-body);font-style:normal;text-align:center}
+/* ПК: две колонки внутри 1024×576 */
+.pcgrid{position:absolute;inset:0;padding:24px 32px;display:grid;grid-template-columns:1fr 320px;gap:24px;align-content:start}
+.pcgrid .hc{min-height:120px}
+.pcgrid .grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+</style>
+</head>
+<body>
+<h1>Герои и стихии: экраны</h1>
+<p class="lead">Четыре экрана: отряд перед сменой, карточка героя, портрет-поп-ап из рации и таблица стихий 5×5. Телефон 390 × 844 и ПК 1024 × 576 рядом. Таблица и тексты взяты из <code>src/data/design/elements.json</code> и <code>heroes.json</code>. Изображения — заглушки, художник даёт файлы по спецификации.</p>
+
+<!-- 1. ОТРЯД -->
+<section class="sec">
+<h2>1. Отряд перед сменой</h2>
+<p class="note">Слоты 3 / 4 / 5 (squad.slotsByUnlocked). Занятый слот — бирюза и ✓, свободный — белый, закрытый — пустой с замком. Кнопка «В смену» внизу, 56 px.</p>
+<div class="pair">
+<div>
+<div class="frame-label">Телефон 390 × 844</div>
+<div class="phone"><div class="scr">
+  <div class="top"><h3 class="h1">Отряд</h3><span class="cap">Смена 2 из 12</span></div>
+  <div class="slots" aria-label="Слоты отряда: 3 из 4">
+    <div class="slot full">✓ Линейщик</div><div class="slot full">✓ Маяк</div><div class="slot full">✓ Доктор</div><div class="slot">+ свободно</div>
+  </div>
+  <p class="small" style="margin:0;color:var(--muted);font-size:13px;line-height:18px">Слотов 4. Пятый откроется, когда разблокируете 10 героев. Героев 3 и 4 ярусов в отряде не больше двух.</p>
+  <div class="grid2">
+    <button class="hc in"><span class="chk">✓</span><span class="portrait" style="width:40px;height:40px;font-size:13px">ЛН</span><span class="n">Линейщик</span><span class="el"><i class="orb o-volt"></i>Молния</span></button>
+    <button class="hc in"><span class="chk">✓</span><span class="portrait" style="width:40px;height:40px;font-size:13px">МК</span><span class="n">Маяк</span><span class="el"><i class="orb o-volt"></i>Молния</span></button>
+    <button class="hc in"><span class="chk">✓</span><span class="portrait" style="width:40px;height:40px;font-size:13px">ДК</span><span class="n">Доктор</span><span class="el"><i class="orb o-toxin"></i>Токсин</span></button>
+    <button class="hc"><span class="chk off"></span><span class="portrait" style="width:40px;height:40px;font-size:13px">КЛ</span><span class="n">Килн</span><span class="el"><i class="orb o-impact"></i>Удар</span></button>
+    <button class="hc"><span class="chk off"></span><span class="portrait" style="width:40px;height:40px;font-size:13px">ФЛ</span><span class="n">Фростлайн</span><span class="el"><i class="orb o-cryo"></i>Лёд</span></button>
+    <button class="hc lock"><span class="portrait" style="width:40px;height:40px;font-size:13px;background:#1f2a31">?</span><span class="n">Скрыт</span><span style="font:600 12px/16px var(--f-body)">Условие: победить, не потеряв ни одного жителя</span></button>
+  </div>
+  <div class="dock"><button class="btn main">В смену · 3 из 4</button><button class="btn ghost">Назад</button></div>
+</div></div>
+</div>
+<div>
+<div class="frame-label">ПК 1024 × 576 (две колонки)</div>
+<div class="pc"><div class="pcgrid">
+  <div>
+    <div class="top"><h3 class="h1">Отряд на смену</h3><span class="cap">Смена 2 из 12</span></div>
+    <div class="grid4" style="margin-top:12px">
+      <button class="hc in"><span class="chk">✓</span><span class="portrait" style="width:40px;height:40px;font-size:13px">ЛН</span><span class="n">Линейщик</span><span class="el"><i class="orb o-volt"></i>Молния</span></button>
+      <button class="hc in"><span class="chk">✓</span><span class="portrait" style="width:40px;height:40px;font-size:13px">МК</span><span class="n">Маяк</span><span class="el"><i class="orb o-volt"></i>Молния</span></button>
+      <button class="hc in"><span class="chk">✓</span><span class="portrait" style="width:40px;height:40px;font-size:13px">ДК</span><span class="n">Доктор</span><span class="el"><i class="orb o-toxin"></i>Токсин</span></button>
+      <button class="hc"><span class="chk off"></span><span class="portrait" style="width:40px;height:40px;font-size:13px">КЛ</span><span class="n">Килн</span><span class="el"><i class="orb o-impact"></i>Удар</span></button>
+      <button class="hc"><span class="chk off"></span><span class="portrait" style="width:40px;height:40px;font-size:13px">ФЛ</span><span class="n">Фростлайн</span><span class="el"><i class="orb o-cryo"></i>Лёд</span></button>
+      <button class="hc"><span class="chk off"></span><span class="portrait" style="width:40px;height:40px;font-size:13px">СР</span><span class="n">Серафим</span><span class="el">Без стихии</span></button>
+      <button class="hc"><span class="chk off"></span><span class="portrait" style="width:40px;height:40px;font-size:13px">ДМ</span><span class="n">Демон</span><span class="el"><i class="orb o-thermo"></i>Огонь</span></button>
+      <button class="hc lock"><span class="portrait" style="width:40px;height:40px;font-size:13px;background:#1f2a31">?</span><span class="n">Скрыт</span><span style="font:600 12px/16px var(--f-body)">Условие: победить, не потеряв ни одного жителя</span></button>
+    </div>
+  </div>
+  <div class="plate" style="display:grid;gap:12px;align-content:start;padding:16px">
+    <span class="cap">Слоты 3 из 4</span>
+    <div class="slots"><div class="slot full">✓ Линейщик</div><div class="slot full">✓ Маяк</div><div class="slot full">✓ Доктор</div><div class="slot">+ свободно</div></div>
+    <p style="margin:0;color:var(--muted);font-size:13px;line-height:18px">Слотов 4. Пятый откроется, когда разблокируете 10 героев. Героев 3 и 4 ярусов не больше двух.</p>
+    <button class="btn main">В смену · 3 из 4</button>
+    <button class="btn ghost">Назад</button>
+  </div>
+</div></div>
+</div>
+</div>
+</section>
+
+<!-- 2. КАРТОЧКА ГЕРОЯ -->
+<section class="sec">
+<h2>2. Карточка героя</h2>
+<p class="note">Открывается тапом по герою в отряде, в Досье и на поле. Стихия показана значком и текстом. Уязвимость и сила — из таблицы стихий (раздел 4), не отдельные числа.</p>
+<div class="pair">
+<div>
+<div class="frame-label">Телефон 390 × 844</div>
+<div class="phone"><div class="scr" style="gap:12px">
+  <div class="top"><button class="btn ghost" style="min-height:48px;padding:8px 14px">← Назад</button><span class="cap">Досье героя</span></div>
+  <div class="hero-hd">
+    <div class="portrait big" style="width:96px;height:96px;font-size:28px">ЛН</div>
+    <div>
+      <h3 class="h1" style="font-size:22px;line-height:26px">Линейщик</h3>
+      <span class="el"><i class="orb o-volt"></i>Молния</span>
+      
+    </div>
+  </div>
+  <div class="plate pass">
+    <span class="cap">Способность</span>
+    <p>В бою подтягивает врага к жителям. Удары жителей рядом с ним дают разряд.</p>
+  </div>
+  <div class="plate" style="display:grid;gap:8px">
+    <span class="cap">Против стихий</span>
+    <ul class="lines">
+      <li><span class="tag safe"><span class="sym">×2</span> бьёт</span> Лёд, Токсин</li>
+      <li><span class="tag dang"><span class="sym">×2</span> получает от</span> Огня, Удара</li>
+    </ul>
+    <p style="margin:0;font-size:13px;line-height:18px;color:var(--muted)">Множитель считается по таблице (раздел 4). Своя стихия бьёт вдвое слабее: Молния по Молнии — ×0,5.</p>
+  </div>
+  <div class="dock"><button class="btn main">В отряд</button></div>
+</div></div>
+</div>
+<div>
+<div class="frame-label">ПК 1024 × 576</div>
+<div class="pc"><div class="pcgrid" style="grid-template-columns:320px 1fr">
+  <div class="plate" style="display:grid;gap:12px;justify-items:center;text-align:center;align-content:start">
+    <div class="portrait big">ЛН</div>
+    <h3 class="h1" style="font-size:22px">Линейщик</h3>
+    <span class="el"><i class="orb o-volt"></i>Молния</span>
+    <button class="btn main" style="width:100%">В отряд</button>
+  </div>
+  <div style="display:grid;gap:12px;align-content:start">
+    <div class="plate pass"><span class="cap">Способность</span><p>В бою подтягивает врага к жителям. Удары жителей рядом с ним дают разряд.</p></div>
+    <div class="plate" style="display:grid;gap:8px"><span class="cap">Против стихий</span>
+      <ul class="lines"><li><span class="tag safe"><span class="sym">×2</span> бьёт</span> Лёд, Токсин</li><li><span class="tag dang"><span class="sym">×2</span> получает от</span> Огня, Удара</li></ul>
+    </div>
+  </div>
+</div></div>
+</div>
+</div>
+</section>
+
+<!-- 3. ПОРТРЕТ-ПОП-АП -->
+<section class="sec">
+<h2>3. Портрет-поп-ап из рации</h2>
+<p class="note">Комикс-иллюстрация (слой «меню и портреты»). Реплика — из <code>src/data/text/comm.json</code>, пока заглушка. Закрывается кнопкой; фон не перехватывает тапы по полю, кроме нажатия по затемнению.</p>
+<div class="pair">
+<div>
+<div class="frame-label">Телефон 390 × 844</div>
+<div class="phone">
+  <div class="scr" style="padding:0"></div>
+  <div class="scrim"></div>
+  <div class="pop">
+    <span class="cap">Рация · Линейщик</span>
+    <div class="portrait big" style="width:132px;height:132px">
+      ЛН
+    </div>
+    <div class="bubble">[Реплика из comm.json, пишет Сценарист]</div>
+    <span class="el"><i class="orb o-volt"></i>Молния<span style="color:var(--muted);font-weight:600">  · получает ×2 от Огня и Удара</span></span>
+    <button class="btn main" style="width:100%">Понятно</button>
+  </div>
+</div>
+</div>
+<div>
+<div class="frame-label">ПК 1024 × 576</div>
+<div class="pc">
+  <div style="position:absolute;inset:0;background:rgba(11,17,23,.72)"></div>
+  <div class="plate" style="position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:520px;display:grid;gap:14px;justify-items:center;text-align:center;padding:24px">
+    <span class="cap">Рация · Линейщик</span>
+    <div class="portrait big" style="width:160px;height:160px;font-size:44px">ЛН</div>
+    <div class="bubble" style="font-size:18px;line-height:24px;max-width:440px">[Реплика из comm.json, пишет Сценарист]</div>
+    <span class="el"><i class="orb o-volt"></i>Молния<span style="color:var(--muted);font-weight:600">  · получает ×2 от Огня и Удара</span></span>
+    <button class="btn main" style="width:240px">Понятно</button>
+  </div>
+</div>
+</div>
+</div>
+</section>
+
+<!-- 4. ТАБЛИЦА СТИХИЙ -->
+<section class="sec">
+<h2>4. Таблица стихий 5×5</h2>
+<p class="note">Строка — атакующая стихия, столбец — цель. Значок и текст несут смысл, цвет поддерживает. Числа из <code>elements.json</code>: сильнее ×2, слабее ×0,75, своя ×0,5. Без стихии всегда ×1, в таблицу не входит.</p>
+<div class="pair">
+<div>
+<div class="frame-label">Телефон 390 × 844</div>
+<div class="phone"><div class="scr">
+  <div class="top"><h3 class="h1">Стихии</h3><span class="cap">Строка бьёт столбец</span></div>
+  <div class="tbl" id="tbl-phone"></div>
+  <div class="plate legend">
+    <div><i class="x2">×2</i> сильнее: урон удвоен</div>
+    <div><i class="x075">×0,75</i> слабее: урон ×0,75</div>
+    <div><i style="background:var(--paper);color:var(--muted)">×0,5</i> своя стихия: вдвое меньше</div>
+  </div>
+  <div class="dock"><button class="btn ghost">Закрыть</button></div>
+</div></div>
+</div>
+<div>
+<div class="frame-label">ПК 1024 × 576</div>
+<div class="pc"><div class="pcgrid" style="grid-template-columns:1fr 300px">
+  <div><div class="top"><h3 class="h1">Стихии</h3><span class="cap">Строка бьёт столбец</span></div>
+    <div class="tbl" id="tbl-pc" style="margin-top:12px;grid-template-columns:96px repeat(5,1fr)"></div></div>
+  <div class="plate legend" style="align-self:start">
+    <div><i class="x2">×2</i> сильнее: урон удвоен</div>
+    <div><i class="x075">×0,75</i> слабее: урон ×0,75</div>
+    <div><i style="background:var(--paper);color:var(--muted)">×0,5</i> своя стихия: вдвое меньше</div>
+  </div>
+</div></div>
+</div>
+</div>
+</section>
+
+<script>
+// Таблица строится из данных elements.json (beats: кто бьёт кого)
+const EL=[["volt","Молния","o-volt"],["cryo","Лёд","o-cryo"],["thermo","Огонь","o-thermo"],["toxin","Токсин","o-toxin"],["impact","Удар","o-impact"]];
+const BEATS={thermo:["cryo","volt"],cryo:["toxin","impact"],volt:["toxin","cryo"],toxin:["impact","thermo"],impact:["volt","thermo"]};
+function build(el,cornerW){
+  let h='<div class="h" aria-hidden="true"></div>';
+  EL.forEach(([id,name,orb])=>{h+=`<div class="h"><i class="orb ${orb}"></i>${name}</div>`});
+  EL.forEach(([row,rn,ro])=>{
+    h+=`<div class="h"><i class="orb ${ro}"></i>${rn}</div>`;
+    EL.forEach(([col])=>{
+      let cls,txt,lbl;
+      if(row===col){cls="x05";txt="×0,5";lbl="своя"}
+      else if(BEATS[row].includes(col)){cls="x2";txt="×2";lbl="сильнее"}
+      else if(BEATS[col].includes(row)){cls="x075";txt="×0,75";lbl="слабее"}
+      h+=`<div class="c ${cls}" role="img" aria-label="${rn} против ${EL.find(e=>e[0]===col)[1]}: ${txt}, ${lbl}">${txt}</div>`;
+    });
+  });
+  el.innerHTML=h;
+}
+build(document.getElementById('tbl-phone'));
+build(document.getElementById('tbl-pc'));
+</script>
+</body>
+</html>
