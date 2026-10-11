@@ -38,7 +38,7 @@ import eventsJson from '../data/design/events.json';
 import { setBackHandler } from '../platform/native';
 import { CAMPAIGN_TOTAL, districtText, getCampaignWorld, getFirstUncleared, markShiftCleared, shiftReward } from './campaign';
 import type { PeerSession as OnlineSession } from '../net/peer';
-import { challengeUrl, closeSocial, displayName, openBoard, openDonate, profile, rankOf, recordRun, resultCard, share, shouldNudge, socialOpen, type RecordedRun } from '../social';
+import { AUTHOR_TELEGRAM, challengeUrl, closeSocial, displayName, openBoard, openDonate, profile, rankOf, recordRun, resultCard, share, shouldNudge, socialOpen, type RecordedRun } from '../social';
 import { enterScene } from './motion';
 
 const BEST_KEY = 'partshift.best.v1';
@@ -216,6 +216,11 @@ function markFlagHintSeen(): void {
   } catch {
     /* private mode: the hint just shows again next time */
   }
+}
+
+/** «Написать автору»: the author's Telegram in a new tab (link lives in social/config.ts). */
+function openAuthor(): void {
+  if (AUTHOR_TELEGRAM) window.open(AUTHOR_TELEGRAM, '_blank', 'noopener');
 }
 
 export class GameScene extends Phaser.Scene {
@@ -1604,6 +1609,7 @@ export class GameScene extends Phaser.Scene {
         extra: [
           ...(rec ? [{ label: t('end.share'), act: () => void this.shareShot() }, { label: t('end.board'), act: () => openBoard({ tab: this.start.daily ? 'day' : 'week' }) }] : []),
           { label: t('end.coffee'), act: () => openDonate(victory ? 'win' : 'lose') },
+          { label: t('author.write'), act: () => openAuthor() },
         ],
       });
       return;
@@ -1635,6 +1641,7 @@ export class GameScene extends Phaser.Scene {
           : [{ label: victory ? t('win.again') : t('lose.again'), act: () => this.restart(), primary: true }]),
         ...(rec ? [{ label: t('end.share'), act: () => void this.shareShot(), half: true }, boardBtn] : []),
         { label: t('end.coffee'), act: () => openDonate(victory ? 'win' : 'lose'), half: true, gold: true },
+        ...(AUTHOR_TELEGRAM ? [{ label: t('author.write'), act: () => openAuthor(), half: true }] : []),
         { label: t('menu.quit_to_menu'), act: () => this.toMenu(), half: true },
       ],
     });

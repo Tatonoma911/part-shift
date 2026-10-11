@@ -3,6 +3,9 @@
  * Docs: docs/SOCIAL.md.
  */
 
+/** The author's Telegram: «Написать автору» in the menu and on the result screens. Empty = the button is hidden. */
+export const AUTHOR_TELEGRAM = 'https://t.me/kazakovant';
+
 /** Public link to the game; share texts and challenge links point here. */
 export const GAME_URL = 'https://tatonoma911.github.io/part-shift/play/';
 

@@ -321,6 +321,7 @@
   "end.share": "Share",
   "end.board": "Ranking",
   "end.board_place": "Ranking · #{place}",
+  "author.write": "Write to the author",
   "end.coffee": "Coffee for the author",
   "end.challenge_won": "Challenge from {name} beaten: {mine} vs {theirs}. You win!",
   "end.challenge_lost": "Challenge from {name}: {theirs}. You got {mine}, try again.",

@@ -176,6 +176,7 @@
   "end.share": "Поделиться",
   "end.board": "Рейтинг",
   "end.board_place": "Рейтинг · #{place}",
+  "author.write": "Написать автору",
   "end.coffee": "Кофе автору",
   "end.challenge_won": "Вызов от {name} принят: {mine} против {theirs}. Ты сильнее!",
   "end.challenge_lost": "Вызов от {name}: {theirs}. У тебя {mine}, попробуй ещё.",
