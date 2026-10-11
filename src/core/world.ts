@@ -984,6 +984,8 @@ export class World {
       for (const n of [{ x, y }, ...neighbors(s, x, y)]) this.reveal(n.x, n.y, player, false);
       const first = this.cfg.population.firstResidentImmediate ? this.cfg.population.initialResidents : 0;
       for (let i = 0; i < first; i++) this.spawnAllyFromPool(s.players[player], x, y);
+      // The next birth comes one spawn interval later, not on the start timer (tutorial: MVP_RULES §22.21).
+      s.players[player].spawnTimer = this.cfg.population.spawnSeconds;
     }
   }
 
