@@ -509,7 +509,7 @@
   "results.stars.team": "Everyone hit the target",
   "campaign.next_shift": "Next shift",
   "campaign.closed": "SHIFT CLOSED",
-  "hud.nests_left": "Nests: {n}",
+  "hud.nests_left": "Nests left: {n}",
   "end.last_chance": "Two losses in a row. Try starting with the Command Center and go easy on dispatching heroes.",
   "building.card.trophy": "Trophies",
   "building.card.disabled.no_trophy_near": "No hero with a trophy nearby",
