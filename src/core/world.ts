@@ -45,6 +45,7 @@ import {
   controlEvents,
   controlSchedule,
 } from './data';
+import { maxLevelOf, upgradeCost } from './upgrades';
 import { cellAt, cellKey, cheb, dist, inBounds, neighbors, parseKey, walkableForEnemy, walkableForPlayer } from './grid';
 import { generateField } from './mapgen';
 import { solvable } from './noguess';
@@ -363,6 +364,16 @@ export class World {
   }
 
   /** Cells where this player may build (own territory, not claimed by a rival). */
+  /** A cell of our land with at least one of its eight neighbours outside our land (the board edge does not count). */
+  onTerritoryEdge(playerId: number, x: number, y: number): boolean {
+    for (let dy = -1; dy <= 1; dy++)
+      for (let dx = -1; dx <= 1; dx++) {
+        const nx = x + dx, ny = y + dy;
+        if ((dx || dy) && inBounds(this.s, nx, ny) && !this.inTerritory(playerId, nx, ny)) return true;
+      }
+    return false;
+  }
+
   inTerritory(playerId: number, x: number, y: number): boolean {
     const owns = (pid: number) =>
       this.s.buildings.some((b) => {
@@ -631,11 +642,10 @@ export class World {
         const b = this.s.buildings.find((x) => x.id === cmd.building && x.owner === playerId);
         if (!b || !b.complete || b.ruined) return bad('building.upgrade.not_complete');
         const def = buildingDefs[b.type];
-        const maxLv = 1 + (def.levels?.length ?? 0);
         const lv = b.level ?? 1;
-        if (lv >= maxLv) return bad('building.upgrade.max_level');
+        if (lv >= maxLevelOf(b.type)) return bad('building.upgrade.max_level');
         if (this.s.units.some((u) => isEnemy(u) && cheb(Math.round(u.x), Math.round(u.y), b.x, b.y) <= 2)) return bad('building.upgrade.enemies_near');
-        const upgCost = def.levels?.[lv - 1]?.cost ?? def.cost * lv;
+        const upgCost = upgradeCost(b.type, lv + 1, def.cost).cost;
         if (p.energy < upgCost) return bad('building.upgrade.not_enough_energy');
         p.energy -= upgCost;
         b.level = lv + 1;
@@ -877,6 +887,8 @@ export class World {
     const c = this.cell(x, y);
     if (!c.revealed || c.content !== 'ground' || !this.inTerritory(playerId, x, y)) return 'build.invalid_cell';
     if (c.building !== undefined) return 'build.cell_occupied';
+    // buildings.json placement «only on the edge of liberated land»: a cell of ours with a neighbour outside our land.
+    if (type === 'outpost' && !this.onTerritoryEdge(playerId, x, y)) return 'build.outpost_edge';
     if (p.energy < this.buildCost(type, x, y)) return 'build.not_enough_energy';
     if (this.s.units.some((u) => isEnemy(u) && cheb(Math.round(u.x), Math.round(u.y), x, y) <= 2)) return 'build.enemies_near';
     const cmd = this.building(p.command)!;
