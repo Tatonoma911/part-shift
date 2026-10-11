@@ -351,7 +351,7 @@ export class BoardView {
         at('fx.cache_open');
         break;
       case 'resident_born':
-        at('fx.resident_born');
+        at('fx.hero_born');
         break;
       case 'energy_orb_arrive': {
         if (!animSets.fx_energy) {
