@@ -17,8 +17,8 @@
 .shift .stat .cap { font-size: 9.5px; }
 .shift .threat { position: relative; width: 46px; height: 46px; flex: none; margin-left: auto; margin-right: 4px; display: grid; place-items: center; }
 .shift .threat svg { position: absolute; inset: 0; transform: rotate(-90deg); }
-.shift .threat b { font: 900 16px var(--f-display); color: var(--white); background: var(--coral); width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center; box-shadow: 0 0 0 2px #fff; }
-.shift .goal { align-self: center; max-width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font: 700 12px var(--f-body); color: var(--paper); background: rgba(11,17,23,.86); padding: 5px 12px; border-radius: 999px; box-shadow: inset 0 0 0 1px rgba(159,244,255,.3); }
+.shift .threat b { font: 900 16px var(--f-display); color: var(--graphite); background: var(--coral); width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center; box-shadow: 0 0 0 2px #fff; }
+.shift .goal { align-self: center; max-width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font: 700 13px var(--f-body); color: var(--paper); background: rgba(11,17,23,.86); padding: 5px 12px; border-radius: 999px; box-shadow: inset 0 0 0 1px rgba(159,244,255,.3); }
 .shift .goal b { color: #c9a6ff; }
 .shift .goal.warn { background: var(--amber); color: var(--amber-ink); box-shadow: none; }
 .shift .goal.warn b { color: var(--amber-ink); }
@@ -31,7 +31,7 @@
 .shift .edge { position: absolute; top: 50%; right: 0; transform: translateY(-50%); }
 .shift .edge .chip { background: var(--coral); color: var(--graphite); box-shadow: 0 0 0 2px #fff; }
 .shift .toast-slot { display: grid; gap: 6px; flex: none; padding: 0 2px; }
-.shift .dock { flex: none; display: grid; grid-template-columns: 1fr 112px; gap: 8px; align-items: stretch; padding: 4px 0 30px; }
+.shift .dock { flex: none; display: grid; grid-template-columns: minmax(0,1fr) 112px; gap: 8px; align-items: stretch; padding: 4px 0 30px; }
 .shift .dock .hint { display: grid; gap: 6px; align-content: center; background: rgba(244,247,247,.08); padding: 8px 12px; border-radius: 10px; color: var(--paper); font-size: 13px; }
 .shift .dock .hint .chip { justify-self: start; background: var(--seam); color: var(--graphite); }
 .shift .toast-slot { width: 100%; }
