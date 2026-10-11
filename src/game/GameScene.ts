@@ -67,13 +67,13 @@ export interface GameStart {
 }
 type Ev = Phaser.Types.Input.EventData;
 
-/** «Строить» button on the right side of the dock, full height (§7.3: «справа во всю высоту»). Left area holds the hint, legend and queue chip. */
+/** «Строить» button on the right side of the dock, centred vertically. Left area holds the hint, legend and queue chip. */
 function dockButtons() {
   const pad = 22;
-  const buildW = 198;
-  const buildH = DOCK.h - 24;
+  const buildW = 174;
+  const buildH = 148;
   const buildX = DOCK.x + DOCK.w - pad - buildW;
-  const buildY = DOCK.y + 12;
+  const buildY = DOCK.y + Math.round((DOCK.h - buildH) / 2);
   const leftW = DOCK.w - pad * 2 - buildW - 12;
   return { pad, buildW, buildH, buildX, buildY, leftW };
 }
