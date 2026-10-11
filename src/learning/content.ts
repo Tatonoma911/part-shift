@@ -224,11 +224,13 @@ export const SECTIONS: Section[] = [
   {
     id: 'buildings',
     icon: 'icon.build',
-    entries: ['command', 'home', 'reactor', 'cooler', 'school', 'medcenter'].map((id) => ({
+    entries: ['command', 'home', 'reactor', 'cooler', 'school', 'medcenter', 'limb_workshop'].map((id) => ({
       id: `building.${id}`,
       name: `building.${id}.name`,
       desc: `bld.${id}.text`,
-      visual: { kind: 'image', key: `building.${id}`, scale: 2 } as Visual,
+      // No sprite for limb_workshop yet (art gap): the entry shows text and stats only.
+      visual: id === 'limb_workshop' ? undefined : ({ kind: 'image', key: `building.${id}`, scale: 2 } as Visual),
+      how: id === 'limb_workshop' ? ['limb_workshop.how'] : undefined,
       clip: id === 'home' || id === 'school' ? ('birth' as ClipId) : id === 'reactor' ? ('energy' as ClipId) : id === 'command' ? ('start' as ClipId) : undefined,
       tip: id === 'home' || id === 'reactor' ? 'lesson.build.tip' : undefined,
       stats: buildingStats(id),

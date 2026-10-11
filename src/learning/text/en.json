@@ -86,8 +86,8 @@
   "clue.safe.text": "The scanner proved from the numbers there's no nest or lair here. Dig away.",
   "clue.danger.name": "Red hotspot mark",
   "clue.danger.text": "The scanner proved there's a nest or a hero lair here. Swipes skip this block. To open it, tap the mark and confirm.",
-  "clue.caution.name": "Your caution flag",
-  "clue.caution.text": "Hold your finger on a closed block to flag it as suspicious. Swipes leave it alone.",
+  "clue.caution.name": "Your «Not sure» mark",
+  "clue.caution.text": "Hold your finger on a closed block and pick «Not sure» if it looks suspicious but you are not certain. Swipes leave it alone.",
   "clue.scanner.name": "HeroOut scanner",
   "clue.scanner.text": "A drone that marks only what follows for certain from the numbers. It never guesses. On Normal it runs on the Scan button: 3 charges, one more every 60 seconds.",
   "clue.accident.name": "Opened a nest by accident",
@@ -129,7 +129,7 @@
   "ctrl.swipe.name": "Swipe",
   "ctrl.swipe.text": "Drag a finger or the mouse across blocks to queue them for clearing. Known hotspots and your flags are skipped.",
   "ctrl.hold.name": "Hold",
-  "ctrl.hold.text": "On a closed block, sets or removes a caution flag. On a building or a creature, shows a tooltip.",
+  "ctrl.hold.text": "On a closed block, hold to set «Danger» or «Not sure». Tap the mark again to remove it. On a building or a creature, hold to see a tooltip.",
   "ctrl.order.name": "Tap an enemy",
   "ctrl.order.text": "Heroes fight on their own. Tap an enemy, a nest or a lair and all heroes nearby go there. Tap empty ground to cancel.",
   "ctrl.build.name": "Build and print",
@@ -193,7 +193,7 @@
   "cap.steam": "Steam blast and hot ground",
   "cap.demon_down": "Call target down",
   "cap.hold": "Hold your finger",
-  "cap.caution": "Caution flag",
+  "cap.caution": "«Not sure» mark",
   "cap.swipe_skips": "Swipes go around it",
   "cap.vein": "Energy vein: heroes mine it",
   "cap.reactor": "The microreactor runs by itself",
@@ -355,5 +355,8 @@
   "map.medkit.how": "The kit works until the end of the shift: heroes out of combat recover 1 HP per second. Bandages, plaster, and not a drop of gel. That is why it works.",
   "people.squad.name": "Squad before the shift",
   "people.squad.text": "Before each shift, choose who goes out on the call. Pick heroes whose elements beat the enemies in the district now.",
-  "people.squad.how": "The shift briefing shows which services failed and with which elements. Pick the ones whose element beats the enemy. Squad places are limited, and an unfinished copy takes one of them."
+  "people.squad.how": "The shift briefing shows which services failed and with which elements. Pick the ones whose element beats the enemy. Squad places are limited, and an unfinished copy takes one of them.",
+  "bld.limb_workshop.text": "Every 90 seconds it makes an arm or a leg for a hero nearby who has a free slot. You pick the element from five.",
+  "building.limb_workshop.name": "Limb Workshop",
+  "limb_workshop.how": "Built after the first school, one per city, costs 260 Energy. Once you pick an element, it makes level-2 parts in that element. Arms and legs take turns. While there is no elemental leg part, an arm is made instead."
 }
