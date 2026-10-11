@@ -1,6 +1,6 @@
 import Phaser from 'phaser';
 import { account } from '../account/cloud';
-import { openAccountPanel } from '../account/panel';
+import { openAccountConflictIfAny, openAccountPanel } from '../account/panel';
 import { config } from '../core/data';
 import { lang, setLang, t } from '../i18n';
 import { introSeen, playIntro } from '../intro';
@@ -92,6 +92,7 @@ export class MenuScene extends Phaser.Scene {
     }
     this.drawBackdrop();
     this.show('main');
+    openAccountConflictIfAny();
     if (roomCode && onlineAvailable()) this.online(roomCode);
     metaPreview(this);
     analytics.where('menu');
