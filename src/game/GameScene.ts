@@ -44,6 +44,10 @@ import { enterScene } from './motion';
 const BEST_KEY = 'partshift.best.v1';
 const LOSS_KEY = 'partshift.losses.v1';
 const LONG_PRESS_MS = 480;
+/** A finger that moves farther than this (screen px) is panning the map, not tapping a cell. */
+const TOUCH_SLOP = 12;
+/** A touch pointer (phones and tablets): its tap is decided on release, so a drag can pan. */
+const isTouch = (p: Phaser.Input.Pointer): boolean => (p.event as PointerEvent | undefined)?.pointerType === 'touch' || !!p.event?.type?.startsWith('touch');
 
 type Mode = 'dig' | 'build';
 
@@ -303,6 +307,8 @@ export class GameScene extends Phaser.Scene {
   private swipeCells: { x: number; y: number }[] = [];
   private lastDragCell = -1;
   private pressTimer: Phaser.Time.TimerEvent | null = null;
+  /** One finger down on the board, not yet a tap or a pan (touch only). */
+  private touchPress: { x: number; y: number; id: number } | null = null;
   private saveTimer = 0;
   private lastCenterHit = -99;
   private lastThreat = 0;
@@ -1862,6 +1868,17 @@ export class GameScene extends Phaser.Scene {
   }
 
   private onDown(p: Phaser.Input.Pointer): void {
+    if (isTouch(p)) {
+      // A second finger makes it a pinch or pan, so the first finger's tap is dropped.
+      const fingers = [this.input.pointer1, this.input.pointer2].filter((q) => q.isDown).length;
+      this.touchPress = fingers >= 2 ? null : { x: p.x, y: p.y, id: p.id };
+      return;
+    }
+    this.press(p);
+  }
+
+  /** The tap on a cell: attack, dig, build, card or long press. Touch taps come here on release. */
+  private press(p: Phaser.Input.Pointer): void {
     if (this.overlay || this.overlayPaused || !this.cams.inBoardView(p) || this.cams.busy) return;
     // The medkit card sits over the board in landscape: its button must not also tap the cell beneath it.
     if (this.medkitCard?.getBounds().contains(p.x, p.y)) return;
@@ -2026,6 +2043,15 @@ export class GameScene extends Phaser.Scene {
   }
 
   private onMove(p: Phaser.Input.Pointer): void {
+    if (isTouch(p)) {
+      // One finger that moves past the slop pans the map (the camera follows it); it never queues digs.
+      const tp = this.touchPress;
+      if (tp && tp.id === p.id && Math.hypot(p.x - tp.x, p.y - tp.y) > TOUCH_SLOP) {
+        this.touchPress = null;
+        this.cams.beginPan(p);
+      }
+      return;
+    }
     if (this.cams.busy) {
       // A second finger turns the gesture into pinch/pan: stop queueing cells.
       this.dragMode = null;
@@ -2040,6 +2066,15 @@ export class GameScene extends Phaser.Scene {
   }
 
   private onUp(p: Phaser.Input.Pointer): void {
+    if (isTouch(p)) {
+      const tp = this.touchPress;
+      this.touchPress = null;
+      if (tp && tp.id === p.id) {
+        this.press({ x: tp.x, y: tp.y, rightButtonDown: () => false, middleButtonDown: () => false } as unknown as Phaser.Input.Pointer);
+        this.dragMode = null;
+      }
+      return;
+    }
     const rc = this.rightClick;
     this.rightClick = null;
     if (rc && Math.hypot(p.x - rc.px, p.y - rc.py) < 10) {
