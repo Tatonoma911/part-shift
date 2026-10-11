@@ -473,6 +473,15 @@ h1, h2, h3, p { margin: 0; }
   background: linear-gradient(180deg, var(--ground) 0%, var(--ground-2) 100%);
 }
 .cell.closed { background: linear-gradient(160deg, #2a4a5e 0%, #1d3445 100%); color: var(--glow); }
+/* Layers of a closed quarter, bottom to top:
+   1 .cell.closed base (placeholder here), 2 .quarter sprite (art, separate file), 3 quarantine film and tape. */
+.cell .quarter {
+  position: absolute;
+  inset: 0;
+  background: var(--quarter-art, none) center / 100% 100% no-repeat;
+  pointer-events: none;
+  z-index: 1;
+}
 .cell.closed::after {       /* the quarantine film, a hint of hex */
   content: "";
   position: absolute;
