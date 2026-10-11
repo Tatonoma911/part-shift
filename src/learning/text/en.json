@@ -135,7 +135,7 @@
   "ctrl.build.name": "Build and print",
   "ctrl.build.text": "There's no separate button. Tap an open tile of your land to build. Tap your building to send a hero out.",
   "ctrl.keys.name": "Keyboard",
-  "ctrl.keys.text": "Space pauses, Esc cancels a selection, right click removes a block from the queue.",
+  "ctrl.keys.text": "Space pauses, Esc cancels the selection. The right mouse button takes a block out of the queue, or, if the block is not queued, sets or removes a «Danger» mark on it.",
   "ctrl.pause.name": "Pause",
   "ctrl.pause.text": "While paused you can plan digs and buildings; they start when you resume. Online games have no pause.",
   "world.city.name": "Lumen City",
