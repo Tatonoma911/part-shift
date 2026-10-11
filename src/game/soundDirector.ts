@@ -19,7 +19,28 @@ const RENAME: Record<string, string> = {
   call_incoming: 'control_call',
   building_upgraded: 'upgrade_chime',
   tempo_level_up: 'tempo_up',
+  // Long-run audit (design/WISHLIST_AUDIT.md): events that fired with no sound.
+  raid_cleared: 'wave_clear',
+  armor_crate_open: 'cache_open',
+  civilian_rescued: 'survivor_joined',
+  civilians_balance_lost: 'resident_die',
+  resident_limb_lost: 'defender_hit',
+  ally_limb_lost: 'defender_hit',
+  // Our attacker tore a limb off an enemy: the same "part taken" sound as a hero part.
+  enemy_limb_lost: 'hero_part_taken',
+  limb_made: 'part_attached',
+  limb_regrown: 'healed',
+  blueprint_found: 'find_chime',
+  lore_found: 'find_chime',
+  // Контроль refused: the boss wakes, so it gets the warning sting.
+  boss_wake: 'demon_warning',
 };
+
+/**
+ * Events that stay silent on purpose. `heal` fires about every 2 s per unit
+ * and would drown the mix; the rest are UI-only (menus, hints, trophy shelf).
+ */
+const SILENT = new Set(['heal', 'hint', 'boss_call_fork', 'trophy_moved', 'trophy_recolored']);
 
 /**
  * Music stages, calmest first. Escalation switches on the next bar; calming
@@ -104,6 +125,7 @@ export class SoundDirector {
   }
 
   private idsFor(e: GameEvent): string[] {
+    if (SILENT.has(e.type)) return [];
     const tech = e.text ? heroes[e.text]?.tech : undefined;
     switch (e.type) {
       case 'hero_spawn':

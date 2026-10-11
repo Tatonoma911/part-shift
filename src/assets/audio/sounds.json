@@ -1465,6 +1465,17 @@
       "priority": 4,
       "group": "world",
       "stereo": true
+    },
+    "find_chime": {
+      "files": [
+        "sfx/find_chime"
+      ],
+      "volume": 0.8,
+      "cooldownMs": 400,
+      "maxInstances": 1,
+      "priority": 5,
+      "group": "world",
+      "stereo": true
     }
   },
   "music": {
