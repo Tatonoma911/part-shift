@@ -1186,11 +1186,17 @@ export class BoardView {
       }
     }
     if (state === 'construct' && hasSheet) spr.setFrame(Math.min(6, Math.floor((b.built / def.buildSeconds) * 6)));
-    spr.setAlpha(b.complete ? 1 : 0.85);
-    if (b.owner !== this.me) spr.setTint(0xffc2a8);
+    // A placed building that no hero has started yet hangs as a pale ghost; once work begins it firms up (Антон, 2026-10-11).
+    const waiting = !b.complete && b.built <= 0;
+    spr.setAlpha(b.complete ? 1 : waiting ? 0.5 : 0.85);
+    if (waiting) spr.setTint(0xbff6ff);
+    else if (b.owner !== this.me) spr.setTint(0xffc2a8);
+    else spr.clearTint();
     const g = this.topG;
     const p = this.center(b.x, b.y);
     if (b.complete && b.hp < def.hp) this.vitals.draw(g, `b:${b.id}`, p.x - 28, p.y - 46, 56, b.hp / def.hp, 'building', this.scene.time.now);
+    // Construction timer: the bar fills while heroes build it.
+    if (!b.complete) this.vitals.draw(g, `c:${b.id}`, p.x - 28, p.y - 46, 56, Math.max(0, b.built) / def.buildSeconds, 'building', this.scene.time.now);
     void now;
   }
 
