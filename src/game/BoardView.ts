@@ -75,8 +75,8 @@ function hash(x: number, y: number): number {
 const RESIDENT_COMBAT_SET = 'defender';
 /** Starter heroes (MVP_RULES §4) whose drawn sheets stand in for workers until v0.7 spawns real heroes. */
 const STARTER_LOOKS = ['standard', 'patch', 'canopy', 'current'];
-/** Our hero dog's sprite scale: half the side, a quarter of the square, so it is not taller than the people (Антон, 2026-10-10). */
-const HERO_DOG_SCALE = 0.5;
+/** Our hero dog and the enemy dog share one sprite scale: both bodies are 54 px tall in their sheets, so both draw at 1× (Антон, 2026-10-11). */
+const DOG_SCALE = 1;
 /** block_fx / lair_fx are drawn at 2× (a block is ~104 px wide in the frame). */
 const FX2 = 0.5;
 const BLOCK_EL = ['thermo', 'cryo', 'volt', 'impact', 'toxin'];
@@ -1310,9 +1310,8 @@ export class BoardView {
       if (!v) {
         const set = this.setOf(u);
         const spr = this.scene.add.sprite(fx, fy, set).setOrigin(...originOf(set));
-        // Our hero dog (Патч) is drawn as big as a person; it fits a quarter of the hero's square (Антон, 2026-10-10).
-        // Every unit that uses the dog sheet gets it: squad heroes and the starter residents alike.
-        if (set === 'ally_patch') spr.setScale(HERO_DOG_SCALE);
+        // Our dog (ally_patch) and the enemy dog (patch) must read the same size on the board (Антон, 2026-10-11).
+        if (set === 'ally_patch' || set === 'patch') spr.setScale(DOG_SCALE);
         v = { spr, set, prevX: u.x, prevY: u.y, curX: u.x, curY: u.y, simT: w.s.time, lastCd: u.attackCooldown, oneShot: false, windup: false, anim: '' };
         // The call target stands a size bigger: it must read as the one to beat (QA-014).
         if (u.kind === 'hero' && u.nest && w.cell(...(u.nest.slice(2).split(',').map(Number) as [number, number])).content === 'boss_hatch') {
