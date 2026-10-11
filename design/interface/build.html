@@ -10,8 +10,8 @@
 .catalog { position: absolute; left: 0; right: 0; bottom: 0; height: 500px; z-index: 12; padding: 14px 14px 0; border-radius: 22px 22px 0 0; background: linear-gradient(180deg,#fff,var(--paper)); color: var(--ink); display: flex; flex-direction: column; gap: 10px; box-shadow: 0 -10px 40px rgba(0,0,0,.35); }
 .catalog .head { display: flex; align-items: center; gap: 8px; }
 .catalog .head .h1 { flex: 1; }
-.catalog .cards { display: flex; gap: 10px; overflow-x: auto; padding: 4px 2px 12px; scroll-snap-type: x mandatory; }
-.catalog .cards > * { scroll-snap-align: start; }
+.catalog .cards { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; overflow-y: auto; overflow-x: hidden; padding: 4px 2px 12px; align-content: start; -webkit-overflow-scrolling: touch; }
+.catalog .cards .catalog-card { width: auto; }
 .catalog .foot { margin-top: auto; padding-bottom: 28px; }
 .ghost-tip { position: absolute; left: 50%; top: 40%; transform: translateX(-50%); background: var(--white); color: var(--ink); padding: 10px 12px; border-radius: 10px; font-size: 13px; width: 250px; box-shadow: 0 6px 18px rgba(0,0,0,.3); }
 .ghost-tip .r { display: flex; gap: 8px; margin-top: 8px; }
@@ -22,10 +22,10 @@
 .blue-sheet { background: #1e3b52; color: #d9f8ff; }
 .bld-ico { font-size: 34px; line-height: 1; }
 @container (min-width: 720px) {
-  .catalog { left: auto; top: 0; width: 320px; height: auto; bottom: 0; border-radius: 0; padding: 16px; }
-  .catalog .cards { flex-direction: column; overflow: auto; }
-  .catalog .cards .catalog-card { width: 100%; display: grid; grid-template-columns: 96px 1fr; gap: 10px; align-items: center; }
-  .catalog .cards .catalog-card .art { height: 64px; }
+  .catalog { left: auto; top: 0; width: 360px; height: auto; bottom: 0; border-radius: 0; padding: 16px; }
+  .catalog .cards { grid-template-columns: 1fr 1fr; overflow: visible; }
+  .catalog .cards .catalog-card { display: grid; grid-template-columns: 1fr; gap: 8px; }
+  .catalog .cards .catalog-card .art { height: 72px; }
   .catalog .cards .catalog-card .ribbon { top: 4px; left: 4px; right: auto; }
   .dock-install { left: auto; right: 340px; width: 360px; bottom: 16px; }
 }
