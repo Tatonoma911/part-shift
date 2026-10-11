@@ -10,7 +10,7 @@ import { Voice } from './voice';
 import { MedalToasts, type Tier } from './meta/Awards';
 import { RunTally } from './meta/record';
 import { showResults } from './meta/ResultsScreen';
-import { boonPoolFor, loadMeta, offerHero, roster } from './meta/store';
+import { boonPoolFor, buildingUnlocked, loadMeta, offerHero, roster } from './meta/store';
 import { beforeShift } from './meta/beforeShift';
 import { pickBoon } from './meta/BoonPick';
 import { closeCoach, learning, openGuide, setLearningHooks } from './learn';
@@ -1228,6 +1228,11 @@ export class GameScene extends Phaser.Scene {
 
   /** Called when the player picks a building from the catalog drawer. */
   private pickBuilding(o: BuildOption): void {
+    // A building whose blueprint is not found yet cannot be picked at all (MVP_RULES §5.1).
+    if (o.state === 'blueprint') {
+      this.say(t('build.locked_blueprint'), 2800, true);
+      return;
+    }
     this.buildType = o.id;
     this.closeCatalog();
     if (o.state !== 'ok' && o.state !== 'energy') return; // locked buildings can't be ghost-placed
@@ -1237,6 +1242,10 @@ export class GameScene extends Phaser.Scene {
 
   /** Tap on liberated land: show the ghost of the selected building there and the building cards. */
   private openBuild(x: number, y: number): void {
+    if (!buildingUnlocked(loadMeta(), this.buildType)) {
+      this.say(t('build.locked_blueprint'), 2800, true);
+      return;
+    }
     const why = this.world.canBuild(this.me, this.buildType, x, y);
     // Not enough Energy still opens the cards (another building may fit the budget); other refusals explain themselves.
     if (why !== null && why !== 'build.not_enough_energy') {
@@ -1318,6 +1327,10 @@ export class GameScene extends Phaser.Scene {
     this.ghostButtons = this.add
       .container(x, y, [
         ...mk(-48, true, '✓', () => {
+          if (!buildingUnlocked(loadMeta(), this.buildType)) {
+            this.say(t('build.locked_blueprint'), 2800, true);
+            return;
+          }
           const r = this.world.apply({ type: 'build', building: this.buildType, x: at.x, y: at.y }, this.me);
           if (!r.ok) this.say(t(r.reason === 'invalid' ? 'build.invalid_cell' : r.reason), 2800, true);
           this.setGhost(null);
