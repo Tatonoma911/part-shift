@@ -409,5 +409,10 @@
   "build.outpost_edge": "Блокпост ставится только на краю своей земли",
   "building.upgrade.busy": "Здание уже улучшается",
   "building.upgrade.needs_command_2": "Нужен Командный центр 2 уровня",
-  "building.upgrade.needs_school": "Нужна Школа спасателей"
+  "building.upgrade.needs_school": "Нужна Школа спасателей",
+  "howtoplay.title": "Как играть",
+  "howtoplay.line1": "Тапни квартал — герои сами раскопают",
+  "howtoplay.line2": "Цифра = гнёзда рядом. Пусто = копать безопасно",
+  "howtoplay.line3": "Щипок двумя пальцами или колёсико — приблизить",
+  "howtoplay.ok": "Понял!"
 }

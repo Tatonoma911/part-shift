@@ -544,5 +544,10 @@
   "building.upgrade.not_enough_energy": "Not enough Energy to upgrade",
   "building.upgrade.busy": "The building is already upgrading",
   "building.upgrade.needs_command_2": "Needs a level-2 Command Center",
-  "building.upgrade.needs_school": "Needs a Rescue School"
+  "building.upgrade.needs_school": "Needs a Rescue School",
+  "howtoplay.title": "How to play",
+  "howtoplay.line1": "Tap a block — your heroes will dig it",
+  "howtoplay.line2": "Number = nests nearby. Empty = safe to dig",
+  "howtoplay.line3": "Pinch or scroll wheel to zoom in",
+  "howtoplay.ok": "Got it!"
 }
