@@ -347,5 +347,13 @@
   "elem.cryo.aka": "cryogel",
   "elem.volt.aka": "formerly volt",
   "elem.toxin.aka": "",
-  "elem.impact.aka": ""
+  "elem.impact.aka": "",
+  "res.squad.text": "How many heroes can go out on a shift at once. It starts at two; each Hero Dorm adds one more.",
+  "res.squad.how": "The squad is picked before every shift. You can pick it by hand or take last time's squad. A squad holds at most two heroes of tier 3–4, and only one unfinished copy.",
+  "map.medkit.name": "First Aid Kit",
+  "map.medkit.text": "A closed block with a first aid kit. Open it, and heroes who are out of a fight start to recover.",
+  "map.medkit.how": "The kit works until the end of the shift: heroes out of combat recover 1 HP per second. Bandages, plaster, and not a drop of gel. That is why it works.",
+  "people.squad.name": "Squad before the shift",
+  "people.squad.text": "Before each shift, choose who goes out on the call. Pick heroes whose elements beat the enemies in the district now.",
+  "people.squad.how": "The shift briefing shows which services failed and with which elements. Pick the ones whose element beats the enemy. Squad places are limited, and an unfinished copy takes one of them."
 }
