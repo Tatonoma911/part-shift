@@ -930,6 +930,9 @@ export class GameScene extends Phaser.Scene {
     } else if (this.start.shiftN && nestsLeft === 0) {
       bg = C.teal;
     }
+    // §22.4: the clean-streak badge sits after the goal while a streak runs.
+    const streak = w.cleanStreakState();
+    if (streak.count > 0 && streak.bonus > 0) goal += `  ·  ${t('hud.clean_streak', { p: Math.round(streak.bonus * 100) })}`;
     const showGoal = !this.guide;
     if (this.hud.goal.text !== goal) this.hud.goal.setText(goal);
     this.hud.goal.setVisible(showGoal);

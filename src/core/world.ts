@@ -1046,6 +1046,7 @@ export class World {
    */
   private mineBlast(x: number, y: number, c: Cell): void {
     const s = this.s;
+    this.resetCleanStreak();
     const m = hazards.mine.unmarkedDig;
     c.fuse = undefined;
     c.resolved = true;
@@ -1212,7 +1213,8 @@ export class World {
       p.autoQueue = p.autoQueue.filter((q) => q !== k);
     }
     if (pay) {
-      this.spawnOrb(owner, x, y, Math.round(this.cfg.economy.energyPerDugTile * this.allyFactor(owner, 'digEnergyFactor') * this.allyFactor(owner, 'energyProductionFactor', 'value')));
+      this.countCleanQuarter();
+      this.spawnOrb(owner, x, y, Math.round(this.cfg.economy.energyPerDugTile * this.allyFactor(owner, 'digEnergyFactor') * this.allyFactor(owner, 'energyProductionFactor', 'value') * (1 + this.cleanBonus())));
       this.emit('dig_done', wave ? { x, y, owner, text: 'wave' } : { x, y, owner });
       this.addTempo(owner, 'dig');
     }
@@ -1828,6 +1830,7 @@ export class World {
       u.holdUntil = s.time + rr.minSecondsSirenToFirstHit;
       this.emit('enemy_spawn', { x: spot.x, y: spot.y, text: `adaptant_${tech ?? 'thermo'}`, unit: u.id });
     }
+    this.resetCleanStreak();
     const b = this.targetPos(target);
     this.startRally(source.x, source.y, this.building(Number(target.slice(2)))!.owner);
     this.emit('raid_incoming', { x: b.x, y: b.y, owner: this.building(Number(target.slice(2)))!.owner, amount: size, text: source.tunnel ? `${source.x},${source.y}` : undefined });
@@ -2093,6 +2096,7 @@ export class World {
         rawDmg = Math.min(rawDmg, Math.max(this.cfg.combat.minDamage, maxDmg));
       }
       b.hp -= rawDmg;
+      if (isEnemy(attacker)) this.resetCleanStreak();
       // A building destroyed by the enemy: one townsperson panics and leaves the balance (civilian.balance).
       if (was > 0 && b.hp <= 0 && isEnemy(attacker) && b.type !== 'command') {
         this.loseCivilians(this.s.players[b.owner], civilianRules.balance.loseOnBuildingDestroyed, 'building');
@@ -2197,6 +2201,7 @@ export class World {
       if (p?.resistUntil !== undefined && this.s.time < p.resistUntil) amount *= hazards.bonusCapsule.pool.damage_resist?.heroesDamageTakenFactor ?? 1;
     }
     v.hp -= amount;
+    if (!isEnemy(v) && by && isEnemy(by)) this.resetCleanStreak();
     // Raiders keep to the buildings until a resident hits them (raidRules.raidersPreferBuildings).
     if (v.raid && by && !isEnemy(by)) {
       v.raid = undefined;
@@ -3532,6 +3537,33 @@ export class World {
     const p = this.s.players[playerId];
     const need = Number(req.civiliansOnBalance ?? req.civiliansRescued ?? 0);
     return (p?.civilians ?? 0) >= need;
+  }
+
+  /** §22.4 clean streak: quarters dug in a row, and when each +2 % step was earned (game seconds). */
+  private cleanCount = 0;
+  private cleanSteps: number[] = [];
+
+  private countCleanQuarter(): void {
+    const cs = config.cleanStreak;
+    this.cleanCount++;
+    if (this.cleanCount % cs.stepCells === 0) this.cleanSteps.push(this.s.time);
+  }
+
+  private resetCleanStreak(): void {
+    this.cleanCount = 0;
+    this.cleanSteps = [];
+  }
+
+  /** Income bonus from the streak: each step lasts bonusDurationSeconds, the sum is capped at maxBonus. */
+  cleanBonus(): number {
+    const cs = config.cleanStreak;
+    this.cleanSteps = this.cleanSteps.filter((t) => this.s.time - t < cs.bonusDurationSeconds);
+    return Math.min(cs.maxBonus, this.cleanSteps.length * cs.bonusPerStep);
+  }
+
+  /** Streak state for the HUD: quarters in a row, and the bonus now. */
+  cleanStreakState(): { count: number; bonus: number } {
+    return { count: this.cleanCount, bonus: this.cleanBonus() };
   }
 
   private emit(type: string, data: Omit<GameEvent, 'type'> = {}): void {
