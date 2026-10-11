@@ -132,3 +132,45 @@ describe('event sounds from the wishlist audit', () => {
     for (const [, sound] of WISH) expect(manifest.sfx[sound], sound).toBeDefined();
   });
 });
+
+describe('event sounds from the long-run audit', () => {
+  // Events that fired with no sound on the long run, and the sound each one gets now.
+  const AUDIT: [string, string][] = [
+    ['raid_cleared', 'wave_clear'],
+    ['armor_crate_open', 'cache_open'],
+    ['civilian_rescued', 'survivor_joined'],
+    ['civilians_balance_lost', 'resident_die'],
+    ['resident_limb_lost', 'defender_hit'],
+    ['ally_limb_lost', 'defender_hit'],
+    ['enemy_limb_lost', 'hero_part_taken'],
+    ['limb_made', 'part_attached'],
+    ['limb_regrown', 'healed'],
+    ['blueprint_found', 'find_chime'],
+    ['lore_found', 'find_chime'],
+    ['boss_wake', 'demon_warning'],
+  ];
+  const SILENT = ['heal', 'hint', 'boss_call_fork', 'trophy_moved', 'trophy_recolored'];
+
+  it('plays the sound for each event', () => {
+    const { d } = setup();
+    for (const [type, sound] of AUDIT) {
+      sfx.length = 0;
+      d.onEvent({ type } as never);
+      expect(sfx, type).toContain(sound);
+    }
+  });
+
+  it('keeps the silent events silent', () => {
+    const { d } = setup();
+    for (const type of SILENT) {
+      sfx.length = 0;
+      d.onEvent({ type } as never);
+      expect(sfx, type).toEqual([]);
+    }
+  });
+
+  it('every sound it names is in the manifest', async () => {
+    const manifest = (await import('../src/assets/audio/sounds.json')).default as unknown as { sfx: Record<string, unknown> };
+    for (const [, sound] of AUDIT) expect(manifest.sfx[sound], sound).toBeDefined();
+  });
+});
