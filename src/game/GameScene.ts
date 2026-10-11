@@ -40,6 +40,7 @@ import { CAMPAIGN_TOTAL, districtText, getCampaignWorld, markShiftCleared, shift
 import type { PeerSession as OnlineSession } from '../net/peer';
 import { challengeUrl, closeSocial, displayName, openBoard, openDonate, profile, rankOf, recordRun, resultCard, share, shouldNudge, socialOpen, type RecordedRun } from '../social';
 import { enterScene } from './motion';
+import { showZoomHint } from './ZoomHint';
 
 const BEST_KEY = 'partshift.best.v1';
 const LOSS_KEY = 'partshift.losses.v1';
@@ -349,6 +350,8 @@ export class GameScene extends Phaser.Scene {
     const params = new URLSearchParams(location.search);
     const assistParam = params.get('assist');
     const assist = ((['full', 'scanner', 'off'] as const).find((m) => m === assistParam) as ('full' | 'scanner' | 'off') | undefined) ?? 'off'; // v0.7 (MVP_RULES §3.1а): no auto checks, no scanner
+    // Wordless hint that the board zooms (pinch or wheel); the tutorial already teaches the board.
+    if (!st.tutorial) this.time.delayedCall(600, () => showZoomHint(this));
     const saved = st.tutorial || st.fresh ? null : loadSlot(this.slot);
     if (st.tutorial) this.guide = new TutorialGuide();
     // Free play: residents dig only where the player sends them, nothing is queued for them at the start.
