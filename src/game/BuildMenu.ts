@@ -215,13 +215,27 @@ export function refusal(o: BuildOption): string {
   return `${name}: ${o.note}`;
 }
 
+/** Maps building ids whose art file has a different base name than the id itself. */
+const ART_ALIAS: Record<string, string> = {
+  station:          'hero_station',
+  outpost:          'checkpoint',
+  relay:            'comms_tower',
+  watchtower:       'monitoring_tower',
+  jammer:           'splice_jammer',
+  backup_lab:       'backup_archive',
+  rotation_center:  'limb_rotation_center',
+  forge:            'element_forge',
+  civ_shelter:      'residents_shelter',
+  repair:           'repair_crew',
+};
+
 /** Texture of a building; hero stations come painted in their hero's element (art pack 03 hero_station_normal_<tech>). */
 export function buildingKey(scene: Phaser.Scene, id: string, hero?: string): string {
   if (hero) {
     const k = `building.station_${techOf(hero)}`;
     if (scene.textures.exists(k)) return k;
   }
-  return `building.${id}`;
+  return `building.${ART_ALIAS[id] ?? id}`;
 }
 
 /** Fits a building sprite into a w×h box, standing on its bottom edge. */
