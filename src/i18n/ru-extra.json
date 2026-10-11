@@ -378,5 +378,9 @@
   "trophy.not_enough_energy": "Не хватает энергии.",
   "trophy.same_element": "У трофея уже эта стихия.",
   "trophy.slot_mismatch": "Трофеи меняются только на такое же место того же типа.",
-  "trophy.max_reached": "У героя уже максимум трофеев."
+  "trophy.max_reached": "У героя уже максимум трофеев.",
+  "building.limb.title": "Выпуск частей",
+  "building.limb.pick_hint": "Выбери стихию: тогда мастерская начнёт выпускать руки и ноги для героев рядом.",
+  "building.limb.wait_hint": "Часть готова, ждёт героя рядом со свободным местом.",
+  "building.limb.next_hint": "Следующая часть через {s} с."
 }

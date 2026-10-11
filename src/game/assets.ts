@@ -54,6 +54,11 @@ export function createArt(scene: Phaser.Scene): void {
     const painted = !key || key.startsWith('screen.') || /^icon\.(boon|menu|control)_/.test(key);
     if (key && !painted && scene.textures.exists(key)) scene.textures.get(key).setFilter(Phaser.Textures.FilterMode.NEAREST);
   }
+  // Placeholder until the limb workshop's own sprite comes from the ChatGPT batch (Аниматор): it reuses the forge picture.
+  if (!scene.textures.exists('building.limb_workshop') && scene.textures.exists('building.forge')) {
+    scene.textures.addImage('building.limb_workshop', scene.textures.get('building.forge').getSourceImage() as HTMLImageElement);
+    scene.textures.get('building.limb_workshop').setFilter(Phaser.Textures.FilterMode.NEAREST);
+  }
   for (const [id, set] of Object.entries(animSets)) {
     for (const [name, a] of Object.entries(set.anims)) {
       scene.anims.create({
