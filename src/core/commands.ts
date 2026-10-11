@@ -59,6 +59,7 @@ export type RefuseReason =
   | 'build.invalid_cell'
   | 'build.cell_occupied'
   | 'build.enemies_near'
+  | 'build.outpost_edge'
   | 'build.unreachable'
   | 'chord.not_ready'
   | 'building.upgrade.max_level'
