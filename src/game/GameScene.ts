@@ -969,8 +969,10 @@ export class GameScene extends Phaser.Scene {
     this.add.image(buildBx + 40, btnY + btnH / 2, 'icon.build').setScale(1.6).setDepth(20).setTintFill(0xffffff);
     this.add.text(buildBx + 72, btnY + btnH / 2, t('hud.mode_build'), TXT.body(26, INK.white, '700')).setOrigin(0, 0.5).setDepth(20);
     const buildHit = this.add.zone(buildBx, btnY, btnW, btnH).setOrigin(0).setDepth(20).setInteractive({ useHandCursor: true });
+    // One tap opens the catalog, the next one closes it (the sheet leaves this button free).
     buildHit.on('pointerdown', stop(() => {
-      if (!this.drawer.isOpen) this.openCatalog();
+      if (this.drawer.isOpen) this.closeCatalog();
+      else this.openCatalog();
     }));
 
     // Content area sits above the buttons.
@@ -1038,10 +1040,18 @@ export class GameScene extends Phaser.Scene {
 
     const extraH = LANDSCAPE ? 200 : 300;
     const catalogBox = { x: DOCK.x, y: DOCK.y - extraH, w: DOCK.w, h: DOCK.h + extraH };
-    this.drawer = new BuildDrawer(this, catalogBox, UI_DEPTH + 10, {
-      pick: (o: BuildOption) => this.pickBuilding(o),
-      close: () => this.closeCatalog(),
-    });
+    // The sheet stops above the «Строить» button, so that button stays the one control that closes it.
+    const reserveBottom = DOCK.y + DOCK.h - btnY;
+    this.drawer = new BuildDrawer(
+      this,
+      catalogBox,
+      UI_DEPTH + 10,
+      {
+        pick: (o: BuildOption) => this.pickBuilding(o),
+        close: () => this.closeCatalog(),
+      },
+      reserveBottom,
+    );
   }
 
   /** 'build' switches the dock to the build catalog; 'dig' restores normal digging view. */
@@ -1797,9 +1807,14 @@ export class GameScene extends Phaser.Scene {
         return;
       }
     }
-    // Long press on an existing building: show name + desc (QA-009, UI_SPEC §4.4).
+    // Tap on our own building: its card (upgrade, boost heroes, demolish, rebuild), as the tutorial promises.
     if (c.revealed && c.building !== undefined) {
       const bid = c.building;
+      if (w.s.buildings.some((b) => b.id === bid && b.owner === this.me)) {
+        this.openBuildingCard(bid);
+        return;
+      }
+      // Someone else's building: long press shows its name + desc (QA-009, UI_SPEC §4.4).
       this.pressTimer = this.time.delayedCall(LONG_PRESS_MS, () => {
         const b = this.world.s.buildings.find((bld) => bld.id === bid);
         if (!b) return;
