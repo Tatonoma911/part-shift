@@ -2593,6 +2593,7 @@ export class World {
       this.addTempo(by.owner, 'nest');
     }
     for (const p of this.s.players) if (p.order === siteKey(site.x, site.y)) p.order = null;
+    if (by.kind === 'ally') this.heroXp(by, HERO_XP.perNest);
     this.emit('nest_destroyed', { x: site.x, y: site.y, owner: by.owner, amount: reward });
   }
 
