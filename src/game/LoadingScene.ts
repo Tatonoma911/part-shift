@@ -5,6 +5,7 @@ import { C, INK, LANDSCAPE, VIEW } from './layout';
 import { preloadComm } from './Comm';
 import { drawMenuBackdrop } from './MenuBackdrop';
 import { preloadMetaArt } from './meta/art';
+import { wantsResultsPreview } from './meta/ResultsPreviewScene';
 import { chip, plate, TXT } from './ui';
 
 /**
@@ -148,7 +149,7 @@ export class LoadingScene extends Phaser.Scene {
     this.leaving = true;
     if (!this.anims.exists('resident.idle')) createArt(this);
     this.cameras.main.fadeOut(220, 244, 247, 247);
-    this.cameras.main.once('camerafadeoutcomplete', () => this.scene.start('menu'));
+    this.cameras.main.once('camerafadeoutcomplete', () => this.scene.start(wantsResultsPreview() ? 'results-preview' : 'menu'));
   }
 
   private drawLogo(): void {

@@ -15,7 +15,7 @@ import { chip, plate, TXT } from './ui';
  * Building the city the way mobile strategies do it (Clash of Clans, Kingdom Rush,
  * Bad North; Антон 10.10: «понятно, приятно и знакомо по играм жанра»):
  *   1. a big «Строить» button in the dock;
- *   2. it slides up a catalog: tabs by group and a swipeable row of cards
+ *   2. it slides up a catalog: one vertical grid of every building, with a scrollable list
  *      (picture, price in Energy, land it frees, and why it is closed: blueprint 2/4,
  *      «нужна Школа», «построено 2/2», not enough Energy);
  *   3. picking a card puts a ghost of the building on the board: green where it can stand,
@@ -297,8 +297,8 @@ interface Box {
 }
 
 /**
- * The catalog sheet: header (title, Energy, ✕), group tabs, a swipeable row of cards.
- * Mouse wheel scrolls the row on PC. Cards redraw live while it is open (Energy grows).
+ * The catalog sheet: header (title, Energy, ✕) and one vertical grid of every building.
+ * Drag or mouse wheel scrolls the list. Cards redraw live while it is open (Energy grows).
  */
 export class BuildDrawer {
   private root: Phaser.GameObjects.Container | null = null;
@@ -321,14 +321,20 @@ export class BuildDrawer {
     private box: Box,
     private depth: number,
     private on: { pick: (o: BuildOption) => void; close: () => void },
+    /** Height of the box's bottom strip that stays free for the dock button under the sheet (taps reach it). */
+    private reserveBottom = 0,
   ) {
     this.cols = LANDSCAPE ? 4 : 3;
     this.gap = 10;
     const sw = box.w - 52;
     this.cardW = Math.floor((sw - this.gap * (this.cols - 1)) / this.cols);
-    // Show ~2 full rows + peek of a third so the user sees there is more to scroll.
-    const sh = box.h - 196;
-    this.cardH = Math.floor((sh - this.gap * 2) / 2.5);
+    // AR-35: ≥190px so picH ≥ 86px and the building sprite fills ≥64px (was 153px → 33px pic).
+    this.cardH = Math.max(190, Math.floor((this.viewH - this.gap * 2) / 2.5));
+  }
+
+  /** Visible height of the card row: from under the tabs down to a hint line above the reserved strip. */
+  private get viewH(): number {
+    return this.box.h - this.reserveBottom - 192;
   }
 
   get isOpen(): boolean {
@@ -344,7 +350,7 @@ export class BuildDrawer {
     const root = s.add.container(0, 0).setDepth(this.depth);
     this.root = root;
     // Eats taps so they don't reach the board under the sheet.
-    const eat = s.add.zone(x, y, w, h).setOrigin(0).setInteractive();
+    const eat = s.add.zone(x, y, w, h - this.reserveBottom).setOrigin(0).setInteractive();
     eat.on('pointerdown', (_p: Phaser.Input.Pointer, _x: number, _y: number, ev: Phaser.Types.Input.EventData) => ev.stopPropagation());
     root.add(eat);
     const g = s.add.graphics();
@@ -395,7 +401,7 @@ export class BuildDrawer {
     this.strip = strip;
     root.add(strip);
     const mask = s.make.graphics({}, false);
-    mask.fillRect(sx - 2, sy - 6, sw + 4, (this.box.h - 196) + 14);
+    mask.fillRect(sx - 2, sy - 6, sw + 4, this.viewH + 14);
     strip.setMask(mask.createGeometryMask());
     this.cards = [];
     let col = 0;
@@ -415,18 +421,21 @@ export class BuildDrawer {
     }
     const totalRows = row + (col > 0 ? 1 : 0);
     const totalH = totalRows * (this.cardH + this.gap) - this.gap;
-    this.maxScroll = Math.max(0, totalH - (this.box.h - 196));
+    this.maxScroll = Math.max(0, totalH - this.viewH);
     this.drawCards(options);
     // Swipe and tap on the row: a drag scrolls, a tap without a drag picks the card under the finger.
-    const zone = s.add.zone(sx, sy, sw, this.box.h - 196).setOrigin(0).setInteractive({ useHandCursor: true });
+    const zone = s.add.zone(sx, sy, sw, this.viewH).setOrigin(0).setInteractive({ useHandCursor: true });
     let downY = 0;
     let startScroll = 0;
     let dragged = false;
+    // A pick needs a press that started on the row: the finger that opened the drawer must not pick a card on lift.
+    let pressedHere = false;
     zone.on('pointerdown', (p: Phaser.Input.Pointer, _x: number, _y: number, ev: Phaser.Types.Input.EventData) => {
       ev.stopPropagation();
       downY = p.y;
       startScroll = this.scroll;
       dragged = false;
+      pressedHere = true;
     });
     zone.on('pointermove', (p: Phaser.Input.Pointer) => {
       if (!p.isDown) return;
@@ -434,6 +443,8 @@ export class BuildDrawer {
       if (dragged) this.scrollTo(startScroll - (p.y - downY));
     });
     zone.on('pointerup', (_p: Phaser.Input.Pointer, lx: number, ly: number) => {
+      if (!pressedHere) return;
+      pressedHere = false;
       if (dragged) return;
       const atY = ly + this.scroll;
       const hit = this.cards.find((c) => lx >= c.x && lx <= c.x + this.cardW && atY >= c.y && atY <= c.y + this.cardH);
@@ -445,10 +456,10 @@ export class BuildDrawer {
     });
     root.add(zone);
     // Hint under the row.
-    root.add(s.add.text(x + w / 2, y + h - 22, t('build.drawer.hint'), TXT.body(LANDSCAPE ? 17 : 19, INK.dim, '500')).setOrigin(0.5));
+    root.add(s.add.text(x + w / 2, y + h - this.reserveBottom - 20, t('build.drawer.hint'), TXT.body(LANDSCAPE ? 17 : 19, INK.dim, '500')).setOrigin(0.5));
     // Open on the highlighted card (tutorial) or the selected one.
     const focus = this.cards.find((c) => highlight.includes(c.o.id)) ?? this.cards.find((c) => c.o.key === selected);
-    if (focus) this.scrollTo(focus.y - ((this.box.h - 196) - this.cardH) / 2);
+    if (focus) this.scrollTo(focus.y - (this.viewH - this.cardH) / 2);
     this.setEnergy(energy);
     root.setY(40).setAlpha(0);
     s.tweens.add({ targets: root, y: 0, alpha: 1, duration: 180, ease: 'Cubic.easeOut' });
@@ -492,7 +503,7 @@ export class BuildDrawer {
 
   private drawTabs(): void {
     // The active tab: the last group that starts in the upper half of the visible strip.
-    const at = this.scroll + (this.box.h - 196) / 2;
+    const at = this.scroll + this.viewH / 2;
     const starts = this.cards.filter((c, k) => k === 0 || this.cards[k - 1].o.group !== c.o.group);
     const cur = [...starts].reverse().find((c) => c.y <= at)?.o.group ?? this.cards[0]?.o.group;
     for (const tb of this.tabs) {
@@ -513,7 +524,6 @@ export class BuildDrawer {
       card.c.removeAll(true);
       drawCard(this.scene, card.c, o, this.cardW, this.cardH, this.highlight.includes(o.id), o.key === this.selected);
     }
-    this.drawTabs();
   }
 }
 

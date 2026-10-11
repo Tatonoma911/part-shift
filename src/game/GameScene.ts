@@ -1,4 +1,3 @@
-import Phaser from 'phaser';
 import { openAccountPanel } from '../account/panel';
 import { BUILDABLE, boons, buildings as buildingDefs, config } from '../core/data';
 import { cellKey } from '../core/grid';
@@ -10,7 +9,8 @@ import { Voice } from './voice';
 import { MedalToasts, type Tier } from './meta/Awards';
 import { RunTally } from './meta/record';
 import { showResults } from './meta/ResultsScreen';
-import { boonPoolFor, loadMeta, pickAllies, roster } from './meta/store';
+import { boonPoolFor, loadMeta, offerHero, roster } from './meta/store';
+import { beforeShift } from './meta/beforeShift';
 import { pickBoon } from './meta/BoonPick';
 import { closeCoach, learning, openGuide, setLearningHooks } from './learn';
 import { volumeHeight, volumeSliders } from './volume';
@@ -29,6 +29,8 @@ import { BuildDrawer, buildOptions, type BuildOption } from './BuildMenu';
 import { buzz } from './comfort';
 import { drawLamp, drawMark, type Channel } from './Sensor';
 import { controlCall, RaidTimer, TempoMeter, type CallCard } from './Pulse';
+import { buildingCard, buildingInfo, DEMOLISH_CONFIRM_MS, type CardActionId } from './BuildingCard';
+import { recolorCommand, swapCommand } from './trophyActions';
 import { techOf } from './Vitals';
 import { armTechs } from './BoardView';
 import eventsJson from '../data/design/events.json';
@@ -38,6 +40,7 @@ import type { PeerSession as OnlineSession } from '../net/peer';
 import { challengeUrl, closeSocial, displayName, openBoard, openDonate, profile, rankOf, recordRun, resultCard, share, shouldNudge, socialOpen, type RecordedRun } from '../social';
 
 const BEST_KEY = 'partshift.best.v1';
+const LOSS_KEY = 'partshift.losses.v1';
 const LONG_PRESS_MS = 480;
 
 type Mode = 'dig' | 'build';
@@ -178,6 +181,22 @@ function stop(fn: () => void) {
  * (ui/BRAND_UI.md, ui/UI_SPEC.md). Rules live in core/World; this scene only
  * reads its state and turns touches into commands.
  */
+const FLAG_HINT_KEY = 'partshift.flagHint.v1';
+function flagHintSeen(): boolean {
+  try {
+    return localStorage.getItem(FLAG_HINT_KEY) === '1';
+  } catch {
+    return true;
+  }
+}
+function markFlagHintSeen(): void {
+  try {
+    localStorage.setItem(FLAG_HINT_KEY, '1');
+  } catch {
+    /* private mode: the hint just shows again next time */
+  }
+}
+
 export class GameScene extends Phaser.Scene {
   private world!: World;
   private board!: BoardView;
@@ -243,9 +262,11 @@ export class GameScene extends Phaser.Scene {
     cards: { id: string; g: Phaser.GameObjects.Graphics; cost: Phaser.GameObjects.Text; x: number; y: number; w: number; h: number }[];
   };
   private toasts: Phaser.GameObjects.Container[] = [];
+  private medkitCard: Phaser.GameObjects.Container | null = null;
   /** «Землекоп: серебро» plates from the top (ACHIEVEMENTS.md §3), one after another. */
   private medals!: MedalToasts;
   private overlay: Phaser.GameObjects.Container | null = null;
+  private buildingPanel: { id: number; card: Phaser.GameObjects.Container; armed: CardActionId | null; armedAt: number; sig: string } | null = null;
   private guideBox: { text: Phaser.GameObjects.Text; dots: Phaser.GameObjects.Graphics; g: Phaser.GameObjects.Graphics; y: number; h: number } | null = null;
 
   private paused = false;
@@ -346,7 +367,8 @@ export class GameScene extends Phaser.Scene {
     const frame = this.add.graphics().setDepth(0.5);
     brackets(frame, bx - 10, by - 10, bw + 20, bh + 20);
     this.board = new BoardView(this, this.world, bx, by, this.me);
-    this.cams.setBounds(bx, by, bw, bh);
+    // The tutorial's 8×10 board is small: let it zoom up to fill the view (AR-36).
+    this.cams.setBounds(bx, by, bw, bh, !!this.guide && !LANDSCAPE);
     // Online fields are bigger than the screen: start at the normal cell size over our own center.
     const home = this.online ? this.world.building(this.world.player(this.me).command) : undefined;
     if (home) this.cams.focus(bx + home.x * STEP + CELL / 2, by + home.y * STEP + CELL / 2, 1);
@@ -395,6 +417,7 @@ export class GameScene extends Phaser.Scene {
     this.ended = false;
     this.boonUi = null;
     this.music.start();
+    sound.play('shift_start');
     this.setMode('dig');
     // The tutorial teaches by itself; coach cards and the guide come with free play.
     setLearningHooks({ pause: () => (this.overlayPaused = true), resume: () => (this.overlayPaused = false), busy: () => this.inFight() || this.ended });
@@ -635,6 +658,33 @@ export class GameScene extends Phaser.Scene {
         this.overlayPaused = false;
       },
     );
+  }
+
+  /** A tapped medkit: a plate in the toast strip with the one button that heals (Антон 2026-10-11). */
+  private askMedkit(x: number, y: number): void {
+    this.medkitCard?.destroy();
+    const width = DOCK.w - 16;
+    const label = this.add.text(0, 0, t('medkit.use.hint'), { ...TXT.body(22, INK.graphite, '600'), align: 'center', lineSpacing: 2, wordWrap: { width: width - 36 } }).setOrigin(0.5, 0);
+    const btnW = width - 48, btnH = 56;
+    const h = 16 + label.height + 14 + btnH + 14;
+    const g = this.add.graphics();
+    chip(g, -width / 2, -h / 2, width, h, C.paper, 0.97, 14, { color: C.seam, width: 2 });
+    label.setPosition(0, -h / 2 + 16);
+    const bx = -btnW / 2, by = h / 2 - 14 - btnH;
+    const btn = this.add.graphics();
+    chip(btn, bx, by, btnW, btnH, C.teal, 1, 14);
+    const btnLabel = this.add.text(0, by + btnH / 2, t('medkit.use.button'), { ...TXT.body(24, INK.white, '800') }).setOrigin(0.5);
+    const hit = this.add.zone(bx, by, btnW, btnH).setOrigin(0).setInteractive({ useHandCursor: true });
+    const yIdeal = DOCK.y - 8 - h / 2;
+    const yPos = LANDSCAPE ? yIdeal : Math.max(yIdeal, BOARD.y + BOARD.h + 4 + h / 2);
+    const box = this.add.container(DOCK.x + DOCK.w / 2, yPos, [g, label, btn, btnLabel, hit]).setDepth(21);
+    const close = () => { if (this.medkitCard === box) this.medkitCard = null; box.destroy(); };
+    hit.on('pointerdown', () => {
+      close();
+      if (this.world.apply({ type: 'useMedkit', x, y }, this.me).ok) this.say(t('event.medkit.open'), 1800);
+    });
+    this.medkitCard = box;
+    this.time.delayedCall(6000, () => { if (this.medkitCard === box) close(); });
   }
 
   /** Toast plate in the strip between the board and the dock; a new one replaces the old (UI_SPEC §2). */
@@ -965,8 +1015,10 @@ export class GameScene extends Phaser.Scene {
     this.add.image(buildBx + 40, btnY + btnH / 2, 'icon.build').setScale(1.6).setDepth(20).setTintFill(0xffffff);
     this.add.text(buildBx + 72, btnY + btnH / 2, t('hud.mode_build'), TXT.body(26, INK.white, '700')).setOrigin(0, 0.5).setDepth(20);
     const buildHit = this.add.zone(buildBx, btnY, btnW, btnH).setOrigin(0).setDepth(20).setInteractive({ useHandCursor: true });
+    // One tap opens the catalog, the next one closes it (the sheet leaves this button free).
     buildHit.on('pointerdown', stop(() => {
-      if (!this.drawer.isOpen) this.openCatalog();
+      if (this.drawer.isOpen) this.closeCatalog();
+      else this.openCatalog();
     }));
 
     // Content area sits above the buttons.
@@ -1034,10 +1086,18 @@ export class GameScene extends Phaser.Scene {
 
     const extraH = LANDSCAPE ? 200 : 300;
     const catalogBox = { x: DOCK.x, y: DOCK.y - extraH, w: DOCK.w, h: DOCK.h + extraH };
-    this.drawer = new BuildDrawer(this, catalogBox, UI_DEPTH + 10, {
-      pick: (o: BuildOption) => this.pickBuilding(o),
-      close: () => this.closeCatalog(),
-    });
+    // The sheet stops above the «Строить» button, so that button stays the one control that closes it.
+    const reserveBottom = DOCK.y + DOCK.h - btnY;
+    this.drawer = new BuildDrawer(
+      this,
+      catalogBox,
+      UI_DEPTH + 10,
+      {
+        pick: (o: BuildOption) => this.pickBuilding(o),
+        close: () => this.closeCatalog(),
+      },
+      reserveBottom,
+    );
   }
 
   /** 'build' switches the dock to the build catalog; 'dig' restores normal digging view. */
@@ -1081,6 +1141,63 @@ export class GameScene extends Phaser.Scene {
     this.drawer.close();
     this.refreshModeBtns(this.mode === 'build');
   }
+
+  /** Shows the card of one of our buildings (upgrade, boost, demolish, rebuild, cancel). */
+  private openBuildingCard(id: number, armed: CardActionId | null = null, armedAt = 0): void {
+    const w = this.world;
+    const b = w.s.buildings.find((x) => x.id === id && x.owner === this.me);
+    if (!b) return this.closeBuildingCard();
+    if (this.drawer?.isOpen) this.closeCatalog();
+    this.buildingPanel?.card.destroy();
+    const info = buildingInfo(w, b, this.me);
+    const card = buildingCard(this, DOCK, info, UI_DEPTH + 10, armed, (a) => this.buildingAct(id, a), () => this.closeBuildingCard(), 900);
+    this.buildingPanel = { id, card, armed, armedAt, sig: JSON.stringify(info) };
+  }
+
+  private closeBuildingCard(): void {
+    this.buildingPanel?.card.destroy();
+    this.buildingPanel = null;
+  }
+
+  /** A card button: demolish takes a second tap within DEMOLISH_CONFIRM_MS, the rest apply at once. */
+  private buildingAct(id: number, a: CardActionId): void {
+    if (a === 'demolish') {
+      if (this.buildingPanel?.armed !== 'demolish') {
+        const stamp = this.time.now;
+        this.openBuildingCard(id, 'demolish', stamp);
+        this.time.delayedCall(DEMOLISH_CONFIRM_MS, () => {
+          if (this.buildingPanel?.id === id && this.buildingPanel.armedAt === stamp) this.openBuildingCard(id);
+        });
+        return;
+      }
+    }
+    // The forge picks an element first (the card's orbs); the rotation centre swaps at once.
+    if (a === 'recolor') return this.openBuildingCard(id, 'recolor');
+    const bld = this.world.s.buildings.find((x) => x.id === id);
+    const cmd =
+      a === 'upgrade' ? { type: 'upgradeBuilding', building: id }
+      : a === 'demolish' ? { type: 'demolish', building: id }
+      : a === 'rebuild' ? { type: 'rebuild', building: id }
+      : a === 'cancel' ? { type: 'cancelBuild', building: id }
+      : a.startsWith('boost:') ? { type: 'heroBoost', building: id }
+      : a.startsWith('recolor:') && bld ? recolorCommand(this.world, bld, this.me, a.slice('recolor:'.length))
+      : a.startsWith('limb:') ? { type: 'setLimbTech', building: id, tech: a.slice('limb:'.length) }
+      : a === 'swap' && bld ? swapCommand(this.world, bld, this.me)
+      : null;
+    if (!cmd) {
+      this.say(t('trophy.invalid'), 2800, true);
+      return this.openBuildingCard(id);
+    }
+    const r = this.world.apply(cmd as never, this.me);
+    if (!r.ok) {
+      this.say(t(r.reason), 2800, true);
+      this.openBuildingCard(id);
+      return;
+    }
+    if (a === 'demolish') this.closeBuildingCard();
+    else this.openBuildingCard(id);
+  }
+
 
   /** Called when the player picks a building from the catalog drawer. */
   private pickBuilding(o: BuildOption): void {
@@ -1382,6 +1499,17 @@ export class GameScene extends Phaser.Scene {
     const me = w.player(this.me);
     const lines = [victory ? t('win.text') : t('lose.text'), t('win.time', { time: this.fmt(w.s.time) }), t('win.threat', { level: w.threatLevel }), t('win.nests', { count: me.stats.nests }), t('win.caches', { count: me.stats.caches })];
     let badge: string | undefined = victory ? undefined : t('lose.badge');
+    // «Последний шанс» (AUDIT: после 2 поражений подряд): счётчик в браузере игрока, сбрасывается победой.
+    if (!this.guide && !this.online) {
+      let losses = 0;
+      try {
+        losses = victory ? 0 : (Number(localStorage.getItem(LOSS_KEY)) || 0) + 1;
+        localStorage.setItem(LOSS_KEY, String(losses));
+      } catch {
+        /* ignore */
+      }
+      if (losses >= 2) lines.push(t('end.last_chance'));
+    }
     if (victory) {
       let best = Infinity;
       try {
@@ -1421,7 +1549,8 @@ export class GameScene extends Phaser.Scene {
           this.scene.start('dossier');
         },
         menu: () => this.toMenu(),
-        takeNext: (id) => pickAllies(loadMeta(), [id]),
+        takeNext: (id) => offerHero(loadMeta(), id),
+        nextShift: victory && shiftN && shiftN < CAMPAIGN_TOTAL ? () => this.nextShift(shiftN + 1) : undefined,
         extra: [
           ...(rec ? [{ label: t('end.share'), act: () => void this.shareShot() }, { label: t('end.board'), act: () => openBoard({ tab: this.start.daily ? 'day' : 'week' }) }] : []),
           { label: t('end.coffee'), act: () => openDonate(victory ? 'win' : 'lose') },
@@ -1439,10 +1568,7 @@ export class GameScene extends Phaser.Scene {
         }),
     };
     // Campaign: primary button is "Следующая смена"; shift 12 leads back to menu.
-    const nextShiftAction =
-      victory && shiftN && shiftN < CAMPAIGN_TOTAL
-        ? () => this.scene.start('game', { slot: this.start.slot ?? 0, fresh: true, shiftN: shiftN + 1 } as typeof this.start)
-        : null;
+    const nextShiftAction = victory && shiftN && shiftN < CAMPAIGN_TOTAL ? () => this.nextShift(shiftN + 1) : null;
     this.overlay?.destroy();
     this.overlay = this.sheet({
       // Comic illustration when the artist's screen is in (style per layer); until then the Command Center sprite, grey on a loss.
@@ -1461,6 +1587,19 @@ export class GameScene extends Phaser.Scene {
         { label: t('menu.quit_to_menu'), act: () => this.toMenu(), half: true },
       ],
     });
+  }
+
+  /** «Следующая смена»: the squad screen opens first, as it does from the menu, then the shift starts with the squad picked. */
+  private nextShift(n: number): void {
+    this.overlay?.destroy();
+    this.overlay = beforeShift(
+      this,
+      (squad) => {
+        this.overlay = null;
+        this.scene.start('game', { slot: this.start.slot ?? 0, fresh: true, shiftN: n, allies: squad });
+      },
+      () => this.toMenu(),
+    );
   }
 
   private showOnlineEnd(victory: boolean, watch: boolean): void {
@@ -1704,6 +1843,8 @@ export class GameScene extends Phaser.Scene {
       return;
     }
     if (p.middleButtonDown()) return;
+    // An opened interactive cell (resource, mine, capsule, medkit, nest, survivor) answers the tap.
+    if (c.revealed && c.content !== 'ground' && c.content !== 'rubble' && c.content !== 'water') sound.play('cell_tap');
     // Tap an enemy or an opened nest: all residents attack it (any mode).
     const foe = this.board.enemyAt(wp.x, wp.y);
     if (foe) {
@@ -1726,9 +1867,14 @@ export class GameScene extends Phaser.Scene {
         return;
       }
     }
-    // Long press on an existing building: show name + desc (QA-009, UI_SPEC §4.4).
+    // Tap on our own building: its card (upgrade, boost heroes, demolish, rebuild), as the tutorial promises.
     if (c.revealed && c.building !== undefined) {
       const bid = c.building;
+      if (w.s.buildings.some((b) => b.id === bid && b.owner === this.me)) {
+        this.openBuildingCard(bid);
+        return;
+      }
+      // Someone else's building: long press shows its name + desc (QA-009, UI_SPEC §4.4).
       this.pressTimer = this.time.delayedCall(LONG_PRESS_MS, () => {
         const b = this.world.s.buildings.find((bld) => bld.id === bid);
         if (!b) return;
@@ -1790,15 +1936,19 @@ export class GameScene extends Phaser.Scene {
       return;
     }
     this.confirmCell = null;
-    // An opened medkit is used by a tap: it heals the heroes around it (hazards.json medkit).
+    // An opened medkit asks first: «Использовать» heals the heroes around it (hazards.json medkit).
     if (c.revealed && c.content === 'medkit') {
-      if (w.apply({ type: 'useMedkit', x, y }, this.me).ok) this.say(t('event.medkit.open'), 1800);
+      if (c.stock && c.heal === undefined) this.askMedkit(x, y);
+      else if (w.apply({ type: 'useMedkit', x, y }, this.me).ok) this.say(t('event.medkit.open'), 1800);
       return;
     }
     // Swiping over auto-queued cells promotes them to the player's own queue; only own orders get cancelled.
     const own = w.player(this.me).queue.includes(k);
     const r = !c.revealed && !own ? w.apply({ type: 'queueDig', x, y }, this.me) : null;
     if (r?.ok) this.guide?.notify('queued');
+    // Once per device: the first dig explains the flag, so nobody opens a suspicious block by accident.
+    if (r?.ok && !flagHintSeen()) { markFlagHintSeen(); this.say(t('cell.mark.hint'), 6000); }
+    if (r && !r.ok && r.reason === 'dig.unreachable') this.say(t('dig.unreachable'), 3000, true);
     if (r && !r.ok && r.reason === 'assist.known_danger') {
       this.confirmCell = k;
       this.say(t(w.visibleKnowledge(this.me).get(k) === 'demon' ? 'cell.confirm_demon.hint' : 'cell.confirm_nest.hint'), 4000, true);

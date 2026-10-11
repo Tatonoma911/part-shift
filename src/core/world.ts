@@ -54,6 +54,13 @@ import type { AssistMode, Building, Cell, ClueChannel, GameState, PartInstance, 
 
 export const STEP = 0.05;
 
+/** Arm or leg kind of a trophy slot (the stumps are per kind). */
+/** The five elements a limb workshop can make limbs in (buildings.json limbMaker.techChoice). */
+const LIMB_TECHS = ['thermo', 'cryo', 'volt', 'toxin', 'impact'];
+const slotKind = (slot: SlotId): 'arm' | 'leg' | 'other' => (slot.startsWith('arm') ? 'arm' : slot.startsWith('leg') ? 'leg' : 'other');
+
+/** Most the relays can add to the hero cap (buildings.json relay: up to +2). */
+const RELAY_CAP_MAX = 2;
 /** How long a capsule peek shows the sensors (buildings.json watchtower.peek.showSeconds). */
 const CAPSULE_PEEK_SECONDS = 20;
 
@@ -340,6 +347,21 @@ export class World {
     return p.queue.includes(k) || p.autoQueue.includes(k);
   }
 
+  /** True when a hero can walk from the command center to a cell next to (x, y) over opened ground. */
+  digReachable(playerId: number, x: number, y: number): boolean {
+    const cmd = this.building(this.s.players[playerId]?.command);
+    if (!cmd) return false;
+    const next = neighbors(this.s, x, y);
+    const path = findPath(
+      this.s.width,
+      this.s.height,
+      { x: cmd.x, y: cmd.y },
+      (ax, ay) => walkableForPlayer(this.s, ax, ay),
+      (ax, ay) => next.some((n) => n.x === ax && n.y === ay),
+    );
+    return path !== null;
+  }
+
   /** Cells where this player may build (own territory, not claimed by a rival). */
   inTerritory(playerId: number, x: number, y: number): boolean {
     const owns = (pid: number) =>
@@ -354,7 +376,15 @@ export class World {
 
   /** Residents a player may have at once (config.population.cap + survivors). */
   residentCap(playerId: number): number {
-    return this.cfg.population.cap + this.player(playerId).capBonus;
+    return this.cfg.population.cap + this.player(playerId).capBonus + this.relayCapBonus(playerId);
+  }
+
+  /** Relays raise the hero cap by heroCapAdd each, at most +2 over the difficulty cap (buildings.json relay). */
+  private relayCapBonus(playerId: number): number {
+    const add = this.s.buildings
+      .filter((b) => b.owner === playerId && b.complete)
+      .reduce((n, b) => n + (buildingDefs[b.type].heroCapAdd ?? 0), 0);
+    return Math.min(RELAY_CAP_MAX, add);
   }
 
   /** School training level of a player's residents, 0..trainingLevelsMax. */
@@ -393,6 +423,12 @@ export class World {
     if (!isEnemy(u) && this.overgrownAt(u)) out.speed *= 1 - (HERO_ABILITY.overgrowth.amount ?? 40) / 100;
     if (u.poison) out.defense = Math.max(0, out.defense - u.poison.defense);
     if (u.bare) out.defense = 0;
+    if (!isEnemy(u)) out.defense += this.heroAuraAt(u);
+    if (isEnemy(u) && this.jammedAt(u)) {
+      const j = buildingDefs.jammer.aura!;
+      out.speed *= j.moveSpeedFactor ?? 1;
+      out.attackSeconds /= j.attackSpeedFactor ?? 1;
+    }
     if (!isEnemy(u)) {
       const cb = this.s.callBuffs;
       if (cb?.damage && this.s.time < cb.damage.until) out.damage *= cb.damage.factor;
@@ -503,6 +539,8 @@ export class World {
           c.markKind = undefined;
         }
         if ((c.revealed && !harvestable) || c.marked || p.queue.includes(k)) return bad();
+        // A plain tap or swipe on a cell no hero can reach would sit in the queue forever: refuse it and say so.
+        if (!cmd.force && !this.digReachable(playerId, cmd.x, cmd.y)) return bad('dig.unreachable');
         const known = this.visibleKnowledge(playerId).get(k);
         if (this.cfg.assist.blockSwipeOnKnownDanger && !cmd.force && (known === 'threat' || known === 'demon')) {
           return bad('assist.known_danger');
@@ -619,6 +657,73 @@ export class World {
         this.emit('building_boosted', { x: b.x, y: b.y, owner: playerId, text: b.type });
         return ok;
       }
+      case 'setLimbTech': {
+        // Limb workshop: the player picks the element of the next limbs (buildings.json limbMaker).
+        const b = this.s.buildings.find((x) => x.id === cmd.building && x.owner === playerId);
+        if (!b || !b.complete || b.ruined || !buildingDefs[b.type].limbMaker) return bad('invalid');
+        if (!LIMB_TECHS.includes(cmd.tech)) return bad('invalid');
+        b.limbTech = cmd.tech;
+        this.rev++;
+        return ok;
+      }
+      case 'recolorTrophy': {
+        // Forge: one trophy of a hero in range changes element; its strength and slot stay (buildings.json forge.recolor).
+        const b = this.s.buildings.find((x) => x.id === cmd.building && x.owner === playerId);
+        const def = b && b.complete && !b.ruined ? buildingDefs[b.type].recolor : undefined;
+        if (!b || !def) return bad('invalid');
+        const u = this.s.units.find((x) => x.id === cmd.unit && x.owner === playerId && x.kind === 'ally');
+        if (!u || cheb(u.x, u.y, b.x, b.y) > def.radius) return bad('trophy.out_of_range');
+        const part = u.parts[cmd.slot];
+        if (!part) return bad('trophy.invalid');
+        const nextId = `${cmd.tech}_${partDefs[part.id].slot}`;
+        const nextDef = partDefs[nextId];
+        if (!nextDef) return bad('trophy.invalid');
+        if (nextDef.tech === partDefs[part.id].tech) return bad('trophy.same_element');
+        if ((b.recolorCooldown ?? 0) > 0) return bad('trophy.on_cooldown');
+        if (p.energy < def.energyCost) return bad('trophy.not_enough_energy');
+        p.energy -= def.energyCost;
+        b.recolorCooldown = def.cooldownSeconds;
+        u.parts = { ...u.parts, [cmd.slot]: { id: nextId, tier: part.tier } };
+        this.emit('trophy_recolored', { x: u.x, y: u.y, owner: playerId, unit: u.id, text: nextId });
+        this.rev++;
+        return ok;
+      }
+      case 'swapTrophy': {
+        // Rotation centre: a trophy moves to another hero in range, or two trophies of one slot kind trade places
+        // (buildings.json rotation_center.swap). A moved trophy leaves its own limb back, not a stump.
+        const b = this.s.buildings.find((x) => x.id === cmd.building && x.owner === playerId);
+        const def = b && b.complete && !b.ruined ? buildingDefs[b.type].swap : undefined;
+        if (!b || !def) return bad('invalid');
+        const from = this.s.units.find((x) => x.id === cmd.from && x.owner === playerId && x.kind === 'ally');
+        const to = this.s.units.find((x) => x.id === cmd.to && x.owner === playerId && x.kind === 'ally');
+        if (!from || !to) return bad('invalid');
+        if (cheb(from.x, from.y, b.x, b.y) > def.radius || cheb(to.x, to.y, b.x, b.y) > def.radius) return bad('trophy.out_of_range');
+        const part = from.parts[cmd.fromSlot];
+        if (!part) return bad('trophy.invalid');
+        const kind = slotKind(cmd.fromSlot);
+        if (kind !== slotKind(cmd.toSlot) || (from === to && cmd.fromSlot === cmd.toSlot)) return bad('trophy.slot_mismatch');
+        if ((b.swapCooldown ?? 0) > 0) return bad('trophy.on_cooldown');
+        const incoming = to.parts[cmd.toSlot];
+        if (!incoming && Object.keys(to.parts).length >= def.respectsMaxTrophies) return bad('trophy.max_reached');
+        if (p.energy < def.energyCost) return bad('trophy.not_enough_energy');
+        p.energy -= def.energyCost;
+        b.swapCooldown = def.cooldownSeconds;
+        if (from === to) {
+          from.parts = { ...from.parts, [cmd.fromSlot]: incoming, [cmd.toSlot]: part };
+        } else {
+          from.parts = { ...from.parts };
+          delete from.parts[cmd.fromSlot];
+          if (incoming) from.parts[cmd.fromSlot] = incoming;
+          to.parts = { ...to.parts, [cmd.toSlot]: part };
+          if (!incoming) {
+            this.removeStump(from, kind);
+            this.removeStump(to, kind);
+          }
+        }
+        this.emit('trophy_moved', { x: to.x, y: to.y, owner: playerId, unit: to.id, text: part.id });
+        this.rev++;
+        return ok;
+      }
       case 'cancelBuild': {
         const b = this.s.buildings.find((x) => x.id === cmd.building && x.owner === playerId);
         if (!b) return bad('invalid');
@@ -677,7 +782,7 @@ export class World {
         s.raidCalledEarly = true;
         // Force the raid clock to fire immediately next tick.
         s.raidAt = 0;
-        this.emit('raid_siren', { owner: playerId });
+        this.emit('raid_siren', { owner: playerId, text: 'early' });
         return ok;
       }
       case 'demolish': {
@@ -1238,6 +1343,7 @@ export class World {
     const frontier: Array<{ x: number; y: number; depth: number }> = [{ x: cx, y: cy, depth: 0 }];
     const visited = new Set<string>();
     visited.add(cellKey(cx, cy));
+    let opened = 0;
     while (frontier.length > 0) {
       const { x, y, depth } = frontier.shift()!;
       if (depth >= maxDepth) continue;
@@ -1255,6 +1361,7 @@ export class World {
           pl.queue = pl.queue.filter((q) => q !== nk);
           pl.autoQueue = pl.autoQueue.filter((q) => q !== nk);
         }
+        opened++;
         this.emit('dig_done', { x: n.x, y: n.y, owner, wave: true });
         this.addTempo(owner, 'wave');
         // Continue cascade only if this neighbor is also quiet.
@@ -1264,6 +1371,7 @@ export class World {
         }
       }
     }
+    if (opened > 0) this.emit('wave_clear', { x: cx, y: cy, owner, amount: opened });
   }
 
   // -- population (MVP_RULES §4: a resident every spawnSeconds while below the cap)
@@ -2109,7 +2217,7 @@ export class World {
     if (v.kind === 'ally') {
       // An ally is knocked out, not lost: it is back at the center after a while.
       const p = s.players[v.owner];
-      (p.allyBack ??= {})[v.hero!] = s.time + ALLY.respawnSeconds;
+      (p.allyBack ??= {})[v.hero!] = s.time + ALLY.respawnSeconds * this.birthFactor(v.owner);
       // Armor plates: lose 1 on knockout (enemies.json armorPlate.lostOnKnockout).
       if (v.armorPlates && v.armorPlates > 0) {
         const lost = Math.min(v.armorPlates, armorPlateDef.lostOnKnockout);
@@ -2222,6 +2330,38 @@ export class World {
     u.hp += Math.max(0, this.stats(u).hp - before);
     this.s.players[u.owner].stats.parts++;
     this.emit(fromHero ? 'hero_part_taken' : 'part_attached', { x: u.x, y: u.y, owner: u.owner, unit: u.id, text: part.id });
+  }
+
+  /**
+   * A stump of one limb kind closes (the hero's own limb is back, or a trophy fills it). Removing it gives back
+   * the stat the stump took (the reverse of tearLimb / takePart). Tails and wings have no stumps.
+   */
+  private removeStump(u: Unit, kind: string): void {
+    if (kind !== 'arm' && kind !== 'leg') return;
+    const stump = u.lostLimbs?.indexOf(kind) ?? -1;
+    if (stump < 0) return;
+    u.lostLimbs!.splice(stump, 1);
+    if (!u.lostLimbs!.length) u.lostLimbs = undefined;
+    u.base = kind === 'arm' ? { ...u.base, damage: Math.round(u.base.damage / 0.8) } : { ...u.base, speed: Math.round((u.base.speed / 0.75) * 10) / 10 };
+  }
+
+  /** Rebirth timer factor of a player: the Archive (buildings.json backup_lab.birthTimeFactor) when one stands. */
+  private birthFactor(playerId: number): number {
+    let f = 1;
+    for (const b of this.s.buildings) if (b.owner === playerId && b.complete && !b.ruined) f = Math.min(f, buildingDefs[b.type].birthTimeFactor ?? 1);
+    return f;
+  }
+
+  /** A stump regrows after `seconds` in a medcenter's heal aura: the limb's stats come back (the reverse of tearLimb). */
+  private regrowLimb(u: Unit, seconds: number, dt: number): void {
+    u.regrowTimer = (u.regrowTimer ?? 0) + dt;
+    if (u.regrowTimer < seconds) return;
+    u.regrowTimer = undefined;
+    const slot = u.lostLimbs![0];
+    u.lostLimbs!.splice(0, 1);
+    if (!u.lostLimbs!.length) u.lostLimbs = undefined;
+    u.base = slot === 'arm' ? { ...u.base, damage: Math.round(u.base.damage / 0.8) } : { ...u.base, speed: Math.round((u.base.speed / 0.75) * 10) / 10 };
+    this.emit('limb_regrown', { x: u.x, y: u.y, owner: u.owner, unit: u.id, text: `${u.hero ?? u.kind}:${slot}` });
   }
 
   private effects(u: Unit, dt: number): void {
@@ -2918,8 +3058,11 @@ export class World {
     const pool = this.rules.allies !== undefined ? this.rules.allies : Object.keys(heroDefs);
     const alive = new Set(this.s.units.filter((u) => u.owner === p.id && u.kind === 'ally' && u.hp > 0).map((u) => u.hero));
     const waiting = new Set(Object.keys(p.allyBack ?? {}));
-    const id = pool.find((hid) => !alive.has(hid) && !waiting.has(hid) && (!tiers || tiers.includes(heroDefs[hid]?.tier ?? 0)));
+    // A knocked-out squad hero is reborn first, at the building that births it, instead of a fresh hero.
+    const fit = (hid: string) => !alive.has(hid) && (!tiers || tiers.includes(heroDefs[hid]?.tier ?? 0));
+    const id = pool.find((hid) => waiting.has(hid) && fit(hid)) ?? pool.find((hid) => !waiting.has(hid) && fit(hid));
     if (!id) return null;
+    if (waiting.has(id)) delete p.allyBack![id];
     const h = heroDefs[id];
     if (!h) return null;
     const e = h.enemy;
@@ -3036,8 +3179,12 @@ export class World {
       if (!b.complete) continue;
       if (def.healAura) {
         for (const u of s.units) {
-          if (u.owner !== b.owner || u.hp <= 0 || cheb(Math.round(u.x), Math.round(u.y), b.x, b.y) > def.healAura.radius) continue;
+          if (u.owner !== b.owner || u.hp <= 0 || cheb(Math.round(u.x), Math.round(u.y), b.x, b.y) > def.healAura.radius) {
+            if (u.regrowTimer) u.regrowTimer = undefined; // the regrowth needs a continuous stay
+            continue;
+          }
           u.hp = Math.min(this.maxHp(u), u.hp + def.healAura.hpPerSecond * dt);
+          if (def.regrowLimbSeconds && u.kind === 'ally' && u.lostLimbs?.length) this.regrowLimb(u, def.regrowLimbSeconds, dt);
         }
       }
       const a = def.autoAttack;
@@ -3054,11 +3201,66 @@ export class World {
     }
   }
 
+  /** Defense an outpost adds to our hero standing in its range (buildings.json heroAura); 0 if none. */
+  private heroAuraAt(u: Unit): number {
+    const a = buildingDefs.outpost.heroAura;
+    if (!a) return 0;
+    const near = this.s.buildings.some((b) => b.type === 'outpost' && b.owner === u.owner && b.complete && !b.ruined && cheb(b.x, b.y, Math.round(u.x), Math.round(u.y)) <= a.radius);
+    return near ? a.defenseAdd : 0;
+  }
+
+  /** True when a built jammer of any side reaches this enemy (buildings.json jammer.aura). */
+  private jammedAt(u: Unit): boolean {
+    const a = buildingDefs.jammer.aura;
+    if (!a) return false;
+    return this.s.buildings.some((b) => b.type === 'jammer' && b.complete && !b.ruined && cheb(b.x, b.y, Math.round(u.x), Math.round(u.y)) <= a.radius);
+  }
+
+  /** Limb workshop: every everySeconds one arm or leg in the picked element goes to an ally in radius with that slot free. */
+  private makeLimbs(b: Building, dt: number): void {
+    const lm = buildingDefs[b.type].limbMaker;
+    if (!lm || !b.limbTech) return;
+    b.limbTimer = (b.limbTimer ?? 0) + dt;
+    if (b.limbTimer < lm.everySeconds) return;
+    const heroes = this.s.units.filter((u) => u.owner === b.owner && u.kind === 'ally' && u.hp > 0 && cheb(u.x, u.y, b.x, b.y) <= lm.radius);
+    // Arms and legs take turns; a leg waits when its element has no leg part in the data, so an arm is made instead.
+    const kinds = (b.limbCount ?? 0) % 2 === 0 ? ['arm', 'leg'] : ['leg', 'arm'];
+    for (const kind of kinds) {
+      const id = `${b.limbTech}_${kind}`;
+      const slots: SlotId[] = kind === 'arm' ? ['arm_left', 'arm_right'] : ['leg_left', 'leg_right'];
+      if (!partDefs[id]) continue;
+      for (const u of heroes) {
+        const slot = slots.find((sl) => !u.parts[sl]);
+        if (!slot) continue;
+        u.parts = { ...u.parts, [slot]: { id, tier: lm.tier } };
+        b.limbCount = (b.limbCount ?? 0) + 1;
+        b.limbTimer = 0;
+        this.emit('limb_made', { x: u.x, y: u.y, owner: b.owner, unit: u.id, text: id });
+        this.rev++;
+        return;
+      }
+    }
+    // Nobody in reach has a free slot: the limb waits ready, and comes out as soon as one does.
+    b.limbTimer = lm.everySeconds;
+  }
+
   private production(dt: number): void {
     const s = this.s;
     for (const b of s.buildings) {
+      // Boost, recolor and swap cooldowns count down whatever the building is doing.
+      if (b.boostCooldown) b.boostCooldown = Math.max(0, b.boostCooldown - dt) || undefined;
+      if (b.recolorCooldown) b.recolorCooldown = Math.max(0, b.recolorCooldown - dt) || undefined;
+      if (b.swapCooldown) b.swapCooldown = Math.max(0, b.swapCooldown - dt) || undefined;
       if (!b.complete) continue;
       const def = buildingDefs[b.type];
+      if (def.limbMaker) this.makeLimbs(b, dt);
+      // Repair building: our finished buildings in range regain HP (buildings.json repair).
+      if (def.repair) {
+        for (const o of s.buildings) {
+          if (o.owner !== b.owner || !o.complete || o.ruined || o.hp <= 0) continue;
+          if (cheb(o.x, o.y, b.x, b.y) <= def.repair.radius) o.hp = Math.min(buildingDefs[o.type].hp, o.hp + def.repair.hpPerSecond * dt);
+        }
+      }
       if (def.produce) {
         // Reactors work by themselves [Антон]; a cooler next door doubles the pace.
         const cooled = s.buildings.some((o) => {

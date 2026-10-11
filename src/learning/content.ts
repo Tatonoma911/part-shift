@@ -217,17 +217,20 @@ export const SECTIONS: Section[] = [
         stats: () => rows(cfg.economy, [['startEnergy', 'stat.start', plain], ['energyPerDugTile', 'stat.per_block', plain], ['cacheEnergy', 'stat.cache', plain]]),
       },
       { id: 'res.residents', name: 'resource.residents.name', desc: 'res.residents.text', visual: { kind: 'anim', set: ourSet('standard'), anim: 'walk', scale: 2.3 }, related: ['people.ours', 'people.birth', 'people.cap'] },
+      { id: 'res.squad', name: 'resource.squad_cap.name', desc: 'res.squad.text', how: ['res.squad.how'], visual: { kind: 'image', key: 'icon.resident' }, related: ['people.ours', 'people.birth'] },
       { id: 'res.threat', name: 'res.threat.name', desc: 'res.threat.text', visual: { kind: 'image', key: 'icon.timer' }, clip: 'threat', tip: 'lesson.call.tip', related: ['hero.lairs'] },
     ],
   },
   {
     id: 'buildings',
     icon: 'icon.build',
-    entries: ['command', 'home', 'reactor', 'cooler', 'school', 'medcenter'].map((id) => ({
+    entries: ['command', 'home', 'reactor', 'cooler', 'school', 'medcenter', 'limb_workshop'].map((id) => ({
       id: `building.${id}`,
       name: `building.${id}.name`,
       desc: `bld.${id}.text`,
-      visual: { kind: 'image', key: `building.${id}`, scale: 2 } as Visual,
+      // No sprite for limb_workshop yet (art gap): the entry shows text and stats only.
+      visual: id === 'limb_workshop' ? undefined : ({ kind: 'image', key: `building.${id}`, scale: 2 } as Visual),
+      how: id === 'limb_workshop' ? ['limb_workshop.how'] : undefined,
       clip: id === 'home' || id === 'school' ? ('birth' as ClipId) : id === 'reactor' ? ('energy' as ClipId) : id === 'command' ? ('start' as ClipId) : undefined,
       tip: id === 'home' || id === 'reactor' ? 'lesson.build.tip' : undefined,
       stats: buildingStats(id),
@@ -251,6 +254,7 @@ export const SECTIONS: Section[] = [
       },
       { id: 'people.cap', name: 'people.cap.name', desc: 'people.cap.text', visual: { kind: 'image', key: 'building.home', scale: 2 }, related: ['building.home'] },
       { id: 'people.rally', name: 'people.rally.name', desc: 'people.rally.text', visual: { kind: 'anim', set: ourSet('kiln'), anim: 'attack', scale: 2.3 }, clip: 'heroes' },
+      { id: 'people.squad', name: 'people.squad.name', desc: 'people.squad.text', how: ['people.squad.how'], visual: { kind: 'image', key: 'icon.resident' }, related: ['people.ours', 'res.squad'] },
       { id: 'people.knockout', name: 'people.knockout.name', desc: 'people.knockout.text', visual: { kind: 'anim', set: ourSet('mason'), anim: 'hit', scale: 2.3 }, related: ['building.medcenter', 'parts.slots'] },
       { id: 'people.ranks', name: 'people.ranks.name', desc: 'people.ranks.text', visual: { kind: 'anim', set: ourSet('frostline'), anim: 'idle', scale: 2.3 }, clip: 'parts' },
     ],
@@ -346,6 +350,7 @@ export const SECTIONS: Section[] = [
         items: ((boonsJson as Row).boons as { id: string }[]).map((b) => [`boon.${b.id}.name`, `boon.${b.id}.desc`] as [string, string]),
         visual: { kind: 'image', key: 'tile.cache', scale: 3 },
       },
+      { id: 'map.medkit', name: 'map.medkit.name', desc: 'map.medkit.text', how: ['map.medkit.how'], visual: { kind: 'image', key: 'tile.cache', scale: 3 }, related: ['map.boons'] },
       { id: 'map.survivor', name: 'site.survivor.name', desc: 'site.survivor.desc', how: ['map.survivor.how'], visual: { kind: 'anim', set: 'resident', anim: 'idle', scale: 3 } },
     ],
   },

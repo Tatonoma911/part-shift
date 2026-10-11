@@ -114,7 +114,7 @@ describe('mines v0.2 (MVP_RULES §5.2, hazards.json mine.unmarkedDig)', () => {
   const m = hazards.mine.unmarkedDig;
 
   it('a hero in the blast loses the difficulty share of max HP and is concussed', () => {
-    for (const [diff, share] of [['intern', 0.5], ['shift', 0.7], ['rush', 0.8]] as const) {
+    for (const [diff, share] of [['intern', 0.2], ['shift', 0.3], ['rush', 0.35]] as const) {
       const { w, c, u } = blastWorld('impact', diff);
       expect(m.heroDamageMaxHpFraction[diff === 'rush' ? 'crunch' : diff]).toBe(share);
       u.parts = {}; // a torn trophy would change max HP

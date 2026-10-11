@@ -1,4 +1,3 @@
-import Phaser from 'phaser';
 import { buildings as buildingDefs, config, heroes as heroDefs, mapgen, parts as partDefs } from '../core/data';
 import { cellKey } from '../core/grid';
 import type { Building, Cell, Unit } from '../core/state';
@@ -74,6 +73,8 @@ function hash(x: number, y: number): number {
 const RESIDENT_COMBAT_SET = 'defender';
 /** Starter heroes (MVP_RULES §4) whose drawn sheets stand in for workers until v0.7 spawns real heroes. */
 const STARTER_LOOKS = ['standard', 'patch', 'canopy', 'current'];
+/** Our hero dog's sprite scale: half the side, a quarter of the square, so it is not taller than the people (Антон, 2026-10-10). */
+const HERO_DOG_SCALE = 0.5;
 /** block_fx / lair_fx are drawn at 2× (a block is ~104 px wide in the frame). */
 const FX2 = 0.5;
 const BLOCK_EL = ['thermo', 'cryo', 'volt', 'impact', 'toxin'];
@@ -88,8 +89,6 @@ const ZONE_DECOR: Record<string, { anim: string; tint?: number; alpha?: number }
   thermo: { anim: 'fx.heat_haze', tint: 0xff7a3a, alpha: 0.95 },
   toxin: { anim: 'fx.heat_haze', tint: 0x7dff5a, alpha: 0.8 },
 };
-/** Strength of the zone colour wash on closed blocks (bright colours need less). */
-const ZONE_WASH: Record<string, number> = { cryo: 0.16, volt: 0.12, impact: 0.14, thermo: 0.16, toxin: 0.16 };
 const CIVILIANS = ['civilian_office', 'civilian_courier', 'civilian_granny'];
 /** Game slot ids → the short names the limb-mask sets use in `slots`. */
 /** Find contents → drawn icon (blueprint fragment, armor plates, Control record). */
@@ -352,7 +351,7 @@ export class BoardView {
         at('fx.cache_open');
         break;
       case 'resident_born':
-        at('fx.resident_born');
+        at('fx.hero_born');
         break;
       case 'energy_orb_arrive': {
         if (!animSets.fx_energy) {
@@ -1287,6 +1286,9 @@ export class BoardView {
       if (!v) {
         const set = this.setOf(u);
         const spr = this.scene.add.sprite(fx, fy, set).setOrigin(...originOf(set));
+        // Our hero dog (Патч) is drawn as big as a person; it fits a quarter of the hero's square (Антон, 2026-10-10).
+        // Every unit that uses the dog sheet gets it: squad heroes and the starter residents alike.
+        if (set === 'ally_patch') spr.setScale(HERO_DOG_SCALE);
         v = { spr, set, prevX: u.x, prevY: u.y, curX: u.x, curY: u.y, simT: w.s.time, lastCd: u.attackCooldown, oneShot: false, windup: false, anim: '' };
         // The call target stands a size bigger: it must read as the one to beat (QA-014).
         if (u.kind === 'hero' && u.nest && w.cell(...(u.nest.slice(2).split(',').map(Number) as [number, number])).content === 'boss_hatch') {

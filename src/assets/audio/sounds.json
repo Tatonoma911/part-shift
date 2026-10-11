@@ -1278,6 +1278,193 @@
       "priority": 3,
       "group": "voice",
       "note": "survivor bubble"
+    },
+    "mine_armed": {
+      "files": [
+        "sfx/mine_armed"
+      ],
+      "volume": 0.6,
+      "cooldownMs": 150,
+      "maxInstances": 2,
+      "priority": 3,
+      "group": "world",
+      "stereo": true
+    },
+    "mine_blast": {
+      "files": [
+        "sfx/mine_blast"
+      ],
+      "volume": 0.9,
+      "cooldownMs": 300,
+      "maxInstances": 2,
+      "priority": 6,
+      "group": "combat",
+      "stereo": true
+    },
+    "mine_defused": {
+      "files": [
+        "sfx/mine_defused"
+      ],
+      "volume": 0.7,
+      "cooldownMs": 300,
+      "maxInstances": 1,
+      "priority": 4,
+      "group": "world",
+      "stereo": true
+    },
+    "medkit_open": {
+      "files": [
+        "sfx/medkit_open"
+      ],
+      "volume": 0.6,
+      "cooldownMs": 200,
+      "maxInstances": 2,
+      "priority": 3,
+      "group": "ui",
+      "stereo": true
+    },
+    "medkit_use": {
+      "files": [
+        "sfx/medkit_use"
+      ],
+      "volume": 0.7,
+      "cooldownMs": 250,
+      "maxInstances": 2,
+      "priority": 4,
+      "group": "ui",
+      "stereo": true
+    },
+    "medkit_empty": {
+      "files": [
+        "sfx/medkit_empty"
+      ],
+      "volume": 0.5,
+      "cooldownMs": 400,
+      "maxInstances": 1,
+      "priority": 2,
+      "group": "ui",
+      "stereo": true
+    },
+    "bonus_opened": {
+      "files": [
+        "sfx/bonus_opened"
+      ],
+      "volume": 0.8,
+      "cooldownMs": 200,
+      "maxInstances": 2,
+      "priority": 4,
+      "group": "world",
+      "stereo": true
+    },
+    "building_demolished": {
+      "files": [
+        "sfx/building_demolished"
+      ],
+      "volume": 0.9,
+      "cooldownMs": 400,
+      "maxInstances": 1,
+      "priority": 5,
+      "group": "world",
+      "stereo": true
+    },
+    "building_boosted": {
+      "files": [
+        "sfx/building_boosted"
+      ],
+      "volume": 0.7,
+      "cooldownMs": 400,
+      "maxInstances": 1,
+      "priority": 3,
+      "group": "world",
+      "stereo": true
+    },
+    "build_cancelled": {
+      "files": [
+        "sfx/build_cancelled"
+      ],
+      "volume": 0.6,
+      "cooldownMs": 300,
+      "maxInstances": 1,
+      "priority": 2,
+      "group": "ui",
+      "stereo": true
+    },
+    "call_answered": {
+      "files": [
+        "sfx/call_answered"
+      ],
+      "volume": 0.7,
+      "cooldownMs": 0,
+      "maxInstances": 1,
+      "priority": 5,
+      "group": "alert",
+      "stereo": true
+    },
+    "call_complied": {
+      "files": [
+        "sfx/call_complied"
+      ],
+      "volume": 0.8,
+      "cooldownMs": 0,
+      "maxInstances": 1,
+      "priority": 5,
+      "group": "alert",
+      "stereo": true
+    },
+    "super_charged": {
+      "files": [
+        "sfx/super_charged"
+      ],
+      "volume": 0.8,
+      "cooldownMs": 0,
+      "maxInstances": 1,
+      "priority": 5,
+      "group": "combat",
+      "stereo": true
+    },
+    "cell_tap": {
+      "files": [
+        "sfx/cell_tap"
+      ],
+      "volume": 0.5,
+      "cooldownMs": 60,
+      "maxInstances": 3,
+      "priority": 2,
+      "group": "ui",
+      "stereo": true
+    },
+    "shift_start": {
+      "files": [
+        "sfx/shift_start"
+      ],
+      "volume": 0.8,
+      "cooldownMs": 0,
+      "maxInstances": 1,
+      "priority": 5,
+      "group": "alert",
+      "stereo": true
+    },
+    "courier_spawn": {
+      "files": [
+        "sfx/courier_spawn"
+      ],
+      "volume": 0.7,
+      "cooldownMs": 300,
+      "maxInstances": 1,
+      "priority": 4,
+      "group": "world",
+      "stereo": true
+    },
+    "courier_grab": {
+      "files": [
+        "sfx/courier_grab"
+      ],
+      "volume": 0.7,
+      "cooldownMs": 200,
+      "maxInstances": 1,
+      "priority": 4,
+      "group": "world",
+      "stereo": true
     }
   },
   "music": {
@@ -1439,6 +1626,39 @@
       "bpm": 70,
       "bars": 16,
       "loopSeconds": 54.8571,
+      "barSync": false
+    },
+    "menu2": {
+      "files": [
+        "music/menu2"
+      ],
+      "volume": 1.0,
+      "loop": true,
+      "bpm": 96,
+      "bars": 32,
+      "loopSeconds": 80.0,
+      "barSync": false
+    },
+    "menu3": {
+      "files": [
+        "music/menu3"
+      ],
+      "volume": 1.0,
+      "loop": true,
+      "bpm": 112,
+      "bars": 32,
+      "loopSeconds": 68.5714,
+      "barSync": false
+    },
+    "menu4": {
+      "files": [
+        "music/menu4"
+      ],
+      "volume": 1.0,
+      "loop": true,
+      "bpm": 92,
+      "bars": 32,
+      "loopSeconds": 83.4783,
       "barSync": false
     }
   },

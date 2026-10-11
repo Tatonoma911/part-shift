@@ -251,7 +251,7 @@
     "retreat": {
       "atHpFraction": 0.25,
       "to": "nearest home shelter or command center",
-      "returnAtHpFraction": 0.8,
+      "returnAtHpFraction": 0.9,
       "_note": "command heals 2 HP/s at radius 1, home shelter protects"
     }
   },

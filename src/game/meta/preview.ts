@@ -190,46 +190,51 @@ export function metaDemo(scene: Phaser.Scene, which: string, meta: MetaSave): bo
     return true;
   }
   const win = which !== 'lose';
-  root = showResults(
+  root = resultsPreview(scene, win, meta, again);
+  return true;
+}
+
+/** The results screen with sample data: `win` picks the win or the loss. Used by ?meta=… and by the standalone results preview scene. */
+export function resultsPreview(scene: Phaser.Scene, win: boolean, meta: MetaSave, close: () => void): Phaser.GameObjects.Container {
+  return showResults(
     scene,
     {
-      outcome: win ? 'win' : 'lose',
-      seconds: win ? 11 * 60 + 42 : 8 * 60 + 3,
-      difficulty: 'shift',
-      newRecord: win,
-      lines: win
-        ? [
-            { key: 'results.score.energy', value: 980 },
-            { key: 'results.score.nests', value: 250 },
-            { key: 'results.score.heroes', value: 400 },
-            { key: 'results.score.call_target', value: 300 },
-            { key: 'results.score.win', value: 300 },
-            { key: 'results.score.speed', value: 100 },
-            { key: 'results.score.stars', value: 150 },
-          ]
-        : [
-            { key: 'results.score.energy', value: 640 },
-            { key: 'results.score.nests', value: 150 },
-            { key: 'results.score.heroes', value: 200 },
-          ],
-      mults: [{ key: 'results.score.mult_difficulty', params: { name: 'Смена', value: '1' } }],
-      total: win ? 2330 : 990,
-      scoreBefore: win ? 5200 : 7340,
-      progress: win
-        ? [
-            { heroId: 'kiln', label: 'Килн', from: 12, to: 13, need: 50 },
-            { heroId: 'patch', label: 'Тайники', from: 24, to: 26, need: 30 },
-            { heroId: 'canopy', label: 'Энергия за смену', from: 640, to: 980, need: 1000 },
-          ]
-        : [],
-      closest: { heroId: 'patch', text: 'Ближе всех: Патч, тайников 26/30' },
-      medals: win ? [{ id: 'dig', tier: 2 }, { id: 'nests', tier: 1 }, { id: 'no_losses', tier: 4 }] : [],
-      medalClosest: { id: 'nests', cur: 132, max: 150 },
-      medalPoints: win ? 3300 : 0,
-      stars: starsView(win ? { met: [true, true, false], stars: 2, bonus: 150, coop: false, limit: 720 } : { met: [false, false, true], stars: 0, bonus: 0, coop: false, limit: 720 }),
-      unlocked: win ? 'frostline' : undefined,
-    },
-    { again, dossier: () => (scene.scene.key === 'dossier' ? again() : scene.scene.start('dossier', { meta })), menu: again, takeNext: () => undefined },
+        outcome: win ? 'win' : 'lose',
+        seconds: win ? 11 * 60 + 42 : 8 * 60 + 3,
+        difficulty: 'shift',
+        newRecord: win,
+        lines: win
+          ? [
+              { key: 'results.score.energy', value: 980 },
+              { key: 'results.score.nests', value: 250 },
+              { key: 'results.score.heroes', value: 400 },
+              { key: 'results.score.call_target', value: 300 },
+              { key: 'results.score.win', value: 300 },
+              { key: 'results.score.speed', value: 100 },
+              { key: 'results.score.stars', value: 150 },
+            ]
+          : [
+              { key: 'results.score.energy', value: 640 },
+              { key: 'results.score.nests', value: 150 },
+              { key: 'results.score.heroes', value: 200 },
+            ],
+        mults: [{ key: 'results.score.mult_difficulty', params: { name: 'Смена', value: '1' } }],
+        total: win ? 2330 : 990,
+        scoreBefore: win ? 5200 : 7340,
+        progress: win
+          ? [
+              { heroId: 'kiln', label: 'Килн', from: 12, to: 13, need: 50 },
+              { heroId: 'patch', label: 'Тайники', from: 24, to: 26, need: 30 },
+              { heroId: 'canopy', label: 'Энергия за смену', from: 640, to: 980, need: 1000 },
+            ]
+          : [],
+        closest: { heroId: 'patch', text: 'Ближе всех: Патч, тайников 26/30' },
+        medals: win ? [{ id: 'dig', tier: 2 }, { id: 'nests', tier: 1 }, { id: 'no_losses', tier: 4 }] : [],
+        medalClosest: { id: 'nests', cur: 132, max: 150 },
+        medalPoints: win ? 3300 : 0,
+        stars: starsView(win ? { met: [true, true, false], stars: 2, bonus: 150, coop: false, limit: 720 } : { met: [false, false, true], stars: 0, bonus: 0, coop: false, limit: 720 }),
+        unlocked: win ? 'frostline' : undefined,
+      },
+    { again: close, dossier: () => (scene.scene.key === 'dossier' ? close() : scene.scene.start('dossier', { meta })), menu: close, takeNext: () => undefined },
   );
-  return true;
 }

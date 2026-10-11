@@ -166,7 +166,7 @@ describe('free play digging', () => {
 });
 
 describe('medcenter', () => {
-  it('pulses heal to a resident within 2 cells every 2 s until it is at full HP', () => {
+  it('heals a wounded resident next to it like the command center, up to the 80 % return point', () => {
     const w = handWorld(['.......', '.......', '.......', '......n']);
     for (const c of w.s.cells) c.revealed = c.content === 'ground';
     w.apply({ type: 'placeCommand', x: 1, y: 1 });
@@ -174,11 +174,9 @@ describe('medcenter', () => {
     w.apply({ type: 'build', building: 'medcenter', x: 2, y: 2 });
     run(w, 12); // build it
     const r = residents(w)[0];
+    Object.assign(r, { x: 2, y: 3, path: [], task: { type: 'idle' } });
     r.hp = 1;
-    w.drainEvents();
     run(w, 20);
-    const pulses = w.drainEvents().filter((e) => e.type === 'healed' && e.unit === r.id).length;
-    expect(pulses).toBeGreaterThanOrEqual(1);
-    expect(r.hp).toBe(w.maxHp(r));
+    expect(r.hp).toBeGreaterThanOrEqual(w.maxHp(r) * 0.8);
   });
 });

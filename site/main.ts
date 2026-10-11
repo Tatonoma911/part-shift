@@ -433,10 +433,13 @@ function villainsView(): string {
 
 function comicCard(c: (typeof COMICS)[number]): string {
   const cover = c.id === 'last-donut' ? `comics/last-donut-cover-${lang}.webp` : c.pages[lang][0];
-  return `<a class="comic-card slab" href="#comic-${c.id}">
-    <div class="cover"><img src="${img(cover)}" alt="" loading="lazy"></div>
-    <div class="meta"><span class="caps">${tr(c.series)} // ${tr(c.cast)}</span><h3>${tr(c.title)}</h3><p>${tr(c.blurb)}</p></div>
-  </a>`;
+  const playLabel = lang === 'ru' ? '► Смотреть' : '► Watch';
+  return `<div class="comic-card slab">
+    <a class="cover" href="#comic-${c.id}"><img src="${img(cover)}" alt="" loading="lazy"></a>
+    <div class="meta"><span class="caps">${tr(c.series)} // ${tr(c.cast)}</span><h3>${tr(c.title)}</h3><p>${tr(c.blurb)}</p>
+    <div class="row" style="margin-top:14px;gap:8px"><a class="btn btn-ghost" href="#comic-${c.id}">${lang === 'ru' ? 'Читать' : 'Read'}</a><button class="btn btn-primary" data-play-comic="${c.id}">${playLabel}</button></div>
+    </div>
+  </div>`;
 }
 
 function storyCard(): string {
@@ -466,6 +469,7 @@ function comicView(id: string): string {
       <h1 style="font-size:clamp(30px,5vw,52px)">${tr(c.title)}</h1>
       <p class="lead">${tr(c.blurb)}${ruOnly ? ` <span class="chip">${u('ruOnly')}</span>` : ''}</p>
       <p class="caps tap-hint">${R('НАЖМИ НА СТРАНИЦУ, ЧТОБЫ ЧИТАТЬ КРУПНО', 'TAP A PAGE TO READ IT LARGE')}</p>
+      <button class="btn btn-primary" data-play-comic="${c.id}" style="margin-bottom:16px">► ${R('Смотреть как кино', 'Watch cinematic')}</button>
       ${c.pages[lang].map((p, k) => `<button class="zoom page" data-src="${img(p)}" data-full="1" aria-label="${esc(tr(c.title))} ${k + 1}"><img src="${img(p)}" alt="${esc(tr(c.title))} ${k + 1}" ${k ? 'loading="lazy"' : ''}></button>`).join('')}
       <div class="pager"><a class="btn btn-ghost" href="#comics">${u('comics')}</a><a class="btn btn-primary" href="#comic-${next.id}">${tr(next.title)} →</a></div>
     </div>
@@ -548,6 +552,17 @@ app.addEventListener('click', (ev) => {
   if (t.closest('#drawer a')) document.getElementById('drawer')!.hidden = true;
   // «Узнать историю» just scrolls the home page down to the canon block instead of opening a new page.
   if (t.closest('[data-story]')) return void import('./intro').then((m) => m.playStory(lang));
+  const playBtn = t.closest<HTMLButtonElement>('[data-play-comic]');
+  if (playBtn) {
+    const cid = playBtn.dataset.playComic!;
+    const c = COMICS.find((x) => x.id === cid);
+    if (c) {
+      import('./comic-player').then((m) => {
+        m.playComic(c.pages[lang].map((p) => img(p)), tr(c.title), lang);
+      });
+    }
+    return;
+  }
   const jump = t.closest<HTMLAnchorElement>('a[data-scroll]');
   if (jump) {
     ev.preventDefault();

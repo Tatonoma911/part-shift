@@ -189,7 +189,8 @@ export function medalTile(scene: Phaser.Scene, x: number, y: number, w: number, 
   const got = st.tier > 0;
   chip(g, 0, 0, w, h, got ? C.paper : C.paper2, got ? 1 : 0.75, 12, { color: got ? TIER_HEX[st.tier] : C.sky2, width: got ? 3 : 2 });
   c.add(g);
-  const cupH = Math.round(h * 0.42);
+  // Phone: a smaller cup leaves room for a name big enough to read (Арт-директор: 15 px of the 780 canvas was ~7 px on screen).
+  const cupH = Math.round(h * (LANDSCAPE ? 0.42 : 0.34));
   c.add(medalCup(scene, w / 2, 8 + cupH, cupH, st.tier));
   if (showcased) {
     // A small yellow star: this medal is in the profile showcase.
@@ -209,18 +210,18 @@ export function medalTile(scene: Phaser.Scene, x: number, y: number, w: number, 
     const pg = scene.add.graphics();
     for (let k = 0; k < 3; k++) {
       pg.fillStyle(k < st.tier ? TIER_HEX[k + 1] : 0xc9d3d7, 1);
-      pg.fillCircle(w / 2 + (k - 1) * 14, py, 4.5);
+      pg.fillCircle(w / 2 + (k - 1) * 13, py, 4);
     }
     c.add(pg);
   }
   // Name on up to two lines; longer ones shrink rather than run into the bar.
-  const name = scene.add.text(w / 2, py + 9, medalName(st.def.id), { ...TXT.body(LANDSCAPE ? 16 : 15, got ? INK.graphite : INK.dim, '700'), align: 'center', wordWrap: { width: w - 14 }, lineSpacing: -2 }).setOrigin(0.5, 0);
-  const room = h - (py + 9) - 22;
+  const name = scene.add.text(w / 2, py + 8, medalName(st.def.id), { ...TXT.body(LANDSCAPE ? 18 : 21, got ? INK.graphite : INK.dim, '700'), align: 'center', wordWrap: { width: w - 10 }, lineSpacing: -4 }).setOrigin(0.5, 0);
+  const room = h - (py + 8) - 18;
   if (name.height > room) name.setScale(room / name.height);
   c.add(name);
   if (!st.maxed) {
     const bg = scene.add.graphics();
-    bar(bg, 12, h - 16, w - 24, 6, st.frac, got ? TIER_HEX[Math.min(3, st.tier + 1)] : C.teal);
+    bar(bg, 12, h - 13, w - 24, 6, st.frac, got ? TIER_HEX[Math.min(3, st.tier + 1)] : C.teal);
     c.add(bg);
   }
   const hit = scene.add.zone(0, 0, w, h).setOrigin(0).setInteractive({ useHandCursor: true });
