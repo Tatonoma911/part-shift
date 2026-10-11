@@ -764,13 +764,13 @@ export class BoardView {
 
   private drawRubble(g: Phaser.GameObjects.Graphics, c: Cell, px: number, py: number, now: number): void {
     if (c.content !== 'rubble' || (c.stock ?? 0) <= 0) return;
-    const left = Math.min(1, (c.stock ?? 0) / RUBBLE_FULL);
-    g.lineStyle(2, C.amber, 0.5 + 0.35 * Math.sin(now / 260));
+    const tiers = Math.ceil(Math.min(1, (c.stock ?? 0) / RUBBLE_FULL) * 3);
+    g.lineStyle(2, C.amber, 0.7);
     g.strokeRect(px + 2, py + 2, CELL - 4, CELL - 4);
     g.fillStyle(C.night, 0.7);
     g.fillRect(px + 4, py + CELL - 7, CELL - 8, 3);
-    g.fillStyle(left > 0.5 ? C.green : left > 0.2 ? C.amber : C.coral, 1);
-    g.fillRect(px + 4, py + CELL - 7, (CELL - 8) * left, 3);
+    g.fillStyle(tiers === 3 ? C.green : tiers === 2 ? C.amber : C.coral, 1);
+    g.fillRect(px + 4, py + CELL - 7, ((CELL - 8) * tiers) / 3, 3);
   }
 
   private drawClosed(
