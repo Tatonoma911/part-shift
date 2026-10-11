@@ -55,6 +55,8 @@ import type { AssistMode, Building, Cell, ClueChannel, GameState, PartInstance, 
 export const STEP = 0.05;
 
 /** Arm or leg kind of a trophy slot (the stumps are per kind). */
+/** The five elements a limb workshop can make limbs in (buildings.json limbMaker.techChoice). */
+const LIMB_TECHS = ['thermo', 'cryo', 'volt', 'toxin', 'impact'];
 const slotKind = (slot: SlotId): 'arm' | 'leg' | 'other' => (slot.startsWith('arm') ? 'arm' : slot.startsWith('leg') ? 'leg' : 'other');
 
 /** Most the relays can add to the hero cap (buildings.json relay: up to +2). */
@@ -653,6 +655,15 @@ export class World {
         b.boostCooldown = def.boost?.cooldown ?? 60;
         this.emit('aura_pulse', { x: b.x, y: b.y, owner: playerId, text: b.type });
         this.emit('building_boosted', { x: b.x, y: b.y, owner: playerId, text: b.type });
+        return ok;
+      }
+      case 'setLimbTech': {
+        // Limb workshop: the player picks the element of the next limbs (buildings.json limbMaker).
+        const b = this.s.buildings.find((x) => x.id === cmd.building && x.owner === playerId);
+        if (!b || !b.complete || b.ruined || !buildingDefs[b.type].limbMaker) return bad('invalid');
+        if (!LIMB_TECHS.includes(cmd.tech)) return bad('invalid');
+        b.limbTech = cmd.tech;
+        this.rev++;
         return ok;
       }
       case 'recolorTrophy': {
@@ -3174,6 +3185,34 @@ export class World {
     return this.s.buildings.some((b) => b.type === 'jammer' && b.complete && !b.ruined && cheb(b.x, b.y, Math.round(u.x), Math.round(u.y)) <= a.radius);
   }
 
+  /** Limb workshop: every everySeconds one arm or leg in the picked element goes to an ally in radius with that slot free. */
+  private makeLimbs(b: Building, dt: number): void {
+    const lm = buildingDefs[b.type].limbMaker;
+    if (!lm || !b.limbTech) return;
+    b.limbTimer = (b.limbTimer ?? 0) + dt;
+    if (b.limbTimer < lm.everySeconds) return;
+    const heroes = this.s.units.filter((u) => u.owner === b.owner && u.kind === 'ally' && u.hp > 0 && cheb(u.x, u.y, b.x, b.y) <= lm.radius);
+    // Arms and legs take turns; a leg waits when its element has no leg part in the data, so an arm is made instead.
+    const kinds = (b.limbCount ?? 0) % 2 === 0 ? ['arm', 'leg'] : ['leg', 'arm'];
+    for (const kind of kinds) {
+      const id = `${b.limbTech}_${kind}`;
+      const slots: SlotId[] = kind === 'arm' ? ['arm_left', 'arm_right'] : ['leg_left', 'leg_right'];
+      if (!partDefs[id]) continue;
+      for (const u of heroes) {
+        const slot = slots.find((sl) => !u.parts[sl]);
+        if (!slot) continue;
+        u.parts = { ...u.parts, [slot]: { id, tier: lm.tier } };
+        b.limbCount = (b.limbCount ?? 0) + 1;
+        b.limbTimer = 0;
+        this.emit('limb_made', { x: u.x, y: u.y, owner: b.owner, unit: u.id, text: id });
+        this.rev++;
+        return;
+      }
+    }
+    // Nobody in reach has a free slot: the limb waits ready, and comes out as soon as one does.
+    b.limbTimer = lm.everySeconds;
+  }
+
   private production(dt: number): void {
     const s = this.s;
     for (const b of s.buildings) {
@@ -3183,6 +3222,7 @@ export class World {
       if (b.swapCooldown) b.swapCooldown = Math.max(0, b.swapCooldown - dt) || undefined;
       if (!b.complete) continue;
       const def = buildingDefs[b.type];
+      if (def.limbMaker) this.makeLimbs(b, dt);
       // Repair building: our finished buildings in range regain HP (buildings.json repair).
       if (def.repair) {
         for (const o of s.buildings) {

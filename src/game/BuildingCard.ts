@@ -21,7 +21,7 @@ import { heroesInReach, swapCommand } from './trophyActions';
  * Texts: building.card.*, building.boost.*, building.demolish.* (Сценарист, ru.json 0.30).
  */
 
-export type CardActionId = 'upgrade' | 'demolish' | 'rebuild' | 'cancel' | 'recolor' | 'swap' | `boost:${string}` | `coat:${string}` | `recolor:${string}`;
+export type CardActionId = 'upgrade' | 'demolish' | 'rebuild' | 'cancel' | 'recolor' | 'swap' | `boost:${string}` | `coat:${string}` | `recolor:${string}` | `limb:${string}`;
 
 /** A trophy row: the forge's recolor or the rotation centre's swap. */
 export interface TrophyRow {
@@ -63,6 +63,8 @@ export interface BuildingInfo {
   boosts: BoostRow[];
   /** Forge recolor and rotation swap rows (buildings.json forge.recolor, rotation_center.swap). */
   trophies: TrophyRow[];
+  /** Limb workshop: the element picked for the next limbs (null until picked) and a one-line hint. */
+  limb: { current: string | null; hint: string } | null;
   demolish: { refund: number; enabled: boolean; reason: string; lowHp: boolean } | null;
   rebuild: { cost: number; enabled: boolean; reason: string } | null;
   cancel: { refund: number } | null;
@@ -183,6 +185,7 @@ export function buildingInfo(world: World, raw: Building, me: number): BuildingI
     upgradingLine: '',
     boosts: [],
     trophies: [],
+    limb: null,
     demolish: null,
     rebuild: null,
     cancel: null,
@@ -260,6 +263,15 @@ export function buildingInfo(world: World, raw: Building, me: number): BuildingI
     else if (dRecolor.energyCost > energy) reason = short(dRecolor.energyCost);
     else if (!reach.some((u) => Object.keys(u.parts).length > 0)) reason = t('building.card.disabled.no_trophy_near');
     info.trophies.push({ id: 'recolor', name: txt('building.trophy.recolor.name') || 'Перекраска', desc: txt('building.trophy.recolor.desc'), energy: dRecolor.energyCost, cd, enabled: !reason, reason });
+  }
+  const lm = buildingDefs[b.type]?.limbMaker;
+  if (lm) {
+    const left = Math.max(0, Math.ceil(lm.everySeconds - (b.limbTimer ?? 0)));
+    const hint = !b.limbTech
+      ? (txt('building.limb.pick_hint') || 'Выбери стихию: тогда мастерская начнёт выпускать руки и ноги для героев рядом.')
+      : left <= 0 ? (txt('building.limb.wait_hint') || 'Часть готова, ждёт героя рядом со свободным местом.')
+      : (txt('building.limb.next_hint', { s: left }) || `Следующая часть через ${left} с.`);
+    info.limb = { current: b.limbTech ?? null, hint };
   }
   const dSwap = buildingDefs[b.type]?.swap;
   if (dSwap) {
@@ -525,6 +537,33 @@ export function buildingCard(scene: Phaser.Scene, box: Box, info: BuildingInfo, 
           y += 96;
         }
       }
+    }
+    // Limb workshop: five orbs pick the element of the next limbs (taps send limb:<tech>).
+    if (info.limb) {
+      y += 6;
+      body.add(scene.add.text(x + pad, y, (txt('building.limb.title') || 'Выпуск частей').toUpperCase(), TXT.caps(INK.amber)));
+      y += 30;
+      line(info.limb.hint, INK.dim, 17, '500');
+      const lg = scene.add.graphics();
+      body.add(lg);
+      const limbTechs = ['thermo', 'cryo', 'volt', 'toxin', 'impact'];
+      const lstep = inner / limbTechs.length;
+      limbTechs.forEach((tech, k) => {
+        const ox = x + pad + lstep * k + lstep / 2;
+        if (info.limb?.current === tech) {
+          lg.lineStyle(4, C.amber, 1);
+          lg.strokeCircle(ox, y + 30, 34);
+        }
+        drawTechOrb(lg, tech, ox, y + 30, 26);
+        const oh = scene.add.zone(ox - lstep / 2, y, lstep, 64).setOrigin(0).setInteractive({ useHandCursor: true });
+        oh.on('pointerdown', (_p: Phaser.Input.Pointer, _x: number, _y: number, ev: Ev) => {
+          stop(ev);
+          act(`limb:${tech}`);
+        });
+        body.add(oh);
+        body.add(scene.add.text(ox, y + 66, t(`tech.${tech}`), TXT.body(15, INK.dim, '700')).setOrigin(0.5, 0));
+      });
+      y += 96;
     }
     // Demolish: small, at the bottom, second tap confirms.
     if (info.demolish) {

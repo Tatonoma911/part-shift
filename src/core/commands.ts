@@ -21,6 +21,8 @@ export type Command =
   /** Boost a building using a hero ability (buildings.json boost). */
   | { type: 'heroBoost'; building: number }
   | { type: 'recolorTrophy'; building: number; unit: number; slot: SlotId; tech: string }
+  /** Limb workshop: pick the element of the limbs it makes next. */
+  | { type: 'setLimbTech'; building: number; tech: string }
   | { type: 'swapTrophy'; building: number; from: number; fromSlot: SlotId; to: number; toSlot: SlotId }
   /** Cancel a building under construction; refunds full cost. */
   | { type: 'cancelBuild'; building: number }
