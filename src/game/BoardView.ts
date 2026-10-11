@@ -593,7 +593,7 @@ export class BoardView {
               key = `water_${(frame4 + h) % 4}`;
               break;
             case 'rubble':
-              key = (c.stock ?? 0) > 0 ? `rubble_${h % 2}` : GROUND[h % 8];
+              key = (c.stock ?? 0) > 0 || c.rubble ? `rubble_${h % 2}` : GROUND[h % 8];
               break;
             case 'energy_vein': {
               const left = (c.stock ?? 0) / veinFull;
