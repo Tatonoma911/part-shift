@@ -267,7 +267,8 @@ describe('PeerSession cooperative voting', () => {
     // We need a host-only session for this (no guest needed).
     // Create a minimal host session via the public API and test _resolveVote.
     const emptyVotes = new Map<number, 'a' | 'b'>();
-    const fakeSession = Object.assign(Object.create(PeerSession.prototype) as PeerSession, {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const fakeSession: any = Object.assign(Object.create(PeerSession.prototype), {
       _vote: { callId: 'boss-current', votes: emptyVotes, timer: 0 },
       listeners: { voteResult: (r: import('../src/net/peer').VoteResult) => results.push(r) },
       gone: false,
