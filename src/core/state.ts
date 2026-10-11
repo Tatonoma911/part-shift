@@ -127,6 +127,9 @@ export interface Unit {
   repathTimer: number;
   burn?: { dps: number; left: number; source: number };
   slow?: { percent: number; left: number };
+  /** Experience of an ally hero: kills, digs, rescues. Every HERO_XP_PER_LEVEL points is a level and a perk. */
+  xp?: number;
+  perks?: string[];
   /** Chill hits in a row (design/ELEMENTS.md: 3 = frozen). */
   chill?: number;
   poison?: { dps: number; left: number; defense: number; source: number };
@@ -243,6 +246,8 @@ export interface Player {
   boons?: Record<string, number>;
   /** An opened cache waiting for the player's pick: three boon ids, and when it was offered. */
   boonOffer?: { ids: string[]; at: number };
+  /** A hero reached a new level: one of its perks to pick (HERO_PERKS in world.ts). */
+  heroPick?: { unit: number; ids: string[]; at: number };
   /** Townsfolk «on the balance» (MVP_RULES §4.4 v0.2): each speeds up Energy income; Контроль's calls spend them. */
   civilians?: number;
   /** Command center: 20 % steps below half HP already charged in lost townsfolk (civilian.balance.loseOnCommandHitBelowHalf). */

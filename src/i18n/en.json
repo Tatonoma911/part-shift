@@ -543,5 +543,17 @@
   "building.upgrade.not_enough_energy": "Not enough Energy to upgrade",
   "building.upgrade.busy": "The building is already upgrading",
   "building.upgrade.needs_command_2": "Needs a level-2 Command Center",
-  "building.upgrade.needs_school": "Needs a Rescue School"
+  "building.upgrade.needs_school": "Needs a Rescue School",
+  "boon.hero_vigor.name": "Toughness",
+  "boon.hero_vigor.desc": "+20 HP for good",
+  "boon.hero_vigor.line": "Can't break me. Well, almost.",
+  "boon.hero_edge.name": "Grip",
+  "boon.hero_edge.desc": "+3 damage for good",
+  "boon.hero_edge.line": "Now I get him.",
+  "boon.hero_guard.name": "Armour",
+  "boon.hero_guard.desc": "+1 defence for good",
+  "boon.hero_guard.line": "Let them try.",
+  "boon.hero_quick.name": "Quick hands",
+  "boon.hero_quick.desc": "Strikes 10% faster",
+  "boon.hero_quick.line": "Tap-tap-tap."
 }

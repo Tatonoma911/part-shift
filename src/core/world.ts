@@ -126,6 +126,17 @@ const isNestCell = (c: Cell) => c.content === 'nest' || c.content === 'heavy_nes
 const isEnemy = (u: Unit) => u.owner < 0;
 /** Allies are heroes at a fraction of their enemy strength; down, they return to the center after a while. */
 const ALLY = heroRules.allyRules;
+
+/** Hero experience (design: heroes grow in a shift). One point per kill, dig, rescue; every level is a perk pick. */
+const HERO_XP = { perKill: 1, perDig: 1, perRescue: 2, perNest: 3, perLevel: 3, radius: 3 };
+/** Perks a hero can pick, each once: stats added to its base (boons-style cards, texts boon.hero_<id>.*). */
+const HERO_PERKS: Record<string, { hp?: number; damage?: number; defense?: number; attackFactor?: number }> = {
+  hero_vigor: { hp: 20 },
+  hero_edge: { damage: 3 },
+  hero_guard: { defense: 1 },
+  hero_quick: { attackFactor: 0.9 },
+};
+
 /** difficulty.json noGuess.maxAttempts; after that the board is accepted as is. */
 const NO_GUESS_ATTEMPTS = 200;
 const siteKey = (x: number, y: number) => `s:${x},${y}`;
@@ -892,6 +903,16 @@ export class World {
       case 'cancelOrder':
         p.order = null;
         return ok;
+      case 'pickHeroPerk': {
+        const offer = p.heroPick;
+        if (!offer || !offer.ids.includes(cmd.id)) return bad();
+        const u = s.units.find((x) => x.id === offer.unit && x.owner === playerId && x.kind === 'ally' && x.hp > 0);
+        p.heroPick = undefined;
+        if (!u) return bad();
+        this.applyHeroPerk(u, cmd.id);
+        this.rev++;
+        return ok;
+      }
       case 'pickBoon': {
         const offer = p.boonOffer;
         if (!offer || !offer.ids.includes(cmd.id)) return bad();
@@ -1261,6 +1282,7 @@ export class World {
       this.countCleanQuarter();
       this.spawnOrb(owner, x, y, Math.round(this.cfg.economy.energyPerDugTile * this.allyFactor(owner, 'digEnergyFactor') * this.allyFactor(owner, 'energyProductionFactor', 'value') * (1 + this.cleanBonus())));
       this.emit('dig_done', wave ? { x, y, owner, text: 'wave' } : { x, y, owner });
+      this.heroXpNear(x, y, owner, HERO_XP.perDig);
       this.addTempo(owner, 'dig');
     }
     const player = s.players[owner];
@@ -2313,6 +2335,7 @@ export class World {
     // Enemy.
     if (by) {
       by.kills++;
+      if (by.kind === 'ally') this.heroXp(by, HERO_XP.perKill);
       const superPerKill = (this.cfg as unknown as { tempo?: { superChargePerKill?: number } }).tempo?.superChargePerKill ?? 10;
       if ((by.kind === 'ally' || by.kind === 'hero') && by.kills % superPerKill === 0) {
         by.superCharge = 100;
@@ -2933,6 +2956,53 @@ export class World {
   }
 
   /** Three different cards from the rank's pool; rare ones come up 30 % of the time; Заначка fills a short offer. */
+  /** Experience to one hero; a new level offers its perks (heroPick) unless one is already waiting. */
+  private heroXp(u: Unit, amount: number): void {
+    const before = Math.floor((u.xp ?? 0) / HERO_XP.perLevel);
+    u.xp = (u.xp ?? 0) + amount;
+    this.emit('xp_gain', { x: Math.round(u.x), y: Math.round(u.y), owner: u.owner, unit: u.id, amount });
+    const after = Math.floor(u.xp / HERO_XP.perLevel);
+    if (after > before) this.offerHeroPerks(u);
+  }
+
+  /** The nearest standing ally of the owner within reach of a cell gets the experience (digs, rescues). */
+  private heroXpNear(x: number, y: number, owner: number, amount: number): void {
+    let best: Unit | null = null;
+    let bestD = HERO_XP.radius + 1;
+    for (const u of this.s.units) {
+      if (u.owner !== owner || u.kind !== 'ally' || u.hp <= 0) continue;
+      const d = cheb(Math.round(u.x), Math.round(u.y), x, y);
+      if (d < bestD) {
+        bestD = d;
+        best = u;
+      }
+    }
+    if (best) this.heroXp(best, amount);
+  }
+
+  private offerHeroPerks(u: Unit): void {
+    const p = this.s.players[u.owner];
+    if (!p || p.heroPick) return;
+    const owned = new Set(u.perks ?? []);
+    const ids = Object.keys(HERO_PERKS).filter((id) => !owned.has(id)).slice(0, 3);
+    if (ids.length === 0) return;
+    p.heroPick = { unit: u.id, ids, at: this.s.time };
+    this.emit('hero_level_up', { x: Math.round(u.x), y: Math.round(u.y), owner: u.owner, unit: u.id, text: u.hero });
+  }
+
+  private applyHeroPerk(u: Unit, id: string): void {
+    const perk = HERO_PERKS[id];
+    if (!perk) return;
+    (u.perks ??= []).push(id);
+    if (perk.hp) {
+      u.base.hp += perk.hp;
+      u.hp += perk.hp;
+    }
+    if (perk.damage) u.base.damage += perk.damage;
+    if (perk.defense) u.base.defense += perk.defense;
+    if (perk.attackFactor) u.base.attackSeconds *= perk.attackFactor;
+  }
+
   private boonOffer(p: Player): string[] {
     const s = this.s;
     const r = boonRules;
@@ -3524,6 +3594,7 @@ export class World {
     p.civilians = (p.civilians ?? 0) + r.addToBalance;
     p.stats.civiliansRescued = (p.stats.civiliansRescued ?? 0) + 1;
     this.emit('civilian_rescued', { x, y, owner: p.id, amount: r.score });
+    this.heroXpNear(x, y, p.id, HERO_XP.perRescue);
   }
 
   /** A dug-open rubble pile becomes open ground, and the person under it runs to the command center (MVP_RULES §22.13). */
