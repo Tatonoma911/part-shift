@@ -30,7 +30,7 @@ import { chip, plate, TXT } from './ui';
 import { drawMenuBackdrop, drawMenuHeroes } from './MenuBackdrop';
 import { resetDialog } from './ResetProgress';
 import { universeButton } from './UniverseScene';
-import { dailySeed, dayId, heroOfWeek, invite, openBoard, openDonate, openFeedback, readChallenge } from '../social';
+import { AUTHOR_TELEGRAM, dailySeed, dayId, heroOfWeek, invite, openBoard, openDonate, openFeedback, readChallenge } from '../social';
 import { enterScene } from './motion';
 
 type Ev = Phaser.Types.Input.EventData;
@@ -253,6 +253,7 @@ export class MenuScene extends Phaser.Scene {
       button(t('online.menu'), onlineAvailable() ? () => this.online() : null, false, onlineAvailable() ? t('online.menu_sub') : t('menu.soon'), 'coop');
       // Meta progress: returned heroes, stats, records, rank (design/META.md §6).
       button(t('dossier.title'), () => this.scene.start('dossier'), false, undefined, undefined, undefined, 'icon.defender');
+      if (AUTHOR_TELEGRAM) button(t('author.write'), () => window.open(AUTHOR_TELEGRAM, '_blank', 'noopener'), false);
       if (last || tutorialDone()) button(t('menu.tutorial'), () => this.play({ tutorial: true }), false, undefined, 'tutorial');
       button(t('menu.guide'), () => openGuide(), false, undefined, undefined, undefined, 'icon.lamp_finds');
       button(t('menu.settings'), () => this.show('settings'), false, undefined, undefined, undefined, 'icon.settings');
