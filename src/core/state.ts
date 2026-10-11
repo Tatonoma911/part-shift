@@ -126,6 +126,8 @@ export interface Unit {
   target?: string;
   repathTimer: number;
   burn?: { dps: number; left: number; source: number };
+  /** A carried medkit: the unit eats it below 25 % HP (MVP_RULES §22.19). */
+  medkit?: boolean;
   slow?: { percent: number; left: number };
   /** Chill hits in a row (design/ELEMENTS.md: 3 = frozen). */
   chill?: number;
@@ -235,6 +237,10 @@ export interface Player {
   order: string | null;
   /** Seconds until the next resident appears. */
   spawnTimer: number;
+  /** Hero medkits in the shared Medcenter stock (MVP_RULES §22.19). */
+  medkits?: number;
+  /** Seconds into the next medkit charge. */
+  medkitTimer?: number;
   /** Extra resident places (survivors). */
   capBonus: number;
   /** Residents gathering before they engage, so they don't trickle in one by one (config.residents.rally). */
