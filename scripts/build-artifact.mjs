@@ -6,7 +6,10 @@ import { copyFileSync, mkdirSync, readFileSync, readdirSync, rmSync, writeFileSy
 const js = readdirSync('dist-artifact/assets').find((f) => f.endsWith('.js'));
 // Reference the JS as an external file rather than inlining it — the inline bundle triggered
 // the Artifact service's pr-review size check at ~6 MB; an external src avoids that entirely.
-const html = `<title>Part Shift</title>
+// Without a viewport meta a phone lays the page out 980 px wide and zooms it out: taps then land off their buttons.
+const html = `<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>Part Shift</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;500;600;700;800&family=Unbounded:wght@700;800;900&display=swap">
