@@ -84,8 +84,10 @@ const heroes = heroesJson as unknown as { heroes: Hero[]; bossPool?: { heroes?: 
 export const HEROES: Hero[] = heroes.heroes;
 const bossPool = new Set(heroes.bossPool?.heroes ?? []);
 /** Rules v0.7 (MVP_RULES §4); the tables in the repo may still predate it, so the same numbers stand in. */
+// The numbers the game spawns with: heroes.json allyRules (hp 50 %, damage 60 %, defense as the infected form).
+const ALLY_RULES = (heroesJson as unknown as { allyRules?: { hpFactor: number; damageFactor: number } }).allyRules;
 const OURS: OurSide = heroes.ourSide ?? {
-  statsFromEnemyForm: { hpFactor: 0.6, damageFactor: 0.8, defenseFactor: 0.6 },
+  statsFromEnemyForm: { hpFactor: ALLY_RULES?.hpFactor ?? 0.5, damageFactor: ALLY_RULES?.damageFactor ?? 0.6, defenseFactor: 1 },
   starterRoster: ['standard', 'patch', 'canopy', 'current'],
   birth: { byTier: { 1: { seconds: 30, cost: 0 }, 2: { seconds: 45, cost: 40 }, 3: { seconds: 60, cost: 90 }, 4: { seconds: 90, cost: 160 } } },
 };
