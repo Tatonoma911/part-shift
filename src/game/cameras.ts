@@ -88,6 +88,34 @@ export class Cameras {
     this.apply();
   }
 
+  get fitZoom(): number {
+    return this.fit;
+  }
+
+  sweep(startZoom: number): void {
+    if (startZoom <= this.fit + 0.05) return;
+    this.focus(this.home.x, this.home.y, startZoom);
+    const proxy = { z: startZoom };
+    this.scene.tweens.add({
+      targets: proxy,
+      z: this.fit,
+      duration: 900,
+      ease: 'Quad.easeInOut',
+      onUpdate: () => { this.zoom = proxy.z; this.apply(); },
+      onComplete: () => {
+        this.scene.time.delayedCall(700, () => {
+          this.scene.tweens.add({
+            targets: proxy,
+            z: startZoom,
+            duration: 900,
+            ease: 'Quad.easeInOut',
+            onUpdate: () => { this.zoom = proxy.z; this.apply(); },
+          });
+        });
+      },
+    });
+  }
+
   /** A one-finger drag on the board: the view follows the finger from here on (touch). */
   beginPan(p: { x: number; y: number }): void {
     this.pan = { x: p.x, y: p.y };
