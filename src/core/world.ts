@@ -1541,6 +1541,14 @@ export class World {
         const c = this.cell(t.x, t.y);
         if (!s.players[u.owner].queue.includes(cellKey(t.x, t.y)) || !(c.stock && c.stock > 0)) return this.setTask(u, { type: 'idle' });
         if (u.path.length > 0) return this.move(u, dt);
+        // A player's new dig order on a closed cell comes before crystals: the harvester drops out and digs it, the crystals stay queued.
+        if (u.repathTimer <= 0 && this.hasUnclaimedDig(u)) {
+          u.repathTimer = 1;
+          this.setTask(u, { type: 'idle' });
+          this.findJob(u);
+          return;
+        }
+        u.repathTimer = Math.max(0, u.repathTimer - dt);
         t.progress += dt;
         if (c.content === 'rubble') {
           if (t.progress >= mapgen.rubble.workSeconds * this.allyFactor(u.owner, 'rubbleWorkFactor')) {
@@ -1731,6 +1739,17 @@ export class World {
   private setTask(u: Unit, task: Task): void {
     u.task = task;
     u.path = [];
+  }
+
+  /** A queued closed cell that nobody digs yet (the player's own dig order, not auto digs). */
+  private hasUnclaimedDig(u: Unit): boolean {
+    const s = this.s;
+    return s.players[u.owner].queue.some((k) => {
+      const { x, y } = parseKey(k);
+      const c = this.cell(x, y);
+      if (c.revealed && !c.rubble) return false;
+      return !s.units.some((o) => o !== u && o.owner === u.owner && o.task.type === 'dig' && o.task.x === x && o.task.y === y);
+    });
   }
 
   /**
