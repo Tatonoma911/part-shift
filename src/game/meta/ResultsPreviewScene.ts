@@ -17,7 +17,9 @@ export class ResultsPreviewScene extends Phaser.Scene {
   create(): void {
     enterScene(this);
     if (!this.anims.exists('resident.idle')) createArt(this);
-    const win = new URLSearchParams(location.search).get('meta') !== 'lose';
+    // ?meta=results&outcome=lose shows the loss; ?meta=lose stays as it was.
+    const q = new URLSearchParams(location.search);
+    const win = q.get('meta') !== 'lose' && q.get('outcome') !== 'lose';
     this.add.rectangle(0, 0, VIEW.width, VIEW.height, C.paper2).setOrigin(0);
     resultsPreview(this, win, demoMeta(), () => this.scene.restart());
   }
