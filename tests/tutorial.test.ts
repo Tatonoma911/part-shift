@@ -7,7 +7,7 @@ describe('First Shift tutorial map', () => {
   it('builds an open field with its overrides; sites follow the chosen center', () => {
     const w = createTutorialWorld();
     expect([w.s.width, w.s.height]).toEqual([8, 10]);
-    expect(w.cfg.dig.digSeconds).toBe(3);
+    expect(w.cfg.dig.digSeconds).toBe(1.5);
     expect(w.player(0).energy).toBe(300);
     expect(w.apply({ type: 'placeCommand', x: 3, y: 8 }).ok).toBe(true);
     expect(w.cell(2, 3).content).toBe('nest');

@@ -28,7 +28,7 @@
           "height": 12
         },
         "config.economy.startEnergy": 100,
-        "config.dig.digSeconds": 6,
+        "config.dig.digSeconds": 3,
         "config.population": {
           "spawnSeconds": 8,
           "initialResidents": 3,

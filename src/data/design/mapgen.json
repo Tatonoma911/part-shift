@@ -35,9 +35,9 @@
   },
   "rubble": {
     "energy": 30,
-    "workSeconds": 24,
+    "workSeconds": 12,
     "durability": {
-      "workSeconds": 24,
+      "workSeconds": 12,
       "_note": "прочность завала = 24 с работы одного героя; двое и больше — по формуле копки (MVP_RULES §4); Инженер ×0,5 (heroes.json rubbleWorkFactor)"
     },
     "rescue": {

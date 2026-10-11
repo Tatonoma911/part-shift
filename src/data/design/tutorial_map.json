@@ -9,7 +9,7 @@
   "legend": null,
   "initiallyRevealedRadius": 1,
   "overrides": {
-    "config.dig.digSeconds": 3,
+    "config.dig.digSeconds": 1.5,
     "config.population.spawnSeconds": 8,
     "config.economy.startEnergy": 300,
     "config.threat.enabled": false,

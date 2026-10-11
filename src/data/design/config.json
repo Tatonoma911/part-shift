@@ -15,7 +15,7 @@
     "_cacheNote": "cache now gives 20 Energy + a 1-of-3 boon choice (boons.json)"
   },
   "dig": {
-    "digSeconds": 9,
+    "digSeconds": 4.5,
     "requireAdjacentRevealed": true,
     "autoQueueZeroNeighbors": false,
     "autoQueuePriority": "low",
@@ -23,7 +23,7 @@
       "_doc": "[Антон 21:48] несколько жителей на одной клетке копают быстрее; MVP_RULES §4.2",
       "maxPerCell": 3,
       "speedBonusPerExtraWorker": 0.75,
-      "formula": "seconds = digSeconds / (1 + 0.75 × (workers − 1))  → 1: 9 s, 2: 5.1 s, 3: 3.6 s",
+      "formula": "seconds = digSeconds / (1 + 0.75 × (workers − 1))  → 1: 4.5 s, 2: 2.6 s, 3: 1.8 s (halved 2026-10-11 by Антон: digging is too slow to wait for)",
       "idleJoin": "an idle resident with nothing in the queue joins the nearest cell being dug (up to maxPerCell)",
       "progressBar": "one shared progress ring on the cell, workers stand on different free sides of it",
       "appliesAlsoTo": [
