@@ -163,9 +163,9 @@ export function socialLinks(text: string, url: string): { id: string; label: str
   const tx = encodeURIComponent(text);
   return [
     { id: 'tg', label: 'Telegram', href: `https://t.me/share/url?url=${u}&text=${tx}` },
+    // Instagram has no share link that takes a text or an image: the picture is saved (or copied) and it opens the app.
+    { id: 'ig', label: 'Instagram', href: 'https://www.instagram.com/' },
     { id: 'vk', label: 'VK', href: `https://vk.com/share.php?url=${u}&title=${tx}` },
-    { id: 'wa', label: 'WhatsApp', href: `https://wa.me/?text=${encodeURIComponent(`${text} ${url}`)}` },
-    { id: 'x', label: 'X', href: `https://x.com/intent/post?text=${tx}&url=${u}` },
   ];
 }
 
