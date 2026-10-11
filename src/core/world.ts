@@ -603,15 +603,6 @@ export class World {
         this.takeFieldMedkit(cmd.x, cmd.y, playerId);
         return ok;
       }
-      case 'takeMedkit': {
-        const c = this.cell(cmd.x, cmd.y);
-        if (!inBounds(this.s, cmd.x, cmd.y) || !c.revealed || c.content !== 'medkit' || !c.stock) return bad();
-        c.stock -= 1;
-        p.medkits = (p.medkits ?? 0) + 1;
-        this.rev++;
-        this.emit('medkit_taken', { x: cmd.x, y: cmd.y, owner: playerId });
-        return ok;
-      }
       case 'takeCapsule': {
         const c = this.cell(cmd.x, cmd.y);
         if (!inBounds(this.s, cmd.x, cmd.y) || !c.revealed || c.content !== 'bonus_capsule' || c.resolved || !c.stock) return bad();
@@ -1536,13 +1527,8 @@ export class World {
     const ux = Math.round(u.x);
     const uy = Math.round(u.y);
     if (u.kind === 'ally') {
-      const oc = cellAt(s, ux, uy);
-      if (oc.revealed && oc.content === 'medkit' && (oc.stock ?? 0) > 0 && oc.heal === undefined) {
-        oc.stock! -= 1;
-        s.players[u.owner].medkits = (s.players[u.owner].medkits ?? 0) + 1;
-        this.emit('medkit_taken', { x: ux, y: uy, owner: u.owner });
-      }
-      if (oc.revealed && oc.content === 'bonus_capsule' && !oc.resolved && (oc.stock ?? 0) > 0) {
+      const oc = inBounds(s, ux, uy) ? cellAt(s, ux, uy) : null;
+      if (oc?.revealed && oc.content === 'bonus_capsule' && !oc.resolved && (oc.stock ?? 0) > 0) {
         oc.resolved = true;
         oc.stock = 0;
         this.openCapsule(s.players[u.owner], ux, uy);
@@ -1716,26 +1702,7 @@ export class World {
         }
       }
     }
-    // No medkit is healing yet: a wounded hero runs to the nearest field medkit that still has charges and eats it there.
-    if (!best) {
-      for (let y = 0; y < s.height; y++) {
-        for (let x = 0; x < s.width; x++) {
-          const c = cellAt(s, x, y);
-          if (c.content !== 'medkit' || !c.revealed || c.heal !== undefined || !(c.stock && c.stock > 0)) continue;
-          const d = dist(x, y, u.x, u.y);
-          if (d < bestD) {
-            bestD = d;
-            best = { x, y };
-          }
-        }
-      }
-      if (!best) return false;
-      if (cheb(ux, uy, best.x, best.y) <= r) {
-        u.path = [];
-        this.useFieldMedkit(best.x, best.y, u.owner);
-        return true;
-      }
-    }
+    if (!best) return false;
     const target = best;
     // Reached a ground medkit: auto-use it.
     if (target.ground && cheb(ux, uy, target.x, target.y) === 0) {
@@ -3957,7 +3924,9 @@ export class World {
         const key = `${hx},${hy}`;
         if (u.atMedkit !== key) u.atMedkit = undefined;
         const here = inBounds(s, hx, hy) ? cellAt(s, hx, hy) : null;
-        if (here && here.content === 'medkit' && here.revealed && here.heal === undefined && (here.stock ?? 0) > 0 && u.atMedkit !== key) {
+        // A wounded hero (below 60 %) eats the field medkit on the spot instead (toMedkit), so it is not carried.
+        const healthy = u.hp >= this.maxHp(u) * 0.6;
+        if (healthy && here && here.content === 'medkit' && here.revealed && here.heal === undefined && (here.stock ?? 0) > 0 && u.atMedkit !== key) {
           u.atMedkit = key;
           here.stock = (here.stock ?? 1) - 1;
           if (!u.medkit) u.medkit = true;
