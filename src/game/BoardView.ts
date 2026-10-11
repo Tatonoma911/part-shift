@@ -1287,7 +1287,8 @@ export class BoardView {
         const set = this.setOf(u);
         const spr = this.scene.add.sprite(fx, fy, set).setOrigin(...originOf(set));
         // Our hero dog (Патч) is drawn as big as a person; it fits a quarter of the hero's square (Антон, 2026-10-10).
-        if (u.kind === 'ally' && u.hero === 'patch') spr.setScale(HERO_DOG_SCALE);
+        // Every unit that uses the dog sheet gets it: squad heroes and the starter residents alike.
+        if (set === 'ally_patch') spr.setScale(HERO_DOG_SCALE);
         v = { spr, set, prevX: u.x, prevY: u.y, curX: u.x, curY: u.y, simT: w.s.time, lastCd: u.attackCooldown, oneShot: false, windup: false, anim: '' };
         // The call target stands a size bigger: it must read as the one to beat (QA-014).
         if (u.kind === 'hero' && u.nest && w.cell(...(u.nest.slice(2).split(',').map(Number) as [number, number])).content === 'boss_hatch') {
