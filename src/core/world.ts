@@ -13,6 +13,7 @@ import { deduce, type Knowledge } from './assist';
 import type { ApplyResult, Command } from './commands';
 import {
   buildings as buildingDefs,
+  upgradeRules,
   config,
   DEFAULT_DIFFICULTY,
   difficulties,
@@ -628,20 +629,31 @@ export class World {
         return ok;
       }
       case 'upgradeBuilding': {
+        // Upgrade: pay now, the building works on while it is upgraded, the next level comes when the timer runs out (buildings.json upgrades).
         const b = this.s.buildings.find((x) => x.id === cmd.building && x.owner === playerId);
         if (!b || !b.complete || b.ruined) return bad('building.upgrade.not_complete');
+        if ((b.upgradeLeft ?? 0) > 0) return bad('building.upgrade.busy');
         const def = buildingDefs[b.type];
-        const maxLv = 1 + (def.levels?.length ?? 0);
+        const per = upgradeRules.perBuilding[b.type];
         const lv = b.level ?? 1;
-        if (lv >= maxLv) return bad('building.upgrade.max_level');
-        if (this.s.units.some((u) => isEnemy(u) && cheb(Math.round(u.x), Math.round(u.y), b.x, b.y) <= 2)) return bad('building.upgrade.enemies_near');
-        const upgCost = def.levels?.[lv - 1]?.cost ?? def.cost * lv;
-        if (p.energy < upgCost) return bad('building.upgrade.not_enough_energy');
-        p.energy -= upgCost;
-        b.level = lv + 1;
-        b.spent = (b.spent ?? def.cost) + upgCost;
+        if (lv >= (per?.maxLevel ?? upgradeRules.maxLevel)) return bad('building.upgrade.max_level');
+        if (this.s.units.some((u) => isEnemy(u) && cheb(Math.round(u.x), Math.round(u.y), b.x, b.y) <= upgradeRules.blockedIfEnemyWithin)) return bad('building.upgrade.enemies_near');
+        const to = lv + 1;
+        const rule = per?.levels?.[String(to)];
+        const command = this.s.buildings.find((x) => x.owner === playerId && x.type === 'command' && x.complete && !x.ruined);
+        if (to >= 3 && b.type !== 'command' && (command?.level ?? 1) < upgradeRules.level3RequiresCommandLevel) return bad('building.upgrade.needs_command_2');
+        const schools = this.s.buildings.filter((x) => x.owner === playerId && x.type === 'school' && x.complete && !x.ruined).length;
+        if ((rule?.requires?.school ?? 0) > schools) return bad('building.upgrade.needs_school');
+        const cost = rule?.cost ?? Math.round(def.cost * (upgradeRules.defaultCostFactorByLevel[String(to)] ?? 1));
+        const seconds = rule?.seconds ?? Math.round(def.buildSeconds * (upgradeRules.defaultSecondsFactorByLevel[String(to)] ?? 1));
+        if (p.energy < cost) return bad('building.upgrade.not_enough_energy');
+        p.energy -= cost;
+        b.spent = (b.spent ?? def.cost) + cost;
+        b.upgradeTo = to;
+        b.upgradeTotal = seconds;
+        b.upgradeLeft = seconds;
         this.emit('upgrade_chime', { x: b.x, y: b.y, owner: playerId, text: b.type });
-        this.emit('building_upgraded', { x: b.x, y: b.y, owner: playerId, text: String(b.level) });
+        this.rev++;
         return ok;
       }
       case 'heroBoost': {
@@ -3221,6 +3233,20 @@ export class World {
     return this.s.buildings.some((b) => b.type === 'jammer' && b.complete && !b.ruined && cheb(b.x, b.y, Math.round(u.x), Math.round(u.y)) <= a.radius);
   }
 
+  /** An upgrade timer ran out: the building takes its next level and is repaired to that level's HP. */
+  private finishUpgrade(b: Building): void {
+    const to = b.upgradeTo ?? (b.level ?? 1) + 1;
+    const def = buildingDefs[b.type];
+    const rule = upgradeRules.perBuilding[b.type]?.levels?.[String(to)];
+    b.level = to;
+    b.hp = rule?.hp ?? Math.round(def.hp * Math.pow(upgradeRules.hpFactorPerLevel, to - 1));
+    b.upgradeTo = undefined;
+    b.upgradeLeft = undefined;
+    b.upgradeTotal = undefined;
+    this.emit('building_upgraded', { x: b.x, y: b.y, owner: b.owner, text: String(to) });
+    this.rev++;
+  }
+
   /** Limb workshop: every everySeconds one arm or leg in the picked element goes to an ally in radius with that slot free. */
   private makeLimbs(b: Building, dt: number): void {
     const lm = buildingDefs[b.type].limbMaker;
@@ -3256,6 +3282,11 @@ export class World {
       if (b.boostCooldown) b.boostCooldown = Math.max(0, b.boostCooldown - dt) || undefined;
       if (b.recolorCooldown) b.recolorCooldown = Math.max(0, b.recolorCooldown - dt) || undefined;
       if (b.swapCooldown) b.swapCooldown = Math.max(0, b.swapCooldown - dt) || undefined;
+      // Upgrade timer: the building keeps working meanwhile (worksWhileUpgrading); the new level and full HP come when it runs out.
+      if ((b.upgradeLeft ?? 0) > 0) {
+        b.upgradeLeft = (b.upgradeLeft as number) - dt;
+        if (b.upgradeLeft <= 0) this.finishUpgrade(b);
+      }
       if (!b.complete) continue;
       const def = buildingDefs[b.type];
       if (def.limbMaker) this.makeLimbs(b, dt);
