@@ -1471,8 +1471,9 @@ export class World {
     const guarded = (x: number, y: number) => own.some((b) => cheb(Math.round(x), Math.round(y), b.x, b.y) <= r.guardRadiusAroundBuildings);
     const close = (e: Unit) => dist(e.x, e.y, u.x, u.y) <= r.engageRadius;
     // Marching on an ordered target, residents still answer foes that reach them.
+    // A fight at our buildings calls everyone off digging at once: any foe there is a target, order or not.
     const near = s.units
-      .filter((e) => isEnemy(e) && e.hp > 0 && (close(e) || (!p.order && guarded(e.x, e.y))))
+      .filter((e) => isEnemy(e) && e.hp > 0 && (close(e) || guarded(e.x, e.y)))
       .sort((a, b) => dist(a.x, a.y, u.x, u.y) - dist(b.x, b.y, u.x, u.y))[0];
     if (near && (!p.order || dist(near.x, near.y, u.x, u.y) <= 2)) return `u:${near.id}`;
     if (p.order) return p.order;
@@ -1497,6 +1498,7 @@ export class World {
       u.calm = this.cfg.residents.returnToWorkAfterSeconds;
       return this.fight(u, target, dt, (x, y) => walkableForPlayer(s, x, y));
     }
+    if (this.toMedkit(u, dt)) return;
     u.target = undefined;
     if ((u.calm ?? 0) > 0) {
       u.calm! -= dt;
@@ -1627,6 +1629,43 @@ export class World {
   }
 
   /** Below 25 % HP a resident walks to the nearest healer (the center or a medcenter) and waits there until 80 %. */
+  /** A hurt unit walks to an opened medkit that is healing (the player tapped it) and stands in its radius; nobody walked there before (hazards.json medkit). */
+  private toMedkit(u: Unit, dt: number): boolean {
+    const s = this.s;
+    if (u.hp >= this.maxHp(u) * 0.6) return false;
+    const ux = Math.round(u.x);
+    const uy = Math.round(u.y);
+    if (s.units.some((e) => isEnemy(e) && e.hp > 0 && cheb(Math.round(e.x), Math.round(e.y), ux, uy) <= 1)) return false;
+    const r = hazards.medkit.radius;
+    let best: { x: number; y: number } | null = null;
+    let bestD = Infinity;
+    for (let y = 0; y < s.height; y++) {
+      for (let x = 0; x < s.width; x++) {
+        const c = cellAt(s, x, y);
+        if (c.heal === undefined || c.heal <= 0) continue;
+        const d = dist(x, y, u.x, u.y);
+        if (d < bestD) {
+          bestD = d;
+          best = { x, y };
+        }
+      }
+    }
+    if (!best) return false;
+    const target = best;
+    if (cheb(ux, uy, target.x, target.y) <= r) {
+      u.path = [];
+      return true;
+    }
+    if (u.path.length === 0 || u.repathTimer <= 0) {
+      u.repathTimer = 0.5;
+      const path = this.playerPath(u, (x, y) => cheb(x, y, target.x, target.y) <= r);
+      u.path = path ? path.slice(1) : [];
+    }
+    u.repathTimer -= dt;
+    this.move(u, dt);
+    return true;
+  }
+
   private retreating(u: Unit, dt: number): boolean {
     const s = this.s;
     const r = this.cfg.residents.retreat;
@@ -1640,9 +1679,13 @@ export class World {
       u.retreat = false;
       return false;
     }
+    // Cornered: an enemy is next to them, so they fight back instead of standing still and taking hits.
+    const ux = Math.round(u.x);
+    const uy = Math.round(u.y);
+    if (s.units.some((e) => isEnemy(e) && e.hp > 0 && cheb(Math.round(e.x), Math.round(e.y), ux, uy) <= 1)) return false;
     u.target = undefined;
     if (u.task.type !== 'idle' && u.task.type !== 'rest') this.setTask(u, { type: 'idle' });
-    if (cheb(Math.round(u.x), Math.round(u.y), home.x, home.y) <= 1) {
+    if (cheb(ux, uy, home.x, home.y) <= 1) {
       u.path = [];
       return true;
     }
