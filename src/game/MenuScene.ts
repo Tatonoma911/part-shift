@@ -140,10 +140,9 @@ export class MenuScene extends Phaser.Scene {
       .finally(() => {
         analytics.where('menu');
         this.storyPlaying = false;
-        if (this.scene.isActive()) {
-          this.input.enabled = true;
-          sound.playMusic('menu');
-        }
+        // Always give the menu its input back, even if the comic ended in a skip or an error (the comic blocked taps).
+        this.input.enabled = true;
+        if (this.scene.isActive()) sound.playMusic('menu');
       });
   }
 

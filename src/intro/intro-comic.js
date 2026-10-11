@@ -252,7 +252,7 @@ const CSS = `
  position:fixed;inset:0;z-index:9999;background:radial-gradient(120% 90% at 50% 0%,#16232d 0%,var(--night) 70%);color:var(--graph);
  font-family:'Golos Text',system-ui,sans-serif;overflow:hidden;user-select:none;-webkit-user-select:none;touch-action:manipulation;-webkit-tap-highlight-color:transparent}
 .psc *{box-sizing:border-box}
-.psc-top{position:absolute;left:0;right:0;top:0;height:52px;display:flex;align-items:center;gap:12px;padding:0 max(16px,env(safe-area-inset-left));z-index:5}
+.psc-top{position:absolute;left:0;right:0;top:0;height:52px;display:flex;align-items:center;gap:12px;padding:0 max(16px,env(safe-area-inset-left));z-index:7}
 .psc-tag{font:700 10px/1 Unbounded,sans-serif;letter-spacing:.14em;color:var(--seam);white-space:nowrap;flex:1;min-width:0;display:flex;gap:8px;align-items:baseline}
 .psc-tag .t{overflow:hidden;text-overflow:ellipsis;min-width:0}
 .psc-tag .n{flex:0 0 auto;color:#fff;opacity:.8}
@@ -260,10 +260,10 @@ const CSS = `
 .psc-prog{display:flex;gap:4px;flex:0 0 auto}
 .psc-prog i{display:block;width:16px;height:3px;background:#ffffff26;clip-path:polygon(2px 0,100% 0,calc(100% - 2px) 100%,0 100%)}
 .psc-prog i.on{background:var(--seam)}
-.psc-btn{white-space:nowrap;font:700 11px/1 Unbounded,sans-serif;letter-spacing:.08em;color:#fff;background:#ffffff14;border:1px solid #ffffff2e;padding:10px 14px;cursor:pointer;
- clip-path:polygon(8px 0,100% 0,100% calc(100% - 8px),calc(100% - 8px) 100%,0 100%,0 8px);min-height:36px}
+.psc-btn{white-space:nowrap;min-width:44px;font:700 11px/1 Unbounded,sans-serif;letter-spacing:.08em;color:#fff;background:#ffffff14;border:1px solid #ffffff2e;padding:10px 14px;cursor:pointer;
+ clip-path:polygon(8px 0,100% 0,100% calc(100% - 8px),calc(100% - 8px) 100%,0 100%,0 8px);min-height:44px}
 .psc-btn:hover{background:#ffffff26}
-.psc-btn.icon{width:40px;padding:0;display:grid;place-items:center}
+.psc-btn.icon{width:44px;padding:0;display:grid;place-items:center}
 .psc-stage{position:absolute;left:0;right:0;top:52px;bottom:0;display:grid;place-items:center;padding:6px 12px max(30px,env(safe-area-inset-bottom))}
 .psc-page{position:relative;display:grid;gap:8px;padding:8px;background:var(--paper);box-shadow:0 30px 80px #0009;
  clip-path:polygon(12px 0,100% 0,100% calc(100% - 12px),calc(100% - 12px) 100%,0 100%,0 12px);transition:transform .5s cubic-bezier(.2,.8,.2,1),opacity .5s}
