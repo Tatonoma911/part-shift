@@ -130,6 +130,8 @@ export interface Unit {
   burn?: { dps: number; left: number; source: number };
   /** A carried medkit: the unit eats it below 25 % HP (MVP_RULES §22.19). */
   medkit?: boolean;
+  /** The field medkit cell this unit has already picked a charge from ("x,y"); cleared on leaving it. */
+  atMedkit?: string;
   slow?: { percent: number; left: number };
   /** Chill hits in a row (design/ELEMENTS.md: 3 = frozen). */
   chill?: number;
