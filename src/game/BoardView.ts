@@ -654,9 +654,9 @@ export class BoardView {
           // A capsule peek shows the closed cell's own sensor for a while (MVP_RULES §5.2).
           this.setClues(i, x, y, c.peekUntil !== undefined && s.time < c.peekUntil ? w.clues(x, y) : null);
           this.drawClosed(og, x, y, px, py, known.get(cellKey(x, y)), risk?.get(i), me.queue.includes(cellKey(x, y)), me.autoQueue.includes(cellKey(x, y)), c.marked ? (c.markKind ?? 'danger') : null, now);
-          // One orb in the corner: the element that digs this block fast; it glows when the squad has it (MVP_RULES §3.4).
+          // Element zone: colour wash + indicator dot on every closed cell so players see which zones open faster.
           if (zoned) {
-            // The zone shows from afar: a light wash of its colour over the block (MVP_RULES §3.4).
+            // Visible wash of the zone element over the block.
             const el = cellElement(c);
             if (el) {
               og.fillStyle(TECH_HEX[el] ?? 0xffffff, 0.28);
