@@ -130,8 +130,8 @@ export function generateField(s: GameState, opts: Options): void {
   // Rubble may sit in the safe area too, but never on the command centers.
   const rubblePool = () => all.filter((p) => cellAt(s, p.x, p.y).content === 'ground' && minCmdDist(p.x, p.y) > 1 && !nearHatch(p));
   for (let i = 0; i < counts.rubble; i++) {
-    const p = set(pick(rubblePool()), 'rubble');
-    if (p) cellAt(s, p.x, p.y).stock = mapgen.rubble.energy;
+    // A closed pile: no stock, it is dug open and frees the person under it (mapgen.rubble.rescue).
+    set(pick(rubblePool()), 'rubble');
   }
 
   // Elemental zones: Voronoi partition of non-water cells outside the safe radius (mapgen.cellElements).
