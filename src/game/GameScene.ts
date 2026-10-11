@@ -441,6 +441,7 @@ export class GameScene extends Phaser.Scene {
     this.voice?.start(!saved);
     if (!this.guide && !saved) this.maybeShowHowToPlay();
     if (!this.guide && !saved) this.showTapHint(bx + Math.round(bw / 2), by + Math.round(bh / 2));
+    if (!this.guide && !saved) this.showZoomHint(bx + Math.round(bw / 2), by + Math.round(bh * 0.3));
     this.tally = this.guide ? null : new RunTally(this.me);
     // A medal tier earned mid-run: a 2 s plate from the top, the game keeps going (ACHIEVEMENTS.md §3).
     // The tally writes into `world.s.medalEvents`; the HUD drains it into MedalToasts (Awards.ts).
@@ -1759,6 +1760,64 @@ export class GameScene extends Phaser.Scene {
   }
 
   /** First launch: a quick 3-line «How to play» sheet (shown once, persisted in localStorage). */
+  private showZoomHint(cx: number, cy: number): void {
+    const KEY = 'partshift.zoomHint.v1';
+    try { if (localStorage.getItem(KEY)) return; } catch { return; }
+    const touch = 'ontouchstart' in window;
+    const color = 0x57d8f2;
+    let gone = false;
+    const dismiss = (items: Phaser.GameObjects.GameObject[]) => {
+      if (gone) return;
+      gone = true;
+      this.tweens.add({
+        targets: items, alpha: 0, duration: 350,
+        onComplete: () => {
+          items.forEach((o) => o.destroy());
+          try { localStorage.setItem(KEY, '1'); } catch { /* ok */ }
+        },
+      });
+    };
+    if (touch) {
+      const r = 26;
+      const g1 = this.add.graphics().setDepth(22);
+      const g2 = this.add.graphics().setDepth(22);
+      const drawFinger = (g: Phaser.GameObjects.Graphics, x: number) => {
+        g.clear();
+        g.lineStyle(3, color, 1); g.fillStyle(color, 0.3);
+        g.fillCircle(x, cy, r); g.strokeCircle(x, cy, r);
+      };
+      const st = { x1: cx - 32, x2: cx + 32 };
+      drawFinger(g1, st.x1); drawFinger(g2, st.x2);
+      this.tweens.add({
+        targets: st, x1: cx - 100, x2: cx + 100, duration: 1000, ease: 'Quad.easeOut',
+        onUpdate: () => { drawFinger(g1, st.x1); drawFinger(g2, st.x2); },
+        onComplete: () => this.time.delayedCall(400, () => dismiss([g1, g2])),
+      });
+      this.time.delayedCall(2200, () => dismiss([g1, g2]));
+    } else {
+      const g = this.add.graphics().setDepth(22);
+      const st = { ay: cy - 44 };
+      const drawMouse = () => {
+        g.clear();
+        g.lineStyle(3, color, 0.9); g.fillStyle(color, 0.15);
+        g.strokeRoundedRect(cx - 18, cy - 30, 36, 52, 10);
+        g.fillRoundedRect(cx - 18, cy - 30, 36, 52, 10);
+        g.fillStyle(color, 0.85); g.fillRoundedRect(cx - 5, cy - 22, 10, 16, 5);
+        g.lineStyle(3, color, 0.9);
+        g.lineBetween(cx, st.ay, cx, st.ay - 16);
+        g.lineBetween(cx, st.ay - 16, cx - 9, st.ay - 8);
+        g.lineBetween(cx, st.ay - 16, cx + 9, st.ay - 8);
+      };
+      drawMouse();
+      this.tweens.add({
+        targets: st, ay: cy - 60, duration: 500, ease: 'Sine.easeInOut', yoyo: true, repeat: 2,
+        onUpdate: drawMouse,
+        onComplete: () => this.time.delayedCall(200, () => dismiss([g])),
+      });
+      this.time.delayedCall(2500, () => dismiss([g]));
+    }
+  }
+
   private showTapHint(cx: number, cy: number): void {
     const KEY = 'partshift.tapHint.v1';
     try { if (localStorage.getItem(KEY)) return; } catch { return; }
