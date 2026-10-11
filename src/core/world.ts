@@ -771,7 +771,7 @@ export class World {
         s.raidCalledEarly = true;
         // Force the raid clock to fire immediately next tick.
         s.raidAt = 0;
-        this.emit('raid_siren', { owner: playerId });
+        this.emit('raid_siren', { owner: playerId, text: 'early' });
         return ok;
       }
       case 'demolish': {
@@ -1332,6 +1332,7 @@ export class World {
     const frontier: Array<{ x: number; y: number; depth: number }> = [{ x: cx, y: cy, depth: 0 }];
     const visited = new Set<string>();
     visited.add(cellKey(cx, cy));
+    let opened = 0;
     while (frontier.length > 0) {
       const { x, y, depth } = frontier.shift()!;
       if (depth >= maxDepth) continue;
@@ -1349,6 +1350,7 @@ export class World {
           pl.queue = pl.queue.filter((q) => q !== nk);
           pl.autoQueue = pl.autoQueue.filter((q) => q !== nk);
         }
+        opened++;
         this.emit('dig_done', { x: n.x, y: n.y, owner, wave: true });
         this.addTempo(owner, 'wave');
         // Continue cascade only if this neighbor is also quiet.
@@ -1358,6 +1360,7 @@ export class World {
         }
       }
     }
+    if (opened > 0) this.emit('wave_clear', { x: cx, y: cy, owner, amount: opened });
   }
 
   // -- population (MVP_RULES §4: a resident every spawnSeconds while below the cap)

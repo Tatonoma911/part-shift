@@ -14,6 +14,7 @@ const RENAME: Record<string, string> = {
   training_up: 'defender_trained',
   hero_warning: 'quarantine_siren',
   raid_incoming: 'raid_siren',
+  chord: 'chord_ok',
   // The Контроль call comes in as call_incoming; its sound is control_call (audio/tools/sfx4.py).
   call_incoming: 'control_call',
   building_upgraded: 'upgrade_chime',
@@ -118,6 +119,9 @@ export class SoundDirector {
         const own = e.text ? `built_${e.text}` : '';
         return [sound.has(own) ? own : 'build_done'];
       }
+      case 'raid_siren':
+        // Calling the raid early has its own sound; the siren is for raids that arrive on the clock.
+        return [e.text === 'early' ? 'raid_called_early' : 'raid_siren'];
       case 'hit': {
         // An enemy landing a blow on one of our residents.
         const by = e.unit !== undefined ? this.world.s.units.find((u) => u.id === e.unit) : undefined;
