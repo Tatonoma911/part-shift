@@ -6,7 +6,8 @@ import { chip, plate, TXT } from '../ui';
 import { drawWeakOrbs, TECH_HEX, weaknessesOf } from '../Vitals';
 import { portrait, preloadMetaArt } from './art';
 import { bestStars, closestMedal, difficultyIcon, medalCard, medalCup, medalName, medalState, medalTile, MEDALS, modeIcon, rankCup, showcaseOf, SHOWCASE_MAX } from './Awards';
-import { bar, button, fmtNum, fmtTime, onTap, plural, shade } from './kit';
+import { enterScene, sheetIn } from '../motion';
+import { BTN, bar, button, fmtNum, fmtTime, onTap, plural, shade } from './kit';
 import { demoMeta, metaDemo } from './preview';
 import { FEMALE, HEROES, heroProgress, heroState, loadMeta, pickAllies, RANKS, rankAt, rankFraction, squadSlots, stat, type HeroInfo, type MetaSave } from './store';
 
@@ -46,6 +47,7 @@ export class DossierScene extends Phaser.Scene {
   }
 
   create(): void {
+    enterScene(this);
     // Hero files get the guide's calm theme; the menu theme crossfades back on the way out.
     sound.playMusic('lore');
     const W = VIEW.width;
@@ -55,7 +57,7 @@ export class DossierScene extends Phaser.Scene {
     const x0 = this.x0();
     this.add.text(x0, 64, t('dossier.title'), TXT.num(48, INK.graphite)).setOrigin(0, 0.5);
     this.add.text(x0 + 4, 108, t('rank.current', { rank: t(`rank.${rankAt(stat(this.meta, 'total_score')).rank.id}`) }).toUpperCase(), TXT.caps());
-    this.add.existing(this.add.container(0, 0, button(this, x0 + this.cw() - 180, 34, 180, 64, t('menu.back'), () => this.back(), false, 24)));
+    this.add.existing(this.add.container(0, 0, button(this, x0 + this.cw() - 200, 16, 200, BTN.sm, t('menu.back'), () => this.back(), false, 26)));
     this.drawTabs();
     this.show(this.tab);
     if (DEMO) {
@@ -63,7 +65,7 @@ export class DossierScene extends Phaser.Scene {
       let k = 0;
       const shows = ['results', 'boon', 'allies', 'unlock', 'lose'];
       this.add.existing(
-        this.add.container(0, 0, button(this, x0 + this.cw() - 400, 34, 200, 64, 'Демо ▸', () => metaDemo(this, shows[k++ % shows.length], this.meta), false, 22)),
+        this.add.container(0, 0, button(this, x0 + this.cw() - 420, 16, 200, BTN.sm, 'Демо ▸', () => metaDemo(this, shows[k++ % shows.length], this.meta), false, 26)),
       );
     }
   }
@@ -324,17 +326,17 @@ export class DossierScene extends Phaser.Scene {
     if (st === 'unlocked') {
       const chosen = this.meta.allyChoice.includes(h.id);
       sheet.add(
-        button(this, pad, y, iw, 92, chosen ? t('ally.select.go') : t('dossier.hero.take'), () => {
+        button(this, pad, y, iw, BTN.md, chosen ? t('ally.select.go') : t('dossier.hero.take'), () => {
           const list = chosen ? this.meta.allyChoice : [h.id, ...this.meta.allyChoice.filter((id) => id !== h.id)];
           pickAllies(this.meta, list);
           close();
           this.show('heroes');
         }, true),
       );
-      y += 106;
+      y += BTN.md + 12;
     }
-    sheet.add(button(this, pad, y, iw, 80, t('menu.back'), close));
-    y += 80 + 34;
+    sheet.add(button(this, pad, y, iw, BTN.sm, t('menu.back'), close));
+    y += BTN.sm + 34;
     plate(g, 0, 0, pw, y, 28);
     // Bottom sheet on a phone, centred panel on PC; shrink if the file is long.
     const k = Math.min(1, (VIEW.height - 60) / y);
@@ -342,10 +344,7 @@ export class DossierScene extends Phaser.Scene {
     sheet.x = (W - pw * k) / 2;
     sheet.y = LANDSCAPE ? (VIEW.height - y * k) / 2 : VIEW.height - y * k - 24;
     root.add(sheet);
-    const sy = sheet.y;
-    sheet.y += 80;
-    sheet.alpha = 0;
-    this.tweens.add({ targets: sheet, y: sy, alpha: 1, duration: 240, ease: 'Cubic.out' });
+    sheetIn(this, [sheet]);
     sound.play('ui_tap');
   }
 

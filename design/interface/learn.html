@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PARTSHIFT · Обучение и онлайн</title>
+<link rel="stylesheet" href="system.css">
+<link rel="stylesheet" href="gallery.css">
+<style>
+.lrn { position: absolute; inset: 0; padding: 47px 14px 24px; display: flex; flex-direction: column; gap: 10px; background: linear-gradient(180deg,#f4f7f7,#e8f0f2); color: var(--ink); overflow: hidden; }
+.lrn .coach { background: var(--white); border-radius: 12px; padding: 12px; box-shadow: inset 0 0 0 2px var(--seam); display: grid; gap: 8px; }
+.lrn .lobby { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+.lrn .lobby > div { height: 132px; border-radius: 10px; background: var(--white); box-shadow: inset 0 0 0 1px var(--line); display: grid; grid-template-rows: 40px 18px 16px; row-gap: 8px; justify-items: center; align-content: center; text-align: center; padding: 10px 6px; font-size: 12px; overflow: hidden; }
+.lrn .lobby .portrait { box-shadow: none; }
+.lrn .lobby .slot-name { font: 700 13px var(--f-body); }
+.lrn .lobby .slot-state { font: 500 12px/1.3 var(--f-body); color: var(--muted); }
+.lrn .lobby .slot-plus { font: 900 22px var(--f-display); color: var(--deep); line-height: 40px; }
+.lrn .lobby .slot-state { white-space: nowrap; }
+.lrn .lobby .free { border: 2px dashed var(--seam); background: transparent; color: var(--deep); box-shadow: none; }
+.lrn .board-row { display: grid; grid-template-columns: 26px 1fr auto; gap: 8px; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--line); font-size: 14px; }
+.lrn .board-row b { font: 900 14px var(--f-display); }
+.lrn .donate { display: grid; gap: 8px; }
+.lrn .amounts { display: grid; grid-template-columns: repeat(3,1fr); gap: 6px; }
+.lrn .amounts button { min-height: 48px; border-radius: 10px; border: 0; background: var(--white); box-shadow: inset 0 0 0 1px var(--line); font: 700 14px var(--f-display); color: var(--ink); }
+@container (min-width: 720px) {
+  .lrn { padding: 24px 40px; display: grid; grid-template-columns: 1fr 1fr; gap: 16px; align-content: start; }
+}
+</style>
+</head>
+<body>
+<div class="page">
+  <nav class="nav" aria-label="Экраны">
+    <a href="index.html">Все экраны</a><a href="shift.html">Смена</a><a href="build.html">Строить</a><a href="control.html">Контроль и тайники</a><a href="results.html">Итоги и концовки</a><a href="dossier.html">Досье</a><a href="menu.html">Меню</a><a href="settings.html">Настройки</a><a href="learn.html" aria-current="page">Обучение и онлайн</a><a href="system.html">Компоненты и состояния</a>
+  </nav>
+  <header>
+    <h1>Обучение, онлайн-лобби, рекорды, поддержка</h1>
+    <p>Четыре экрана, которые не про смену, но без которых игра не работает: карточка-подсказка обучения, лобби онлайн-вызова (2–4 игрока), таблица рекордов, поддержка игры (донат и поделиться).</p>
+  </header>
+
+  <section class="stage" data-show="phone pc">
+    <h2>1. Обучение: карточка-подсказка</h2>
+    <p class="lede">Подсказка одна за раз, в углу, не закрывает поле. Три карточки первой смены, потом только по запросу из Справочника. Пропустить можно в любой момент.</p>
+    <div class="devices"></div>
+    <template>
+      <div class="lrn" style="background:#0b1117;color:var(--paper)">
+        <div class="coach" style="position:absolute;left:14px;right:14px;bottom:110px;color:var(--ink);z-index:2">
+          <div class="row" style="justify-content:space-between;min-height:0;border:0;padding:0"><span class="cap">Урок 1 из 3 · Копать</span><span class="small muted">Пропустить</span></div>
+          <p style="font-size:14px">Проведите пальцем по закрытому кварталу. Цифра подскажет, сколько опасного рядом.</p>
+          <div class="chip ok" style="justify-self:start">Цифра 1: рядом одна опасность</div>
+          <button class="btn primary block">Понятно, дальше</button>
+        </div>
+      </div>
+    </template>
+    <ul class="notes"><li>Подсказка не блокирует поле: тапы идут мимо. Текст только из text/ru.json.</li></ul>
+  </section>
+
+  <section class="stage" data-show="phone pc">
+    <h2>2. Онлайн: лобби вызова (2–4 игрока)</h2>
+    <p class="lede">Друг заходит по ссылке на сайт к хосту: P2P через браузер хоста, без своего сервера. Четыре места: занятое, свободное, закрытое (ждём подключения). Кнопка «Начать» только у хоста и только при двух игроках.</p>
+    <div class="devices"></div>
+    <template>
+      <div class="lrn" style="background:#0b1117;color:var(--paper)">
+        <div style="grid-column:1/-1;display:grid;gap:8px">
+          <p class="cap on-dark">Общий вызов · лобби</p>
+          <h2 class="h1" style="color:var(--paper);font-size:20px">Ждём второго игрока</h2>
+          <div class="lobby" style="color:var(--ink)">
+            <div><span class="portrait won" style="width:40px;height:40px;font-size:12px">Вы</span><span class="slot-name">Хост</span><span class="slot-state">готов</span></div>
+            <div><span class="portrait" style="width:40px;height:40px;font-size:12px">Др</span><span class="slot-name">Игрок 2</span><span class="slot-state">подключается</span></div>
+            <div class="free"><span class="slot-plus">+</span><span class="slot-name">Свободно</span><span class="slot-state">ссылка скопирована</span></div>
+            <div class="free" style="opacity:.6"><span class="slot-plus">+</span><span class="slot-name">Свободно</span><span class="slot-state">ждём друга</span></div>
+          </div>
+          <p class="small" style="color:#cdd9dd">Карта вдвое больше, злодеи усиливаются вдвое быстрее. Без общения и помощи будет тяжело.</p>
+          <div class="error" style="background:#2a1820;color:#ffd6dc;box-shadow:inset 4px 0 0 var(--coral)"><span>⚠</span><span>Соединение нестабильно. Игра подождёт 20 с, потом предложит выйти.</span></div>
+          <div style="display:grid;gap:8px"><button class="btn primary block">Начать вызов</button><button class="btn on-dark-ghost block">Скопировать ссылку</button></div>
+        </div>
+      </div>
+    </template>
+    <ul class="notes"><li>Ошибка связи показывает, что будет дальше, а не просто «ошибка».</li><li>Для гостя кнопка «Начать» не показана, а не заблокирована: нечего объяснять.</li></ul>
+  </section>
+
+  <section class="stage" data-show="phone pc">
+    <h2>3. Таблица рекордов</h2>
+    <p class="lede">Список мест без прокрутки страницы: топ-5, своя строка всегда видна внизу. Рекорды за смену, не за аккаунт.</p>
+    <div class="devices"></div>
+    <template>
+      <div class="lrn">
+        <p class="cap">Рекорды</p>
+        <h1 class="h1" style="font-size:22px">Лучшие смены</h1>
+        <div class="tabs"><button class="tab" aria-selected="true">Очки</button><button class="tab">Время</button><button class="tab">Сложность</button></div>
+        <div>
+          <div class="board-row"><b>1</b><span>Фиолетовая Тень</span><span class="num">18 420</span></div>
+          <div class="board-row"><b>2</b><span>Дежурный-07</span><span class="num">16 905</span></div>
+          <div class="board-row"><b>3</b><span>Стажёр</span><span class="num">12 110</span></div>
+          <div class="board-row" style="background:rgba(0,126,137,.08)"><b>47</b><span><b>Вы</b> · Смена 01</span><span class="num">2 040</span></div>
+        </div>
+        <p class="small muted">Таблица обновляется после смены. Ник можно сменить в Настройках.</p>
+      </div>
+    </template>
+    <ul class="notes"><li>Своя строка подсвечена тонкой плашкой и цифрой, цвет не единственный признак.</li></ul>
+  </section>
+
+  <section class="stage" data-show="phone pc">
+    <h2>4. Поддержка игры: донат и поделиться</h2>
+    <p class="lede">Добровольный донат: 50, 100, 300, 500, 1000 ₽ или своя сумма. Кнопка «Купить разработчику кофе» большая, золотая, на всю ширину. Экран не давит и не мешает игре.</p>
+    <div class="devices"></div>
+    <template>
+      <div class="lrn">
+        <div class="donate">
+          <p class="cap">Поддержка игры</p>
+          <h1 class="h1" style="font-size:20px">PARTSHIFT бесплатная</h1>
+          <p class="small muted">Игра живёт на рекламе и добровольных донатах. Спасибо, что играете.</p>
+          <div class="amounts"><button>50 ₽</button><button>100 ₽</button><button>300 ₽</button><button>500 ₽</button><button>1000 ₽</button><button>Своя сумма</button></div>
+          <button class="btn gold block lg">Купить разработчику кофе</button>
+          <p class="small muted">Оплата через ЮMoney. Чек придёт на почту.</p>
+          <button class="btn ghost block">Поделиться игрой</button>
+        </div>
+      </div>
+    </template>
+    <ul class="notes"><li>Донат никогда не появляется в середине смены и не даёт игровых преимуществ.</li></ul>
+  </section>
+
+  <ul class="notes"><li><b>Проверка.</b> Лобби и таблица на 360 px без прокрутки страницы: список внутри блока. Золотая кнопка доната читается при тёмной теме (контраст 8,4 с тёмным текстом).</li></ul>
+</div>
+<script src="gallery.js"></script>
+</body>
+</html>

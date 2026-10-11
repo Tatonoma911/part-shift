@@ -305,7 +305,7 @@
   "lesson.birth.text": "Tap a building and choose who goes on shift. The center prints level 1 heroes for free, the Dorm up to level 2, the School up to level 3. \"Auto\" picks the hero whose element works best against the nearest enemy.",
   "lesson.birth.tip": "The number of places on a shift grows as new heroes come back. Victories over infected heroes unlock new ones.",
   "people.ours.name": "Who our heroes are",
-  "people.ours.text": "Stand-ins: copies of HeroOut heroes printed from backups taken before the gel outbreak. So they're sane, but weaker than the infected originals: 60% health, 80% damage, 60% armor.",
+  "people.ours.text": "Shift heroes: copies of HeroOut heroes from backups taken before the gel outbreak. They are sane, but weaker than the infected originals: 50 % health, 60 % damage. Their defense matches the infected form.",
   "people.birth.name": "Printing heroes",
   "people.birth.text": "Tap a building and pick a hero. A building prints one hero at a time. The Command Center prints level 1, a Hero Dorm up to 2, a School up to 3, three Schools up to 4.",
   "people.birth.auto": "\"Auto\" prints the hero whose element is strongest against the nearest known enemy.",

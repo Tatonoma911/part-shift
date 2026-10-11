@@ -215,13 +215,27 @@ export function refusal(o: BuildOption): string {
   return `${name}: ${o.note}`;
 }
 
+/** Maps building ids whose art file has a different base name than the id itself. */
+const ART_ALIAS: Record<string, string> = {
+  station:          'hero_station',
+  outpost:          'checkpoint',
+  relay:            'comms_tower',
+  watchtower:       'monitoring_tower',
+  jammer:           'splice_jammer',
+  backup_lab:       'backup_archive',
+  rotation_center:  'limb_rotation_center',
+  forge:            'element_forge',
+  civ_shelter:      'residents_shelter',
+  repair:           'repair_crew',
+};
+
 /** Texture of a building; hero stations come painted in their hero's element (art pack 03 hero_station_normal_<tech>). */
 export function buildingKey(scene: Phaser.Scene, id: string, hero?: string): string {
   if (hero) {
     const k = `building.station_${techOf(hero)}`;
     if (scene.textures.exists(k)) return k;
   }
-  return `building.${id}`;
+  return `building.${ART_ALIAS[id] ?? id}`;
 }
 
 /** Fits a building sprite into a w×h box, standing on its bottom edge. */
@@ -558,9 +572,8 @@ function drawCard(s: Phaser.Scene, c: Phaser.GameObjects.Container, o: BuildOpti
   const nameColor = locked ? INK.white : dim ? INK.dim : INK.graphite;
   const nameLabel = station ? heroName(o.hero!) : optionName(o);
   const nameFS = LANDSCAPE ? 16 : 18;
-  // Leave room on right for orbs if present
-  const orbsW = o.techs.length && !locked ? Math.min(o.techs.length, 4) * 26 + 4 : 0;
-  const nameMaxW = w - 14 - orbsW - 10;
+  // The name gets the full card width; element orbs sit in the picture corner so they never cut a word.
+  const nameMaxW = w - 20;
   const name = s.add.text(10, 10, nameLabel, {
     ...TXT.body(nameFS, nameColor, '700'),
     wordWrap: { width: nameMaxW },
@@ -568,14 +581,6 @@ function drawCard(s: Phaser.Scene, c: Phaser.GameObjects.Container, o: BuildOpti
   });
   if (name.height > 46) name.setScale(46 / name.height);
   c.add(name);
-
-  // Element orbs: small row top-right of the name band
-  if (o.techs.length && !locked) {
-    const og = s.add.graphics();
-    const orbR = 10;
-    o.techs.slice(0, 4).forEach((tech, k) => drawTechOrb(og, tech, w - orbsW + 4 + k * 26 + orbR, 22, orbR));
-    c.add(og);
-  }
 
   // ── PICTURE WELL ───────────────────────────────────────────────────────────
   const nameH = Math.max(46, name.displayHeight) + 16; // dynamic based on name wrap
@@ -596,11 +601,22 @@ function drawCard(s: Phaser.Scene, c: Phaser.GameObjects.Container, o: BuildOpti
     }
   }
 
-  const pic = buildingPic(s, o.id, picMidX, picMidY, w - 32, picH - 16, o.hero);
+  // Plain buildings keep room under the orb row (top of the picture) so the art never sits on the orbs.
+  const orbRoom = o.techs.length && !locked && !station ? 14 : 0;
+  const pic = buildingPic(s, o.id, picMidX, picMidY + orbRoom / 2, w - 32, picH - 16 - orbRoom, o.hero);
   if (pic) {
     if (locked) pic.setTintFill(0xffffff).setAlpha(0.75);
     else if (dim) pic.setTint(0x8a969c).setAlpha(0.72);
     c.add(pic);
+  }
+
+  // Element orbs: a row in the top-right corner of the picture. Stations show their elements in the detail rows instead.
+  if (o.techs.length && !locked && !station) {
+    const og = s.add.graphics();
+    const orbR = 9;
+    const shown = o.techs.slice(0, 4);
+    shown.forEach((tech, k) => drawTechOrb(og, tech, w - 14 - orbR - (shown.length - 1 - k) * 22, picTop + 8 + orbR, orbR));
+    c.add(og);
   }
 
   // Hero station: round comic portrait in the top-right corner of the picture.
@@ -693,7 +709,8 @@ function drawCard(s: Phaser.Scene, c: Phaser.GameObjects.Container, o: BuildOpti
   if (s.textures.exists('icon.energy')) c.add(s.add.image(w / 2 - costT.width / 2 - 4, chipY + chipH / 2, 'icon.energy').setScale(1.0).setOrigin(1, 0.5));
   // If short: small "not enough energy" label above the chip.
   if (short) {
-    const nt = s.add.text(w / 2, h - footH + 2, o.note, TXT.body(12, INK.coral, '600')).setOrigin(0.5, 1);
+    // #C8243F, not the bright coral: the small text must reach WCAG AA on white (design/INTERFACE_SYSTEM.md §3.2).
+    const nt = s.add.text(w / 2, h - footH + 2, o.note, TXT.body(13, '#C8243F', '700')).setOrigin(0.5, 1);
     if (nt.width > w - 16) nt.setScale((w - 16) / nt.width);
     c.add(nt);
   }

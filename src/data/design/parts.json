@@ -189,6 +189,121 @@
         }
       ],
       "_note": "dropped by heavy adaptants"
+    },
+    {
+      "id": "thermo_leg",
+      "slot": "leg",
+      "tech": "thermo",
+      "tiers": [
+        {
+          "tier": 1,
+          "speed": 0.4,
+          "hp": 10
+        },
+        {
+          "tier": 2,
+          "speed": 0.6,
+          "hp": 15
+        },
+        {
+          "tier": 3,
+          "speed": 0.8,
+          "hp": 20
+        }
+      ],
+      "_note": "workshop leg for the element (QA-053); tiers as runner_leg"
+    },
+    {
+      "id": "cryo_leg",
+      "slot": "leg",
+      "tech": "cryo",
+      "tiers": [
+        {
+          "tier": 1,
+          "speed": 0.4,
+          "hp": 10
+        },
+        {
+          "tier": 2,
+          "speed": 0.6,
+          "hp": 15
+        },
+        {
+          "tier": 3,
+          "speed": 0.8,
+          "hp": 20
+        }
+      ],
+      "_note": "workshop leg for the element (QA-053); tiers as runner_leg"
+    },
+    {
+      "id": "volt_leg",
+      "slot": "leg",
+      "tech": "volt",
+      "tiers": [
+        {
+          "tier": 1,
+          "speed": 0.4,
+          "hp": 10
+        },
+        {
+          "tier": 2,
+          "speed": 0.6,
+          "hp": 15
+        },
+        {
+          "tier": 3,
+          "speed": 0.8,
+          "hp": 20
+        }
+      ],
+      "_note": "workshop leg for the element (QA-053); tiers as runner_leg"
+    },
+    {
+      "id": "impact_leg",
+      "slot": "leg",
+      "tech": "impact",
+      "tiers": [
+        {
+          "tier": 1,
+          "speed": 0.4,
+          "hp": 10
+        },
+        {
+          "tier": 2,
+          "speed": 0.6,
+          "hp": 15
+        },
+        {
+          "tier": 3,
+          "speed": 0.8,
+          "hp": 20
+        }
+      ],
+      "_note": "workshop leg for the element (QA-053); tiers as runner_leg"
+    },
+    {
+      "id": "toxin_leg",
+      "slot": "leg",
+      "tech": "toxin",
+      "tiers": [
+        {
+          "tier": 1,
+          "speed": 0.4,
+          "hp": 10
+        },
+        {
+          "tier": 2,
+          "speed": 0.6,
+          "hp": 15
+        },
+        {
+          "tier": 3,
+          "speed": 0.8,
+          "hp": 20
+        }
+      ],
+      "_note": "workshop leg for the element (QA-053); tiers as runner_leg"
     }
   ]
 }

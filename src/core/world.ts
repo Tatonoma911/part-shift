@@ -3287,7 +3287,8 @@ export class World {
         b.upgradeLeft = (b.upgradeLeft as number) - dt;
         if (b.upgradeLeft <= 0) this.finishUpgrade(b);
       }
-      if (!b.complete) continue;
+      // A ruined building stops everything it does until it is rebuilt (QA-054).
+      if (!b.complete || b.ruined) continue;
       const def = buildingDefs[b.type];
       if (def.limbMaker) this.makeLimbs(b, dt);
       // Repair building: our finished buildings in range regain HP (buildings.json repair).
