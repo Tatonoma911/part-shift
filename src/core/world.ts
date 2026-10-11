@@ -593,10 +593,14 @@ export class World {
       case 'useMedkit': {
         const c = this.cell(cmd.x, cmd.y);
         if (!inBounds(this.s, cmd.x, cmd.y) || !c.revealed || c.content !== 'medkit' || c.heal !== undefined || !c.stock) return bad();
-        c.stock -= 1;
-        c.heal = hazards.medkit.seconds;
-        this.rev++;
-        this.emit('medkit_use', { x: cmd.x, y: cmd.y, owner: playerId });
+        this.useFieldMedkit(cmd.x, cmd.y, playerId);
+        return ok;
+      }
+      case 'takeMedkit': {
+        // «Взять»: one charge from the field medkit goes into our Medcenter stock; the medkit stays until it is empty.
+        const c = this.cell(cmd.x, cmd.y);
+        if (!inBounds(this.s, cmd.x, cmd.y) || !c.revealed || c.content !== 'medkit' || c.heal !== undefined || !c.stock) return bad();
+        this.takeFieldMedkit(cmd.x, cmd.y, playerId);
         return ok;
       }
       case 'chord': {
@@ -1493,6 +1497,8 @@ export class World {
     if (aid && u.hp < this.maxHp(u) && !s.units.some((e) => isEnemy(e) && e.hp > 0 && dist(e.x, e.y, u.x, u.y) <= 3)) {
       u.hp = Math.min(this.maxHp(u), u.hp + Number(aid.hpPerSecond) * dt);
     }
+    // A wounded unit goes to a medkit first (a healing one or the nearest with charges), else to the healer (retreating).
+    if (this.toMedkit(u, dt)) return;
     if (this.retreating(u, dt)) return;
     if (this.rallying(u, dt)) return;
     const target = this.cfg.residents.allFight ? this.combatTarget(u) : null;
@@ -1501,7 +1507,6 @@ export class World {
       u.calm = this.cfg.residents.returnToWorkAfterSeconds;
       return this.fight(u, target, dt, (x, y) => walkableForPlayer(s, x, y));
     }
-    if (this.toMedkit(u, dt)) return;
     u.target = undefined;
     if ((u.calm ?? 0) > 0) {
       u.calm! -= dt;
@@ -1662,7 +1667,26 @@ export class World {
         }
       }
     }
-    if (!best) return false;
+    // No medkit is healing yet: a wounded hero runs to the nearest field medkit that still has charges and eats it there.
+    if (!best) {
+      for (let y = 0; y < s.height; y++) {
+        for (let x = 0; x < s.width; x++) {
+          const c = cellAt(s, x, y);
+          if (c.content !== 'medkit' || !c.revealed || c.heal !== undefined || !(c.stock && c.stock > 0)) continue;
+          const d = dist(x, y, u.x, u.y);
+          if (d < bestD) {
+            bestD = d;
+            best = { x, y };
+          }
+        }
+      }
+      if (!best) return false;
+      if (cheb(ux, uy, best.x, best.y) <= r) {
+        u.path = [];
+        this.useFieldMedkit(best.x, best.y, u.owner);
+        return true;
+      }
+    }
     const target = best;
     if (cheb(ux, uy, target.x, target.y) <= r) {
       u.path = [];
@@ -3787,6 +3811,24 @@ export class World {
     return Math.min(cs.maxBonus, this.cleanSteps.length * cs.bonusPerStep);
   }
 
+  /** Eats one charge of a field medkit: it heals everybody next to it for hazards.json medkit.seconds. */
+  private useFieldMedkit(x: number, y: number, owner: number): void {
+    const c = this.cell(x, y);
+    c.stock = (c.stock ?? 1) - 1;
+    c.heal = hazards.medkit.seconds;
+    this.rev++;
+    this.emit('medkit_use', { x, y, owner });
+  }
+
+  /** Takes one charge of a field medkit into the owner's stock (MVP_RULES §22.19). */
+  private takeFieldMedkit(x: number, y: number, owner: number): void {
+    const c = this.cell(x, y);
+    c.stock = (c.stock ?? 1) - 1;
+    this.s.players[owner].medkits = (this.s.players[owner].medkits ?? 0) + 1;
+    this.rev++;
+    this.emit('medkit_taken', { x, y, owner });
+  }
+
   /**
    * Hero medkits (MVP_RULES §22.19): each completed Medcenter adds a charge to its owner's stock every chargeSeconds,
    * up to capPerMedcenter per Medcenter. A unit with no medkit takes one from the stock. A unit that falls below 25 %
@@ -3812,6 +3854,20 @@ export class World {
       for (const u of s.units) {
         // Only our heroes (allies from the squad) carry medkits; residents do not.
         if (u.owner !== p.id || u.kind !== 'ally' || u.hp <= 0) continue;
+        // A hero who walks over a field medkit picks a charge up by itself (the medkit stays until it is empty).
+        const hx = Math.round(u.x);
+        const hy = Math.round(u.y);
+        const key = `${hx},${hy}`;
+        if (u.atMedkit !== key) u.atMedkit = undefined;
+        const here = inBounds(s, hx, hy) ? cellAt(s, hx, hy) : null;
+        if (here && here.content === 'medkit' && here.revealed && here.heal === undefined && (here.stock ?? 0) > 0 && u.atMedkit !== key) {
+          u.atMedkit = key;
+          here.stock = (here.stock ?? 1) - 1;
+          if (!u.medkit) u.medkit = true;
+          else p.medkits = (p.medkits ?? 0) + 1;
+          this.rev++;
+          this.emit('medkit_taken', { x: hx, y: hy, owner: p.id, unit: u.id });
+        }
         if (!u.medkit && (p.medkits ?? 0) > 0) {
           u.medkit = true;
           p.medkits = (p.medkits ?? 0) - 1;
