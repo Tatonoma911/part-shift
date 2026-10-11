@@ -63,7 +63,7 @@ function langSwitch(): string {
 }
 
 function drawer(): string {
-  const items = (['home', ...NAV, 'updates'] as string[])
+  const items = (['home', ...NAV] as string[])
     .map((k) => `<a class="item" href="#${k}">${u(k)}<span class="caps">${k === 'home' ? 'LUMEN CITY' : ''}</span></a>`)
     .join('');
   return `<div class="drawer" id="drawer" hidden><div class="drawer-panel">
@@ -574,53 +574,9 @@ function route(): { view: string; active: string; anchor?: string } {
       return { view: home(), active: 'home', anchor: 'story' };
     case 'archive':
       return { view: villainsView(), active: 'villains', anchor: 'archive' };
-    case 'updates':
-      return { view: updatesView(), active: 'updates' };
     default:
       return { view: home(), active: 'home' };
   }
-}
-
-/** Version list for the site: the same content as CHANGELOG.md, kept short. */
-const VERSIONS = [
-  {
-    v: '0.8.0',
-    st: R('в игре', 'in the game'),
-    items: [
-      R('Серия чистых кварталов: +2 % к Энергии за каждые 5 подряд', 'Clean streak: +2% Energy per 5 quarters in a row'),
-      R('Звонки Контроля в кампании', 'Control calls in the campaign'),
-      R('17 зданий: Ретранслятор, Медцентр, Кузница, Ротация, Архив и другие', '17 buildings: Relay, Medcenter, Forge, Rotation, Archive and more'),
-      R('Мины (14 на смену), бонусные капсулы, аптечки, сундуки', 'Mines (14 per shift), bonus capsules, medkits, caches'),
-      R('Аккорд, волна зачистки, ранний рейд — новые звуки', 'Chord, wave clear and early raid — new sounds'),
-      R('Контакт автора и эта страница', 'Author contact and this page'),
-    ],
-    soon: [
-      R('Курьер Splice', 'Splice courier'),
-      R('Флаг сбора и аварийный купол', 'Rally flag and emergency dome'),
-      R('Подсказка «последний шанс»', 'Last-chance hint'),
-      R('Финальный удар и три звезды на итоге', 'Final blow and three stars on the result'),
-    ],
-  },
-  {
-    v: '0.7.0',
-    st: R('текущий онлайн-релиз', 'current online release'),
-    items: [
-      R('Смена, гнёзда адаптантов, набеги, герои из отряда', 'Shifts, adaptant nests, raids, squad heroes'),
-      R('Кампания с нарастающей сложностью', 'Campaign with rising difficulty'),
-      R('Онлайн для 2–4 игроков (PeerJS)', 'Online for 2–4 players (PeerJS)'),
-      R('Сайт вселенной: герои, мир, злодеи, комиксы, артбук', 'Universe site: heroes, world, villains, comics, artbook'),
-    ],
-  },
-];
-
-function updatesView(): string {
-  const blocks = VERSIONS.map((ver) => `
-    <article class="slab" style="padding:18px;margin-bottom:16px">
-      <span class="caps">${ver.v} // ${ver.st}</span>
-      <ul style="margin:10px 0 0;padding-left:20px;line-height:1.5">${ver.items.map((i) => `<li>${i}</li>`).join('')}</ul>
-      ${'soon' in ver && ver.soon ? `<p class="caps" style="margin:14px 0 6px">${R('В работе', 'In progress')}</p><ul style="margin:0;padding-left:20px;line-height:1.5">${ver.soon.map((i) => `<li>${i}</li>`).join('')}</ul>` : ''}
-    </article>`).join('');
-  return `<section class="wrap" style="padding-block:40px">${head(u('updates'), R('Что нового в игре', 'What is new in the game'), R('Версии и их содержимое. Полный список в CHANGELOG.md.', 'Versions and what is in them. Full list in CHANGELOG.md.'))}${blocks}</section>`;
 }
 
 const app = document.getElementById('site')!;
