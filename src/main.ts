@@ -27,7 +27,7 @@ Promise.all([fontsReady(), account.boot()]).then(() => {
   const box = document.getElementById('app')?.getBoundingClientRect();
   chooseLayout(box?.width || window.innerWidth, box?.height || window.innerHeight);
   bootAnalytics(LANDSCAPE ? 'landscape' : 'portrait');
-  new Phaser.Game({
+  const game = new Phaser.Game({
     type: Phaser.AUTO,
     parent: 'app',
     backgroundColor: '#dfeef3',
@@ -38,6 +38,10 @@ Promise.all([fontsReady(), account.boot()]).then(() => {
     // The loading screen goes first: it loads the art and hands over to the menu.
     scene: [LoadingScene, MenuScene, GameScene, DossierScene, UniverseScene, ResultsPreviewScene],
   });
+  // A finger on the board is a tap or a drag, never a page scroll: phones otherwise take the drag, cancel the tap and scroll.
+  // Only the game lives in #app (DOM panels sit beside it on body), so the page's own scrolling is untouched.
+  game.canvas.style.touchAction = 'none';
+  document.getElementById('app')?.addEventListener('touchmove', (e) => e.preventDefault(), { passive: false });
   account.markLive();
   bootSocial();
 });
