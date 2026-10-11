@@ -522,5 +522,10 @@
   "building.limb.next_hint": "Next limb in {s} s.",
   "building.limb_workshop.name": "Limb Workshop",
   "building.limb_workshop.desc": "Every 90 s makes an arm or a leg for a hero nearby. You pick the element. Needs a Rescue School.",
-  "hud.clean_streak": "Clean streak: +{p}%"
+  "hud.clean_streak": "Clean streak: +{p}%",
+  "howtoplay.title": "How to play",
+  "howtoplay.line1": "Tap a block — your heroes will dig it",
+  "howtoplay.line2": "Number = nests nearby. Empty = safe to dig",
+  "howtoplay.line3": "Pinch or scroll wheel to zoom in",
+  "howtoplay.ok": "Got it!"
 }

@@ -3,7 +3,7 @@ import { BOARD, LANDSCAPE, VIEW } from './layout';
 
 /** Depth bands: below 0 the sky, 19 and up the HUD/dock, everything between is the board. */
 export const UI_DEPTH = 19;
-const MAX_ZOOM = 3;
+const MAX_ZOOM = 5;
 
 /**
  * Three cameras: a fixed sky camera, a board camera that zooms and pans inside
