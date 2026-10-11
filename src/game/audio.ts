@@ -135,6 +135,11 @@ class SoundBoard {
       const ctx = this.ctx;
       this.masterBus = ctx.createGain();
       this.masterBus.connect(ctx.destination);
+      // Minimised or switched-away: silence everything (music too); back in view: carry on where it stopped.
+      document.addEventListener('visibilitychange', () => {
+        if (document.hidden) void ctx.suspend();
+        else if (ctx.state === 'suspended') void ctx.resume();
+      });
       const bus = () => {
         const g = ctx.createGain();
         g.connect(this.masterBus);
@@ -147,7 +152,7 @@ class SoundBoard {
       for (const id of ['ui_tap', 'dig_done', 'energy_orb_arrive', 'build_place']) SFX[id]?.files.forEach((f) => void this.load(f));
       if (this.wantMusic) this.playMusic(this.wantMusic);
     }
-    if (this.ctx.state === 'suspended') void this.ctx.resume();
+    if (this.ctx.state === 'suspended' && !document.hidden) void this.ctx.resume();
   }
 
   setPrefs(p: Partial<SoundPrefs>): void {
