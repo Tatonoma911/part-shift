@@ -36,7 +36,7 @@ import { techOf } from './Vitals';
 import { armTechs } from './BoardView';
 import eventsJson from '../data/design/events.json';
 import { setBackHandler } from '../platform/native';
-import { CAMPAIGN_TOTAL, districtText, getCampaignWorld, markShiftCleared, shiftReward } from './campaign';
+import { CAMPAIGN_TOTAL, districtText, getCampaignWorld, getFirstUncleared, markShiftCleared, shiftReward } from './campaign';
 import type { PeerSession as OnlineSession } from '../net/peer';
 import { challengeUrl, closeSocial, displayName, openBoard, openDonate, profile, rankOf, recordRun, resultCard, share, shouldNudge, socialOpen, type RecordedRun } from '../social';
 import { enterScene } from './motion';
@@ -799,7 +799,8 @@ export class GameScene extends Phaser.Scene {
         title: t('tutorial.final.title'),
         lines: [t('tutorial.final.line1'), t('tutorial.final.line2'), t('tutorial.final.line3')],
         actions: [
-          { label: t('tutorial.final.go'), act: () => this.scene.start('game', { slot: 1, fresh: !loadSlot(1) }), primary: true },
+          // «На первую смену» opens the campaign's first uncleared shift (squad screen first), not a free run.
+          { label: t('tutorial.final.go'), act: () => this.nextShift(getFirstUncleared()), primary: true },
           { label: t('menu.quit_to_menu'), act: () => this.toMenu() },
         ],
       });
