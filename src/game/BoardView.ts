@@ -77,6 +77,8 @@ const RESIDENT_COMBAT_SET = 'defender';
 const STARTER_LOOKS = ['standard', 'patch', 'canopy', 'current'];
 /** Our hero dog's sprite scale: half the side, a quarter of the square, so it is not taller than the people (Антон, 2026-10-10). */
 const HERO_DOG_SCALE = 0.5;
+/** A destroyed building hangs as a wreck this long before it disappears (Антон, 2026-10-11). */
+const RUIN_HANG_MS = 5000;
 /** block_fx / lair_fx are drawn at 2× (a block is ~104 px wide in the frame). */
 const FX2 = 0.5;
 const BLOCK_EL = ['thermo', 'cryo', 'volt', 'impact', 'toxin'];
@@ -125,6 +127,8 @@ export class BoardView {
   readonly height: number;
   private readonly tiles: Phaser.GameObjects.Image[] = [];
   private readonly tileKey: string[] = [];
+  /** Cells whose wreck has hung long enough to vanish: their rubble tile reverts to ground. */
+  private readonly ruinGone = new Set<number>();
   private readonly film: Phaser.GameObjects.Image[] = [];
   private readonly hot = new Map<number, Phaser.GameObjects.Image>();
   private readonly haze = new Map<number, Phaser.GameObjects.Sprite>();
@@ -633,7 +637,7 @@ export class BoardView {
               key = GROUND[h % 8];
           }
           // Ruins of a lost building: rubble until it is rebuilt at half price.
-          if (c.ruin && c.building === undefined) key = `rubble_${h % 2}`;
+          if (c.ruin && c.building === undefined && !this.ruinGone.has(i)) key = `rubble_${h % 2}`;
         }
         if (this.tileKey[i] !== key) {
           this.tiles[i].setTexture(`tile.${key}`);
@@ -1143,13 +1147,18 @@ export class BoardView {
       const lost = this.lost.find((e) => e.x === v.x && e.y === v.y);
       const sheet = `bld_${v.type}`;
       const ruin = `bldg.${v.type}_destroyed`;
+      if (lost) {
+        // The wreck hangs for a few seconds, then vanishes and frees its cell for a new build (Антон, 2026-10-11).
+        const cell = v.y * this.world.s.width + v.x;
+        this.scene.time.delayedCall(RUIN_HANG_MS, () => this.ruinGone.add(cell));
+      }
       if (lost && animSets[sheet]) {
         v.spr.setOrigin(...originOf(sheet)).play(`${sheet}.destroy`);
-        this.scene.tweens.add({ targets: v.spr, alpha: 0, delay: 1400, duration: 600, onComplete: () => v.spr.destroy() });
+        this.scene.tweens.add({ targets: v.spr, alpha: 0, delay: RUIN_HANG_MS, duration: 600, onComplete: () => v.spr.destroy() });
       } else if (lost && this.scene.textures.exists(ruin)) {
         v.spr.stop();
         v.spr.setTexture(ruin).clearTint().setAlpha(1);
-        this.scene.tweens.add({ targets: v.spr, alpha: 0, delay: 1800, duration: 700, onComplete: () => v.spr.destroy() });
+        this.scene.tweens.add({ targets: v.spr, alpha: 0, delay: RUIN_HANG_MS, duration: 700, onComplete: () => v.spr.destroy() });
       } else v.spr.destroy();
     }
     this.lost = [];
