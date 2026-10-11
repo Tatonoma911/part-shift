@@ -39,4 +39,4 @@ jobs:
       - run: npm ci
       - run: npm run build
       - name: Deploy to Netlify
-        run: npx netlify-cli deploy --prod --dir=dist --site=${{ secrets.NETLIFY_SITE_ID }} --auth=${{ secrets.NETLIFY_AUTH_TOKEN }}
+        run: npx netlify-cli deploy --prod --dir=dist --site=80a14eff-3d58-4454-8aee-e97964ec15d5 --auth=${{ secrets.NETLIFY_AUTH_TOKEN }}
