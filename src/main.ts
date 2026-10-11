@@ -14,6 +14,7 @@ import './game/Hover'; // glow feedback on every clickable object (ui/code READM
 import { initNative } from './platform/native';
 import { bootAnalytics } from './analytics';
 import { bootSocial } from './social';
+import { initCursor } from './ui/cursor';
 
 initNative();
 applyPalette();
@@ -27,6 +28,7 @@ Promise.all([fontsReady(), account.boot()]).then(() => {
   // Prevent the browser from intercepting pinch-to-zoom and scroll-to-zoom gestures.
   const appEl = document.getElementById('app');
   if (appEl) appEl.style.touchAction = 'none';
+  if (appEl) initCursor(appEl);
   const box = appEl?.getBoundingClientRect();
   chooseLayout(box?.width || window.innerWidth, box?.height || window.innerHeight);
   bootAnalytics(LANDSCAPE ? 'landscape' : 'portrait');
