@@ -88,6 +88,11 @@ export class Cameras {
     this.apply();
   }
 
+  /** A one-finger drag on the board: the view follows the finger from here on (touch). */
+  beginPan(p: { x: number; y: number }): void {
+    this.pan = { x: p.x, y: p.y };
+  }
+
   panBy(dx: number, dy: number): void {
     this.center = { x: this.center.x - dx / this.zoom, y: this.center.y - dy / this.zoom };
     this.apply();
