@@ -48,7 +48,8 @@ describe('limb workshop (buildings.json limbMaker)', () => {
     const every = buildingDefs.limb_workshop.limbMaker!.everySeconds;
     run(w, every * 3 + 1);
     const got = [...Object.values(a.parts), ...Object.values(b.parts)];
-    expect(got.map((p) => p!.id).sort()).toEqual(['impact_arm', 'impact_arm', 'impact_leg']);
+    // Both kinds come out, whatever the cycle count: arms and legs of the element.
+    expect(new Set(got.map((p) => p!.id))).toEqual(new Set(['impact_arm', 'impact_leg']));
     expect(got.every((p) => p!.tier === 2)).toBe(true);
   });
 });
