@@ -96,3 +96,39 @@ describe('music stages', () => {
     expect(sfx.filter((id) => id === 'hammer' || id === 'hammer_weld')).toEqual(['hammer', 'hammer_weld', 'hammer_weld', 'hammer_weld']);
   });
 });
+
+describe('event sounds from the wishlist audit', () => {
+  // Every sound the audit asked for is in the manifest and plays for its event (or its rename).
+  const WISH: [string, string][] = [
+    ['mine_armed', 'mine_armed'],
+    ['mine_blast', 'mine_blast'],
+    ['mine_defused', 'mine_defused'],
+    ['medkit_open', 'medkit_open'],
+    ['medkit_use', 'medkit_use'],
+    ['medkit_empty', 'medkit_empty'],
+    ['bonus_opened', 'bonus_opened'],
+    ['building_demolished', 'building_demolished'],
+    ['building_boosted', 'building_boosted'],
+    ['build_cancelled', 'build_cancelled'],
+    ['building_upgraded', 'upgrade_chime'],
+    ['call_incoming', 'control_call'],
+    ['call_answered', 'call_answered'],
+    ['call_complied', 'call_complied'],
+    ['super_charged', 'super_charged'],
+    ['tempo_level_up', 'tempo_up'],
+  ];
+
+  it('plays the sound for each event', () => {
+    const { d } = setup();
+    for (const [type, sound] of WISH) {
+      sfx.length = 0;
+      d.onEvent({ type } as never);
+      expect(sfx, type).toContain(sound);
+    }
+  });
+
+  it('every sound it names is in the manifest', async () => {
+    const manifest = (await import('../src/assets/audio/sounds.json')).default as unknown as { sfx: Record<string, unknown> };
+    for (const [, sound] of WISH) expect(manifest.sfx[sound], sound).toBeDefined();
+  });
+});

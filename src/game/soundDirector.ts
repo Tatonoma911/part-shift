@@ -15,6 +15,10 @@ const RENAME: Record<string, string> = {
   hero_warning: 'quarantine_siren',
   raid_incoming: 'raid_siren',
   chord: 'chord_ok',
+  // The Контроль call comes in as call_incoming; its sound is control_call (audio/tools/sfx4.py).
+  call_incoming: 'control_call',
+  building_upgraded: 'upgrade_chime',
+  tempo_level_up: 'tempo_up',
 };
 
 /**
