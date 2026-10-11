@@ -531,7 +531,6 @@ export const UI: Record<string, L> = {
   villains: { ru: 'Злодеи', en: 'Villains' },
   comics: { ru: 'Комиксы', en: 'Comics' },
   artbook: { ru: 'Артбук', en: 'Artbook' },
-  updates: { ru: 'Обновления', en: 'Updates' },
   home: { ru: 'Главная', en: 'Home' },
   read: { ru: 'Читать', en: 'Read' },
   open: { ru: 'Открыть', en: 'Open' },
