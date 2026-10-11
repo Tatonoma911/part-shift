@@ -75,6 +75,69 @@ function drawer(): string {
   </div></div>`;
 }
 
+function contactBlock(): string {
+  const teaser = R(
+    'Эту игру делает один человек. Хотите узнать, как так вышло? Нажмите.',
+    'One person makes this game. Want to know how that happened? Click.',
+  );
+  const full = [
+    R(
+      'Эту игру делаю я один, а в сети меня чаще всего найти по логину @kazakovant. Он одинаковый в Telegram, Instagram и на YouTube. Пишите, если нашли баг, хотите сказать спасибо или поспорить про тактику.',
+      "I make this game alone, and online you'll mostly find me as @kazakovant. The same handle on Telegram, Instagram and YouTube. Write if you've found a bug, want to say thanks, or want to argue about tactics.",
+    ),
+    R(
+      'Я обучаю бизнес внедрять ИИ: автоматизировать процессы, делать игры, запускать творческие проекты. ИИ под любую задачу, от таблицы для отдела продаж до сценария мультфильма. Вместе с командой и нейросетями разработал 550 брендов и сотни тысяч макетов дизайна.',
+      "I teach businesses how to bring AI in: automating processes, making games, launching creative projects. AI for any task, from a sales spreadsheet to a cartoon script. Together with my team and AI, I've developed 550 brands and hundreds of thousands of design layouts.",
+    ),
+    R(
+      'В первую очередь это для бизнес-стратегов и креативных маркетологов. Вам нужна не инструкция на три страницы, а другой способ думать: как ставить задачу ИИ, как проверять ответ и где он врёт. Этим я и занимаюсь.',
+      "Mostly for business strategists and creative marketers. You don't need a three-page manual, you need a different way of thinking: how to brief AI, how to check its answer, and where it lies. That's what I do.",
+    ),
+    R(
+      'Если интересно, напишите мне в Telegram: @kazakovant. Мои дизайн-проекты и кейсы — на oneconception.ru. Хотите поблагодарить за игру, есть кнопка поддержки в игре и на сайте. Спасибо, что дочитали, это уже редкость.',
+      "If that interests you, message me on Telegram: @kazakovant. My design projects and case studies are at oneconception.ru. Want to thank me for the game? There's a support button in the game and on the site. Thanks for reading to the end, that's rare.",
+    ),
+  ];
+  const adLine = R(
+    'Обучаю внедрять ИИ в бизнес: автоматизация, игры, творчество.',
+    'I teach businesses to bring AI in: automation, games, creative work.',
+  );
+  const siteLabel = R('Дизайн-проекты', 'Design projects');
+  const copyLabel = R('Скопировать', 'Copy');
+  const copiedLabel = R('Скопировано', 'Copied');
+  const hintPrefix = R('Везде одинаковый:', 'Same handle everywhere:');
+
+  const pills = [
+    { href: 'https://t.me/kazakovant', label: 'Telegram', icon: '<svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.894 8.221l-1.97 9.28c-.145.658-.537.818-1.084.508l-3-2.21-1.447 1.394c-.16.16-.295.295-.605.295l.213-3.053 5.56-5.023c.242-.213-.054-.333-.373-.12l-6.871 4.326-2.962-.924c-.643-.204-.657-.643.136-.953l11.57-4.461c.537-.194 1.006.131.833.941z"/></svg>' },
+    { href: 'https://instagram.com/kazakovant', label: 'Instagram', icon: '<svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg>' },
+    { href: 'https://youtube.com/@kazakovant', label: 'YouTube', icon: '<svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M23.495 6.205a3.007 3.007 0 0 0-2.088-2.088c-1.87-.501-9.396-.501-9.396-.501s-7.507-.01-9.396.501A3.007 3.007 0 0 0 .527 6.205a31.247 31.247 0 0 0-.522 5.805 31.247 31.247 0 0 0 .522 5.783 3.007 3.007 0 0 0 2.088 2.088c1.868.502 9.396.502 9.396.502s7.506 0 9.396-.502a3.007 3.007 0 0 0 2.088-2.088 31.247 31.247 0 0 0 .5-5.783 31.247 31.247 0 0 0-.5-5.805zM9.609 15.601V8.408l6.264 3.602z"/></svg>' },
+    { href: 'https://oneconception.ru', label: siteLabel, icon: '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 2C6.477 2 2 6.477 2 12s4.477 10 10 10 10-4.477 10-10S17.523 2 12 2zm0 2a8 8 0 0 1 8 8 8 8 0 0 1-8 8 8 8 0 0 1-8-8 8 8 0 0 1 8-8zm-1 3v2H8l-.002.001A5.002 5.002 0 0 0 7 12a5 5 0 0 0 5 5 5 5 0 0 0 5-5 5.002 5.002 0 0 0-.998-2.999L16 9h-3V7h-2zm1 4a3 3 0 0 1 3 3 3 3 0 0 1-3 3 3 3 0 0 1-3-3 3 3 0 0 1 3-3z" fill="currentColor"/></svg>' },
+  ].map(p => `<a class="contact-pill" href="${esc(p.href)}" target="_blank" rel="noopener">${p.icon}${esc(p.label)}</a>`).join('');
+
+  return `
+  <div class="contact-block" id="contact-block">
+    <div class="wrap">
+      <button class="contact-trigger" aria-expanded="false" aria-controls="contact-panel" id="contact-trigger">
+        <span class="contact-arrow" aria-hidden="true"><svg width="9" height="9" viewBox="0 0 9 9" fill="none"><path d="M1.5 3L4.5 6L7.5 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+        <span class="contact-teaser">${esc(teaser)}</span>
+      </button>
+      <div class="contact-panel" id="contact-panel" role="region" aria-labelledby="contact-trigger">
+        <div class="contact-panel-inner">
+          <div class="contact-name">Антон Казаков</div>
+          <div class="contact-bio">${full.map(p => `<p>${esc(p)}</p>`).join('')}</div>
+          <div class="contact-socials">${pills}</div>
+          <div class="contact-hint">
+            <span>${esc(hintPrefix)}</span>
+            <span class="contact-handle">@kazakovant</span>
+            <button class="contact-copy" data-copy="@kazakovant" data-label="${esc(copyLabel)}" data-done="${esc(copiedLabel)}">${esc(copyLabel)}</button>
+          </div>
+          <div class="contact-ad">${esc(adLine)}</div>
+        </div>
+      </div>
+    </div>
+  </div>`;
+}
+
 function footer(): string {
   return `<footer><div class="wrap">
     <span class="wordmark">PART<b>SHIFT</b></span>
@@ -522,13 +585,46 @@ let lastHash = '';
 function render(): void {
   document.documentElement.lang = lang;
   const r = route();
-  app.innerHTML = `${bar(r.active)}<main>${r.view}</main>${footer()}${drawer()}<div class="lightbox" id="lightbox" hidden></div>`;
+  app.innerHTML = `${bar(r.active)}<main>${r.view}</main>${contactBlock()}${footer()}${drawer()}<div class="lightbox" id="lightbox" hidden></div>`;
   document.title = r.active === 'home' ? 'PART SHIFT — Lumen City' : `${u(r.active)} · PART SHIFT`;
   const same = location.hash === lastHash;
   lastHash = location.hash;
   wireSupport(app, lang);
+  wireContact(app);
   if (r.anchor) document.getElementById(r.anchor)?.scrollIntoView();
   else if (!same) window.scrollTo(0, 0);
+}
+
+function wireContact(root: HTMLElement): void {
+  const trigger = root.querySelector<HTMLButtonElement>('#contact-trigger');
+  const panel = root.querySelector<HTMLElement>('#contact-panel');
+  if (trigger && panel) {
+    trigger.addEventListener('click', () => {
+      const open = trigger.getAttribute('aria-expanded') === 'true';
+      trigger.setAttribute('aria-expanded', String(!open));
+      panel.classList.toggle('open', !open);
+    });
+  }
+  root.querySelectorAll<HTMLButtonElement>('.contact-copy').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const text = btn.dataset.copy ?? '';
+      const done = btn.dataset.done ?? 'Copied';
+      const orig = btn.dataset.label ?? btn.textContent ?? '';
+      navigator.clipboard.writeText(text).then(() => {
+        btn.textContent = done;
+        btn.classList.add('copied');
+        setTimeout(() => { btn.textContent = orig; btn.classList.remove('copied'); }, 2000);
+      }).catch(() => {
+        const handle = root.querySelector<HTMLElement>('.contact-handle');
+        if (handle) {
+          const range = document.createRange();
+          range.selectNodeContents(handle);
+          window.getSelection()?.removeAllRanges();
+          window.getSelection()?.addRange(range);
+        }
+      });
+    });
+  });
 }
 
 function setLang(l: Lang): void {
