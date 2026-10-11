@@ -140,7 +140,9 @@ h1, h2, h3, p { margin: 0; }
 .small { font-size: 13px; line-height: 1.4; }
 .num { font-family: var(--f-display); font-weight: 900; font-variant-numeric: tabular-nums; }
 
-/* ---------- Buttons ---------- */
+/* ---------- Buttons: one system ----------
+   Sizes: default 48 px, lg 56 px, xl 64 px (two-line label). Same cut corners and the same
+   type on every button. Pages do not add their own size, font or shape to a button. */
 .btn {
   display: inline-flex;
   align-items: center;
@@ -151,7 +153,9 @@ h1, h2, h3, p { margin: 0; }
   padding: 0 var(--s5);
   border: 0;
   border-radius: 0;
-  font: 700 var(--t-label) / 1.2 var(--f-body);
+  font: 700 15px / 1.2 var(--f-body);
+  letter-spacing: 0;
+  text-align: center;
   color: var(--ink);
   background: rgba(16, 23, 28, 0.08);
   cursor: pointer;
@@ -165,7 +169,11 @@ h1, h2, h3, p { margin: 0; }
 .btn:active:not(:disabled) { transform: translateY(1px); }
 .btn:focus-visible { outline: none; box-shadow: inset 0 0 0 3px var(--amber); }
 .btn.block { width: 100%; }
-.btn .glyph { font-size: 16px; line-height: 1; }
+.btn.lg { min-height: 56px; }
+.btn.xl { min-height: 64px; flex-direction: column; gap: 2px; }
+.btn.xl .t { display: block; font: 800 15px / 1.2 var(--f-body); }
+.btn.xl .s { display: block; font: 500 12px / 1.3 var(--f-body); opacity: .9; }
+.btn.icon { width: var(--hit); padding: 0; background: var(--graphite); color: var(--paper); }
 
 .btn.primary {
   color: var(--white);
@@ -174,47 +182,19 @@ h1, h2, h3, p { margin: 0; }
 }
 .btn.primary:active:not(:disabled) { background: var(--teal-dark); box-shadow: inset 0 -2px 0 #003d44; }
 
-.btn.dark {
-  color: var(--paper);
-  background: var(--graphite);
-}
+.btn.dark { color: var(--paper); background: var(--graphite); }
 .btn.dark:active:not(:disabled) { background: #000; }
 
-.btn.danger {
-  color: var(--graphite);
-  background: var(--coral);
-  box-shadow: inset 0 -4px 0 #c94760;
-}
+.btn.danger { color: var(--graphite); background: var(--coral); box-shadow: inset 0 -4px 0 #c94760; }
 
-.btn.gold {               /* «Купить разработчику кофе»: large, full width, gold (UI_SPEC §1, Антон) */
-  min-height: 60px;
-  font-size: 16px;
+.btn.gold {               /* «Купить разработчику кофе»: the one gold button */
   color: var(--amber-ink);
   background: linear-gradient(180deg, #f5c063 0%, var(--amber) 100%);
   box-shadow: inset 0 -4px 0 #b97a1c;
 }
 
-.btn.ghost {
-  background: rgba(16, 23, 28, 0.06);
-  color: var(--ink);
-  box-shadow: inset 0 0 0 1px rgba(16, 23, 28, 0.22);
-  clip-path: none;
-  border-radius: 10px;
-}
-.btn.on-dark-ghost {
-  background: rgba(244, 247, 247, 0.1);
-  color: var(--paper);
-  box-shadow: inset 0 0 0 1px rgba(159, 244, 255, 0.35);
-  clip-path: none;
-  border-radius: 10px;
-}
-
-.btn.icon {
-  width: var(--hit);
-  padding: 0;
-  background: var(--graphite);
-  color: var(--paper);
-}
+.btn.ghost { background: rgba(16, 23, 28, 0.08); color: var(--ink); box-shadow: inset 0 0 0 1px rgba(16, 23, 28, 0.22); }
+.btn.on-dark-ghost { background: rgba(244, 247, 247, 0.12); color: var(--paper); box-shadow: inset 0 0 0 1px rgba(159, 244, 255, 0.35); }
 
 .btn:disabled,
 .btn[aria-disabled="true"] {
@@ -608,3 +588,14 @@ h1, h2, h3, p { margin: 0; }
 .bar > i { animation: mv-bar 1.2s ease-out both; }
 .tabs .tab[aria-selected="true"] { animation: mv-pop 3s ease-in-out infinite; }
 .switch::after { transition: left .2s; }
+
+/* Segmented and list buttons take the same shape and type as .btn */
+.seg button, .swatches button, .amounts button {
+  min-height: var(--hit);
+  border: 0;
+  border-radius: 0;
+  font: 700 15px / 1.2 var(--f-body);
+  clip-path: polygon(
+    var(--cut-btn) 0, 100% 0, 100% calc(100% - var(--cut-btn)),
+    calc(100% - var(--cut-btn)) 100%, 0 100%, 0 var(--cut-btn));
+}

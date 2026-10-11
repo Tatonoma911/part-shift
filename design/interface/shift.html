@@ -35,10 +35,8 @@
 .shift .dock .hint { display: grid; gap: 6px; align-content: center; background: rgba(244,247,247,.08); padding: 8px 12px; border-radius: 10px; color: var(--paper); font-size: 13px; }
 .shift .dock .hint .chip { justify-self: start; background: var(--seam); color: var(--graphite); }
 .shift .toast-slot { width: 100%; }
-.shift .btn.build { min-height: 64px; flex-direction: column; gap: 2px; font-size: 14px; position: relative; }
-.shift .btn.build .glyph { font-size: 18px; }
+.shift .btn.build { position: relative; }
 .shift .side { display: none; }
-.shift .pause { min-height: 44px; width: 44px; }
 .shift .sheet-wrap { position: absolute; inset: 0; }
 .shift .stat-note { display: none; }
 
@@ -148,7 +146,7 @@
               <span>Проведите по закрытым кварталам. Цифры подскажут, где опасно.</span>
               <span class="chip">В очереди: 3 · сбросить</span>
             </div>
-            <button class="btn primary build" aria-label="Строить, можно поставить 3 здания"><span class="glyph">⚒</span>Строить<span class="count-badge">3</span></button>
+            <button class="btn primary xl build" aria-label="Строить, можно поставить 3 здания"><span class="glyph">⚒</span>Строить<span class="count-badge">3</span></button>
           </footer>
         </div>
         <aside class="side" aria-label="Сводка смены">
@@ -171,7 +169,7 @@
               <span>Копать: тап или проведение по закрытым кварталам.</span>
               <span class="chip">В очереди: 3 · сбросить</span>
             </div>
-            <button class="btn primary build" aria-label="Строить, можно поставить 3 здания"><span class="glyph">⚒</span>Строить<span class="count-badge">3</span></button>
+            <button class="btn primary xl build" aria-label="Строить, можно поставить 3 здания"><span class="glyph">⚒</span>Строить<span class="count-badge">3</span></button>
           </div>
         </aside>
       </div>
@@ -219,7 +217,7 @@
           <div class="toast-slot"><div class="toast">Пауза включена. Кнопка ▶ вернёт время.</div></div>
           <footer class="dock phone-dock">
             <div class="hint"><span>Выберите клетку на своей земле и откройте Строить.</span></div>
-            <button class="btn primary build" aria-label="Строить"><span class="glyph">⚒</span>Строить</button>
+            <button class="btn primary xl build" aria-label="Строить"><span class="glyph">⚒</span>Строить</button>
           </footer>
         </div>
       </div>
@@ -264,7 +262,7 @@
           <p class="muted" style="font-size:14px">Ход этой смены сотрётся: поле, очередь и строения. Герои, чертежи и Досье останутся.</p>
           <div style="display:grid;gap:8px;margin-top:16px">
             <button class="btn primary block">Нет, вернуться</button>
-            <button class="btn ghost block" style="color:#a8253c">Да, начать заново</button>
+            <button class="btn ghost block">Да, начать заново</button>
           </div>
         </div>
       </div>
@@ -312,7 +310,7 @@
           <div class="toast-slot"><div class="control-plate"><span class="label">КОНТРОЛЬ <b>// ОБЪЯВЛЕНИЕ</b></span><br>Демон уже ворочается под кварталом 7. Вы успеете. Наверное.</div></div>
           <footer class="dock phone-dock">
             <div class="hint"><span>Остановите Демона до пробуждения: откройте его квартал.</span></div>
-            <button class="btn primary build" aria-label="Строить"><span class="glyph">⚒</span>Строить</button>
+            <button class="btn primary xl build" aria-label="Строить"><span class="glyph">⚒</span>Строить</button>
           </footer>
         </div>
       </div>
@@ -344,7 +342,7 @@
           </div>
           <footer class="dock phone-dock">
             <div class="hint"><span>Док откроется, когда центр будет на поле.</span></div>
-            <button class="btn build" disabled aria-label="Строить, пока недоступно"><span class="glyph">⚒</span>Строить</button>
+            <button class="btn xl build" disabled aria-label="Строить, пока недоступно"><span class="glyph">⚒</span>Строить</button>
           </footer>
         </div>
       </div>
@@ -392,7 +390,7 @@
           <div class="toast-slot"><div class="toast bad" role="alert">Не хватает Энергии: нужно 100, есть 80. Копайте, Энергия придёт.</div></div>
           <footer class="dock phone-dock">
             <div class="hint"><span>Подсказка: копать дешевле, чем строить. Копка даёт Энергию.</span></div>
-            <button class="btn primary build" aria-label="Строить"><span class="glyph">⚒</span>Строить<span class="count-badge">0</span></button>
+            <button class="btn primary xl build" aria-label="Строить"><span class="glyph">⚒</span>Строить<span class="count-badge">0</span></button>
           </footer>
         </div>
       </div>

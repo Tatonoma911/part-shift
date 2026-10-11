@@ -15,7 +15,7 @@
 .catalog .foot { margin-top: auto; padding-bottom: 28px; }
 .ghost-tip { position: absolute; left: 50%; top: 40%; transform: translateX(-50%); background: var(--white); color: var(--ink); padding: 10px 12px; border-radius: 10px; font-size: 13px; width: 250px; box-shadow: 0 6px 18px rgba(0,0,0,.3); }
 .ghost-tip .r { display: flex; gap: 8px; margin-top: 8px; }
-.ghost-tip .r .btn { min-height: 40px; min-width: 56px; flex: 1; font-size: 18px; }
+.ghost-tip .r .btn { flex: 1; }
 .dock-install { position: absolute; left: 12px; right: 12px; bottom: 30px; background: linear-gradient(180deg,#fff,var(--paper)); color: var(--ink); border-radius: 16px; padding: 12px; display: grid; grid-template-columns: 72px 1fr; gap: 10px; box-shadow: 0 -6px 22px rgba(0,0,0,.35); }
 .dock-install .art { width: 72px; height: 60px; border-radius: 10px; background: var(--mist); display: grid; place-items: center; font-size: 30px; }
 .card-sheet .stat2 { display: flex; gap: 6px; flex-wrap: wrap; }
@@ -52,7 +52,7 @@
         </div>
         <div class="catalog" role="dialog" aria-label="Строительство">
           <div class="grip" style="width:40px;height:4px;background:rgba(16,23,28,.2);border-radius:2px;margin:0 auto"></div>
-          <div class="head"><h2 class="h1">Стройка</h2><span class="chip info">⚡ 1 240</span><button class="btn icon" style="background:rgba(16,23,28,.08);color:var(--ink);width:48px" aria-label="Закрыть">✕</button></div>
+          <div class="head"><h2 class="h1">Стройка</h2><span class="chip info">⚡ 1 240</span><button class="btn icon" aria-label="Закрыть">✕</button></div>
           <div class="tabs" role="tablist" aria-label="Группы">
             <button class="tab" role="tab" aria-selected="true">Основа</button><button class="tab" role="tab" aria-selected="false">Поддержка</button><button class="tab" role="tab" aria-selected="false">Прокачка</button><button class="tab" role="tab" aria-selected="false">Герои</button>
           </div>
@@ -91,7 +91,7 @@
         <div class="toast" style="position:absolute;left:16px;right:16px;bottom:120px;background:#fff;color:var(--ink);box-shadow:inset 3px 0 0 var(--coral)">Рядом враги, строить опасно. Сначала вскройте соседние гнёзда.</div>
         <div class="dock-install" style="bottom:34px">
           <div class="art">❄</div>
-          <div><div class="h2" style="font-size:15px">Станция охлаждения</div><div class="small muted">Земля +2 · 100 ⚡ · Не хватает 0 ⚡</div><div class="small" style="margin-top:6px">Ставится на пунктир: земля, которую здание освободит.</div><button class="btn ghost block" style="margin-top:8px;min-height:44px">Отмена</button></div>
+          <div><div class="h2" style="font-size:15px">Станция охлаждения</div><div class="small muted">Земля +2 · 100 ⚡ · Не хватает 0 ⚡</div><div class="small" style="margin-top:6px">Ставится на пунктир: земля, которую здание освободит.</div><button class="btn ghost block">Отмена</button></div>
         </div>
       </div>
     </template>
@@ -111,9 +111,9 @@
             <div class="bld-ico" style="width:72px;height:64px;border-radius:12px;background:var(--mist);display:grid;place-items:center">⚛</div>
             <div><p class="cap">Здание · уровень 2</p><h2 id="bc-title" class="h1" style="font-size:18px">Микрореактор</h2><p class="small muted">Энергия без жителей: 22 ⚡ в минуту</p></div>
           </div>
-          <div class="row" style="margin-top:8px"><div class="grow small">Улучшить до 3 · 80 ⚡</div><button class="btn primary" style="min-width:120px">Улучшить</button></div>
-          <div class="row"><div class="grow small">Усилить героев рядом: +10% урона</div><button class="btn ghost" style="min-width:120px">Усилить</button></div>
-          <div class="row"><div class="grow small">Снести: вернётся 50% Энергии</div><button class="btn danger" style="min-width:120px">Снести</button></div>
+          <div class="row" style="margin-top:8px"><div class="grow small">Улучшить до 3 · 80 ⚡</div><button class="btn primary">Улучшить</button></div>
+          <div class="row"><div class="grow small">Усилить героев рядом: +10% урона</div><button class="btn ghost">Усилить</button></div>
+          <div class="row"><div class="grow small">Снести: вернётся 50% Энергии</div><button class="btn danger">Снести</button></div>
           <p class="small muted" style="margin-top:6px">Снос спросит второй тап: «Точно снести?».</p>
         </div>
       </div>
@@ -127,7 +127,7 @@
     <div class="devices"></div>
     <template>
       <div style="position:absolute;inset:0;background:#0b1117"><div class="catalog" style="height:340px">
-        <div class="head"><h2 class="h1">Стройка</h2><button class="btn icon" style="background:rgba(16,23,28,.08);color:var(--ink);width:48px" aria-label="Закрыть">✕</button></div>
+        <div class="head"><h2 class="h1">Стройка</h2><button class="btn icon" aria-label="Закрыть">✕</button></div>
         <div class="empty" style="margin-top:8px"><p class="h2" style="font-size:15px;color:var(--ink)">Земли пока нет</p><p class="small" style="margin-top:6px">Вскройте квартал рядом со своим зданием. Земля вокруг каждого здания уже ваша.</p></div>
         <div class="error" style="margin-top:12px"><span>⚠</span><span>Каталог не загрузился. <b>Повторить</b></span></div>
       </div></div>
