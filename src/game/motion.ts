@@ -41,22 +41,29 @@ export function sheetIn(scene: Phaser.Scene, parts: Phaser.GameObjects.GameObjec
   }
 }
 
-/** A quick press: the parts shrink a little and spring back. Call on pointer down. */
-export function pressFx(scene: Phaser.Scene, parts: Phaser.GameObjects.GameObject[]): void {
+/** Resting size and place of pressed objects, so a press that lands mid-spring still returns exactly. */
+const rest = new WeakMap<object, { x: number; y: number; sx: number; sy: number }>();
+
+/**
+ * A quick press: the parts shrink a little and spring back. Call on pointer down.
+ * With a pivot, they shrink towards that point (the middle of a button) instead of their own origin.
+ */
+export function pressFx(scene: Phaser.Scene, parts: Phaser.GameObjects.GameObject[], pivot?: { x: number; y: number }): void {
   if (calmFx()) return;
   for (const p of parts) {
-    const o = p as Scalable;
-    const sx = o.scaleX;
-    const sy = o.scaleY;
+    const o = p as Scalable & Fadeable;
+    if (!rest.has(o)) rest.set(o, { x: o.x, y: o.y, sx: o.scaleX, sy: o.scaleY });
+    const r = rest.get(o)!;
     scene.tweens.killTweensOf(o);
-    o.setScale(sx, sy);
-    scene.tweens.add({
-      targets: o,
-      scaleX: sx * MOTION.pressScale,
-      scaleY: sy * MOTION.pressScale,
-      duration: MOTION.press,
-      yoyo: true,
-      ease: 'Quad.easeOut',
-    });
+    o.setScale(r.sx, r.sy);
+    o.x = r.x;
+    o.y = r.y;
+    const k = MOTION.pressScale;
+    const to: Record<string, number> = { scaleX: r.sx * k, scaleY: r.sy * k };
+    if (pivot) {
+      to.x = pivot.x + (r.x - pivot.x) * k;
+      to.y = pivot.y + (r.y - pivot.y) * k;
+    }
+    scene.tweens.add({ targets: o, ...to, duration: MOTION.press, yoyo: true, ease: 'Quad.easeOut' });
   }
 }

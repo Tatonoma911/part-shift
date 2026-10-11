@@ -31,7 +31,7 @@ import { drawMenuBackdrop, drawMenuHeroes } from './MenuBackdrop';
 import { resetDialog } from './ResetProgress';
 import { universeButton } from './UniverseScene';
 import { dailySeed, dayId, heroOfWeek, invite, openBoard, openDonate, openFeedback, readChallenge } from '../social';
-import { enterScene } from './motion';
+import { enterScene, pressFx } from './motion';
 
 type Ev = Phaser.Types.Input.EventData;
 type Page = 'main' | 'slots' | 'settings' | 'comfort';
@@ -201,19 +201,26 @@ export class MenuScene extends Phaser.Scene {
       }
       const color = primary ? INK.white : act ? INK.graphite : INK.dim;
       const tx = this.add.text(cx, y + (sub ? 38 : h / 2), label, TXT.body(29, color, '700')).setOrigin(0.5);
+      // Parts that press together with the plate (icons and stars included).
+      const pressed: Phaser.GameObjects.GameObject[] = [g, tx];
       // A label never touches the button edges (ART_REVIEW AR-10): shrink it to fit, larger text sizes included.
       // With an icon or stars at the sides, the label keeps clear of both.
       const side = mode || iconKey || stars !== undefined ? 2 * (stars !== undefined ? 110 : 76) : 0;
       const room = w - 64 - 56 - side;
       if (tx.width > room) tx.setScale(room / tx.width);
       c.add([g, tx]);
-      if (mode) c.add(modeIcon(this, x0 + 32 + 46, y + h / 2, Math.min(64, h - 24), mode).setAlpha(act ? 1 : 0.5));
+      if (mode) {
+        const icon = modeIcon(this, x0 + 32 + 46, y + h / 2, Math.min(64, h - 24), mode).setAlpha(act ? 1 : 0.5);
+        c.add(icon);
+        pressed.push(icon);
+      }
       if (iconKey && this.textures.exists(iconKey)) {
         const img = this.add.image(x0 + 32 + 46, y + h / 2, iconKey);
         const sz = Math.min(48, h - 16);
         img.setScale(sz / Math.max(img.width, img.height));
         img.setAlpha(act ? 1 : 0.5);
         c.add(img);
+        pressed.push(img);
       }
       if (stars !== undefined) bestStars(this, c, x0 + w - 32 - 20 - 3 * 28 - 4, y + h / 2, 28, stars);
       if (sub) {
@@ -232,6 +239,7 @@ export class MenuScene extends Phaser.Scene {
         hit.on('pointerdown', (_p: Phaser.Input.Pointer, _x: number, _y: number, ev: Ev) => {
           ev.stopPropagation();
           sound.play('ui_tap');
+          pressFx(this, pressed, { x: cx, y: y + h / 2 });
           act();
         });
         c.add(hit);
