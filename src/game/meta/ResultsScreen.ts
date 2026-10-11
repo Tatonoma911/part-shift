@@ -6,7 +6,7 @@ import { C, FONT, INK, LANDSCAPE, VIEW } from '../layout';
 import { chip, plate, TXT } from '../ui';
 import { portrait } from './art';
 import { rankCup, resultsMedals, resultsStars, type ShiftStars, type Tier } from './Awards';
-import { bar, button, fmtNum, fmtTime, shade } from './kit';
+import { BTN, bar, button, fmtNum, fmtTime, shade } from './kit';
 import { FEMALE, rankAt, rankFraction } from './store';
 
 /**
@@ -129,16 +129,17 @@ export function showResults(scene: Phaser.Scene, v: ResultsView, act: ResultsAct
   }
   const stripe = scene.add.graphics();
   stripe.fillStyle(win ? C.teal : v.outcome === 'lose' ? C.coralInk : C.graphite, 1);
-  stripe.fillRect(pad, y, 8, 92);
+  stripe.fillRect(pad, y, 8, 124);
   head.push(stripe);
-  const title = scene.add.text(pad + 28, y - 4, t(titleKey), TXT.num(42, INK.graphite));
+  // Win and lose titles use the display size (28 css px, INTERFACE_SYSTEM §3.3).
+  const title = scene.add.text(pad + 28, y - 4, t(titleKey), TXT.num(56, INK.graphite));
   if (title.width > iw - 28) title.setScale((iw - 28) / title.width);
   head.push(title);
   const sub = `${t('results.time', { time: fmtTime(v.seconds) })}  ·  ${t('results.difficulty', { name: t(`difficulty.${v.difficulty}.name`) })}`;
-  head.push(scene.add.text(pad + 30, y + 60, sub, TXT.body(23, INK.dim, '600')));
+  head.push(scene.add.text(pad + 30, y + 80, sub, TXT.body(28, INK.dim, '600')));
   body.add(head);
   reveal(head, at);
-  y += 122;
+  y += 146;
 
   // 1½. Shift rating: three stars rise one by one, each with its condition (art 169).
   if (v.stars) {
@@ -324,21 +325,21 @@ export function showResults(scene: Phaser.Scene, v: ResultsView, act: ResultsAct
   y += ctl.height + 34;
   const btns = [
     ...(act.nextShift
-      ? button(scene, pad, y, iw, 100, t('campaign.next_shift'), () => leave(act.nextShift!), true, 31)
-      : button(scene, pad, y, iw, 100, t('results.again'), () => leave(act.again), true, 31)),
-    ...button(scene, pad, y + 116, iw / 2 - 8, 84, t('results.dossier'), () => leave(act.dossier)),
-    ...button(scene, pad + iw / 2 + 8, y + 116, iw / 2 - 8, 84, t('results.menu'), () => leave(act.menu)),
+      ? button(scene, pad, y, iw, BTN.lg, t('campaign.next_shift'), () => leave(act.nextShift!), true, 31)
+      : button(scene, pad, y, iw, BTN.lg, t('results.again'), () => leave(act.again), true, 31)),
+    ...button(scene, pad, y + BTN.lg + 12, iw / 2 - 8, BTN.sm, t('results.dossier'), () => leave(act.dossier)),
+    ...button(scene, pad + iw / 2 + 8, y + BTN.lg + 12, iw / 2 - 8, BTN.sm, t('results.menu'), () => leave(act.menu)),
   ];
   const extra = act.extra ?? [];
   extra.forEach((b, i) => {
     const bx = pad + (i % 2) * (iw / 2 + 8);
-    const by = y + 116 + 84 + 16 + Math.floor(i / 2) * 84;
-    btns.push(...button(scene, bx, by, i % 2 === 0 && i === extra.length - 1 ? iw : iw / 2 - 8, 70, b.label, b.act, false, 24));
+    const by = y + BTN.lg + 12 + BTN.sm + 12 + Math.floor(i / 2) * (BTN.sm + 12);
+    btns.push(...button(scene, bx, by, i % 2 === 0 && i === extra.length - 1 ? iw : iw / 2 - 8, BTN.sm, b.label, b.act, false, 26));
   });
   body.add(btns);
   // Buttons are there from the start: nobody waits for the count-up to leave (QA-041).
   reveal(btns, 0, 12);
-  y += 116 + 84 + 40 + Math.ceil(extra.length / 2) * 84;
+  y += BTN.lg + 12 + BTN.sm + 40 + Math.ceil(extra.length / 2) * (BTN.sm + 12);
   y = Math.max(y, leftBottom + 40);
   if (LANDSCAPE) {
     const sep = scene.add.graphics();
@@ -420,13 +421,13 @@ export function heroReturned(scene: Phaser.Scene, id: string, act: Pick<ResultsA
     scene.tweens.add({ targets: root, alpha: 0, duration: 200, onComplete: () => { root.destroy(); then?.(); } });
   };
   const btns = [
-    ...button(scene, 40, y, pw - 80, 96, t('results.take_next'), () => {
+    ...button(scene, 40, y, pw - 80, BTN.md, t('results.take_next'), () => {
       act.takeNext?.(id);
       close();
     }, true),
-    ...button(scene, 40, y + 110, pw - 80, 80, t('unlock.screen.ok'), close),
+    ...button(scene, 40, y + BTN.md + 12, pw - 80, BTN.sm, t('unlock.screen.ok'), close),
   ];
-  y += 110 + 80 + 36;
+  y += BTN.md + 12 + BTN.sm + 36;
   plate(g, 0, 0, pw, y, 30);
   card.add([caps, nm, tx, ag, ally, ...(line ? [line] : []), ...btns]);
   root.add(card);

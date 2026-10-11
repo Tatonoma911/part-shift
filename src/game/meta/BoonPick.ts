@@ -28,8 +28,8 @@ export function pickBoon(scene: Phaser.Scene, offers: BoonOffer[], onPick: (id: 
   const calm = calmFx();
 
   const titleY = LANDSCAPE ? 70 : 200;
-  const caps = scene.add.text(W / 2, titleY, t('boon.pick.title').toUpperCase(), { ...TXT.caps('#9FF4FF'), fontSize: LANDSCAPE ? '22px' : '24px', align: 'center', wordWrap: { width: W - 80 } }).setOrigin(0.5);
-  const hint = scene.add.text(W / 2, titleY + 44, t('boon.pick.hint'), { ...TXT.body(22, '#C9E2EA', '500'), align: 'center', wordWrap: { width: W - 120 } }).setOrigin(0.5, 0);
+  const caps = scene.add.text(W / 2, titleY, t('boon.pick.title').toUpperCase(), { ...TXT.caps('#9FF4FF'), fontSize: LANDSCAPE ? '24px' : '26px', align: 'center', wordWrap: { width: W - 80 } }).setOrigin(0.5);
+  const hint = scene.add.text(W / 2, titleY + 44, t('boon.pick.hint'), { ...TXT.body(28, '#C9E2EA', '500'), align: 'center', wordWrap: { width: W - 120 } }).setOrigin(0.5, 0);
   root.add([caps, hint]);
 
   const cards: Phaser.GameObjects.Container[] = [];
@@ -72,7 +72,8 @@ export function pickBoon(scene: Phaser.Scene, offers: BoonOffer[], onPick: (id: 
       cy = 190;
     } else {
       cw = W - 80;
-      ch = 262;
+      // Body text runs at 30 px (15 css, the reading minimum): the card grows to fit it.
+      ch = 300;
       cx = 40;
       cy = 330 + i * (ch + 26);
     }
@@ -89,21 +90,21 @@ export function pickBoon(scene: Phaser.Scene, offers: BoonOffer[], onPick: (id: 
     const line = t(`boon.${o.id}.line`);
     if (LANDSCAPE) {
       c.add(boonIcon(scene, 0, -ch / 2 + 110, 130, o.id, o.rare));
-      const nmL = scene.add.text(0, -ch / 2 + 205, name, { ...TXT.num(30, INK.graphite), align: 'center', wordWrap: { width: cw - 60 } }).setOrigin(0.5, 0);
+      const nmL = scene.add.text(0, -ch / 2 + 205, name, { ...TXT.num(34, INK.graphite), align: 'center', wordWrap: { width: cw - 60 } }).setOrigin(0.5, 0);
       c.add(nmL);
-      c.add(scene.add.text(0, nmL.y + nmL.height + 14, desc, { ...TXT.body(22, INK.graphite, '500'), align: 'center', wordWrap: { width: cw - 70 }, lineSpacing: 4 }).setOrigin(0.5, 0));
-      c.add(scene.add.text(0, ch / 2 - 40, line, { fontFamily: FONT, fontStyle: 'italic 500', fontSize: '18px', color: INK.dim, align: 'center', wordWrap: { width: cw - 70 } }).setOrigin(0.5, 1));
+      c.add(scene.add.text(0, nmL.y + nmL.height + 14, desc, { ...TXT.body(28, INK.graphite, '500'), align: 'center', wordWrap: { width: cw - 70 }, lineSpacing: 4 }).setOrigin(0.5, 0));
+      c.add(scene.add.text(0, ch / 2 - 40, line, { fontFamily: FONT, fontStyle: 'italic 500', fontSize: '22px', color: INK.dim, align: 'center', wordWrap: { width: cw - 70 } }).setOrigin(0.5, 1));
     } else {
       const ix = -cw / 2 + 110;
       c.add(boonIcon(scene, ix, 0, 140, o.id, o.rare));
       const tx = -cw / 2 + 210;
       const tw = cw - 250;
-      const nm = scene.add.text(tx, -ch / 2 + 34, name, { ...TXT.num(29, INK.graphite), wordWrap: { width: tw - (o.rare ? 120 : 0) } });
+      const nm = scene.add.text(tx, -ch / 2 + 34, name, { ...TXT.num(32, INK.graphite), wordWrap: { width: tw - (o.rare ? 120 : 0) } });
       if (nm.width > tw) nm.setScale(tw / nm.width);
       c.add(nm);
-      const d = scene.add.text(tx, nm.y + nm.displayHeight + 10, desc, { ...TXT.body(22, INK.graphite, '500'), wordWrap: { width: tw }, lineSpacing: 3 });
+      const d = scene.add.text(tx, nm.y + nm.displayHeight + 10, desc, { ...TXT.body(30, INK.graphite, '500'), wordWrap: { width: tw }, lineSpacing: 3 });
       c.add(d);
-      c.add(scene.add.text(tx, ch / 2 - 30, line, { fontFamily: FONT, fontStyle: 'italic 500', fontSize: '18px', color: INK.dim, wordWrap: { width: tw } }).setOrigin(0, 1));
+      c.add(scene.add.text(tx, ch / 2 - 30, line, { fontFamily: FONT, fontStyle: 'italic 500', fontSize: '24px', color: INK.dim, wordWrap: { width: tw } }).setOrigin(0, 1));
     }
     if (o.rare) {
       const tag = scene.add.graphics();
@@ -132,7 +133,7 @@ export function pickBoon(scene: Phaser.Scene, offers: BoonOffer[], onPick: (id: 
 
   if (opts.seconds) {
     let left = opts.seconds;
-    const timerY = LANDSCAPE ? H - 80 : 330 + 3 * 288 + 30;
+    const timerY = LANDSCAPE ? H - 80 : 330 + 3 * 326 + 30;
     const timer = scene.add.text(W / 2, timerY, t('boon.pick.timer', { value: left }), TXT.num(26, '#FFFFFF')).setOrigin(0.5);
     root.add(timer);
     const ev = scene.time.addEvent({
