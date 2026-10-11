@@ -1712,6 +1712,8 @@ export class World {
     // Spawn a hero of the building's tier when construction finishes (MVP_RULES §4.1b).
     const birthTiers = buildingDefs[b.type].heroBirthTiers;
     if (birthTiers?.length) this.spawnAllyFromPool(this.s.players[b.owner], b.x, b.y, birthTiers);
+    // Each finished Общежитие adds one more active hero from the squad: the next one out of the pool, at base stats.
+    if (b.type === 'home') this.spawnAllyFromPool(this.s.players[b.owner], b.x, b.y);
   }
 
   private depleted(x: number, y: number): void {
