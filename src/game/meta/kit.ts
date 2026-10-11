@@ -25,8 +25,16 @@ export function shade(scene: Phaser.Scene, w: number, h: number, alpha = 0.62, o
   return r;
 }
 
+/**
+ * One button system (design/INTERFACE_SYSTEM.md §3.4): three heights, 48 / 56 / 64 css px.
+ * The scene draws at 2× on a phone (780 px wide view on a 390 px screen), so these are the logical sizes.
+ */
+export const BTN = { sm: 96, md: 112, lg: 128 } as const;
+
 /** Brand button: teal primary with a graphite underline, or a light secondary. Presses shrink a little around its centre. */
 export function button(scene: Phaser.Scene, x: number, y: number, w: number, h: number, label: string, act: () => void, primary = false, size = 29): Phaser.GameObjects.GameObject[] {
+  // Nothing is ever shorter than the smallest touch target (48 css px).
+  h = Math.max(h, BTN.sm);
   // Drawn around the centre, so the press pulse scales from the middle of the button.
   const cx = x + w / 2;
   const cy = y + h / 2;
