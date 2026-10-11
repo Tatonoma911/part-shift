@@ -238,13 +238,11 @@ export function openOnlineScreen(opts: { assist: AssistMode; initialCode?: strin
       }),
     );
 
-    const quick = h('button', 'pso-btn primary', `<b>${esc(t('online.quick'))}</b><span>${esc(t('online.quick_sub'))}</span>`);
-    quick.disabled = busy;
-    quick.onclick = () => connect(() => OnlineSession.quick(profile(), mode), 'online.error.connect');
-    const create = h('button', 'pso-btn', `<b>${esc(t('online.create'))}</b><span>${esc(t('online.create_sub'))}</span>`);
+    // No matchmaking yet: "quick match" would only open a room nobody can find, so the create button is the one entry.
+    const create = h('button', 'pso-btn primary', `<b>${esc(t('online.create'))}</b><span>${esc(t('online.create_sub'))}</span>`);
     create.disabled = busy;
     create.onclick = () => connect(() => OnlineSession.create(profile(), mode), 'online.error.connect');
-    sheet.append(quick, create);
+    sheet.appendChild(create);
 
     const codeLabel = h('label', 'pso-caps pso-label', esc(t('online.code')));
     codeLabel.htmlFor = 'pso-code';
