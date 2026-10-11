@@ -1,6 +1,5 @@
 import Phaser from 'phaser';
 import { account } from './account/cloud';
-import { watchAccountConflicts } from './account/panel';
 import { GameScene } from './game/GameScene';
 import { LoadingScene } from './game/LoadingScene';
 import { MenuScene } from './game/MenuScene';
@@ -20,7 +19,6 @@ applyPalette();
 
 // Cloud saves land in localStorage before the menu reads them (account.boot waits only briefly).
 Promise.all([fontsReady(), account.boot()]).then(() => {
-  watchAccountConflicts();
   // Wide screens get the landscape canvas; the site's /play page reads this flag to size #app 16:9.
   if (window.innerWidth > 860 && window.innerWidth > window.innerHeight * 1.15) document.body.dataset.layout = 'landscape';
   // Pick the layout from the game's own box, so an embedding page (site /play) decides.
