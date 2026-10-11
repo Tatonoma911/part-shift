@@ -17,11 +17,11 @@ import { glyph } from './ui';
 import { drawMark, drawSensor, sensorTexts, type MarkKind } from './Sensor';
 
 const CHANNELS = ['finds', 'threat', 'demon'] as const;
-// Open ground: batch 6 square paving (art/export/x2/board_b6, 52 px). Paving is the base; the manhole, grass edge and debris are rare accents.
-const GROUND = [
-  'ground_b6_01', 'ground_b6_02', 'ground_b6_03', 'ground_b6_12', 'ground_b6_01', 'ground_b6_02', 'ground_b6_03', 'ground_b6_08',
-  'ground_b6_12', 'ground_b6_01', 'ground_b6_02', 'ground_b6_03', 'ground_b6_09', 'ground_b6_01', 'ground_b6_11', 'ground_b6_13',
-];
+// Open ground: batch 6 square paving (art/export/x2/board_b6, 52 px). Paving tile_01–03 is the base;
+// the manhole, grass edge and debris are rare accents, about one open cell in 45 (Арт-директор, AR-38).
+const GROUND_BASE = ['ground_b6_01', 'ground_b6_02', 'ground_b6_03'];
+const GROUND_ACCENT = ['ground_b6_09', 'ground_b6_11', 'ground_b6_13'];
+const groundKey = (h: number) => (h % 45 === 0 ? GROUND_ACCENT[(h / 45) % GROUND_ACCENT.length | 0] : GROUND_BASE[h % GROUND_BASE.length]);
 const FEET = 46;
 
 /** Depths, bottom to top (UI_SPEC §2.3). */
@@ -596,44 +596,44 @@ export class BoardView {
               key = `water_${(frame4 + h) % 4}`;
               break;
             case 'rubble':
-              key = (c.stock ?? 0) > 0 ? `rubble_${h % 2}` : GROUND[h % GROUND.length];
+              key = (c.stock ?? 0) > 0 ? `rubble_${h % 2}` : groundKey(h);
               break;
             case 'energy_vein': {
               const left = (c.stock ?? 0) / veinFull;
-              key = left > 0 ? `vein_${left > 0.67 ? 0 : left > 0.34 ? 1 : 2}_${(frame3 + h) % 3}` : GROUND[h % GROUND.length];
+              key = left > 0 ? `vein_${left > 0.67 ? 0 : left > 0.34 ? 1 : 2}_${(frame3 + h) % 3}` : groundKey(h);
               break;
             }
             // Unresolved finds show their own drawn cell (art batch 4) when it is loaded; plain cache otherwise.
             case 'cache':
-              key = c.resolved ? GROUND[h % GROUND.length] : this.scene.textures.exists('tile.cache_v2') ? 'cache_v2' : 'cache';
+              key = c.resolved ? groundKey(h) : this.scene.textures.exists('tile.cache_v2') ? 'cache_v2' : 'cache';
               break;
             case 'blueprint':
-              key = c.resolved ? GROUND[h % GROUND.length] : this.scene.textures.exists('tile.find_blueprint') ? 'find_blueprint' : 'cache';
+              key = c.resolved ? groundKey(h) : this.scene.textures.exists('tile.find_blueprint') ? 'find_blueprint' : 'cache';
               break;
             case 'armor_crate':
-              key = c.resolved ? GROUND[h % GROUND.length] : this.scene.textures.exists('tile.find_armor') ? 'find_armor' : 'cache';
+              key = c.resolved ? groundKey(h) : this.scene.textures.exists('tile.find_armor') ? 'find_armor' : 'cache';
               break;
             case 'lore_record':
-              key = c.resolved ? GROUND[h % GROUND.length] : this.scene.textures.exists('tile.find_record') ? 'find_record' : 'cache';
+              key = c.resolved ? groundKey(h) : this.scene.textures.exists('tile.find_record') ? 'find_record' : 'cache';
               break;
             case 'survivor':
-              key = c.resolved ? GROUND[h % GROUND.length] : (this.scene.textures.exists('survivor') ? 'survivor' : 'cache');
+              key = c.resolved ? groundKey(h) : (this.scene.textures.exists('survivor') ? 'survivor' : 'cache');
               break;
             case 'nest':
             case 'heavy_nest': {
               const dead = c.resolved || w.site(x, y)?.destroyed;
               // With the element's own nest building drawn on top, the cell itself is plain ground.
-              key = this.nestKey(x, y, !!dead) ? GROUND[h % GROUND.length] : (c.content === 'nest' ? 'nest' : 'nest_heavy') + (dead ? '_dead' : '');
+              key = this.nestKey(x, y, !!dead) ? groundKey(h) : (c.content === 'nest' ? 'nest' : 'nest_heavy') + (dead ? '_dead' : '');
               break;
             }
             case 'boss_hatch':
               key = `hatch_${s.boss.awake || s.boss.dead ? 2 : s.boss.warned ? 1 : 0}`;
               break;
             case 'hero_lair':
-              key = c.resolved ? GROUND[h % GROUND.length] : 'hatch_2';
+              key = c.resolved ? groundKey(h) : 'hatch_2';
               break;
             default:
-              key = GROUND[h % GROUND.length];
+              key = groundKey(h);
           }
           // Ruins of a lost building: rubble until it is rebuilt at half price.
           if (c.ruin && c.building === undefined) key = `rubble_${h % 2}`;
