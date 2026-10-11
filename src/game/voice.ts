@@ -214,7 +214,7 @@ export class Voice {
     const prefix = ad ? '' : `${t('voice.control_prefix')} `;
     const full = prefix + text;
     // Measure the whole line first so the strip has its final height while the text types out.
-    const body = s.add.text(left, 0, full, { ...TXT.body(21, ad ? INK.graphite : INK.white, '600'), lineSpacing: 2, wordWrap: { width: w / 2 - 18 - left, useAdvancedWrap: true } });
+    const body = s.add.text(left, 0, full, { ...TXT.body(26, ad ? INK.graphite : INK.white, '600'), lineSpacing: 2, wordWrap: { width: w / 2 - 18 - left, useAdvancedWrap: true } });
     const h = Math.max(BAR_H, body.height + 24);
     body.setY(-body.height / 2);
     const g = s.add.graphics();
@@ -254,7 +254,7 @@ export class Voice {
   /** Comic speech bubble over a sprite on the board (board camera). */
   private bubble(text: string, x: number, y: number, seconds: number, villain: boolean): void {
     const s = this.scene;
-    const body = s.add.text(0, 0, text, { ...TXT.body(20, INK.graphite, '700'), align: 'center', wordWrap: { width: 300, useAdvancedWrap: true } }).setOrigin(0.5);
+    const body = s.add.text(0, 0, text, { ...TXT.body(24, INK.graphite, '700'), align: 'center', wordWrap: { width: 300, useAdvancedWrap: true } }).setOrigin(0.5);
     const bw = body.width + 28;
     const bh = body.height + 20;
     const g = s.add.graphics();

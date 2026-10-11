@@ -24,7 +24,10 @@ Promise.all([fontsReady(), account.boot()]).then(() => {
   // Wide screens get the landscape canvas; the site's /play page reads this flag to size #app 16:9.
   if (window.innerWidth > 860 && window.innerWidth > window.innerHeight * 1.15) document.body.dataset.layout = 'landscape';
   // Pick the layout from the game's own box, so an embedding page (site /play) decides.
-  const box = document.getElementById('app')?.getBoundingClientRect();
+  // Prevent the browser from intercepting pinch-to-zoom and scroll-to-zoom gestures.
+  const appEl = document.getElementById('app');
+  if (appEl) appEl.style.touchAction = 'none';
+  const box = appEl?.getBoundingClientRect();
   chooseLayout(box?.width || window.innerWidth, box?.height || window.innerHeight);
   bootAnalytics(LANDSCAPE ? 'landscape' : 'portrait');
   const game = new Phaser.Game({

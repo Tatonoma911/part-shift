@@ -439,6 +439,7 @@ export class GameScene extends Phaser.Scene {
     // The city's voice: Контроль, ads, hero bubbles (not in the tutorial, it has its own coach).
     this.voice = this.guide ? null : new Voice(this, this.world, this.me, (at) => this.board.speakerAt(at), () => this.toasts.some((b) => b.active));
     this.voice?.start(!saved);
+    if (!this.guide && !saved) this.maybeShowHowToPlay();
     this.tally = this.guide ? null : new RunTally(this.me);
     // A medal tier earned mid-run: a 2 s plate from the top, the game keeps going (ACHIEVEMENTS.md §3).
     // The tally writes into `world.s.medalEvents`; the HUD drains it into MedalToasts (Awards.ts).
@@ -693,7 +694,7 @@ export class GameScene extends Phaser.Scene {
   private askMedkit(x: number, y: number): void {
     this.medkitCard?.destroy();
     const width = DOCK.w - 16;
-    const label = this.add.text(0, 0, t('medkit.use.hint'), { ...TXT.body(22, INK.graphite, '600'), align: 'center', lineSpacing: 2, wordWrap: { width: width - 36 } }).setOrigin(0.5, 0);
+    const label = this.add.text(0, 0, t('medkit.use.hint'), { ...TXT.body(26, INK.graphite, '600'), align: 'center', lineSpacing: 2, wordWrap: { width: width - 36 } }).setOrigin(0.5, 0);
     const btnW = width - 48, btnH = 56;
     const h = 16 + label.height + 14 + btnH + 14;
     const g = this.add.graphics();
@@ -702,7 +703,7 @@ export class GameScene extends Phaser.Scene {
     const bx = -btnW / 2, by = h / 2 - 14 - btnH;
     const btn = this.add.graphics();
     chip(btn, bx, by, btnW, btnH, C.teal, 1, 14);
-    const btnLabel = this.add.text(0, by + btnH / 2, t('medkit.use.button'), { ...TXT.body(24, INK.white, '800') }).setOrigin(0.5);
+    const btnLabel = this.add.text(0, by + btnH / 2, t('medkit.use.button'), { ...TXT.body(26, INK.white, '800') }).setOrigin(0.5);
     const hit = this.add.zone(bx, by, btnW, btnH).setOrigin(0).setInteractive({ useHandCursor: true });
     const yIdeal = DOCK.y - 8 - h / 2;
     const yPos = LANDSCAPE ? yIdeal : Math.max(yIdeal, BOARD.y + BOARD.h + 4 + h / 2);
@@ -725,7 +726,7 @@ export class GameScene extends Phaser.Scene {
     this.lastSaid = { text, bad, at: now, until: now + ms };
     this.side?.note(text);
     const width = DOCK.w - 16;
-    const tx = this.add.text(0, 0, text, { ...TXT.body(22, bad ? INK.white : INK.graphite, '600'), align: 'center', lineSpacing: 2, wordWrap: { width: width - 36 } }).setOrigin(0.5);
+    const tx = this.add.text(0, 0, text, { ...TXT.body(26, bad ? INK.white : INK.graphite, '600'), align: 'center', lineSpacing: 2, wordWrap: { width: width - 36 } }).setOrigin(0.5);
     const h = Math.max(58, tx.height + 20);
     const g = this.add.graphics();
     chip(g, -width / 2, -h / 2, width, h, bad ? C.coralInk : C.paper, 0.97, 14, bad ? undefined : { color: C.seam, width: 2 });
@@ -753,7 +754,7 @@ export class GameScene extends Phaser.Scene {
       const p = this.board.center(at.x, at.y);
       const pts = e.amount ?? 25;
       const tx = this.add.text(p.x, p.y - 20, `+${pts}`, { ...TXT.num(34, INK.teal), stroke: '#ffffff', strokeThickness: 7 }).setOrigin(0.5).setDepth(15).setScale(0.6);
-      const sub = this.add.text(p.x, p.y + 12, t(`event.civilians_rescued.one`, { count: 1 }), { ...TXT.body(18, INK.graphite, '700'), stroke: '#ffffff', strokeThickness: 5 }).setOrigin(0.5).setDepth(15);
+      const sub = this.add.text(p.x, p.y + 12, t(`event.civilians_rescued.one`, { count: 1 }), { ...TXT.body(26, INK.graphite, '700'), stroke: '#ffffff', strokeThickness: 5 }).setOrigin(0.5).setDepth(15);
       this.tweens.add({ targets: tx, scale: 1, duration: 200, ease: 'Back.easeOut' });
       this.tweens.add({ targets: [tx, sub], y: '-=80', alpha: 0, delay: 500, duration: 1300, onComplete: () => (tx.destroy(), sub.destroy()) });
     }
@@ -896,7 +897,7 @@ export class GameScene extends Phaser.Scene {
     this.medals = new MedalToasts(this, HUD.x + HUD.w / 2, HUD.y + HUD.h + 6, UI_DEPTH + 4);
     this.raidTimer = new RaidTimer(this, HUD.x + (LANDSCAPE ? 256 : 240), GOAL.y, LANDSCAPE ? 236 : 226, 44, 21, () => this.callRaidEarly(), HUD.w - (LANDSCAPE ? 256 : 240));
     const goalBg = this.add.graphics().setDepth(20);
-    const goal = this.add.text(HUD.x + HUD.w - 24, GOAL.y + 22, '', TXT.body(23, INK.white, '700')).setOrigin(1, 0.5).setDepth(20);
+    const goal = this.add.text(HUD.x + HUD.w - 24, GOAL.y + 22, '', TXT.body(26, INK.white, '700')).setOrigin(1, 0.5).setDepth(20);
     this.hud = { energy, residents, squad, threat, ring, ringBox, goal, goalBg };
   }
 
@@ -1064,12 +1065,12 @@ export class GameScene extends Phaser.Scene {
     // Content area sits above the buttons.
     const ty = DOCK.y + 22;
     const headText = this.add
-      .text(DOCK.x + pad + 8, ty + 40, '', { ...TXT.body(23, INK.graphite, '600'), wordWrap: { width: leftW }, lineSpacing: 2 })
+      .text(DOCK.x + pad + 8, ty + 40, '', { ...TXT.body(26, INK.graphite, '600'), wordWrap: { width: DOCK.w - pad * 2 - 190 }, lineSpacing: 2 })
       .setOrigin(0, 0.5)
       .setDepth(20);
     const cg0 = this.add.graphics();
     chip(cg0, 0, 0, 170, 70, C.graphite, 1, 14);
-    const ctx = this.add.text(85, 35, `✕ ${t('dock.cancel')}`, TXT.body(23, INK.white, '700')).setOrigin(0.5);
+    const ctx = this.add.text(85, 35, `✕ ${t('dock.cancel')}`, TXT.body(26, INK.white, '700')).setOrigin(0.5);
     const chit = this.add.zone(0, 0, 170, 70).setOrigin(0).setInteractive({ useHandCursor: true });
     chit.on('pointerdown', stop(() => this.setGhost(null)));
     const cancel = this.add.container(DOCK.x + pad + leftW - 170, ty + 5, [cg0, ctx, chit]).setDepth(20);
@@ -1098,12 +1099,12 @@ export class GameScene extends Phaser.Scene {
       if (kind === 'mark') drawMark(ig.setScale(0.6), 0, 0, 'danger');
       else drawLamp(ig.setScale(2), kind, -7, -5, 14, 10);
       dig.add(ig);
-      dig.add(this.add.text(lx + 22, ly, t(key), TXT.body(23, INK.graphite, '500')).setOrigin(0, 0.5));
+      dig.add(this.add.text(lx + 22, ly, t(key), TXT.body(26, INK.graphite, '500')).setOrigin(0, 0.5));
     });
     const qx = DOCK.x + pad + leftW - 250;
     const qg = this.add.graphics();
     chip(qg, qx, top + 4, 250, 60, 0xd9f3f8, 1, 12);
-    const queue = this.add.text(qx + 22, top + 34, '', TXT.body(23, INK.deep, '700')).setOrigin(0, 0.5);
+    const queue = this.add.text(qx + 22, top + 34, '', TXT.body(26, INK.deep, '700')).setOrigin(0, 0.5);
     const qx2 = this.add.text(qx + 226, top + 34, '✕', TXT.body(26, INK.deep, '700')).setOrigin(1, 0.5);
     const qhit = this.add.zone(qx, top + 4, 250, 60).setOrigin(0).setInteractive({ useHandCursor: true });
     qhit.on(
@@ -1754,6 +1755,28 @@ export class GameScene extends Phaser.Scene {
   private fmt(seconds: number): string {
     const s = Math.floor(seconds);
     return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
+  }
+
+  /** First launch: a quick 3-line «How to play» sheet (shown once, persisted in localStorage). */
+  private maybeShowHowToPlay(): void {
+    const KEY = 'partshift.howToPlay.v1';
+    try { if (localStorage.getItem(KEY)) return; } catch { return; }
+    this.overlay?.destroy();
+    this.overlayPaused = true;
+    this.overlay = this.sheet({
+      title: t('howtoplay.title'),
+      lines: [t('howtoplay.line1'), t('howtoplay.line2'), t('howtoplay.line3')],
+      actions: [{
+        label: t('howtoplay.ok'),
+        primary: true,
+        act: () => {
+          this.overlay?.destroy();
+          this.overlay = null;
+          this.overlayPaused = false;
+          try { localStorage.setItem(KEY, '1'); } catch { /* ok */ }
+        },
+      }],
+    });
   }
 
   /** Bottom sheet over the dimmed board (UI_SPEC §5). */
