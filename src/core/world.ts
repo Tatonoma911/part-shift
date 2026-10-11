@@ -3256,7 +3256,8 @@ export class World {
       if (b.boostCooldown) b.boostCooldown = Math.max(0, b.boostCooldown - dt) || undefined;
       if (b.recolorCooldown) b.recolorCooldown = Math.max(0, b.recolorCooldown - dt) || undefined;
       if (b.swapCooldown) b.swapCooldown = Math.max(0, b.swapCooldown - dt) || undefined;
-      if (!b.complete) continue;
+      // A ruined building stops everything it does until it is rebuilt (QA-054).
+      if (!b.complete || b.ruined) continue;
       const def = buildingDefs[b.type];
       if (def.limbMaker) this.makeLimbs(b, dt);
       // Repair building: our finished buildings in range regain HP (buildings.json repair).
