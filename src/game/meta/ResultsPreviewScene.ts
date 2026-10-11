@@ -2,6 +2,7 @@ import Phaser from 'phaser';
 import { createArt } from '../assets';
 import { C, VIEW } from '../layout';
 import { demoMeta, resultsPreview } from './preview';
+import { enterScene } from '../motion';
 
 /**
  * ?meta=results opens the shift results with sample data in a scene of its own, so the
@@ -14,6 +15,7 @@ export class ResultsPreviewScene extends Phaser.Scene {
   }
 
   create(): void {
+    enterScene(this);
     if (!this.anims.exists('resident.idle')) createArt(this);
     const win = new URLSearchParams(location.search).get('meta') !== 'lose';
     this.add.rectangle(0, 0, VIEW.width, VIEW.height, C.paper2).setOrigin(0);
