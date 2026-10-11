@@ -509,5 +509,7 @@
   "building.limb.title": "Limb output",
   "building.limb.pick_hint": "Pick an element: then the workshop starts making arms and legs for heroes nearby.",
   "building.limb.wait_hint": "A limb is ready, waiting for a hero nearby with a free slot.",
-  "building.limb.next_hint": "Next limb in {s} s."
+  "building.limb.next_hint": "Next limb in {s} s.",
+  "building.limb_workshop.name": "Limb Workshop",
+  "building.limb_workshop.desc": "Every 90 s makes an arm or a leg for a hero nearby. You pick the element. Needs a Rescue School."
 }
