@@ -469,6 +469,7 @@ export class GameScene extends Phaser.Scene {
   update(time: number, deltaMs: number): void {
     const w = this.world;
     this.boonCheck();
+    this.heroPickCheck();
     // Online there is no pause (MVP_RULES §14.2): menus and hints never stop the server's clock.
     if (this.online || (!this.paused && !this.overlayPaused && !this.callPauses() && w.s.outcome === 'playing')) {
       if (!this.coachedBuild && !this.guide && w.player(this.me).energy >= 100) this.coachedBuild = learning().coach('build') || this.coachedBuild;
@@ -635,6 +636,7 @@ export class GameScene extends Phaser.Scene {
     // However the center went down (tap, restore), the "place the Command Center" line gives way (AR-06).
     if (e.type === 'command_placed' && e.owner === this.me && !this.guide) this.say(t('tutorial.dig'), 5000);
     if (e.type === 'cache_open' && e.x !== undefined) this.float(e.x, e.y!, `+${e.amount}`);
+    if (e.type === 'xp_gain' && e.x !== undefined) this.floatXp(e.x, e.y!, `+${e.amount} XP`);
     if (e.type === 'civilian_rescued' && e.owner === this.me) this.civilianRescued(e);
     if ((e.type === 'nest_open' || e.type === 'heavy_nest_open') && e.x !== undefined) this.explainNest(e.x, e.y!);
     if (e.type === 'victory' || e.type === 'defeat') this.showEnd(e.type === 'victory');
@@ -659,6 +661,22 @@ export class GameScene extends Phaser.Scene {
         }
       }
     }
+  }
+
+  /** A hero reached a new level: its perk cards, the same pick as the boons (world.ts HERO_PERKS). */
+  private heroPickCheck(): void {
+    const offer = this.world.player(this.me).heroPick;
+    if (!offer || this.boonUi || this.world.s.outcome !== 'playing') return;
+    this.overlayPaused = true;
+    this.boonUi = pickBoon(
+      this,
+      offer.ids.map((id) => ({ id, rare: false, stacks: 0 })),
+      (id) => {
+        this.world.apply({ type: 'pickHeroPerk', id }, this.me);
+        this.boonUi = null;
+        this.overlayPaused = false;
+      },
+    );
   }
 
   /** An opened cache waits for the pick: solo runs pause under the cards (boons.json rules.solo). */
@@ -748,6 +766,14 @@ export class GameScene extends Phaser.Scene {
     }
     this.tweens.add({ targets: this.hud.squad, scale: 1.3, duration: 160, yoyo: true });
     sound.play('ui_tap');
+  }
+
+  /** Experience pops out gold with a shine, the retro way: it rises, flares and fades (Антон 2026-10-11). */
+  private floatXp(x: number, y: number, text: string): void {
+    const p = this.board.center(x, y);
+    const tx = this.add.text(p.x, p.y, text, { ...TXT.num(24, '#FFD65A'), stroke: '#5A3A00', strokeThickness: 5 }).setOrigin(0.5).setDepth(16).setScale(0.7);
+    this.tweens.add({ targets: tx, y: p.y - 56, scale: 1.1, duration: 500, ease: 'Quad.Out' });
+    this.tweens.add({ targets: tx, alpha: 0, delay: 500, duration: 500, onComplete: () => tx.destroy() });
   }
 
   private float(x: number, y: number, text: string): void {

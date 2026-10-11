@@ -405,5 +405,17 @@
   "build.outpost_edge": "Блокпост ставится только на краю своей земли",
   "building.upgrade.busy": "Здание уже улучшается",
   "building.upgrade.needs_command_2": "Нужен Командный центр 2 уровня",
-  "building.upgrade.needs_school": "Нужна Школа спасателей"
+  "building.upgrade.needs_school": "Нужна Школа спасателей",
+  "boon.hero_vigor.name": "Крепость",
+  "boon.hero_vigor.desc": "+20 здоровья навсегда",
+  "boon.hero_vigor.line": "Меня не сломать. Ну, почти.",
+  "boon.hero_edge.name": "Хват",
+  "boon.hero_edge.desc": "+3 урона навсегда",
+  "boon.hero_edge.line": "Сейчас я его достану.",
+  "boon.hero_guard.name": "Бронежилет",
+  "boon.hero_guard.desc": "+1 защиты навсегда",
+  "boon.hero_guard.line": "Пусть попробуют.",
+  "boon.hero_quick.name": "Быстрые руки",
+  "boon.hero_quick.desc": "Бьёт на 10% чаще",
+  "boon.hero_quick.line": "Тык-тык-тык."
 }

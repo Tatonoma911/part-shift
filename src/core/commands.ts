@@ -37,6 +37,7 @@ export type Command =
   | { type: 'scan' }
   /** Take one card of the open cache offer (boons.json). */
   | { type: 'pickBoon'; id: string }
+  | { type: 'pickHeroPerk'; id: string }
   /**
    * Answer the boss call. choice 0 = refuse (free, boss risk); choice 1 = comply (costs energy, delays boss).
    * A Контроль call from events.json (controlCall.id is an event id) takes 'a'/'b' (or 0/1) and applies that option.
