@@ -67,13 +67,15 @@ export interface GameStart {
 }
 type Ev = Phaser.Types.Input.EventData;
 
-/** «Строить» button at the bottom of the dock (§7.3): full dock width, no «Копать» — tapping a closed cell digs automatically. */
+/** «Строить» button on the right side of the dock, full height (§7.3: «справа во всю высоту»). Left area holds the hint, legend and queue chip. */
 function dockButtons() {
   const pad = 22;
-  const btnH = 76;
-  const btnW = DOCK.w - pad * 2;
-  const btnY = DOCK.y + DOCK.h - btnH - 10;
-  return { pad, btnW, btnH, btnY, buildX: DOCK.x + pad };
+  const buildW = 198;
+  const buildH = DOCK.h - 24;
+  const buildX = DOCK.x + DOCK.w - pad - buildW;
+  const buildY = DOCK.y + 12;
+  const leftW = DOCK.w - pad * 2 - buildW - 12;
+  return { pad, buildW, buildH, buildX, buildY, leftW };
 }
 
 /** Medal tiers earned mid-run, waiting for the HUD (not part of the core's rules). */
@@ -1023,15 +1025,14 @@ export class GameScene extends Phaser.Scene {
   private createDock(): void {
     const g = this.add.graphics().setDepth(20);
     plate(g, DOCK.x, DOCK.y, DOCK.w, DOCK.h, 28);
-    // §7.3: single «Строить» button at the bottom of the dock — «Копать» removed (Антон 2026-10-10).
-    const { pad, btnW, btnH, btnY, buildX } = dockButtons();
-    // Build button — full dock width.
+    // §7.3: «Строить» on the RIGHT side of the dock, full height. Left area = hint + legend + queue.
+    const { pad, buildW, buildH, buildX, buildY, leftW } = dockButtons();
+    // Build button — right column, full dock height.
     const buildBg = this.add.graphics().setDepth(20);
-    const buildBx = buildX;
-    chip(buildBg, buildBx, btnY, btnW, btnH, C.graphite, 1, 14);
-    this.add.image(buildBx + 40, btnY + btnH / 2, 'icon.build').setScale(1.6).setDepth(20).setTintFill(0xffffff);
-    this.add.text(buildBx + 72, btnY + btnH / 2, t('hud.mode_build'), TXT.body(26, INK.white, '700')).setOrigin(0, 0.5).setDepth(20);
-    const buildHit = this.add.zone(buildBx, btnY, btnW, btnH).setOrigin(0).setDepth(20).setInteractive({ useHandCursor: true });
+    chip(buildBg, buildX, buildY, buildW, buildH, C.graphite, 1, 14);
+    this.add.image(buildX + buildW / 2, buildY + buildH / 2 - 26, 'icon.build').setScale(1.8).setDepth(20).setTintFill(0xffffff);
+    this.add.text(buildX + buildW / 2, buildY + buildH / 2 + 16, t('hud.mode_build'), TXT.body(24, INK.white, '700')).setOrigin(0.5, 0).setDepth(20);
+    const buildHit = this.add.zone(buildX, buildY, buildW, buildH).setOrigin(0).setDepth(20).setInteractive({ useHandCursor: true });
     // One tap opens the catalog, the next one closes it (the sheet leaves this button free).
     buildHit.on('pointerdown', stop(() => {
       if (this.drawer.isOpen) this.closeCatalog();
@@ -1041,7 +1042,7 @@ export class GameScene extends Phaser.Scene {
     // Content area sits above the buttons.
     const ty = DOCK.y + 22;
     const headText = this.add
-      .text(DOCK.x + pad + 8, ty + 40, '', { ...TXT.body(23, INK.graphite, '600'), wordWrap: { width: DOCK.w - pad * 2 - 190 }, lineSpacing: 2 })
+      .text(DOCK.x + pad + 8, ty + 40, '', { ...TXT.body(23, INK.graphite, '600'), wordWrap: { width: leftW }, lineSpacing: 2 })
       .setOrigin(0, 0.5)
       .setDepth(20);
     const cg0 = this.add.graphics();
@@ -1049,10 +1050,10 @@ export class GameScene extends Phaser.Scene {
     const ctx = this.add.text(85, 35, `✕ ${t('dock.cancel')}`, TXT.body(23, INK.white, '700')).setOrigin(0.5);
     const chit = this.add.zone(0, 0, 170, 70).setOrigin(0).setInteractive({ useHandCursor: true });
     chit.on('pointerdown', stop(() => this.setGhost(null)));
-    const cancel = this.add.container(DOCK.x + DOCK.w - pad - 170, ty + 5, [cg0, ctx, chit]).setDepth(20);
+    const cancel = this.add.container(DOCK.x + pad + leftW - 170, ty + 5, [cg0, ctx, chit]).setDepth(20);
     const divider = this.add.graphics().setDepth(20);
     divider.fillStyle(C.graphite, 0.08);
-    divider.fillRect(DOCK.x + pad, ty + 88, DOCK.w - pad * 2, 2);
+    divider.fillRect(DOCK.x + pad, ty + 88, leftW, 2);
 
     const top = DOCK.y + 124;
     // Dig: legend of the clue glyphs + queue chip (+ scan button).
@@ -1077,7 +1078,7 @@ export class GameScene extends Phaser.Scene {
       dig.add(ig);
       dig.add(this.add.text(lx + 22, ly, t(key), TXT.body(23, INK.graphite, '500')).setOrigin(0, 0.5));
     });
-    const qx = DOCK.x + DOCK.w - pad - 250;
+    const qx = DOCK.x + pad + leftW - 250;
     const qg = this.add.graphics();
     chip(qg, qx, top + 4, 250, 60, 0xd9f3f8, 1, 12);
     const queue = this.add.text(qx + 22, top + 34, '', TXT.body(23, INK.deep, '700')).setOrigin(0, 0.5);
@@ -1104,7 +1105,7 @@ export class GameScene extends Phaser.Scene {
     const extraH = LANDSCAPE ? 200 : 300;
     const catalogBox = { x: DOCK.x, y: DOCK.y - extraH, w: DOCK.w, h: DOCK.h + extraH };
     // The sheet stops above the «Строить» button, so that button stays the one control that closes it.
-    const reserveBottom = DOCK.y + DOCK.h - btnY;
+    const reserveBottom = 0;
     this.drawer = new BuildDrawer(
       this,
       catalogBox,
@@ -1136,8 +1137,8 @@ export class GameScene extends Phaser.Scene {
   private refreshModeBtns(buildActive: boolean): void {
     if (!this.dock?.modeBtns) return;
     const { build: bb } = this.dock.modeBtns;
-    const { btnW, btnH, btnY, buildX } = dockButtons();
-    bb.clear(); chip(bb, buildX, btnY, btnW, btnH, buildActive ? C.cobalt : C.graphite, 1, 14);
+    const { buildW, buildH, buildX, buildY } = dockButtons();
+    bb.clear(); chip(bb, buildX, buildY, buildW, buildH, buildActive ? C.cobalt : C.graphite, 1, 14);
   }
 
   private tutorialWantsBuild(): boolean {
