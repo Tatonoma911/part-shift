@@ -17,7 +17,7 @@ describe('First Shift stays calm (FEEL_AUDIT F-05)', () => {
     const g = new TutorialGuide();
     const w = g.world;
     w.apply({ type: 'placeCommand', x: 3, y: 8 });
-    (g as unknown as { index: number }).index = 6; // step 7: open the nest
+    (g as unknown as { index: number }).index = 7; // step 7: open the nest (the card step 6b sits before it)
     g.onEvent({ type: 'nest_open' } as never);
     const foe = w.s.units[0];
     const owner = foe.owner;
@@ -27,7 +27,7 @@ describe('First Shift stays calm (FEEL_AUDIT F-05)', () => {
     expect(g.update()).toBe(false);
     foe.hp = 0;
     expect(g.update()).toBe(true);
-    expect(g.stepIndex).toBe(7);
+    expect(g.stepIndex).toBe(8);
     foe.owner = owner;
   });
 });

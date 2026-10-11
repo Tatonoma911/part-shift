@@ -73,6 +73,13 @@
       "until": "building_built:reactor"
     },
     {
+      "id": 61,
+      "text": "tutorial.step6b",
+      "until": "building_card_opened",
+      "autoAdvanceSeconds": 15,
+      "minSeconds": 2
+    },
+    {
       "id": 7,
       "text": "tutorial.step7",
       "focus": "nest_cell",
