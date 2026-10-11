@@ -697,7 +697,7 @@ export class BoardView {
             og.fillRect(px, py, CELL, CELL);
           }
         }
-        this.drawRubble(og, c, px, py, now);
+        this.drawRubble(og, c, px, py);
         if (view.buildType && w.canBuild(this.me, view.buildType, x, y) === null) {
           const pulse = 0.35 + 0.25 * Math.sin(now / 200);
           og.fillStyle(C.seam, pulse * 0.6);
@@ -762,7 +762,7 @@ export class BoardView {
     return out;
   }
 
-  private drawRubble(g: Phaser.GameObjects.Graphics, c: Cell, px: number, py: number, now: number): void {
+  private drawRubble(g: Phaser.GameObjects.Graphics, c: Cell, px: number, py: number): void {
     if (c.content !== 'rubble' || (c.stock ?? 0) <= 0) return;
     const tiers = Math.ceil(Math.min(1, (c.stock ?? 0) / RUBBLE_FULL) * 3);
     g.lineStyle(2, C.amber, 0.7);
