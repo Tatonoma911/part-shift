@@ -172,7 +172,7 @@ h1, h2, h3, p { margin: 0; }
 .btn.lg { min-height: 56px; }
 .btn.xl { min-height: 64px; flex-direction: column; gap: 2px; }
 .btn.xl .t { display: block; font: 800 15px / 1.2 var(--f-body); }
-.btn.xl .s { display: block; font: 500 12px / 1.3 var(--f-body); opacity: .9; }
+.btn.xl .s { display: block; font: 500 13px / 1.3 var(--f-body); opacity: .9; }
 .btn.icon { width: var(--hit); padding: 0; background: var(--graphite); color: var(--paper); }
 
 .btn.primary {
