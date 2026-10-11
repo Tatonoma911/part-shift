@@ -5,6 +5,7 @@ import { C, INK, LANDSCAPE, VIEW } from '../layout';
 import { chip, plate, TXT } from '../ui';
 import { drawWeakOrbs, TECH_HEX, weaknessesOf } from '../Vitals';
 import { portrait } from './art';
+import { sheetIn } from '../motion';
 import { button, onTap, shade } from './kit';
 import {
   autoSquad,
@@ -455,5 +456,6 @@ export function shiftBrief(
   };
 
   draw();
+  sheetIn(scene, [body]);
   return root;
 }

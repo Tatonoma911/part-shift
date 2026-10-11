@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 import { sound } from '../audio';
 import { C, INK } from '../layout';
+import { pressFx } from '../motion';
 import { chip, TXT } from '../ui';
 
 /** Small building blocks shared by the meta screens, same look as the pause and end sheets. */
@@ -24,26 +25,34 @@ export function shade(scene: Phaser.Scene, w: number, h: number, alpha = 0.62, o
   return r;
 }
 
-/** Brand button: teal primary with a graphite underline, or a light secondary. */
 /**
  * One button system (design/INTERFACE_SYSTEM.md §3.4): three heights, 48 / 56 / 64 css px.
  * The scene draws at 2× on a phone (780 px wide view on a 390 px screen), so these are the logical sizes.
  */
 export const BTN = { sm: 96, md: 112, lg: 128 } as const;
 
+/** Brand button: teal primary with a graphite underline, or a light secondary. Presses shrink a little around its centre. */
 export function button(scene: Phaser.Scene, x: number, y: number, w: number, h: number, label: string, act: () => void, primary = false, size = 29): Phaser.GameObjects.GameObject[] {
   // Nothing is ever shorter than the smallest touch target (48 css px).
   h = Math.max(h, BTN.sm);
-  const g = scene.add.graphics();
-  chip(g, x, y, w, h, primary ? C.teal : C.graphite, primary ? 1 : 0.1, 18);
+  // Drawn around the centre, so the press pulse scales from the middle of the button.
+  const cx = x + w / 2;
+  const cy = y + h / 2;
+  const g = scene.add.graphics().setPosition(cx, cy);
+  chip(g, -w / 2, -h / 2, w, h, primary ? C.teal : C.graphite, primary ? 1 : 0.1, 18);
   if (primary) {
     g.fillStyle(C.graphite, 0.35);
-    g.fillRect(x + 18, y + h - 6, w - 36, 6);
+    g.fillRect(-w / 2 + 18, h / 2 - 6, w - 36, 6);
   }
-  const tx = scene.add.text(x + w / 2, y + h / 2, label, TXT.body(size, primary ? INK.white : INK.graphite, '700')).setOrigin(0.5);
+  const tx = scene.add.text(cx, cy, label, TXT.body(size, primary ? INK.white : INK.graphite, '700')).setOrigin(0.5);
   if (tx.width > w - 40) tx.setScale((w - 40) / tx.width);
   const hit = scene.add.zone(x, y, w, h).setOrigin(0).setInteractive({ useHandCursor: true });
-  onTap(hit, act);
+  hit.on('pointerdown', (_p: Phaser.Input.Pointer, _x: number, _y: number, ev: Ev) => {
+    ev?.stopPropagation();
+    sound.play('ui_tap');
+    pressFx(scene, [g, tx]);
+    act();
+  });
   return [g, tx, hit];
 }
 

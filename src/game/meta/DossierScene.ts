@@ -6,6 +6,7 @@ import { chip, plate, TXT } from '../ui';
 import { drawWeakOrbs, TECH_HEX, weaknessesOf } from '../Vitals';
 import { portrait, preloadMetaArt } from './art';
 import { bestStars, closestMedal, difficultyIcon, medalCard, medalCup, medalName, medalState, medalTile, MEDALS, modeIcon, rankCup, showcaseOf, SHOWCASE_MAX } from './Awards';
+import { enterScene, sheetIn } from '../motion';
 import { BTN, bar, button, fmtNum, fmtTime, onTap, plural, shade } from './kit';
 import { demoMeta, metaDemo } from './preview';
 import { FEMALE, HEROES, heroProgress, heroState, loadMeta, pickAllies, RANKS, rankAt, rankFraction, squadSlots, stat, type HeroInfo, type MetaSave } from './store';
@@ -46,6 +47,7 @@ export class DossierScene extends Phaser.Scene {
   }
 
   create(): void {
+    enterScene(this);
     // Hero files get the guide's calm theme; the menu theme crossfades back on the way out.
     sound.playMusic('lore');
     const W = VIEW.width;
@@ -342,10 +344,7 @@ export class DossierScene extends Phaser.Scene {
     sheet.x = (W - pw * k) / 2;
     sheet.y = LANDSCAPE ? (VIEW.height - y * k) / 2 : VIEW.height - y * k - 24;
     root.add(sheet);
-    const sy = sheet.y;
-    sheet.y += 80;
-    sheet.alpha = 0;
-    this.tweens.add({ targets: sheet, y: sy, alpha: 1, duration: 240, ease: 'Cubic.out' });
+    sheetIn(this, [sheet]);
     sound.play('ui_tap');
   }
 

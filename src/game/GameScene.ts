@@ -39,6 +39,7 @@ import { setBackHandler } from '../platform/native';
 import { CAMPAIGN_TOTAL, districtText, getCampaignWorld, markShiftCleared, shiftReward } from './campaign';
 import type { PeerSession as OnlineSession } from '../net/peer';
 import { challengeUrl, closeSocial, displayName, openBoard, openDonate, profile, rankOf, recordRun, resultCard, share, shouldNudge, socialOpen, type RecordedRun } from '../social';
+import { enterScene } from './motion';
 
 const BEST_KEY = 'partshift.best.v1';
 const LOSS_KEY = 'partshift.losses.v1';
@@ -343,6 +344,7 @@ export class GameScene extends Phaser.Scene {
   }
 
   create(): void {
+    enterScene(this);
     const st = this.start;
     const params = new URLSearchParams(location.search);
     const assistParam = params.get('assist');
