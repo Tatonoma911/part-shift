@@ -1082,11 +1082,13 @@ export class GameScene extends Phaser.Scene {
     });
     const qx = DOCK.x + pad + legendColW;
     const qw = leftW - legendColW - 10;
+    // Centre the chip on the legend rows (4 items × 40 px, centred at top+80)
+    const qy = top + 46;
     const qg = this.add.graphics();
-    chip(qg, qx, top + 8, qw, 68, 0xd9f3f8, 1, 12);
-    const queue = this.add.text(qx + 16, top + 42, '', TXT.body(23, INK.deep, '700')).setOrigin(0, 0.5);
-    const qx2 = this.add.text(qx + qw - 14, top + 42, '✕', TXT.body(26, INK.deep, '700')).setOrigin(1, 0.5);
-    const qhit = this.add.zone(qx, top + 8, qw, 68).setOrigin(0).setInteractive({ useHandCursor: true });
+    chip(qg, qx, qy, qw, 68, 0xd9f3f8, 1, 12);
+    const queue = this.add.text(qx + 16, qy + 34, '', TXT.body(23, INK.deep, '700')).setOrigin(0, 0.5);
+    const qx2 = this.add.text(qx + qw - 14, qy + 34, '✕', TXT.body(26, INK.deep, '700')).setOrigin(1, 0.5);
+    const qhit = this.add.zone(qx, qy, qw, 68).setOrigin(0).setInteractive({ useHandCursor: true });
     qhit.on(
       'pointerdown',
       stop(() => {
