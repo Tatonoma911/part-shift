@@ -387,5 +387,6 @@
   "trophy.not_enough_energy": "Не хватает энергии.",
   "trophy.same_element": "У трофея уже эта стихия.",
   "trophy.slot_mismatch": "Трофеи меняются только на такое же место того же типа.",
-  "trophy.max_reached": "У героя уже максимум трофеев."
+  "trophy.max_reached": "У героя уже максимум трофеев.",
+  "hud.clean_streak": "Серия чистых кварталов: +{p}%"
 }

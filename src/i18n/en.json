@@ -514,5 +514,6 @@
   "trophy.not_enough_energy": "Not enough Energy.",
   "trophy.same_element": "The trophy already has that element.",
   "trophy.slot_mismatch": "Trophies only trade places in a matching slot type.",
-  "trophy.max_reached": "This hero already carries the most trophies."
+  "trophy.max_reached": "This hero already carries the most trophies.",
+  "hud.clean_streak": "Clean streak: +{p}%"
 }

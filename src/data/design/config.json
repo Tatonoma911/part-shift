@@ -341,5 +341,19 @@
     "earlyRaidClearBonusMultiplier": 2,
     "superChargePerKill": 10,
     "controlCallForks": 10
+  },
+  "cleanStreak": {
+    "_doc": "MVP_RULES §22.4 Серия чистых кварталов",
+    "stepCells": 5,
+    "bonusPerStep": 0.02,
+    "bonusDurationSeconds": 60,
+    "maxBonus": 0.1,
+    "resetOn": [
+      "mine_blast",
+      "hero_damaged",
+      "building_damaged_by_enemy",
+      "raid_start",
+      "shelter"
+    ]
   }
 }
