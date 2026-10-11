@@ -603,6 +603,35 @@ export class World {
         this.takeFieldMedkit(cmd.x, cmd.y, playerId);
         return ok;
       }
+      case 'takeMedkit': {
+        const c = this.cell(cmd.x, cmd.y);
+        if (!inBounds(this.s, cmd.x, cmd.y) || !c.revealed || c.content !== 'medkit' || !c.stock) return bad();
+        c.stock -= 1;
+        p.medkits = (p.medkits ?? 0) + 1;
+        this.rev++;
+        this.emit('medkit_taken', { x: cmd.x, y: cmd.y, owner: playerId });
+        return ok;
+      }
+      case 'takeCapsule': {
+        const c = this.cell(cmd.x, cmd.y);
+        if (!inBounds(this.s, cmd.x, cmd.y) || !c.revealed || c.content !== 'bonus_capsule' || c.resolved || !c.stock) return bad();
+        c.resolved = true;
+        c.stock = 0;
+        this.openCapsule(p, cmd.x, cmd.y);
+        this.rev++;
+        return ok;
+      }
+      case 'setDigPriority': {
+        if (!inBounds(s, cmd.x, cmd.y)) return bad();
+        const c = this.cell(cmd.x, cmd.y);
+        if (c.revealed && !c.rubble) return bad();
+        const k = cellKey(cmd.x, cmd.y);
+        if (!p.queue.includes(k) && !p.autoQueue.includes(k)) return bad();
+        const cur = (c.digPriority ?? 0) as 0 | 1 | 2 | 3;
+        c.digPriority = cur >= 3 ? undefined : ((cur + 1) as 1 | 2 | 3);
+        this.rev++;
+        return ok;
+      }
       case 'chord': {
         // Аккорд (campaign alwaysOn «chord»): a revealed clue whose «Опасно» marks match its number digs the rest of its free neighbours.
         if (!inBounds(s, cmd.x, cmd.y)) return bad('chord.not_ready');
@@ -680,11 +709,12 @@ export class World {
         if (to >= 3 && b.type !== 'command' && (command?.level ?? 1) < upgradeRules.level3RequiresCommandLevel) return bad('building.upgrade.needs_command_2');
         const schools = this.s.buildings.filter((x) => x.owner === playerId && x.type === 'school' && x.complete && !x.ruined).length;
         if ((rule?.requires?.school ?? 0) > schools) return bad('building.upgrade.needs_school');
-        const cost = rule?.cost ?? Math.round(def.cost * (upgradeRules.defaultCostFactorByLevel[String(to)] ?? 1));
+        const baseCost = typeof def.cost === 'number' ? def.cost : 0;
+        const cost = rule?.cost ?? Math.round(baseCost * (upgradeRules.defaultCostFactorByLevel[String(to)] ?? 1));
         if (p.energy < cost) return bad('building.upgrade.not_enough_energy');
         // Paid in Energy, the new level and full HP come at once: no timer, no second currency.
         p.energy -= cost;
-        b.spent = (b.spent ?? def.cost) + cost;
+        b.spent = (b.spent ?? baseCost) + cost;
         b.upgradeTo = to;
         this.emit('upgrade_chime', { x: b.x, y: b.y, owner: playerId, text: b.type });
         this.finishUpgrade(b);
@@ -1319,8 +1349,9 @@ export class World {
         this.emit('mine_armed', { x, y, owner, text: c.tech });
         break;
       case 'bonus_capsule':
-        c.resolved = true;
-        this.openCapsule(player, x, y);
+        // Stays on the ground for hero or player to pick up (auto-picked when hero walks over).
+        c.stock = 1;
+        this.emit('capsule_found', { x, y, owner });
         break;
       case 'medkit':
         // A found medkit keeps its charges; the player taps it to heal (useMedkit).
@@ -1501,6 +1532,22 @@ export class World {
     if (this.toMedkit(u, dt)) return;
     if (this.retreating(u, dt)) return;
     if (this.rallying(u, dt)) return;
+    // Auto-pickup: hero standing on a medkit or capsule grabs it without player input.
+    const ux = Math.round(u.x);
+    const uy = Math.round(u.y);
+    if (u.kind === 'ally') {
+      const oc = cellAt(s, ux, uy);
+      if (oc.revealed && oc.content === 'medkit' && (oc.stock ?? 0) > 0 && oc.heal === undefined) {
+        oc.stock! -= 1;
+        s.players[u.owner].medkits = (s.players[u.owner].medkits ?? 0) + 1;
+        this.emit('medkit_taken', { x: ux, y: uy, owner: u.owner });
+      }
+      if (oc.revealed && oc.content === 'bonus_capsule' && !oc.resolved && (oc.stock ?? 0) > 0) {
+        oc.resolved = true;
+        oc.stock = 0;
+        this.openCapsule(s.players[u.owner], ux, uy);
+      }
+    }
     const target = this.cfg.residents.allFight ? this.combatTarget(u) : null;
     if (target) {
       if (u.task.type !== 'idle' && u.task.type !== 'rest') this.setTask(u, { type: 'idle' });
@@ -1654,16 +1701,18 @@ export class World {
     const uy = Math.round(u.y);
     if (s.units.some((e) => isEnemy(e) && e.hp > 0 && cheb(Math.round(e.x), Math.round(e.y), ux, uy) <= 1)) return false;
     const r = hazards.medkit.radius;
-    let best: { x: number; y: number } | null = null;
+    let best: { x: number; y: number; ground: boolean } | null = null;
     let bestD = Infinity;
     for (let y = 0; y < s.height; y++) {
       for (let x = 0; x < s.width; x++) {
         const c = cellAt(s, x, y);
-        if (c.heal === undefined || c.heal <= 0) continue;
+        const isHealZone = c.heal !== undefined && c.heal > 0;
+        const isGroundMedkit = c.revealed && c.content === 'medkit' && (c.stock ?? 0) > 0 && c.heal === undefined;
+        if (!isHealZone && !isGroundMedkit) continue;
         const d = dist(x, y, u.x, u.y);
         if (d < bestD) {
           bestD = d;
-          best = { x, y };
+          best = { x, y, ground: isGroundMedkit };
         }
       }
     }
@@ -1688,13 +1737,20 @@ export class World {
       }
     }
     const target = best;
-    if (cheb(ux, uy, target.x, target.y) <= r) {
+    // Reached a ground medkit: auto-use it.
+    if (target.ground && cheb(ux, uy, target.x, target.y) === 0) {
+      const p = s.players[u.owner];
+      if (p) this.apply({ type: 'useMedkit', x: target.x, y: target.y }, u.owner);
+      u.path = [];
+      return true;
+    }
+    if (cheb(ux, uy, target.x, target.y) <= (target.ground ? 0 : r)) {
       u.path = [];
       return true;
     }
     if (u.path.length === 0 || u.repathTimer <= 0) {
       u.repathTimer = 0.5;
-      const path = this.playerPath(u, (x, y) => cheb(x, y, target.x, target.y) <= r);
+      const path = this.playerPath(u, (x, y) => cheb(x, y, target.x, target.y) <= (target.ground ? 0 : r));
       u.path = path ? path.slice(1) : [];
     }
     u.repathTimer -= dt;
@@ -1800,20 +1856,27 @@ export class World {
 
     // `join`: help on a cell somebody already digs, up to maxPerCell (config.dig.workers.idleJoin).
     const digFrom = (list: string[], join = false): boolean => {
-      const wanted = new Set(
-        list.filter((k) => {
-          const { x, y } = parseKey(k);
-          if (this.cell(x, y).revealed && !this.cell(x, y).rubble) return false;
-          const n = claims((t) => t.type === 'dig' && t.x === x && t.y === y);
-          return join ? n > 0 && n < maxPer : n === 0;
-        }),
-      );
-      if (wanted.size === 0) return false;
+      const candidates = list.filter((k) => {
+        const { x, y } = parseKey(k);
+        if (this.cell(x, y).revealed && !this.cell(x, y).rubble) return false;
+        const n = claims((t) => t.type === 'dig' && t.x === x && t.y === y);
+        return join ? n > 0 && n < maxPer : n === 0;
+      });
+      if (candidates.length === 0) return false;
+      // Higher digPriority cells are tried first.
+      candidates.sort((a, b) => {
+        const pa = parseKey(a); const pb = parseKey(b);
+        return (this.cell(pb.x, pb.y).digPriority ?? 0) - (this.cell(pa.x, pa.y).digPriority ?? 0);
+      });
+      const wanted = new Set(candidates);
       let goal: { x: number; y: number } | null = null;
+      let goalPriority = -1;
       const path = this.playerPath(u, (x, y) => {
         for (const n of neighbors(s, x, y)) {
           if (wanted.has(cellKey(n.x, n.y))) {
-            goal = { x: n.x, y: n.y };
+            const p = this.cell(n.x, n.y).digPriority ?? 0;
+            if (p > goalPriority) { goal = { x: n.x, y: n.y }; goalPriority = p; }
+            else if (!goal) goal = { x: n.x, y: n.y };
             return true;
           }
         }
@@ -1850,6 +1913,40 @@ export class World {
 
     if (digFrom(p.autoQueue)) return;
     if (digFrom(p.queue, true) || digFrom(p.autoQueue, true)) return;
+
+    // Stalemate fix: queued cells exist but no path via revealed tiles (e.g. water barrier).
+    // Find the nearest enemy site via non-solid cells and auto-queue the first unrevealed step.
+    if (p.queue.length > 0 || p.autoQueue.length > 0) {
+      const allQueued = [...p.queue, ...p.autoQueue];
+      const blocked = allQueued.some((k) => {
+        const { x, y } = parseKey(k);
+        return !this.digReachable(u.owner, x, y);
+      });
+      if (blocked) {
+        const cmd = this.building(p.command);
+        if (cmd) {
+          let bridgeCell: { x: number; y: number } | null = null;
+          const sites = s.sites.filter((st) => !st.destroyed);
+          for (const site of sites) {
+            const path = findPath(
+              s.width, s.height,
+              { x: cmd.x, y: cmd.y },
+              (ax, ay) => inBounds(s, ax, ay) && !isSolid(cellAt(s, ax, ay)),
+              (ax, ay) => ax === site.x && ay === site.y,
+            );
+            if (path) {
+              const step = path.find((pt) => !cellAt(s, pt.x, pt.y).revealed);
+              if (step) { bridgeCell = step; break; }
+            }
+          }
+          if (bridgeCell) {
+            const bk = cellKey(bridgeCell.x, bridgeCell.y);
+            if (!p.queue.includes(bk) && !p.autoQueue.includes(bk)) p.autoQueue.push(bk);
+          }
+        }
+      }
+    }
+
     const helpBuild = s.buildings.find(
       (b) => b.owner === u.owner && !b.complete && claims((t) => t.type === 'build' && t.building === b.id) < maxPer,
     );

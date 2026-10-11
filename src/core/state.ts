@@ -77,6 +77,8 @@ export interface Cell {
   ruin?: string;
   /** Elemental zone this cell belongs to (mapgen.cellElements Voronoi). Ground/safe-radius cells have none. */
   element?: Tech;
+  /** Player-assigned dig priority (1–3 red rings); 0 or absent = normal. */
+  digPriority?: 1 | 2 | 3;
 }
 
 /** An opened nest (a structure with HP that releases enemies) or an opened hero lair / boss hatch. */

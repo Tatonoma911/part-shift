@@ -669,7 +669,7 @@ export class BoardView {
         if (!c.revealed) {
           // A capsule peek shows the closed cell's own sensor for a while (MVP_RULES §5.2).
           this.setClues(i, x, y, c.peekUntil !== undefined && s.time < c.peekUntil ? w.clues(x, y) : null);
-          this.drawClosed(og, x, y, px, py, known.get(cellKey(x, y)), risk?.get(i), me.queue.includes(cellKey(x, y)), me.autoQueue.includes(cellKey(x, y)), c.marked ? (c.markKind ?? 'danger') : null, now);
+          this.drawClosed(og, x, y, px, py, known.get(cellKey(x, y)), risk?.get(i), me.queue.includes(cellKey(x, y)), me.autoQueue.includes(cellKey(x, y)), c.marked ? (c.markKind ?? 'danger') : null, now, c.digPriority);
           // Element zone: colour wash + indicator dot on every closed cell so players see which zones open faster.
           if (zoned) {
             // Visible wash of the zone element over the block.
@@ -789,6 +789,7 @@ export class BoardView {
     auto: boolean,
     marked: MarkKind | null,
     now: number,
+    digPriority?: 1 | 2 | 3,
   ): void {
     const cx = px + CELL / 2;
     const cy = py + CELL / 2;
@@ -818,6 +819,14 @@ export class BoardView {
       if (queued) {
         g.fillStyle(C.glow, 1);
         g.fillPoints([new Phaser.Math.Vector2(cx, cy - 7), new Phaser.Math.Vector2(cx + 7, cy), new Phaser.Math.Vector2(cx, cy + 7), new Phaser.Math.Vector2(cx - 7, cy)], true);
+      }
+    }
+    // Priority dig rings: 1–3 concentric red rings drawn outward from the cell centre.
+    if (digPriority) {
+      for (let i = 0; i < digPriority; i++) {
+        const r = 6 + i * 5;
+        g.lineStyle(2, 0xff3030, 0.9 - i * 0.15);
+        g.strokeCircle(cx, cy, r);
       }
     }
     if (marked) drawMark(g, cx, cy, marked);

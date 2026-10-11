@@ -15,6 +15,8 @@ export type Command =
   | { type: 'chord'; x: number; y: number }
   | { type: 'useMedkit'; x: number; y: number }
   | { type: 'takeMedkit'; x: number; y: number }
+  | { type: 'takeCapsule'; x: number; y: number }
+  | { type: 'setDigPriority'; x: number; y: number }
   | { type: 'build'; building: string; x: number; y: number; hero?: string }
   | { type: 'setRecruit'; building: number; on: boolean }
   /** Upgrade a completed building to the next level (buildings.json levels[]). */

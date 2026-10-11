@@ -691,26 +691,35 @@ export class GameScene extends Phaser.Scene {
     );
   }
 
-  /** A tapped medkit: a plate in the toast strip with the one button that heals (Антон 2026-10-11). */
+  /** A tapped medkit: two buttons — «Взять» adds to hero inventory, «Использовать» heals in place. */
   private askMedkit(x: number, y: number): void {
     this.medkitCard?.destroy();
     const width = DOCK.w - 16;
     const label = this.add.text(0, 0, t('medkit.use.hint'), { ...TXT.body(22, INK.graphite, '600'), align: 'center', lineSpacing: 2, wordWrap: { width: width - 36 } }).setOrigin(0.5, 0);
-    const btnW = width - 48, btnH = 56;
+    const gap = 8, btnH = 56, btnW = (width - 48 - gap) / 2;
     const h = 16 + label.height + 14 + btnH + 14;
     const g = this.add.graphics();
     chip(g, -width / 2, -h / 2, width, h, C.paper, 0.97, 14, { color: C.seam, width: 2 });
     label.setPosition(0, -h / 2 + 16);
-    const bx = -btnW / 2, by = h / 2 - 14 - btnH;
-    const btn = this.add.graphics();
-    chip(btn, bx, by, btnW, btnH, C.teal, 1, 14);
-    const btnLabel = this.add.text(0, by + btnH / 2, t('medkit.use.button'), { ...TXT.body(24, INK.white, '800') }).setOrigin(0.5);
-    const hit = this.add.zone(bx, by, btnW, btnH).setOrigin(0).setInteractive({ useHandCursor: true });
+    const by = h / 2 - 14 - btnH;
+    const bxTake = -width / 2 + 24, bxUse = bxTake + btnW + gap;
+    const btnTake = this.add.graphics();
+    chip(btnTake, bxTake, by, btnW, btnH, C.teal, 1, 14);
+    const lblTake = this.add.text(bxTake + btnW / 2, by + btnH / 2, t('medkit.take.button'), { ...TXT.body(22, INK.white, '800') }).setOrigin(0.5);
+    const hitTake = this.add.zone(bxTake, by, btnW, btnH).setOrigin(0).setInteractive({ useHandCursor: true });
+    const btnUse = this.add.graphics();
+    chip(btnUse, bxUse, by, btnW, btnH, C.coral, 1, 14);
+    const lblUse = this.add.text(bxUse + btnW / 2, by + btnH / 2, t('medkit.use.button'), { ...TXT.body(22, INK.white, '800') }).setOrigin(0.5);
+    const hitUse = this.add.zone(bxUse, by, btnW, btnH).setOrigin(0).setInteractive({ useHandCursor: true });
     const yIdeal = DOCK.y - 8 - h / 2;
     const yPos = LANDSCAPE ? yIdeal : Math.max(yIdeal, BOARD.y + BOARD.h + 4 + h / 2);
-    const box = this.add.container(DOCK.x + DOCK.w / 2, yPos, [g, label, btn, btnLabel, hit]).setDepth(21);
+    const box = this.add.container(DOCK.x + DOCK.w / 2, yPos, [g, label, btnTake, lblTake, hitTake, btnUse, lblUse, hitUse]).setDepth(21);
     const close = () => { if (this.medkitCard === box) this.medkitCard = null; box.destroy(); };
-    hit.on('pointerdown', () => {
+    hitTake.on('pointerdown', () => {
+      close();
+      if (this.world.apply({ type: 'takeMedkit', x, y }, this.me).ok) this.say(t('medkit.taken'), 1800);
+    });
+    hitUse.on('pointerdown', () => {
       close();
       if (this.world.apply({ type: 'useMedkit', x, y }, this.me).ok) this.say(t('event.medkit.open'), 1800);
     });
@@ -2009,13 +2018,27 @@ export class GameScene extends Phaser.Scene {
       return;
     }
     this.confirmCell = null;
+    // Tap on a queued cell cycles dig priority (1→2→3→0 red rings).
+    if (!c.revealed && (w.player(this.me).queue.includes(k) || w.player(this.me).autoQueue.includes(k))) {
+      w.apply({ type: 'setDigPriority', x, y }, this.me);
+      this.board.tapFlash(x, y);
+      return;
+    }
     // Opened interactive cells say what they are, what they are for and how to use them, in their own colour (Антон 2026-10-11).
-    const info = c.revealed && c.content !== 'medkit' ? INTERACTIVE_INFO[c.content] : undefined;
+    const info = c.revealed && c.content !== 'medkit' && c.content !== 'bonus_capsule' ? INTERACTIVE_INFO[c.content] : undefined;
     if (info) {
       this.spotlight = { x, y, until: this.time.now + 6000, tint: info.tint };
       this.say(t(info.key), 6000);
     }
-    // An opened medkit asks first: «Использовать» heals the heroes around it (hazards.json medkit).
+    // An opened but not yet collected capsule shows «Открыть».
+    if (c.revealed && c.content === 'bonus_capsule' && !c.resolved && (c.stock ?? 0) > 0) {
+      if (w.apply({ type: 'takeCapsule', x, y }, this.me).ok) {
+        this.say(t('capsule.opened'), 2000);
+        this.board.tapFlash(x, y);
+      }
+      return;
+    }
+    // An opened medkit asks first: «Взять» or «Использовать».
     if (c.revealed && c.content === 'medkit') {
       if (c.stock && c.heal === undefined) { this.board.tapFlash(x, y); this.askMedkit(x, y); }
       else if (w.apply({ type: 'useMedkit', x, y }, this.me).ok) { this.say(t('event.medkit.open'), 1800); this.board.tapFlash(x, y); }
