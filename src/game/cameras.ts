@@ -43,7 +43,8 @@ export class Cameras {
     this.bounds = { x: x - 20, y: y - 20, w: w + 40, h: h + 40 };
     const c = this.board;
     this.fit = Math.min(grow ? MAX_ZOOM : 1, c.width / this.bounds.w, c.height / this.bounds.h);
-    if (this.fit < 1) this.home = { x: x + w / 2, y: y + h / 2 };
+    // A grown small board (the tutorial) centers on its own field too, not on the board area.
+    if (this.fit < 1 || grow) this.home = { x: x + w / 2, y: y + h / 2 };
     this.zoom = this.fit;
     this.center = { ...this.home };
     this.apply();
