@@ -45,7 +45,8 @@ export interface ViewState {
   /** Building type being placed, to light up cells where it fits. */
   buildType: string | null;
   ghost: { x: number; y: number } | null;
-  spotlight: { x: number; y: number } | null;
+  /** tint: the centre outline colour (interactive cells get their own), amber by default. */
+  spotlight: { x: number; y: number; tint?: number } | null;
   focus: { x: number; y: number }[];
   /** Assist mode "full": show the risk glow around visible numbers (UI_SPEC §3.2). */
   showRisk: boolean;
@@ -830,7 +831,7 @@ export class BoardView {
           g.fillStyle(0xffffff, 0.14);
           g.fillRect(px, py, CELL, CELL);
           g.lineStyle(3, 0xffffff, 0.95);
-        } else g.lineStyle(4, C.amber, 1);
+        } else g.lineStyle(4, sp.tint ?? C.amber, 1);
         g.strokeRect(px + 1, py + 1, CELL - 2, CELL - 2);
       }
     }
