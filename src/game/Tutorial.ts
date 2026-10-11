@@ -49,7 +49,7 @@ export class TutorialGuide {
   }
 
   /** The scene reports player actions the world does not record. */
-  notify(what: 'clue_touched' | 'queued'): void {
+  notify(what: 'clue_touched' | 'queued' | 'building_card_opened'): void {
     if (what === 'queued') this.queued++;
     else this.flags.add(what);
   }

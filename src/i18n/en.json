@@ -91,6 +91,7 @@
   "tutorial.step4": "A number counts only the 8 blocks around it. Tap it: only one neighbor is closed, so the nest is there. Hold that block and mark it «Danger».",
   "tutorial.step5": "Tap both numbers. They share one closed neighbor, and the nest can only be there. So the other block is safe. Dig it.",
   "tutorial.step6": "Before going near the nest, stock up on Energy. Build a Microreactor: it makes Energy by itself, no hero has to sit inside.",
+  "tutorial.step6b": "Tap your Microreactor to open its card: Upgrade, Boost heroes, Demolish. Demolishing returns part of the cost, so a mistake can be fixed.",
   "tutorial.step7": "Your heroes are ready. Tap the red mark to open the nest. It is not a loss, it is the start of a fight: heroes fight by themselves.",
   "tutorial.step8": "The hero won and took the adaptant's arm. The more trophies, the stronger they get.",
   "tutorial.step9": "A light-blue number means a find nearby. Clear a block next to it and open the cache.",
