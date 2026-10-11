@@ -1,0 +1,547 @@
+/* PARTSHIFT interface system: tokens and components (v1.0, 2026-10-11)
+   Source of truth for values: design/INTERFACE_SYSTEM.md. Change a token here and in the doc together. */
+@import url("https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;500;600;700;800&family=Unbounded:wght@700;800;900&display=swap");
+
+:root {
+  /* Brand core (BRAND_UI.md) */
+  --night: #0b1117;
+  --graphite: #10171c;
+  --paper: #f4f7f7;
+  --mist: #edf4f5;
+  --white: #ffffff;
+  --seam: #57d8f2;
+  --glow: #9ff4ff;
+  --deep: #115a80;
+  --teal: #007e89;
+  --teal-dark: #00535b;
+  --cobalt: #2e55c8;
+  --coral: #ef5c73;
+  --coral-text: #c8243f;   /* small coral text: AA 5.16 on paper (#e03552 fails at 4.06) */
+  --amber: #e8a33a;
+  --amber-ink: #2c1c00;
+  --demon: #8a4dff;
+  --ground: #efe8d8;
+  --ground-2: #e2d8c2;
+  --leaf: #6fbf3a;
+
+  /* Text roles */
+  --ink: var(--graphite);
+  --muted: #5d7079;        /* secondary text on paper and white: 4.8 / 5.2 */
+  --line: #cfdcdf;
+  --disabled-bg: #dce4e6;
+  --disabled-ink: #4b5a62;
+
+  /* Fonts */
+  --f-display: "Unbounded", "Golos Text", system-ui, sans-serif;
+  --f-body: "Golos Text", system-ui, -apple-system, "Segoe UI", sans-serif;
+
+  /* Type scale (px) */
+  --t-display: 28px;  /* win/lose titles, results title */
+  --t-h1: 20px;       /* screen titles */
+  --t-h2: 16px;       /* block titles */
+  --t-body: 15px;     /* body, min for reading text */
+  --t-label: 13px;    /* buttons, chips, tab labels */
+  --t-cap: 10px;      /* caps captions, min on phone (was 8.5 px in the old mockup: too small) */
+  --t-num: 22px;      /* counters */
+
+  /* Space: 4-point, plus 16 phone gutter / 24 PC gutter */
+  --s1: 4px; --s2: 8px; --s3: 12px; --s4: 16px; --s5: 20px; --s6: 24px; --s8: 32px;
+
+  /* Touch */
+  --hit: 48px;        /* minimum target; WCAG 2.5.5 needs 44 */
+  --gutter: 16px;
+
+  /* Cut corners instead of radii (BRAND_UI.md §Форма) */
+  --cut-plate: 12px;
+  --cut-btn: 8px;
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  background: var(--night);
+  color: var(--paper);
+  font-family: var(--f-body);
+  font-size: var(--t-body);
+  line-height: 1.45;
+  -webkit-text-size-adjust: 100%;
+}
+
+/* ---------- Devices: a screen is a container; layout reacts to its own width ---------- */
+.screen {
+  position: relative;
+  container-type: inline-size;
+  overflow: hidden;
+  color: var(--ink);
+  font-family: var(--f-body);
+  background:
+    radial-gradient(120% 60% at 50% 0%, #1f3a4c 0%, rgba(31, 58, 76, 0) 60%),
+    linear-gradient(180deg, #13212b 0%, #0b1117 100%);
+  isolation: isolate;
+}
+.screen.phone { width: 390px; height: 844px; border-radius: 36px; }
+.screen.pc    { width: 1024px; height: 576px; border-radius: 10px; }
+.screen.pc.tall { height: 640px; }
+
+/* A PC screen gets the PC layout only when it is wide enough (container query) */
+@container (min-width: 720px) {
+  .pc-only { display: revert !important; }
+  .phone-only { display: none !important; }
+}
+@container (max-width: 719px) {
+  .pc-only { display: none !important; }
+}
+
+/* ---------- Plates (the ceramic slab) ---------- */
+.plate {
+  position: relative;
+  background: linear-gradient(180deg, #ffffff 0%, var(--paper) 100%);
+  color: var(--ink);
+  clip-path: polygon(
+    var(--cut-plate) 0, 100% 0, 100% calc(100% - var(--cut-plate)),
+    calc(100% - var(--cut-plate)) 100%, 0 100%, 0 var(--cut-plate));
+  padding: var(--s4);
+}
+.plate.seam::before {
+  content: "";
+  position: absolute;
+  inset: 4px;
+  border: 1px solid rgba(87, 216, 242, 0.55);
+  pointer-events: none;
+  clip-path: inherit;
+}
+.plate.dark {
+  background: linear-gradient(180deg, #1b2a34 0%, var(--graphite) 100%);
+  color: var(--paper);
+}
+.plate.amber { background: var(--amber); color: var(--amber-ink); }
+
+/* ---------- Captions ---------- */
+.cap {
+  font: 700 var(--t-cap) / 1.3 var(--f-display);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--deep);
+  margin: 0;
+}
+.cap.muted { color: var(--muted); }
+.cap.on-dark { color: var(--seam); }
+
+h1, h2, h3, p { margin: 0; }
+.h1 { font: 800 var(--t-h1) / 1.2 var(--f-display); color: var(--ink); }
+.h2 { font: 700 var(--t-h2) / 1.3 var(--f-display); color: var(--ink); }
+.display { font: 900 var(--t-display) / 1.1 var(--f-display); color: var(--ink); text-wrap: balance; }
+.muted { color: var(--muted); }
+.small { font-size: 13px; line-height: 1.4; }
+.num { font-family: var(--f-display); font-weight: 900; font-variant-numeric: tabular-nums; }
+
+/* ---------- Buttons ---------- */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--s2);
+  min-height: var(--hit);
+  min-width: var(--hit);
+  padding: 0 var(--s5);
+  border: 0;
+  border-radius: 0;
+  font: 700 var(--t-label) / 1.2 var(--f-body);
+  color: var(--ink);
+  background: rgba(16, 23, 28, 0.08);
+  cursor: pointer;
+  clip-path: polygon(
+    var(--cut-btn) 0, 100% 0, 100% calc(100% - var(--cut-btn)),
+    calc(100% - var(--cut-btn)) 100%, 0 100%, 0 var(--cut-btn));
+  transition: transform 120ms ease, background-color 120ms ease;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+.btn:active:not(:disabled) { transform: translateY(1px); }
+.btn:focus-visible { outline: none; box-shadow: inset 0 0 0 3px var(--amber); }
+.btn.block { width: 100%; }
+.btn .glyph { font-size: 16px; line-height: 1; }
+
+.btn.primary {
+  color: var(--white);
+  background: var(--teal);
+  box-shadow: inset 0 -4px 0 var(--teal-dark);
+}
+.btn.primary:active:not(:disabled) { background: var(--teal-dark); box-shadow: inset 0 -2px 0 #003d44; }
+
+.btn.dark {
+  color: var(--paper);
+  background: var(--graphite);
+}
+.btn.dark:active:not(:disabled) { background: #000; }
+
+.btn.danger {
+  color: var(--graphite);
+  background: var(--coral);
+  box-shadow: inset 0 -4px 0 #c94760;
+}
+
+.btn.gold {               /* «Купить разработчику кофе»: large, full width, gold (UI_SPEC §1, Антон) */
+  min-height: 60px;
+  font-size: 16px;
+  color: var(--amber-ink);
+  background: linear-gradient(180deg, #f5c063 0%, var(--amber) 100%);
+  box-shadow: inset 0 -4px 0 #b97a1c;
+}
+
+.btn.ghost {
+  background: rgba(16, 23, 28, 0.06);
+  color: var(--ink);
+  box-shadow: inset 0 0 0 1px rgba(16, 23, 28, 0.22);
+  clip-path: none;
+  border-radius: 10px;
+}
+.btn.on-dark-ghost {
+  background: rgba(244, 247, 247, 0.1);
+  color: var(--paper);
+  box-shadow: inset 0 0 0 1px rgba(159, 244, 255, 0.35);
+  clip-path: none;
+  border-radius: 10px;
+}
+
+.btn.icon {
+  width: var(--hit);
+  padding: 0;
+  background: var(--graphite);
+  color: var(--paper);
+}
+
+.btn:disabled,
+.btn[aria-disabled="true"] {
+  background: var(--disabled-bg);
+  color: var(--disabled-ink);
+  box-shadow: none;
+  cursor: not-allowed;
+}
+
+/* Hold-to-confirm (destructive reset): the fill shows progress, the text says what happens */
+.btn.hold {
+  position: relative;
+  overflow: hidden;
+  color: var(--white);
+  background: #a8253c;
+  box-shadow: none;
+}
+.btn.hold::after {
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: var(--hold, 0%);
+  background: rgba(255, 255, 255, 0.28);
+}
+
+/* ---------- Chips, tags, badges ---------- */
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 28px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font: 700 12px / 1.2 var(--f-body);
+  background: rgba(16, 23, 28, 0.07);
+  color: var(--ink);
+}
+.chip.ok { background: rgba(0, 126, 137, 0.14); color: #00515a; }
+.chip.warn { background: var(--amber); color: var(--amber-ink); }
+.chip.bad { background: var(--coral); color: var(--graphite); }
+.chip.info { background: var(--cobalt); color: var(--white); }
+.tag {                     /* «5 МИН», «РЕДКОЕ» */
+  display: inline-block;
+  padding: 2px 8px;
+  font: 800 10px / 1.5 var(--f-display);
+  letter-spacing: 0.12em;
+  color: var(--white);
+  background: var(--teal);
+  clip-path: polygon(6px 0, 100% 0, 100% 100%, 0 100%, 0 6px);
+}
+.count-badge {             /* red number on a button: how many builds are possible now */
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  min-width: 22px;
+  height: 22px;
+  padding: 0 6px;
+  display: grid;
+  place-items: center;
+  border-radius: 999px;
+  font: 900 12px / 1 var(--f-display);
+  color: var(--graphite);
+  background: var(--coral);
+  box-shadow: 0 0 0 2px var(--white);
+}
+
+/* ---------- Segmented tabs (Досье, режимы) ---------- */
+.tabs {
+  display: flex;
+  gap: 4px;
+  padding: 4px;
+  background: rgba(16, 23, 28, 0.08);
+  border-radius: 12px;
+}
+.tab {
+  flex: 1 1 0;
+  min-height: 40px;
+  padding: 0 8px;
+  border: 0;
+  border-radius: 9px;
+  background: transparent;
+  color: var(--ink);
+  font: 700 var(--t-label) / 1.1 var(--f-body);
+  cursor: pointer;
+}
+.tab[aria-selected="true"] { background: var(--graphite); color: var(--paper); }
+.tab:disabled { color: var(--disabled-ink); cursor: not-allowed; }
+
+/* ---------- Bars and meters ---------- */
+.bar {
+  position: relative;
+  height: 8px;
+  background: rgba(16, 23, 28, 0.12);
+  overflow: hidden;
+}
+.bar > i {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: var(--v, 0%);
+  background: var(--seam);
+}
+.bar.coral > i { background: var(--coral); }
+.bar.teal > i { background: var(--teal); }
+.bar.amber > i { background: var(--amber); }
+.bar.cobalt > i { background: var(--cobalt); }
+.bar.gain > i { background: rgba(87, 216, 242, 0.5); } /* the part a new shift just added */
+
+/* ---------- Stat tile ---------- */
+.tile { padding: var(--s3) var(--s4); background: var(--white); clip-path: none; border-radius: 10px; box-shadow: inset 0 0 0 1px var(--line); }
+.tile .num { font-size: var(--t-num); line-height: 1.1; }
+.tile .cap { margin-top: 2px; }
+
+/* ---------- Toasts and control announcements ---------- */
+.toast {
+  display: flex;
+  align-items: center;
+  gap: var(--s2);
+  min-height: 44px;
+  padding: 10px 14px;
+  background: rgba(11, 17, 23, 0.92);
+  color: var(--paper);
+  font: 600 13px / 1.35 var(--f-body);
+  border-radius: 10px;
+  box-shadow: inset 0 0 0 1px rgba(159, 244, 255, 0.25);
+}
+.toast.warn { box-shadow: inset 3px 0 0 var(--amber); }
+.toast.bad  { box-shadow: inset 3px 0 0 var(--coral); }
+
+.control-plate {           /* Контроль: white plate, HERO | OUT label */
+  padding: 12px 14px 12px 16px;
+  background: var(--white);
+  color: var(--ink);
+  font: 500 14px / 1.4 var(--f-body);
+  clip-path: polygon(0 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.25);
+}
+.control-plate .label { display: inline-block; margin-bottom: 4px; font: 800 10px / 1 var(--f-display); letter-spacing: 0.14em; color: var(--deep); }
+.control-plate .label b { color: var(--coral-text); font-weight: 800; }
+
+/* ---------- Sheet, modal, scrim ---------- */
+.scrim { position: absolute; inset: 0; background: rgba(10, 18, 24, 0.55); backdrop-filter: blur(3px); z-index: 10; }
+.sheet {
+  position: absolute;
+  left: 14px;
+  right: 14px;
+  bottom: 34px;
+  z-index: 11;
+  padding: var(--s5) var(--s4) var(--s4);
+  border-radius: 24px 24px 12px 12px;
+  background: linear-gradient(180deg, #ffffff 0%, var(--paper) 100%);
+  color: var(--ink);
+  box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.35);
+  max-height: calc(100% - 96px);
+  overflow: hidden;
+}
+.sheet .grip { width: 40px; height: 4px; margin: 0 auto var(--s3); background: rgba(16, 23, 28, 0.2); border-radius: 2px; }
+.sheet.center { top: 50%; bottom: auto; transform: translateY(-50%); }
+
+/* ---------- Rows, list items, cards ---------- */
+.row {
+  display: flex;
+  align-items: center;
+  gap: var(--s3);
+  min-height: 56px;
+  padding: var(--s2) 0;
+  border-bottom: 1px solid var(--line);
+}
+.row:last-child { border-bottom: 0; }
+.row .grow { flex: 1; min-width: 0; }
+.row .value { font: 700 14px var(--f-body); color: var(--ink); white-space: nowrap; }
+
+.switch {                  /* 56 x 32, the whole row is the target */
+  position: relative;
+  width: 56px;
+  height: 32px;
+  flex: none;
+  border-radius: 999px;
+  background: rgba(16, 23, 28, 0.22);
+}
+.switch::after {
+  content: "";
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--white);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+.switch[aria-checked="true"] { background: var(--teal); }
+.switch[aria-checked="true"]::after { left: 28px; }
+
+.portrait {                /* placeholder for comic portraits: art arrives from Художник */
+  width: 56px;
+  height: 56px;
+  flex: none;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font: 900 18px var(--f-display);
+  color: var(--white);
+  background: linear-gradient(160deg, #2e4b5c, #10171c);
+  box-shadow: 0 0 0 3px var(--coral);
+}
+.portrait.won { box-shadow: 0 0 0 3px var(--seam), 0 0 12px rgba(87, 216, 242, 0.6); }
+.portrait.unknown { background: #0b1117; color: var(--seam); box-shadow: 0 0 0 2px rgba(87, 216, 242, 0.4); }
+.portrait.lg { width: 96px; height: 96px; font-size: 28px; }
+
+.catalog-card {
+  width: 148px;
+  flex: none;
+  padding: var(--s2);
+  background: var(--white);
+  border-radius: 10px;
+  box-shadow: inset 0 0 0 1px var(--line);
+  position: relative;
+}
+.catalog-card .art {
+  height: 84px;
+  display: grid;
+  place-items: center;
+  background: var(--mist);
+  border-radius: 8px;
+  font-size: 34px;
+}
+.catalog-card.locked .art { background: #1e3b52; color: rgba(159, 244, 255, 0.6); }
+.catalog-card .cost { font: 900 13px var(--f-display); color: var(--cobalt); }
+.catalog-card.short .cost { color: var(--coral-text); }
+.catalog-card .ribbon {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 58px;
+  padding: 3px 6px;
+  font: 800 10px / 1.2 var(--f-body);
+  background: rgba(16, 23, 28, 0.82);
+  color: var(--paper);
+  text-align: center;
+}
+
+/* ---------- Empty and error states ---------- */
+.empty {
+  padding: var(--s6) var(--s4);
+  text-align: center;
+  color: var(--muted);
+  border: 1px dashed rgba(16, 23, 28, 0.25);
+  border-radius: 12px;
+}
+.error {
+  display: flex;
+  gap: var(--s3);
+  align-items: flex-start;
+  padding: var(--s3) var(--s4);
+  border-radius: 10px;
+  background: #fde9ec;
+  color: #7a1426;
+  font: 600 14px / 1.4 var(--f-body);
+  box-shadow: inset 4px 0 0 var(--coral-text);
+}
+
+/* ---------- Board cells (for shift screens) ---------- */
+.board {
+  display: grid;
+  gap: 1px;
+  background: var(--night);
+  padding: 2px;
+}
+.cell {
+  position: relative;
+  aspect-ratio: 1;
+  display: grid;
+  place-items: center;
+  font: 900 13px var(--f-display);
+  color: var(--graphite);
+  background: linear-gradient(180deg, var(--ground) 0%, var(--ground-2) 100%);
+}
+.cell.closed { background: linear-gradient(160deg, #2a4a5e 0%, #1d3445 100%); color: var(--glow); }
+.cell.closed::after {       /* the quarantine film, a hint of hex */
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(60deg, rgba(87, 216, 242, 0.14) 0 1px, transparent 1px 9px);
+}
+.cell.safe { box-shadow: inset 0 0 0 2px var(--teal); }
+.cell.danger { box-shadow: inset 0 0 0 2px var(--coral); }
+.cell.queue { box-shadow: inset 0 0 0 2px var(--seam); background: rgba(87, 216, 242, 0.25); }
+.cell.nest { background: radial-gradient(circle, #ffd2da 0 20%, var(--coral) 60%); color: var(--graphite); }
+.cell.sel { box-shadow: inset 0 0 0 3px var(--amber); }
+.cell .n-find { color: var(--teal); }
+.cell .n-threat { color: var(--coral-text); }
+.cell .n-demon { color: var(--demon); }
+.cell .work {               /* the work arc: almost the full cell, shrinking while digging */
+  position: absolute;
+  inset: 3px;
+  border-radius: 50%;
+  border: 3px solid transparent;
+  border-top-color: var(--seam);
+  border-right-color: var(--seam);
+  filter: drop-shadow(0 0 3px rgba(87, 216, 242, 0.9));
+}
+.cell .tape {               /* black-yellow tape on closed/open border */
+  position: absolute;
+  inset: 0;
+  border: 2px dashed var(--amber);
+  opacity: 0.8;
+}
+.cell .beacon {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--coral);
+  box-shadow: 0 0 6px var(--coral);
+}
+
+/* ---------- Focus and motion ---------- */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { transition: none !important; animation: none !important; }
+}
+.sr-only {
+  position: absolute !important;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}

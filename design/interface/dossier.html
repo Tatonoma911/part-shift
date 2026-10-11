@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PARTSHIFT · Досье</title>
+<link rel="stylesheet" href="system.css">
+<link rel="stylesheet" href="gallery.css">
+<style>
+.dos { position: absolute; inset: 0; padding: 47px 14px 24px; display: flex; flex-direction: column; gap: 12px; background: linear-gradient(180deg,#f4f7f7,#e8f0f2); color: var(--ink); }
+.dos .top { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.dos .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; align-content: start; }
+.hero-card { background: var(--white); border-radius: 10px; padding: 8px 6px; text-align: center; display: grid; gap: 4px; justify-items: center; box-shadow: inset 0 0 0 1px var(--line); min-height: 116px; }
+.hero-card .portrait { width: 48px; height: 48px; font-size: 14px; }
+.hero-card.unknown { background: #0b1117; color: var(--seam); box-shadow: none; }
+.hero-card.in { box-shadow: inset 0 0 0 2px var(--seam); }
+.hero-card .n { font: 700 11px var(--f-body); color: var(--ink); }
+.hero-card .s { font: 700 10px var(--f-body); color: var(--muted); }
+.stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.lad { display: grid; gap: 6px; }
+.lad div { display: grid; grid-template-columns: 36px 1fr auto; gap: 8px; align-items: center; padding: 6px 8px; border-radius: 8px; font-size: 13px; }
+.lad .on { background: rgba(0,126,137,.12); font-weight: 700; }
+.lad .off { color: var(--muted); }
+.sheet-file { background: #fff6cf; color: var(--ink); padding: 14px; font-size: 13px; box-shadow: inset 0 0 0 1px #e5cf7a; }
+@container (min-width: 720px) {
+  .dos { padding: 24px 32px; }
+  .dos .grid { grid-template-columns: repeat(8, 1fr); }
+  .stat-grid { grid-template-columns: repeat(4, 1fr); }
+  .dos .pc-split { display: grid; grid-template-columns: 1fr 300px; gap: 16px; }
+}
+</style>
+</head>
+<body>
+<div class="page">
+  <nav class="nav" aria-label="Экраны">
+    <a href="index.html">Все экраны</a><a href="shift.html">Смена</a><a href="build.html">Строить</a><a href="control.html">Контроль и тайники</a><a href="results.html">Итоги и концовки</a><a href="dossier.html" aria-current="page">Досье</a><a href="menu.html">Меню</a><a href="settings.html">Настройки</a><a href="learn.html">Обучение и онлайн</a><a href="system.html">Компоненты и состояния</a>
+  </nav>
+  <header>
+    <h1>Досье: герои, статистика, рекорды, звание, чертежи</h1>
+    <p>Четыре вкладки-сегмента без прокрутки страницы; на телефоне сетка героев 3 × 5, на ПК 8 × 2. Чертежи и архив идут отдельными вкладками в той же шапке. Тап по герою открывает личное дело листом.</p>
+  </header>
+
+  <section class="stage" data-show="phone pc">
+    <h2>1. Герои</h2>
+    <p class="lede">Три состояния карточки: неизвестен (силуэт и «???»), встречен (цветной портрет, коралл, полоса «12/50»), вернулся в команду (голубое кольцо, «В команде»).</p>
+    <div class="devices"></div>
+    <template>
+      <div class="dos">
+        <div class="top"><div><p class="cap">Звание: Дежурный</p><h1 class="h1" style="font-size:22px">Досье</h1></div><button class="btn ghost" style="min-width:96px">Назад</button></div>
+        <div class="tabs" role="tablist"><button class="tab" role="tab" aria-selected="true">Герои</button><button class="tab" role="tab" aria-selected="false">Статистика</button><button class="tab" role="tab" aria-selected="false">Рекорды</button><button class="tab" role="tab" aria-selected="false">Звание</button></div>
+        <p class="small muted">Вернулись в команду: 4 из 15. Мест в команде: 3. Следующее место, когда вернутся 5 героев.</p>
+        <div class="grid">
+          <div class="hero-card in"><span class="portrait won">Ки</span><span class="n">Килн</span><span class="s">В команде</span></div>
+          <div class="hero-card in"><span class="portrait won">Ш</span><span class="n">Серафим</span><span class="s">В команде</span></div>
+          <div class="hero-card"><span class="portrait">Д</span><span class="n">Доктор</span><span class="s">12/50</span></div>
+          <div class="hero-card unknown"><span class="portrait unknown">?</span><span class="n" style="color:var(--paper)">???</span><span class="s" style="color:var(--seam)">Не встречен</span></div>
+          <div class="hero-card unknown"><span class="portrait unknown">?</span><span class="n" style="color:var(--paper)">???</span><span class="s" style="color:var(--seam)">Не встречен</span></div>
+          <div class="hero-card"><span class="portrait">Ф</span><span class="n">Фростлайн</span><span class="s">3/50</span></div>
+        </div>
+        <p class="small muted">Ближе всех: Килн, 12 из 50 побед.</p>
+      </div>
+    </template>
+    <ul class="notes"><li>Неизвестный герой: «По данным Контроля, такого сотрудника никогда не было.» Загадка, а не пустое место.</li><li>Цветные полоски и шарики слабостей совпадают с тем, что видно над врагом на поле.</li></ul>
+  </section>
+
+  <section class="stage" data-show="phone pc">
+    <h2>2. Личное дело героя (лист)</h2>
+    <p class="lede">Портрет, чип стихии, шарики слабостей, способность, как открыть, личное дело на жёлтом листке. Третья строка листка курсивом, это примечание Контроля.</p>
+    <div class="devices"></div>
+    <template>
+      <div class="dos" style="background:#0b1117">
+        <div class="scrim" style="background:rgba(8,14,19,.5)"></div>
+        <div class="sheet" style="top:70px;bottom:24px;max-height:none">
+          <div class="grip"></div>
+          <div class="row"><span class="portrait won lg" style="width:72px;height:72px;font-size:22px">Ки</span><div class="grow"><p class="cap">Вернулся в команду</p><h2 class="h1" style="font-size:20px">Килн</h2><span class="chip warn">Огонь</span> <span class="chip">Слабость: Лёд</span></div></div>
+          <p class="small" style="margin-top:8px">Тяжёлый пожарно-спасательный оператор. Снова выносит на себе всё: герои рядом получают на 20% меньше урона.</p>
+          <div class="sheet-file" style="margin-top:12px;transform:rotate(-.5deg)"><b>Личное дело</b><br>Выносит всех, кроме себя. Просит не звать «толстым».<br><i>Контроль: прошу не считать это достижением.</i></div>
+          <div style="display:grid;gap:8px;margin-top:12px"><button class="btn primary block">Взять в смену</button><button class="btn ghost block">Закрыть</button></div>
+        </div>
+      </div>
+    </template>
+  </section>
+
+  <section class="stage" data-show="phone pc">
+    <h2>3. Статистика, рекорды, звание</h2>
+    <p class="lede">Статистика: восемь плиток 2 × 4 на телефоне, 4 × 2 на ПК. Рекорды по четырём режимам, пусто говорит, что сыграть. Звание: плита текущего, лестница из семи, открытые и будущие.</p>
+    <div class="devices"></div>
+    <template>
+      <div class="dos">
+        <div class="top"><div><p class="cap">Досье</p><h1 class="h1" style="font-size:22px">Статистика</h1></div><button class="btn ghost" style="min-width:96px">Назад</button></div>
+        <div class="tabs" role="tablist"><button class="tab" role="tab" aria-selected="false">Герои</button><button class="tab" role="tab" aria-selected="true">Статистика</button><button class="tab" role="tab" aria-selected="false">Рекорды</button><button class="tab" role="tab" aria-selected="false">Звание</button></div>
+        <div class="stat-grid">
+          <div class="tile"><div class="num">41</div><div class="cap">Смен отработано</div></div>
+          <div class="tile"><div class="num">9</div><div class="cap">Вызовов закрыто</div></div>
+          <div class="tile"><div class="num">26</div><div class="cap">Гнёзд вскрыто</div></div>
+          <div class="tile"><div class="num">14</div><div class="cap">Потеряно жителей</div></div>
+          <div class="tile"><div class="num">4</div><div class="cap">Героев остановлено</div></div>
+          <div class="tile"><div class="num">12 300</div><div class="cap">Энергии добыто</div></div>
+          <div class="tile"><div class="num">3</div><div class="cap">Тайников открыто</div></div>
+          <div class="tile"><div class="num">02:14</div><div class="cap">Время на смене</div></div>
+        </div>
+        <p class="small muted">Потерянные жители показаны коралом с припиской Контроля: «Это статистика, а не обвинение».</p>
+      </div>
+    </template>
+    <ul class="notes"><li>Плитки статистики: число крупно, подпись капсом. Цвет числа не несёт смысла.</li></ul>
+  </section>
+
+  <section class="stage" data-show="phone pc">
+    <h2>4. Чертежи и архив (вкладки 5–6)</h2>
+    <p class="lede">Шесть вкладок в две строки на телефоне. Чертёж: синий лист, фрагменты 2/4. Архив: записи о находках, открываются по одной.</p>
+    <div class="devices"></div>
+    <template>
+      <div class="dos">
+        <div class="top"><div><p class="cap">Досье</p><h1 class="h1" style="font-size:22px">Чертежи</h1></div><button class="btn ghost" style="min-width:96px">Назад</button></div>
+        <div class="tabs" style="flex-wrap:wrap"><button class="tab">Герои</button><button class="tab">Статистика</button><button class="tab">Рекорды</button><button class="tab">Звание</button><button class="tab" aria-selected="true">Чертежи</button><button class="tab">Архив</button></div>
+        <div class="plate dark" style="background:#1e3b52"><p class="cap on-dark">Чертёж 2/4 · Станция охлаждения</p><p class="small" style="margin-top:6px;color:#d9f8ff">Соберите четыре фрагмента, чтобы строить Станцию. Фрагменты падают с находок.</p><div class="bar" style="margin-top:10px;background:rgba(255,255,255,.15)"><i style="--v:50%;background:var(--seam)"></i></div></div>
+        <div class="empty">Архив пока пуст. Первая находка появится в архиве сама.</div>
+      </div>
+    </template>
+  </section>
+
+  <ul class="notes"><li><b>Что решено.</b> Досье не даёт потерять герой: даже в команде слот занят, а не удалён. Сброс прогресса описан на экране «Настройки».</li></ul>
+</div>
+<script src="gallery.js"></script>
+</body>
+</html>

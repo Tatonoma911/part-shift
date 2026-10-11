@@ -1,0 +1,412 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PARTSHIFT · Смена</title>
+<link rel="stylesheet" href="system.css">
+<link rel="stylesheet" href="gallery.css">
+<style>
+/* Shift screen: one template, two layouts (phone column, PC with side column) */
+.shift { position: absolute; inset: 0; display: flex; flex-direction: column; padding: 47px 8px 0; gap: 6px; }
+.shift .hud { display: flex; align-items: center; gap: 6px; height: 56px; padding: 6px 8px; background: linear-gradient(180deg,#fff,var(--paper)); clip-path: polygon(12px 0,100% 0,100% calc(100% - 12px),calc(100% - 12px) 100%,0 100%,0 12px); flex: none; }
+.shift .stat { min-width: 0; display: grid; gap: 1px; padding: 0 6px; background: rgba(17,90,128,.08); height: 44px; align-content: center; border-radius: 6px; }
+.shift .stat.energy { background: rgba(46,85,200,.12); }
+.shift .stat .num { font-size: 15px; color: var(--ink); white-space: nowrap; }
+.shift .stat.energy .num { color: var(--cobalt); }
+.shift .stat .cap { font-size: 9.5px; }
+.shift .threat { position: relative; width: 46px; height: 46px; flex: none; margin-left: auto; display: grid; place-items: center; }
+.shift .threat svg { position: absolute; inset: 0; transform: rotate(-90deg); }
+.shift .threat b { font: 900 16px var(--f-display); color: var(--white); background: var(--coral); width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center; box-shadow: 0 0 0 2px #fff; }
+.shift .goal { align-self: center; max-width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font: 700 12px var(--f-body); color: var(--paper); background: rgba(11,17,23,.86); padding: 5px 12px; border-radius: 999px; box-shadow: inset 0 0 0 1px rgba(159,244,255,.3); }
+.shift .goal b { color: #c9a6ff; }
+.shift .goal.warn { background: var(--amber); color: var(--amber-ink); box-shadow: none; }
+.shift .goal.warn b { color: var(--amber-ink); }
+.shift .goal.demon { background: var(--demon); color: var(--white); box-shadow: none; }
+.shift .field { flex: 1 1 auto; min-height: 0; display: grid; align-content: center; justify-items: center; position: relative; }
+.shift .board { width: 378px; max-width: 100%; grid-template-columns: none; gap: 1px; padding: 0; background: var(--night); }
+.shift .board .cell { font-size: 12px; }
+.shift .board .cell span.n-find { color: #0c7f8a; }
+.shift .board .cell.nest { color: var(--graphite); }
+.shift .edge { position: absolute; top: 50%; right: 0; transform: translateY(-50%); }
+.shift .edge .chip { background: var(--coral); color: var(--graphite); box-shadow: 0 0 0 2px #fff; }
+.shift .toast-slot { display: grid; gap: 6px; flex: none; padding: 0 2px; }
+.shift .dock { flex: none; display: grid; grid-template-columns: 1fr 112px; gap: 8px; align-items: stretch; padding: 4px 0 30px; }
+.shift .dock .hint { display: grid; gap: 6px; align-content: center; background: rgba(244,247,247,.08); padding: 8px 12px; border-radius: 10px; color: var(--paper); font-size: 13px; }
+.shift .dock .hint .chip { justify-self: start; background: var(--seam); color: var(--graphite); }
+.shift .toast-slot { width: 100%; }
+.shift .btn.build { min-height: 64px; flex-direction: column; gap: 2px; font-size: 14px; position: relative; }
+.shift .btn.build .glyph { font-size: 18px; }
+.shift .side { display: none; }
+.shift .pause { min-height: 44px; width: 44px; }
+.shift .sheet-wrap { position: absolute; inset: 0; }
+.shift .stat-note { display: none; }
+
+/* PC layout: the shift is a 1024 wide screen; the side column holds summary, log and dock */
+@container (min-width: 720px) {
+  .shift { flex-direction: row; padding: 16px; gap: 16px; }
+  .shift .main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 8px; }
+  .shift .hud { height: 60px; }
+  .shift .field { flex: 1; }
+  .shift .side { display: flex; flex-direction: column; gap: 12px; width: 300px; flex: none; }
+  .shift .side .plate { padding: 14px; }
+  .shift .side .row { min-height: 40px; padding: 4px 0; border-bottom: 0; }
+  .shift .side .bar { margin-top: 2px; }
+  .shift .log { display: grid; gap: 6px; font-size: 12.5px; color: var(--ink); }
+  .shift .log div:nth-child(n+3) { opacity: .45; }
+  .shift .dock { grid-template-columns: 1fr; padding: 0; }
+  .shift .dock .hint { font-size: 13px; }
+  .shift .edge { right: 8px; }
+  .shift .field { min-height: 0; }
+  .shift .board { width: 378px; }
+  .shift .toast-slot { width: 100%; max-width: 100%; }
+  .shift .phone-dock { display: none; }
+}
+@container (max-width: 719px) {
+  .shift .side { display: none; }
+  .shift .main { display: contents; }
+}
+.shift .main { display: contents; }
+.shift .side { display: none; }
+@container (min-width: 720px) { .shift .main { display: flex; } .shift .side { display: flex; } }
+</style>
+</head>
+<body>
+<div class="page">
+  <nav class="nav" aria-label="Экраны">
+    <a href="index.html">Все экраны</a>
+    <a href="shift.html" aria-current="page">Смена</a>
+    <a href="build.html">Строить</a>
+    <a href="control.html">Контроль и тайники</a>
+    <a href="results.html">Итоги и концовки</a>
+    <a href="dossier.html">Досье</a>
+    <a href="menu.html">Меню</a>
+    <a href="settings.html">Настройки</a>
+    <a href="learn.html">Обучение и онлайн</a>
+    <a href="system.html">Компоненты и состояния</a>
+  </nav>
+  <header>
+    <h1>Смена: поле, HUD, док</h1>
+    <p>Главный экран игры. На телефоне всё помещается без прокрутки: HUD сверху, поле по центру, док снизу. На ПК поле слева, справа колонка со сводкой, журналом и доком. Поле 14 × 18 клеток, шаг 27 px, в макете клетки показаны с состояниями.</p>
+  </header>
+  <div class="legend">
+    <span><i style="background:var(--night)"></i>закрытый квартал (город в карантине)</span>
+    <span><i style="background:var(--ground)"></i>своя открытая земля</span>
+    <span><i style="background:var(--coral)"></i>гнездо</span>
+    <span><i style="background:var(--seam)"></i>очередь / работа</span>
+    <span><i style="background:var(--teal)"></i>безопасно</span>
+    <span><i style="background:var(--amber)"></i>внимание</span>
+  </div>
+
+  <section class="stage" data-board data-show="phone pc">
+    <h2>1. Обычная смена</h2>
+    <p class="lede">Копать по-прежнему тапом и проведением пальца. Правая кнопка дока «Строить» с красным счётчиком: сколько зданий можно поставить прямо сейчас. Число «Гнёзд осталось» виден всегда. Край поля: красная капсула показывает врага за экраном.</p>
+    <div class="devices"></div>
+    <template>
+      <div class="shift">
+        <div class="main">
+          <header class="hud" aria-label="Панель смены">
+          <button class="btn icon pause" aria-label="Пауза">❚❚</button>
+          <div class="stat energy"><span class="cap">Энергия</span><b class="num">1 240</b></div>
+          <div class="stat"><span class="cap">Герои</span><b class="num">5/8</b></div>
+          <div class="stat"><span class="cap">Спасено</span><b class="num">3</b></div>
+          <div class="threat" role="img" aria-label="Угроза 2, до следующего уровня около 70 секунд">
+            <svg viewBox="0 0 46 46" aria-hidden="true"><circle cx="23" cy="23" r="19" fill="none" stroke="rgba(16,23,28,.12)" stroke-width="5"/><circle cx="23" cy="23" r="19" fill="none" stroke="#ef5c73" stroke-width="5" stroke-linecap="round" stroke-dasharray="119.4" stroke-dashoffset="50"/></svg>
+            <b>2</b>
+          </div>
+        </header>
+        
+          <div class="goal" role="status">Гнёзд осталось: <b>6</b> · Цель: остановить Демона</div>
+          <div class="field">
+            <div class="board" data-map="
+              ##############
+              ######1.1#####
+              #####1..2#####
+              ####1...1.####
+              ###2..1....2##
+              ###1..C.1..1##
+              ##2.1..w...1##
+              ##1...^..22.##
+              ###1.2..!...##
+              ##..1...1..#.#
+              ##.2..1..1..##
+              ###1..2s....##
+              ##21..1..1...#
+              ##1....2.....#
+              ###...1..11..#
+              ##....1.......
+              ##...1........
+              ##............
+            "></div>
+            <div class="edge"><span class="chip">▲ 2 за краем</span></div>
+          </div>
+          <div class="toast-slot">
+            <div class="toast bad" role="alert">Гнездо вскрыто. Рядом ▲ 2: тап по числу подсветит соседние клетки.</div>
+          </div>
+          <footer class="dock phone-dock">
+            <div class="hint">
+              <span>Проведите по закрытым кварталам. Цифры подскажут, где опасно.</span>
+              <span class="chip">В очереди: 3 · сбросить</span>
+            </div>
+            <button class="btn primary build" aria-label="Строить, можно поставить 3 здания"><span class="glyph">⚒</span>Строить<span class="count-badge">3</span></button>
+          </footer>
+        </div>
+        <aside class="side" aria-label="Сводка смены">
+          <div class="plate seam">
+            <div class="row" style="justify-content:space-between"><span class="cap">Сводка смены</span><span class="chip warn">Угроза 2 · 1:10</span></div>
+            <div class="row"><div class="grow"><div class="small">Кварталы вскрыто</div><div class="bar"><i style="--v:34%"></i></div></div><span class="value">34%</span></div>
+            <div class="row"><div class="grow"><div class="small">Гнёзда разорено</div><div class="bar coral"><i style="--v:33%"></i></div></div><span class="value">3/9</span></div>
+            <div class="row"><div class="grow"><div class="small">Тайники и выжившие</div><div class="bar teal"><i style="--v:40%"></i></div></div><span class="value">2/5</span></div>
+          </div>
+          <div class="plate">
+            <span class="cap">Журнал</span>
+            <div class="log" style="margin-top:8px">
+              <div><b>Гнездо вскрыто.</b> Рядом ▲ 2.</div>
+              <div>КОНТРОЛЬ: Вы опять копаете без маски. Очень смело.</div>
+              <div>Спасён горожанин: +4% к Энергии.</div>
+            </div>
+          </div>
+          <div class="dock">
+            <div class="hint">
+              <span>Копать: тап или проведение по закрытым кварталам.</span>
+              <span class="chip">В очереди: 3 · сбросить</span>
+            </div>
+            <button class="btn primary build" aria-label="Строить, можно поставить 3 здания"><span class="glyph">⚒</span>Строить<span class="count-badge">3</span></button>
+          </div>
+        </aside>
+      </div>
+    </template>
+  </section>
+
+  <section class="stage" data-board data-show="phone pc">
+    <h2>2. Пауза, планирование</h2>
+    <p class="lede">Пауза не отменяет смену, она даёт время спланировать. Цель становится жёлтой и говорит прямо: время стоит. Кнопка паузы снимает паузу. Стройка и раскопка работают, но таймеров угрозы не ждут.</p>
+    <div class="devices"></div>
+    <template>
+      <div class="shift">
+        <div class="main">
+          <header class="hud">
+          <button class="btn icon pause" aria-label="Снять паузу" aria-pressed="true">▶</button>
+          <div class="stat energy"><span class="cap">Энергия</span><b class="num">1 240</b></div>
+          <div class="stat"><span class="cap">Герои</span><b class="num">5/8</b></div>
+          <div class="stat"><span class="cap">Спасено</span><b class="num">3</b></div>
+          <div class="threat" role="img" aria-label="Угроза 2 на паузе"><svg viewBox="0 0 46 46" aria-hidden="true"><circle cx="23" cy="23" r="19" fill="none" stroke="rgba(16,23,28,.12)" stroke-width="5"/><circle cx="23" cy="23" r="19" fill="none" stroke="#ef5c73" stroke-width="5" stroke-linecap="round" stroke-dasharray="119.4" stroke-dashoffset="40"/></svg><b>2</b></div>
+        </header>
+        
+          <div class="goal warn" role="status">Пауза: планируйте, время стоит</div>
+          <div class="field">
+            <div class="board" data-map="
+              ##############
+              ######1.1#####
+              #####1..2#####
+              ####1...1.####
+              ###2..1....2##
+              ###1..C.1..1##
+              ##2.1..w...1##
+              ##1...^..22.##
+              ###1.2..!...##
+              ##..1...1..#.#
+              ##.2..1..1..##
+              ###1..2s....##
+              ##21..1..1...#
+              ##1....2.....#
+              ###...1..11..#
+              ##....1.......
+              ##...1........
+              ##............
+            "></div>
+          </div>
+          <div class="toast-slot"><div class="toast">Пауза включена. Кнопка ▶ вернёт время.</div></div>
+          <footer class="dock phone-dock">
+            <div class="hint"><span>Выберите клетку на своей земле и откройте Строить.</span></div>
+            <button class="btn primary build" aria-label="Строить"><span class="glyph">⚒</span>Строить</button>
+          </footer>
+        </div>
+      </div>
+    </template>
+  </section>
+
+  <section class="stage" data-show="phone pc">
+    <h2>3. Пауза: лист с настройками</h2>
+    <p class="lede">Лист поверх размытого поля, а не отдельный экран. Кнопки 50 px высотой. Вернуться — основная кнопка. «Начать заново» открывает подтверждение, а не стирает сразу.</p>
+    <div class="devices"></div>
+    <template>
+      <div class="screen-inner" style="position:absolute;inset:0;background:linear-gradient(180deg,#13212b,#0b1117)">
+        <div style="position:absolute;inset:0;background:repeating-linear-gradient(90deg,#1d3445 0 28px,#23404f 28px 56px);opacity:.6"></div>
+        <div class="scrim"></div>
+        <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="p-title">
+          <div class="grip"></div>
+          <p class="cap">Смена на паузе</p>
+          <h2 id="p-title" class="display" style="margin:4px 0 12px;font-size:24px">Пауза</h2>
+          <div class="row" style="min-height:48px"><div class="grow">Звуки</div><span class="switch" role="switch" aria-checked="true" aria-label="Звуки"></span></div>
+          <div class="row" style="min-height:48px"><div class="grow">Музыка</div><span class="switch" role="switch" aria-checked="true" aria-label="Музыка"></span></div>
+          <div class="row" style="min-height:48px"><div class="grow">Вибро</div><span class="switch" role="switch" aria-checked="false" aria-label="Вибро"></span></div>
+          <div style="display:grid;gap:8px;margin-top:12px">
+            <button class="btn primary block">Вернуться к смене</button>
+            <button class="btn ghost block">Начать смену заново</button>
+            <button class="btn ghost block">В главное меню</button>
+          </div>
+        </div>
+      </div>
+    </template>
+  </section>
+
+  <section class="stage" data-show="phone pc">
+    <h2>4. Начать смену заново: подтверждение</h2>
+    <p class="lede">Прогресс (герои, чертежи, Досье) не сгорает. Сотрётся только ход этой смены. Поэтому подтверждение короткое, а кнопка «Нет, вернуться» стоит на месте основной.</p>
+    <div class="devices"></div>
+    <template>
+      <div class="screen-inner" style="position:absolute;inset:0;background:#0b1117">
+        <div class="scrim"></div>
+        <div class="sheet center" role="alertdialog" aria-modal="true" aria-labelledby="r-title" style="left:24px;right:24px">
+          <p class="cap">Подтверждение</p>
+          <h2 id="r-title" class="h1" style="margin:6px 0 8px">Начать смену заново?</h2>
+          <p class="muted" style="font-size:14px">Ход этой смены сотрётся: поле, очередь и строения. Герои, чертежи и Досье останутся.</p>
+          <div style="display:grid;gap:8px;margin-top:16px">
+            <button class="btn primary block">Нет, вернуться</button>
+            <button class="btn ghost block" style="color:#a8253c">Да, начать заново</button>
+          </div>
+        </div>
+      </div>
+    </template>
+  </section>
+
+  <section class="stage" data-board data-show="phone pc">
+    <h2>5. Демон скоро проснётся: предупреждение за 60 секунд</h2>
+    <p class="lede">Фиолетовая капсула в цели и одно короткое объявление. Пульс только у капсулы, поле не мигает. Ни одного ложного таймера на поле.</p>
+    <div class="devices"></div>
+    <template>
+      <div class="shift">
+        <div class="main">
+          <header class="hud">
+          <button class="btn icon pause" aria-label="Пауза">❚❚</button>
+          <div class="stat energy"><span class="cap">Энергия</span><b class="num">2 080</b></div>
+          <div class="stat"><span class="cap">Герои</span><b class="num">6/8</b></div>
+          <div class="stat"><span class="cap">Спасено</span><b class="num">7</b></div>
+          <div class="threat" role="img" aria-label="Угроза 4"><svg viewBox="0 0 46 46" aria-hidden="true"><circle cx="23" cy="23" r="19" fill="none" stroke="rgba(16,23,28,.12)" stroke-width="5"/><circle cx="23" cy="23" r="19" fill="none" stroke="#ef5c73" stroke-width="5" stroke-linecap="round" stroke-dasharray="119.4" stroke-dashoffset="90"/></svg><b>4</b></div>
+        </header>
+        
+          <div class="goal demon" role="status">Демон просыпается через 60 с · Цель: <b>Демон</b></div>
+          <div class="field">
+            <div class="board" data-map="
+              ##############
+              ######1.1#####
+              #####1..2#####
+              ####1...1.####
+              ###2..1....2##
+              ###1..C.1..1##
+              ##2.1..w...1##
+              ##1...^..22.##
+              ###1.2..!...##
+              ##..1...1..#.#
+              ##.2..1..1..##
+              ###1..2s....##
+              ##21..1..1...#
+              ##1....2.....#
+              ###...1..11..#
+              ##....1.......
+              ##...1........
+              ##............
+            "></div>
+          </div>
+          <div class="toast-slot"><div class="control-plate"><span class="label">КОНТРОЛЬ <b>// ОБЪЯВЛЕНИЕ</b></span><br>Демон уже ворочается под кварталом 7. Вы успеете. Наверное.</div></div>
+          <footer class="dock phone-dock">
+            <div class="hint"><span>Остановите Демона до пробуждения: откройте его квартал.</span></div>
+            <button class="btn primary build" aria-label="Строить"><span class="glyph">⚒</span>Строить</button>
+          </footer>
+        </div>
+      </div>
+    </template>
+  </section>
+
+  <section class="stage" data-show="phone pc">
+    <h2>6. Начало смены: поставьте Командный центр</h2>
+    <p class="lede">Поле закрыто, один тап ставит центр. Вокруг открывается безопасный пятачок. Строка подсказки в облачке, док пока неактивен.</p>
+    <div class="devices"></div>
+    <template>
+      <div class="shift">
+        <div class="main">
+          <header class="hud">
+          <button class="btn icon pause" aria-label="Пауза" disabled>❚❚</button>
+          <div class="stat energy"><span class="cap">Энергия</span><b class="num">0</b></div>
+          <div class="stat"><span class="cap">Герои</span><b class="num">0/0</b></div>
+          <div class="stat"><span class="cap">Спасено</span><b class="num">0</b></div>
+          <div class="threat" role="img" aria-label="Угроза 1"><svg viewBox="0 0 46 46" aria-hidden="true"><circle cx="23" cy="23" r="19" fill="none" stroke="rgba(16,23,28,.12)" stroke-width="5"/><circle cx="23" cy="23" r="19" fill="none" stroke="#ef5c73" stroke-width="5" stroke-linecap="round" stroke-dasharray="119.4" stroke-dashoffset="0"/></svg><b>1</b></div>
+        </header>
+        
+          <div class="goal" role="status">Цель: остановить Демона</div>
+          <div class="field">
+            <div class="board" style="position:relative;display:block;height:486px;background:#1d3445"></div>
+            <div style="position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);max-width:260px;padding:14px 16px;border-radius:14px;background:rgba(255,255,255,.96);color:var(--ink);text-align:center;box-shadow:0 10px 30px rgba(0,0,0,.4)">
+              <p class="cap" style="margin-bottom:6px">Первый шаг</p>
+              <p style="font-size:14px">Нажмите на квартал, где поставить Командный центр.</p>
+            </div>
+          </div>
+          <footer class="dock phone-dock">
+            <div class="hint"><span>Док откроется, когда центр будет на поле.</span></div>
+            <button class="btn build" disabled aria-label="Строить, пока недоступно"><span class="glyph">⚒</span>Строить</button>
+          </footer>
+        </div>
+      </div>
+    </template>
+  </section>
+
+  <section class="stage" data-show="phone pc">
+    <h2>7. Тост об ошибке: здесь нельзя строить</h2>
+    <p class="lede">Причина отказа красным, с советом. Тост не закрывает поле и уходит сам через 2,8 с. Отказ не звучит как обвинение.</p>
+    <div class="devices"></div>
+    <template>
+      <div class="shift">
+        <div class="main">
+          <header class="hud">
+          <button class="btn icon pause" aria-label="Пауза">❚❚</button>
+          <div class="stat energy"><span class="cap">Энергия</span><b class="num">80</b></div>
+          <div class="stat"><span class="cap">Герои</span><b class="num">5/8</b></div>
+          <div class="stat"><span class="cap">Спасено</span><b class="num">3</b></div>
+          <div class="threat" role="img" aria-label="Угроза 2"><svg viewBox="0 0 46 46" aria-hidden="true"><circle cx="23" cy="23" r="19" fill="none" stroke="rgba(16,23,28,.12)" stroke-width="5"/><circle cx="23" cy="23" r="19" fill="none" stroke="#ef5c73" stroke-width="5" stroke-linecap="round" stroke-dasharray="119.4" stroke-dashoffset="50"/></svg><b>2</b></div>
+        </header>
+        
+          <div class="goal" role="status">Гнёзд осталось: <b>6</b> · Цель: остановить Демона</div>
+          <div class="field">
+            <div class="board" data-map="
+              ##############
+              ######1.1#####
+              #####1..2#####
+              ####1...1.####
+              ###2..1....2##
+              ###1..C.1..1##
+              ##2.1..w...1##
+              ##1...^..22.##
+              ###1.2..!...##
+              ##..1...1..#.#
+              ##.2..1..1..##
+              ###1..2s....##
+              ##21..1..1...#
+              ##1....2.....#
+              ###...1..11..#
+              ##....1.......
+              ##...1........
+              ##............
+            "></div>
+          </div>
+          <div class="toast-slot"><div class="toast bad" role="alert">Не хватает Энергии: нужно 100, есть 80. Копайте, Энергия придёт.</div></div>
+          <footer class="dock phone-dock">
+            <div class="hint"><span>Подсказка: копать дешевле, чем строить. Копка даёт Энергию.</span></div>
+            <button class="btn primary build" aria-label="Строить"><span class="glyph">⚒</span>Строить<span class="count-badge">0</span></button>
+          </footer>
+        </div>
+      </div>
+    </template>
+  </section>
+
+  <ul class="notes">
+    <li><b>Док.</b> Режимов «Копать / Строить / В атаку» больше нет (решение Антона 2026-10-09 и 2026-10-10). Копать по тапу, строить по кнопке. Кнопки атаки нет: юниты дерутся сами, тап только направляет.</li>
+    <li><b>Числа на поле.</b> Цифра читается формой и цветом одновременно: ▲ гнёзда, ◆ находки, шестиугольник Демона. Цвет никогда не единственный носитель смысла (см. раздел «Цвет» в INTERFACE_SYSTEM.md).</li>
+    <li><b>HUD.</b> Энергия, Герои и Спасено считаются разными счётчиками. «Спасено» не юнит, а горожанин в балансе (+4% Энергии за каждого, до 10 человек).</li>
+    <li><b>Размер клетки.</b> 27 px на телефоне: мало для пальца. Поэтому раскопка проведением, а не только тапом, и подсказка по долгому нажатию (0,48 с). Если тестировщик подтвердит промахи, включаем увеличение ×1,6 с прокруткой камеры, а не страницы.</li>
+    <li><b>Проверка.</b> Нижний край дока с отступом 30 px под системную полосу. Все цели не меньше 44 px, кнопки HUD 44 px, кнопка «Строить» 64 px.</li>
+  </ul>
+</div>
+<script src="gallery.js"></script>
+</body>
+</html>
