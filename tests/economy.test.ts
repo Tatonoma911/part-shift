@@ -67,13 +67,18 @@ describe('digging', () => {
     expect(residents(w).length).toBeGreaterThanOrEqual(3);
   });
 
-  it('a pile opened by the start frees the person under it, who reaches the center', () => {
+  it('a pile opened by the start stays sealed until it is dug open, then frees the person under it', () => {
     const w = handWorld(['.r.....', '.......', '......n']);
+    // A mapgen pile: no harvest stock, sealed under its hex layer.
+    Object.assign(w.cell(1, 0), { stock: undefined, rubble: true });
     w.apply({ type: 'placeCommand', x: 0, y: 1 });
     expect(w.cell(1, 0).revealed).toBe(true);
-    expect(w.cell(1, 0).content).toBe('ground');
-    expect(w.s.runners).toHaveLength(1);
+    expect(w.cell(1, 0).rubble).toBe(true);
+    expect(w.s.runners ?? []).toHaveLength(0);
     const e0 = w.player(0).energy;
+    expect(w.apply({ type: 'queueDig', x: 1, y: 0 }).ok).toBe(true);
+    run(w, 40);
+    expect(w.cell(1, 0).content).toBe('ground');
     run(w, 30);
     expect(w.s.runners ?? []).toHaveLength(0);
     expect(w.player(0).civilians).toBe(mapgen.rubble.rescue.onOpen.balance);

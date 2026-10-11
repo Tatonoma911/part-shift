@@ -69,6 +69,8 @@ export interface Cell {
   warned?: boolean;
   /** Seconds left of Canopy's overgrowth (slows residents). */
   overgrown?: number;
+  /** Sealed rubble pile (mapgen): the hex layer above is dug first; the pile itself is dug open after it (mapgen.rubble.durability). */
+  rubble?: boolean;
   /** Ruins of this building type: rebuilding is cheaper and faster (difficulty.json buildingDamage.ruins). */
   ruin?: string;
   /** Elemental zone this cell belongs to (mapgen.cellElements Voronoi). Ground/safe-radius cells have none. */

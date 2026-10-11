@@ -567,7 +567,9 @@ export class World {
           c.marked = false;
           c.markKind = undefined;
         }
-        if ((c.revealed && !harvestable) || c.marked || p.queue.includes(k)) return bad();
+        // A sealed pile is queued again after its hex layer is open (it is dug on its own).
+        const sealed = c.revealed && c.rubble === true;
+        if ((c.revealed && !harvestable && !sealed) || c.marked || p.queue.includes(k)) return bad();
         // Any closed cell may be queued in advance: heroes dig the queue in order as soon as a way opens (findJob).
         // Only a cell no way can ever reach (walled in by water or solid sites) is refused.
         if (!cmd.force && !this.digEverReachable(playerId, cmd.x, cmd.y)) return bad('dig.unreachable');
@@ -1294,16 +1296,9 @@ export class World {
         this.addTempo(owner, 'survivor');
         break;
       }
-      case 'rubble': {
-        // Opened rubble becomes open ground, and the person it hid runs to the command center (MVP_RULES §22.13).
-        c.content = 'ground';
-        c.resolved = true;
-        c.stock = undefined;
-        s.runners = s.runners ?? [];
-        s.runners.push({ id: s.nextId++, owner, x, y, path: [], repath: 0, wait: 0 });
-        this.emit('rubble_opened', { x, y, owner });
+      case 'rubble':
+        // The hex layer is open; the pile under it stays sealed until it is dug open (openRubble).
         break;
-      }
       case 'mine':
         // Dug under an «Опасно» mark: the heroes defuse it (hazards.json mine.markedDig).
         if (defusing && hazards.mine.markedDig.defuse) {
@@ -1519,7 +1514,7 @@ export class World {
         this.move(u, dt);
         return;
       case 'dig': {
-        if (!this.isQueued(u.owner, t.x, t.y) || this.cell(t.x, t.y).revealed) return this.setTask(u, { type: 'idle' });
+        if (!this.isQueued(u.owner, t.x, t.y) || (this.cell(t.x, t.y).revealed && !this.cell(t.x, t.y).rubble)) return this.setTask(u, { type: 'idle' });
         if (u.path.length > 0) return this.move(u, dt);
         if (t.progress === 0) this.emit('dig_start', { x: t.x, y: t.y, owner: u.owner });
         const c = this.cell(t.x, t.y);
@@ -1527,13 +1522,15 @@ export class World {
         c.dig = (c.dig ?? 0) + this.workShare(u, (o) => o.task.type === 'dig' && o.task.x === t.x && o.task.y === t.y) * dt * digMul;
         t.progress = Math.max(c.dig, 1e-6);
         // Rubble is dug like a closed cell, but its durability is mapgen.rubble.durability (Инженер ×0,5).
-        const need = c.content === 'rubble'
+        // A sealed pile takes its own durability (mapgen.rubble.durability, Инженер ×0,5); anything else the normal dig time.
+        const need = c.revealed && c.rubble
           ? mapgen.rubble.durability.workSeconds * this.allyFactor(u.owner, 'rubbleWorkFactor')
           : this.cfg.dig.digSeconds * this.boonFactor(u.owner, 'sharp_shovels') * this.allyFactor(u.owner, 'drillDig', 'digTimeFactor');
         if (c.dig >= need) {
           c.dig = undefined;
           this.setTask(u, { type: 'idle' });
-          this.reveal(t.x, t.y, u.owner);
+          if (c.revealed) this.openRubble(t.x, t.y, u.owner);
+          else this.reveal(t.x, t.y, u.owner);
         }
         return;
       }
@@ -1714,7 +1711,7 @@ export class World {
       const wanted = new Set(
         list.filter((k) => {
           const { x, y } = parseKey(k);
-          if (this.cell(x, y).revealed) return false;
+          if (this.cell(x, y).revealed && !this.cell(x, y).rubble) return false;
           const n = claims((t) => t.type === 'dig' && t.x === x && t.y === y);
           return join ? n > 0 && n < maxPer : n === 0;
         }),
@@ -3527,6 +3524,20 @@ export class World {
     p.civilians = (p.civilians ?? 0) + r.addToBalance;
     p.stats.civiliansRescued = (p.stats.civiliansRescued ?? 0) + 1;
     this.emit('civilian_rescued', { x, y, owner: p.id, amount: r.score });
+  }
+
+  /** A dug-open rubble pile becomes open ground, and the person under it runs to the command center (MVP_RULES §22.13). */
+  private openRubble(x: number, y: number, owner: number): void {
+    const s = this.s;
+    const c = this.cell(x, y);
+    c.rubble = undefined;
+    c.content = 'ground';
+    c.resolved = true;
+    c.stock = undefined;
+    s.runners = s.runners ?? [];
+    s.runners.push({ id: s.nextId++, owner, x, y, path: [], repath: 0, wait: 0 });
+    this.rev++;
+    this.emit('rubble_opened', { x, y, owner });
   }
 
   /**
