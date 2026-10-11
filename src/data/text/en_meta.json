@@ -561,7 +561,7 @@
   "building.repair.desc": "Repairs nearby buildings and rebuilds ruins twice as fast. The only service in the city that fixes instead of rescues.",
   "building.card.level": "Level {level}",
   "building.card.level_max": "Max level",
-  "building.card.upgrade": "Upgrade · {cost} ⚡ · {time}s",
+  "building.card.upgrade": "Upgrade · {cost} ⚡",
   "building.card.upgrade_next": "After upgrade: {effect}",
   "building.card.upgrading": "Upgrading, {time}s left. The building keeps working meanwhile.",
   "building.card.waiting_hero": "Waiting for a free hero to do the upgrade.",

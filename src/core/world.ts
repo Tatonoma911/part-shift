@@ -676,15 +676,13 @@ export class World {
         const schools = this.s.buildings.filter((x) => x.owner === playerId && x.type === 'school' && x.complete && !x.ruined).length;
         if ((rule?.requires?.school ?? 0) > schools) return bad('building.upgrade.needs_school');
         const cost = rule?.cost ?? Math.round(def.cost * (upgradeRules.defaultCostFactorByLevel[String(to)] ?? 1));
-        const seconds = rule?.seconds ?? Math.round(def.buildSeconds * (upgradeRules.defaultSecondsFactorByLevel[String(to)] ?? 1));
         if (p.energy < cost) return bad('building.upgrade.not_enough_energy');
+        // Paid in Energy, the new level and full HP come at once: no timer, no second currency.
         p.energy -= cost;
         b.spent = (b.spent ?? def.cost) + cost;
         b.upgradeTo = to;
-        b.upgradeTotal = seconds;
-        b.upgradeLeft = seconds;
         this.emit('upgrade_chime', { x: b.x, y: b.y, owner: playerId, text: b.type });
-        this.rev++;
+        this.finishUpgrade(b);
         return ok;
       }
       case 'heroBoost': {

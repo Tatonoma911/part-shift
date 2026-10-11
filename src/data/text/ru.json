@@ -262,7 +262,7 @@
   "building.repair.desc": "Чинит здания рядом и вдвое быстрее отстраивает руины. Единственная служба в городе, которая чинит, а не спасает.",
   "building.card.level": "{level} уровень",
   "building.card.level_max": "Максимальный уровень",
-  "building.card.upgrade": "Улучшить · {cost} ⚡ · {time} с",
+  "building.card.upgrade": "Улучшить · {cost} ⚡",
   "building.card.upgrade_next": "После улучшения: {effect}",
   "building.card.upgrading": "Улучшается, осталось {time} с. Пока здание работает как раньше.",
   "building.card.waiting_hero": "Ждём свободного героя: улучшать будет он.",
