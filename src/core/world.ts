@@ -1725,6 +1725,35 @@ export class World {
     this.emit('raid_incoming', { x: b.x, y: b.y, owner: this.building(Number(target.slice(2)))!.owner, amount: size, text: source.tunnel ? `${source.x},${source.y}` : undefined });
   }
 
+  /**
+   * Element types of the next raid's source nest, shown in the countdown HUD before the wave fires.
+   * Mirrors raidClock's source-picking logic without mutating state.
+   */
+  private nextRaidTechs(): Tech[] {
+    const s = this.s;
+    const opened = s.sites.filter((t) => !t.destroyed && (t.kind === 'nest' || t.kind === 'heavy_nest'));
+    const ours = s.buildings.filter((b) => s.players[b.owner]?.alive);
+    if (!ours.length) return [];
+    const near = (x: number, y: number) => Math.min(...ours.map((b) => dist(b.x, b.y, x, y)));
+    let source: { x: number; y: number } | undefined;
+    if (opened.length) {
+      const t = [...opened].sort((a, b) => near(a.x, a.y) - near(b.x, b.y))[0];
+      source = { x: t.x, y: t.y };
+    } else {
+      let best = Infinity;
+      s.cells.forEach((c, i) => {
+        if (c.revealed || (c.content !== 'nest' && c.content !== 'heavy_nest')) return;
+        const x = i % s.width;
+        const y = (i - x) / s.width;
+        const d = near(x, y);
+        if (d < best) [best, source] = [d, { x, y }];
+      });
+    }
+    if (!source) return [];
+    const tech = this.cell(source.x, source.y).tech;
+    return tech ? [tech] : [];
+  }
+
   /** Keep raid/tempo/controlCall in sync so the UI always sees current values. */
   private syncDerivedFields(): void {
     const s = this.s;
@@ -1738,7 +1767,9 @@ export class World {
     s.raid = {
       nextIn,
       active: activeRaiders.length > 0,
-      techs: [...new Set(activeRaiders.map((u) => u.tech).filter((t): t is Tech => t !== undefined))],
+      techs: activeRaiders.length > 0
+        ? [...new Set(activeRaiders.map((u) => u.tech).filter((t): t is Tech => t !== undefined))]
+        : this.nextRaidTechs(),
       callEarlyEnergy,
       canCallEarly: raids && nextIn > 0 && s.players.some((p) => p.energy >= callEarlyEnergy),
     };
