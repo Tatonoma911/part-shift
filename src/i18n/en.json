@@ -412,6 +412,15 @@
   "event.medkit.open": "A medkit is open. Stand next to it and wounds will close, unless the gel decides to run off again.",
   "medkit.use.hint": "A medkit is open. Tap “Use” and heroes next to it start healing.",
   "medkit.use.button": "Use",
+  "cell.info.energy_vein": "Energy vein. Heroes mine one unit of Energy every few seconds. The vein is finite: when it runs dry, it goes dark. Tap a block to light up the cells it touches.",
+  "cell.info.rubble": "Rubble. Heroes clear it and collect the Energy left inside. A cleared pile becomes an ordinary block.",
+  "cell.info.cache": "Cache. Heroes open it and you pick one of three upgrades for this shift.",
+  "cell.info.survivor": "Survivor. The heroes pulled them out from under the rubble. Each one speeds up Energy income.",
+  "cell.info.blueprint": "Blueprint fragment. Collected blueprints unlock new buildings.",
+  "cell.info.armor_crate": "Armor crate. Opening it gives a plate to the nearest heroes, and the plate absorbs damage.",
+  "cell.info.lore_record": "Control record. It does nothing in a fight, but it explains what is going on in the city.",
+  "cell.info.mine": "Mine. It ticks until it blows, and the blast hits heroes nearby. A defused mine pays out Energy.",
+  "cell.info.bonus_capsule": "Supply capsule. Inside: Energy, a plate, repairs or a peek at neighbouring blocks. Open it next to heroes.",
   "event.mine.defused": "The mine under the Danger mark is defused, +{energy} Energy. Control logged it as scheduled maintenance.",
   "event.bonus.peek": "Supply capsule: a 3×3 peek. The sensors of the blocks around it show for 20 seconds; the rest is up to you.",
   "reset.kicker": "This can't be undone",
@@ -511,5 +520,6 @@
   "building.limb.wait_hint": "A limb is ready, waiting for a hero nearby with a free slot.",
   "building.limb.next_hint": "Next limb in {s} s.",
   "building.limb_workshop.name": "Limb Workshop",
-  "building.limb_workshop.desc": "Every 90 s makes an arm or a leg for a hero nearby. You pick the element. Needs a Rescue School."
+  "building.limb_workshop.desc": "Every 90 s makes an arm or a leg for a hero nearby. You pick the element. Needs a Rescue School.",
+  "hud.clean_streak": "Clean streak: +{p}%"
 }

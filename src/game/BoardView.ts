@@ -45,7 +45,8 @@ export interface ViewState {
   /** Building type being placed, to light up cells where it fits. */
   buildType: string | null;
   ghost: { x: number; y: number } | null;
-  spotlight: { x: number; y: number } | null;
+  /** tint: the centre outline colour (interactive cells get their own), amber by default. */
+  spotlight: { x: number; y: number; tint?: number } | null;
   focus: { x: number; y: number }[];
   /** Assist mode "full": show the risk glow around visible numbers (UI_SPEC §3.2). */
   showRisk: boolean;
@@ -268,6 +269,16 @@ export class BoardView {
     return best;
   }
 
+  /** Brief white flash on cell (x, y) confirming a tap action (dig queued, attack issued, item used). */
+  tapFlash(x: number, y: number): void {
+    const px = this.bx + x * STEP;
+    const py = this.by + y * STEP;
+    const g = this.scene.add.graphics().setDepth(D.top + 1);
+    g.fillStyle(C.white, 0.45).fillRect(px, py, CELL, CELL);
+    g.lineStyle(3, C.seam, 0.9).strokeRect(px + 1, py + 1, CELL - 2, CELL - 2);
+    this.scene.tweens.add({ targets: g, alpha: 0, duration: 220, ease: 'Quad.Out', onComplete: () => g.destroy() });
+  }
+
 
   // ----------------------------------------------------------------- events
 
@@ -351,7 +362,7 @@ export class BoardView {
         at('fx.cache_open');
         break;
       case 'resident_born':
-        at('fx.resident_born');
+        at('fx.hero_born');
         break;
       case 'energy_orb_arrive': {
         if (!animSets.fx_energy) {
@@ -654,9 +665,9 @@ export class BoardView {
           // A capsule peek shows the closed cell's own sensor for a while (MVP_RULES §5.2).
           this.setClues(i, x, y, c.peekUntil !== undefined && s.time < c.peekUntil ? w.clues(x, y) : null);
           this.drawClosed(og, x, y, px, py, known.get(cellKey(x, y)), risk?.get(i), me.queue.includes(cellKey(x, y)), me.autoQueue.includes(cellKey(x, y)), c.marked ? (c.markKind ?? 'danger') : null, now);
-          // One orb in the corner: the element that digs this block fast; it glows when the squad has it (MVP_RULES §3.4).
+          // Element zone: colour wash + indicator dot on every closed cell so players see which zones open faster.
           if (zoned) {
-            // The zone shows from afar: a light wash of its colour over the block (MVP_RULES §3.4).
+            // Visible wash of the zone element over the block.
             const el = cellElement(c);
             if (el) {
               og.fillStyle(TECH_HEX[el] ?? 0xffffff, 0.28);
@@ -830,7 +841,7 @@ export class BoardView {
           g.fillStyle(0xffffff, 0.14);
           g.fillRect(px, py, CELL, CELL);
           g.lineStyle(3, 0xffffff, 0.95);
-        } else g.lineStyle(4, C.amber, 1);
+        } else g.lineStyle(4, sp.tint ?? C.amber, 1);
         g.strokeRect(px + 1, py + 1, CELL - 2, CELL - 2);
       }
     }

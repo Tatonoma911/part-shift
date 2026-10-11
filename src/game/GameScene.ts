@@ -2,6 +2,7 @@ import { openAccountPanel } from '../account/panel';
 import { BUILDABLE, boons, buildings as buildingDefs, config } from '../core/data';
 import { cellKey } from '../core/grid';
 import { World, type GameEvent } from '../core/world';
+import type { CellContent } from '../core/state';
 import { t } from '../i18n';
 import { sound } from './audio';
 import { SoundDirector } from './soundDirector';
@@ -181,6 +182,19 @@ function stop(fn: () => void) {
  * (ui/BRAND_UI.md, ui/UI_SPEC.md). Rules live in core/World; this scene only
  * reads its state and turns touches into commands.
  */
+/** Opened cells the player can tap: highlight colour and the i18n key of the what / why / how text. */
+const INTERACTIVE_INFO: Partial<Record<CellContent, { tint: number; key: string }>> = {
+  energy_vein: { tint: C.seam, key: 'cell.info.energy_vein' },
+  rubble: { tint: C.green, key: 'cell.info.rubble' },
+  cache: { tint: C.violet, key: 'cell.info.cache' },
+  survivor: { tint: C.glow, key: 'cell.info.survivor' },
+  blueprint: { tint: C.cobalt, key: 'cell.info.blueprint' },
+  armor_crate: { tint: C.teal, key: 'cell.info.armor_crate' },
+  lore_record: { tint: C.deep, key: 'cell.info.lore_record' },
+  mine: { tint: C.coralInk, key: 'cell.info.mine' },
+  bonus_capsule: { tint: C.amber, key: 'cell.info.bonus_capsule' },
+};
+
 const FLAG_HINT_KEY = 'partshift.flagHint.v1';
 function flagHintSeen(): boolean {
   try {
@@ -229,7 +243,7 @@ export class GameScene extends Phaser.Scene {
   private ghost: { x: number; y: number } | null = null;
   private ghostButtons: Phaser.GameObjects.Container | null = null;
   private drawer!: BuildDrawer;
-  private spotlight: { x: number; y: number; until: number } | null = null;
+  private spotlight: { x: number; y: number; until: number; tint?: number } | null = null;
   /** Pace of the shift (Pulse.ts): «Темп», the raid timer, Контроль's call. */
   private tempo!: TempoMeter;
   private raidTimer!: RaidTimer;
@@ -916,6 +930,9 @@ export class GameScene extends Phaser.Scene {
     } else if (this.start.shiftN && nestsLeft === 0) {
       bg = C.teal;
     }
+    // §22.4: the clean-streak badge sits after the goal while a streak runs.
+    const streak = w.cleanStreakState();
+    if (streak.count > 0 && streak.bonus > 0) goal += `  ·  ${t('hud.clean_streak', { p: Math.round(streak.bonus * 100) })}`;
     const showGoal = !this.guide;
     if (this.hud.goal.text !== goal) this.hud.goal.setText(goal);
     this.hud.goal.setVisible(showGoal);
@@ -1818,6 +1835,8 @@ export class GameScene extends Phaser.Scene {
 
   private onDown(p: Phaser.Input.Pointer): void {
     if (this.overlay || this.overlayPaused || !this.cams.inBoardView(p) || this.cams.busy) return;
+    // The medkit card sits over the board in landscape: its button must not also tap the cell beneath it.
+    if (this.medkitCard?.getBounds().contains(p.x, p.y)) return;
     const wp = this.cams.worldAt(p);
     const at = this.board.cellAt(wp.x, wp.y);
     if (!at) return;
@@ -1848,12 +1867,12 @@ export class GameScene extends Phaser.Scene {
     // Tap an enemy or an opened nest: all residents attack it (any mode).
     const foe = this.board.enemyAt(wp.x, wp.y);
     if (foe) {
-      if (w.apply({ type: 'attack', target: `u:${foe.id}` }, this.me).ok) this.orderSaid();
+      if (w.apply({ type: 'attack', target: `u:${foe.id}` }, this.me).ok) { this.orderSaid(); this.board.tapFlash(x, y); }
       return;
     }
     const site = c.revealed ? w.site(x, y) : undefined;
     if (site && !site.destroyed) {
-      if (w.apply({ type: 'attack', target: `s:${x},${y}` }, this.me).ok) this.orderSaid();
+      if (w.apply({ type: 'attack', target: `s:${x},${y}` }, this.me).ok) { this.orderSaid(); this.board.tapFlash(x, y); }
       return;
     }
     // A tap that just missed a running enemy must not drop the order (QA-037): only a tap well away
@@ -1923,7 +1942,7 @@ export class GameScene extends Phaser.Scene {
       if (this.confirmCell === k) {
         this.confirmCell = null;
         // The core lifts the mark itself: under «Опасно» the heroes dig carefully and defuse a mine (MVP_RULES §5.2).
-        if (w.apply({ type: 'queueDig', x, y, force: true }, this.me).ok) this.guide?.notify('queued');
+        if (w.apply({ type: 'queueDig', x, y, force: true }, this.me).ok) { this.guide?.notify('queued'); this.board.tapFlash(x, y); }
         return;
       }
       this.confirmCell = k;
@@ -1932,20 +1951,26 @@ export class GameScene extends Phaser.Scene {
     }
     if (this.confirmCell === k) {
       this.confirmCell = null;
-      if (w.apply({ type: 'queueDig', x, y, force: true }, this.me).ok) this.guide?.notify('queued');
+      if (w.apply({ type: 'queueDig', x, y, force: true }, this.me).ok) { this.guide?.notify('queued'); this.board.tapFlash(x, y); }
       return;
     }
     this.confirmCell = null;
+    // Opened interactive cells say what they are, what they are for and how to use them, in their own colour (Антон 2026-10-11).
+    const info = c.revealed && c.content !== 'medkit' ? INTERACTIVE_INFO[c.content] : undefined;
+    if (info) {
+      this.spotlight = { x, y, until: this.time.now + 6000, tint: info.tint };
+      this.say(t(info.key), 6000);
+    }
     // An opened medkit asks first: «Использовать» heals the heroes around it (hazards.json medkit).
     if (c.revealed && c.content === 'medkit') {
-      if (c.stock && c.heal === undefined) this.askMedkit(x, y);
-      else if (w.apply({ type: 'useMedkit', x, y }, this.me).ok) this.say(t('event.medkit.open'), 1800);
+      if (c.stock && c.heal === undefined) { this.board.tapFlash(x, y); this.askMedkit(x, y); }
+      else if (w.apply({ type: 'useMedkit', x, y }, this.me).ok) { this.say(t('event.medkit.open'), 1800); this.board.tapFlash(x, y); }
       return;
     }
     // Swiping over auto-queued cells promotes them to the player's own queue; only own orders get cancelled.
     const own = w.player(this.me).queue.includes(k);
     const r = !c.revealed && !own ? w.apply({ type: 'queueDig', x, y }, this.me) : null;
-    if (r?.ok) this.guide?.notify('queued');
+    if (r?.ok) { this.guide?.notify('queued'); this.board.tapFlash(x, y); }
     // Once per device: the first dig explains the flag, so nobody opens a suspicious block by accident.
     if (r?.ok && !flagHintSeen()) { markFlagHintSeen(); this.say(t('cell.mark.hint'), 6000); }
     if (r && !r.ok && r.reason === 'dig.unreachable') this.say(t('dig.unreachable'), 3000, true);
@@ -1964,7 +1989,9 @@ export class GameScene extends Phaser.Scene {
       if (this.dragMode === 'queue') w.apply({ type: 'cancelDig', x, y }, this.me);
       w.apply({ type: 'toggleMark', x, y }, this.me);
       const kind = w.cell(x, y).markKind;
-      this.say(kind ? t(`cell.mark.${kind}`) : t('cell.mark.hint'), 1800);
+      // Setting a mark names it; lifting one stays quiet, and the how-to shows once per device.
+      if (kind) this.say(t(`cell.mark.${kind}`), 1800);
+      else if (!flagHintSeen()) { markFlagHintSeen(); this.say(t('cell.mark.hint'), 1800); }
       buzz(20);
       this.dragMode = null;
     });

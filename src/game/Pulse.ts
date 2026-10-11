@@ -118,6 +118,8 @@ export class RaidTimer {
     }
     this.armedAt = now;
     sound.play('ui_tap');
+    // Redraw immediately so the chip turns amber on this frame, not the next update tick.
+    this.update(s.left, s.reward, s.techs, s.active, s.can, performance.now());
   }
 
   /** left = seconds to the next raid; reward = Energy for calling now; active = a raid is on. */
