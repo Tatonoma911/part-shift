@@ -245,7 +245,7 @@ export class MenuScene extends Phaser.Scene {
         const s = loadSlot(last)!;
         button(t('menu.continue'), () => this.play({ slot: last }), true, `${t('menu.slot', { n: last })} · ${this.fmt(s.time)}`);
       }
-      // F-06: until the tutorial is done, «New shift» is the tutorial (it has its own «Skip»).
+      // F-06: until the tutorial is done, «Новая смена» is the tutorial (it has its own «Пропустить»).
       // Otherwise it is the urgent call, with its best rating over the difficulties (ACHIEVEMENTS.md §6).
       const callStars = Math.max(0, ...Object.entries(loadMeta().records).filter(([k]) => k.startsWith('call.')).map(([, r]) => r.bestStars ?? 0));
       if (!tutorialDone()) button(t('menu.new_run'), () => this.play({ tutorial: true }), !last, undefined, 'call');
@@ -291,7 +291,7 @@ export class MenuScene extends Phaser.Scene {
       }
       button(t('menu.back'), () => this.show('main'));
     } else if (page === 'comfort') {
-      // «Udobstvo» (UI_SPEC §4.7): each row cycles its value on tap.
+      // «Удобство» (UI_SPEC §4.7): each row cycles its value on tap.
       const cf = comfort();
       const onOff = (v: boolean) => t(v ? 'comfort.on' : 'comfort.off');
       c.add(this.add.text(cx, y + 6, t('settings.comfort').toUpperCase(), TXT.caps()).setOrigin(0.5));
@@ -401,7 +401,7 @@ export class MenuScene extends Phaser.Scene {
   }
 
   /**
-   * «Coffee for the developer» as one big gold button (Антон 10.10: four equal chips made its long label unreadable),
+   * «Купить разработчику кофе» as one big gold button (Антон 10.10: four equal chips made its long label unreadable),
    * then Ranking · Invite · Feedback as a slim row of quiet chips under it. Returns the height it took.
    */
   private socialRow(c: Phaser.GameObjects.Container, x: number, y: number, w: number): number {
@@ -463,7 +463,7 @@ export class MenuScene extends Phaser.Scene {
 
   private play(start: GameStart): void {
     closeConsent();
-    // Before each shift: show «Briefing» (MVP_RULES §4.5) to pick the squad.
+    // Before each shift: show «Сводка смены» (MVP_RULES §4.5) to pick the squad.
     if (start.fresh && !start.tutorial && !this.allyUi) {
       this.allyUi = beforeShift(
         this,
