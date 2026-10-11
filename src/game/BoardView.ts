@@ -1606,7 +1606,11 @@ export class BoardView {
       g.strokePath();
     };
     for (const u of w.s.units) {
-      if (u.task.type === 'dig' && u.path.length === 0) arc(u.task.x, u.task.y, 1 - u.task.progress / config.dig.digSeconds);
+      // The ring reads the cell's shared progress against the cell's own need, so it ends exactly when the dig does.
+      if (u.task.type === 'dig' && u.path.length === 0) {
+        const c = w.cell(u.task.x, u.task.y);
+        arc(u.task.x, u.task.y, 1 - (c.dig ?? 0) / (c.digNeed ?? config.dig.digSeconds));
+      }
     }
     for (const b of w.s.buildings) {
       if (!b.complete && b.built > 0) arc(b.x, b.y, 1 - b.built / w.buildSeconds(b));

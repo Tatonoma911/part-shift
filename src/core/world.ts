@@ -1528,6 +1528,7 @@ export class World {
         const need = c.revealed && c.rubble
           ? mapgen.rubble.durability.workSeconds * this.allyFactor(u.owner, 'rubbleWorkFactor')
           : this.cfg.dig.digSeconds * this.boonFactor(u.owner, 'sharp_shovels') * this.allyFactor(u.owner, 'drillDig', 'digTimeFactor');
+        c.digNeed = need;
         if (c.dig >= need) {
           c.dig = undefined;
           this.setTask(u, { type: 'idle' });

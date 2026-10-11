@@ -51,6 +51,8 @@ export interface Cell {
   heal?: number;
   /** Shared dig progress of everyone digging this cell (config.dig.workers). */
   dig?: number;
+  /** Dig work this cell needs in total (rubble and hard cells differ from digSeconds); the progress ring reads it. */
+  digNeed?: number;
   /** Building standing on this cell. */
   building?: number;
   /** Player's "danger here" flag. */
