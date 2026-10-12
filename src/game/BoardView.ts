@@ -1005,7 +1005,8 @@ export class BoardView {
         case 'mine': {
           const el = MINE_EL[c.tech ?? 'impact'] ?? 'force';
           const blink = c.fuse !== undefined && Math.floor(now / (c.fuse < 0.5 ? 70 : 160)) % 2 === 0;
-          name = c.resolved ? `mine_${el}_spent` : `mine_${el}_${blink ? 'triggered' : 'armed'}`;
+          // A mine that went off or was defused is used up and leaves the board.
+          name = c.resolved ? null : `mine_${el}_${blink ? 'triggered' : 'armed'}`;
           break;
         }
         case 'bonus_capsule': {
@@ -1016,11 +1017,13 @@ export class BoardView {
           const t0 = this.opened.get(i) ?? now;
           this.opened.set(i, t0);
           const t = now - t0;
-          name = t < 350 ? 'bonus_capsule_opening' : t < 2200 ? 'bonus_capsule_open_glow' : 'bonus_capsule_empty';
+          // Once the glow ends the capsule is used up and leaves the board.
+          name = t < 350 ? 'bonus_capsule_opening' : t < 2200 ? 'bonus_capsule_open_glow' : null;
           break;
         }
         case 'medkit':
-          name = c.heal !== undefined ? (Math.floor(now / 400) % 2 ? 'medkit_use_glow' : 'medkit_open') : c.resolved ? 'medkit_spent' : 'medkit_closed';
+          // A medkit used up or taken to its last charge leaves the board.
+          name = c.heal !== undefined ? (Math.floor(now / 400) % 2 ? 'medkit_use_glow' : 'medkit_open') : c.resolved ? null : 'medkit_closed';
           break;
       }
     }

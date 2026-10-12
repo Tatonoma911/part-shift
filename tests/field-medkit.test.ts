@@ -44,6 +44,25 @@ describe('field medkits: take, pick up, eat (MVP_RULES §22.19)', () => {
     expect(w.cell(3, 1).content).toBe('medkit');
   });
 
+  it('the last charge taken leaves a spent medkit (resolved), so it leaves the board', () => {
+    const w = setup(['.......', '.......']);
+    medkitAt(w, 4, 1);
+    w.cell(4, 1).stock = 1;
+    w.apply({ type: 'takeMedkit', x: 4, y: 1 });
+    expect(w.cell(4, 1).stock).toBe(0);
+    expect(w.cell(4, 1).resolved).toBe(true);
+  });
+
+  it('a hero who walks over the last charge empties the medkit (resolved)', () => {
+    const w = setup(['.......', '.......']);
+    medkitAt(w, 3, 1);
+    w.cell(3, 1).stock = 1;
+    ally(w, 3, 1);
+    run(w, 0.1);
+    expect(w.cell(3, 1).stock).toBe(0);
+    expect(w.cell(3, 1).resolved).toBe(true);
+  });
+
   it('a wounded hero runs to the nearest field medkit and eats it there', () => {
     const w = setup(['.........', '.........']);
     medkitAt(w, 7, 1);
