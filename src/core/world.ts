@@ -3889,6 +3889,8 @@ export class World {
   private takeFieldMedkit(x: number, y: number, owner: number): void {
     const c = this.cell(x, y);
     c.stock = (c.stock ?? 1) - 1;
+    // An emptied medkit is used up: it leaves the board (BoardView hides resolved medkits).
+    if (!c.stock) c.resolved = true;
     this.s.players[owner].medkits = (this.s.players[owner].medkits ?? 0) + 1;
     this.rev++;
     this.emit('medkit_taken', { x, y, owner });
@@ -3930,6 +3932,8 @@ export class World {
         if (healthy && here && here.content === 'medkit' && here.revealed && here.heal === undefined && (here.stock ?? 0) > 0 && u.atMedkit !== key) {
           u.atMedkit = key;
           here.stock = (here.stock ?? 1) - 1;
+          // An emptied medkit is used up: it leaves the board (BoardView hides resolved medkits).
+          if (!here.stock) here.resolved = true;
           if (!u.medkit) u.medkit = true;
           else p.medkits = (p.medkits ?? 0) + 1;
           this.rev++;
