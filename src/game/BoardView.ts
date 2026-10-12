@@ -1005,7 +1005,8 @@ export class BoardView {
         case 'mine': {
           const el = MINE_EL[c.tech ?? 'impact'] ?? 'force';
           const blink = c.fuse !== undefined && Math.floor(now / (c.fuse < 0.5 ? 70 : 160)) % 2 === 0;
-          name = c.resolved ? `mine_${el}_spent` : `mine_${el}_${blink ? 'triggered' : 'armed'}`;
+          // A mine that went off or was defused is used up and leaves the board.
+          name = c.resolved ? null : `mine_${el}_${blink ? 'triggered' : 'armed'}`;
           break;
         }
         case 'bonus_capsule': {
