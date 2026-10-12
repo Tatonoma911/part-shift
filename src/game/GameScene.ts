@@ -954,7 +954,9 @@ export class GameScene extends Phaser.Scene {
     const earned = (this.world.s as MedalEvents).medalEvents;
     if (earned?.length) for (const e of earned.splice(0)) this.medals.push(e.id, e.tier as Tier);
 
-    const nestsLeft = w.s.cells.filter((c) => (c.content === 'nest' || c.content === 'heavy_nest') && !c.resolved).length;
+    const nestsLeft = w.s.generated
+      ? w.s.cells.filter((c) => (c.content === 'nest' || c.content === 'heavy_nest') && !c.resolved).length
+      : (w.s.rules?.counts?.nests ?? 0);
     let goal = this.start.shiftN
       ? t('hud.nests_left', { n: nestsLeft })
       : t('mode.call.goal', { hero: heroName(w.s.boss.hero) });
@@ -965,7 +967,7 @@ export class GameScene extends Phaser.Scene {
     } else if (!this.start.shiftN && w.s.boss.warned && !w.s.boss.awake && !w.s.boss.dead) {
       goal = t('event.boss_warning');
       bg = C.violet;
-    } else if (this.start.shiftN && nestsLeft === 0) {
+    } else if (this.start.shiftN && nestsLeft === 0 && w.s.generated) {
       bg = C.teal;
     }
     // §22.4: the clean-streak badge sits after the goal while a streak runs.
