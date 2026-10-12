@@ -1532,6 +1532,7 @@ export class World {
         oc.resolved = true;
         oc.stock = 0;
         this.openCapsule(s.players[u.owner], ux, uy);
+        this.rev++;
       }
     }
     const target = this.cfg.residents.allFight ? this.combatTarget(u) : null;
