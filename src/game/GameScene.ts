@@ -1141,8 +1141,9 @@ export class GameScene extends Phaser.Scene {
 
     this.dock = { head: { text: headText, cancel }, panes: { dig, build }, queue, cards, modeBtns: { build: buildBg } };
 
-    const extraH = LANDSCAPE ? 200 : 300;
-    const catalogBox = { x: DOCK.x, y: DOCK.y - extraH, w: DOCK.w, h: DOCK.h + extraH };
+    // Portrait: the sheet starts under the board, so it never covers the field; it still ends at the dock's bottom.
+    const catalogTop = LANDSCAPE ? DOCK.y - 200 : BOARD.y + BOARD.h + 4;
+    const catalogBox = { x: DOCK.x, y: catalogTop, w: DOCK.w, h: DOCK.y + DOCK.h - catalogTop };
     // The sheet stops above the «Строить» button, so that button stays the one control that closes it.
     const reserveBottom = 0;
     this.drawer = new BuildDrawer(
