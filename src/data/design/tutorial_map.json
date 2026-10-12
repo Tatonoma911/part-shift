@@ -9,8 +9,10 @@
   "legend": null,
   "initiallyRevealedRadius": 1,
   "overrides": {
-    "config.dig.digSeconds": 3,
-    "config.population.spawnSeconds": 8,
+    "config.dig.digSeconds": 1.5,
+    "config.population.spawnSeconds": 30,
+    "config.population.initialResidents": 1,
+    "config.population.cap": 3,
     "config.economy.startEnergy": 300,
     "config.threat.enabled": false,
     "commandInvulnerable": true,

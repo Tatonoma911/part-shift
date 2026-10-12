@@ -637,7 +637,7 @@ function drawCard(s: Phaser.Scene, c: Phaser.GameObjects.Container, o: BuildOpti
   // «Пригодится» badge: amber chip on the picture (station only).
   if (station && o.useful && o.digs) {
     const bt = s.add.text(w / 2, picBot - 6, t('build.station.useful', { zone: t(`zone.short.${o.digs}`) }), {
-      ...TXT.body(13, INK.graphite, '800'),
+      ...TXT.body(20, INK.graphite, '800'),
       backgroundColor: '#FFC94D',
       padding: { x: 6, y: 2 },
     }).setOrigin(0.5, 1);
@@ -648,7 +648,7 @@ function drawCard(s: Phaser.Scene, c: Phaser.GameObjects.Container, o: BuildOpti
   // Land freed: bottom-left of picture (OK state only, below orbs).
   if (o.land > 0 && !locked && o.state === 'ok') {
     const lt = s.add.text(10, picBot - 4, t('build.card.land', { count: o.land }), {
-      ...TXT.body(14, INK.teal, '700'),
+      ...TXT.body(20, INK.teal, '700'),
       backgroundColor: '#FFFFFFCC',
       padding: { x: 5, y: 2 },
     }).setOrigin(0, 1);
@@ -668,7 +668,7 @@ function drawCard(s: Phaser.Scene, c: Phaser.GameObjects.Container, o: BuildOpti
       if (!text) continue;
       const orbR2 = 7;
       if (tech) drawTechOrb(dg, tech, 18, ry + orbR2, orbR2);
-      const tl = s.add.text(tech ? 32 : 10, ry, text, TXT.body(13, locked ? '#DCEBFF' : INK.graphite, '600'));
+      const tl = s.add.text(tech ? 32 : 10, ry, text, TXT.body(20, locked ? '#DCEBFF' : INK.graphite, '600'));
       if (tl.width > w - (tech ? 42 : 20)) tl.setScale((w - (tech ? 42 : 20)) / tl.width);
       c.add(tl);
       ry += 20;
@@ -684,14 +684,14 @@ function drawCard(s: Phaser.Scene, c: Phaser.GameObjects.Container, o: BuildOpti
     fragmentBar(fg, 12, h - footH + 6, w - 24, 10, o.have ?? 0, o.need ?? 1);
     c.add(fg);
     c.add(
-      s.add.text(w / 2, h - footH / 2 + 8, t('build.state.blueprint', { have: o.have ?? 0, need: o.need ?? 0 }), TXT.body(16, '#DCEBFF', '700')).setOrigin(0.5),
+      s.add.text(w / 2, h - footH / 2 + 8, t('build.state.blueprint', { have: o.have ?? 0, need: o.need ?? 0 }), TXT.body(20, '#DCEBFF', '700')).setOrigin(0.5),
     );
     return;
   }
 
   if (dim) {
     // Dimmed reason: just a small label in the foot row.
-    const nt = s.add.text(w / 2, fy, o.note, TXT.body(15, INK.dim, '600')).setOrigin(0.5);
+    const nt = s.add.text(w / 2, fy, o.note, TXT.body(20, INK.dim, '600')).setOrigin(0.5);
     if (nt.width > w - 20) nt.setScale((w - 20) / nt.width);
     c.add(nt);
     return;
@@ -709,8 +709,7 @@ function drawCard(s: Phaser.Scene, c: Phaser.GameObjects.Container, o: BuildOpti
   if (s.textures.exists('icon.energy')) c.add(s.add.image(w / 2 - costT.width / 2 - 4, chipY + chipH / 2, 'icon.energy').setScale(1.0).setOrigin(1, 0.5));
   // If short: small "not enough energy" label above the chip.
   if (short) {
-    // #C8243F, not the bright coral: the small text must reach WCAG AA on white (design/INTERFACE_SYSTEM.md §3.2).
-    const nt = s.add.text(w / 2, h - footH + 2, o.note, TXT.body(13, '#C8243F', '700')).setOrigin(0.5, 1);
+    const nt = s.add.text(w / 2, h - footH + 2, o.note, TXT.body(20, INK.coral, '600')).setOrigin(0.5, 1);
     if (nt.width > w - 16) nt.setScale((w - 16) / nt.width);
     c.add(nt);
   }
@@ -754,7 +753,7 @@ export function placeBar(scene: Phaser.Scene, box: Box, id: string, cost: number
     desc = [zone ? t('build.station.digs', { zone: t(`zone.${zone}`) }) : t('build.station.digs_none'), strong ? t('build.station.strong', { tech: t(`tech.${strong}`) }) : ''].filter(Boolean).join('. ') + '.';
   }
   if (desc && !LANDSCAPE) {
-    const d = scene.add.text(tx, hint.y + hint.height + 8, desc, { ...TXT.body(17, INK.dim, '500'), wordWrap: { width: tw } });
+    const d = scene.add.text(tx, hint.y + hint.height + 8, desc, { ...TXT.body(20, INK.dim, '500'), wordWrap: { width: tw } });
     if (d.y + d.height > y + h - 16) d.setVisible(false);
     c.add(d);
   }
@@ -767,7 +766,7 @@ export function placeBar(scene: Phaser.Scene, box: Box, id: string, cost: number
   chip(bg, bx, by, bw, bh, C.graphite, 1, 14);
   c.add(bg);
   c.add(scene.add.text(bx + bw / 2, by + 34, '✕', TXT.num(30, INK.white)).setOrigin(0.5));
-  c.add(scene.add.text(bx + bw / 2, by + 72, t('dock.cancel'), TXT.body(18, INK.white, '700')).setOrigin(0.5));
+  c.add(scene.add.text(bx + bw / 2, by + 72, t('dock.cancel'), TXT.body(22, INK.white, '700')).setOrigin(0.5));
   const hit = scene.add.zone(bx, by, bw, bh).setOrigin(0).setInteractive({ useHandCursor: true });
   hit.on('pointerdown', (_p: Phaser.Input.Pointer, _x: number, _y: number, ev: Phaser.Types.Input.EventData) => {
     ev.stopPropagation();

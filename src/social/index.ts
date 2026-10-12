@@ -5,7 +5,7 @@ import { addRun, displayName, profile, updateProfile } from './profile';
 import { boardId, dayId, rankOf, runScore, type RunResult } from './score';
 import { flushFeedback } from './ui';
 
-export { donateReady } from './config';
+export { AUTHOR_TELEGRAM, donateReady } from './config';
 export { boardEnabled } from './board';
 export { dailySeed, dayId, rankOf } from './score';
 export { displayName, profile } from './profile';

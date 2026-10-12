@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
+import type { World } from '../src/core/world';
 import { buildings as buildingDefs, upgradeRules } from '../src/core/data';
 import { handWorld } from './helpers';
-import type { World } from '../src/core/world';
 
 type Inner = {
   addBuilding(owner: number, type: string, x: number, y: number, complete: boolean): { id: number; hp: number };
@@ -17,12 +17,8 @@ function world() {
   return { w, bld };
 }
 
-const run = (w: World, seconds: number) => {
-  for (let t = 0; t < seconds; t += 0.05) w.step(0.05);
-};
-
 describe('building upgrade (buildings.json upgrades)', () => {
-  it('charges the level-2 price, the building works on while upgrading, then takes level 2', () => {
+  it('charges the level-2 price and the building is level 2 at once, with no timer', () => {
     const { w, bld } = world();
     const rule = upgradeRules.perBuilding.reactor.levels!['2'];
     const before = w.s.players[0].energy;
@@ -30,12 +26,9 @@ describe('building upgrade (buildings.json upgrades)', () => {
     const cost = rule.cost ?? Math.round(buildingDefs.reactor.cost * upgradeRules.defaultCostFactorByLevel['2']);
     expect(w.s.players[0].energy).toBe(before - cost);
     const b = w.s.buildings.find((x) => x.id === bld.id)!;
-    expect(b.upgradeLeft).toBeGreaterThan(0);
-    expect(b.level ?? 1).toBe(1);
-    expect(w.apply({ type: 'upgradeBuilding', building: bld.id }).ok).toBe(false);
-    run(w, (rule.seconds ?? buildingDefs.reactor.buildSeconds) + 1);
     expect(b.level).toBe(2);
     expect(b.upgradeLeft).toBeUndefined();
+    expect(b.upgradeTo).toBeUndefined();
   });
 
   it('refuses without the energy, and an upgrade to level 3 needs a level-2 Command Center', () => {

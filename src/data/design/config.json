@@ -15,7 +15,7 @@
     "_cacheNote": "cache now gives 20 Energy + a 1-of-3 boon choice (boons.json)"
   },
   "dig": {
-    "digSeconds": 9,
+    "digSeconds": 4.5,
     "requireAdjacentRevealed": true,
     "autoQueueZeroNeighbors": false,
     "autoQueuePriority": "low",
@@ -23,7 +23,7 @@
       "_doc": "[Антон 21:48] несколько жителей на одной клетке копают быстрее; MVP_RULES §4.2",
       "maxPerCell": 3,
       "speedBonusPerExtraWorker": 0.75,
-      "formula": "seconds = digSeconds / (1 + 0.75 × (workers − 1))  → 1: 9 s, 2: 5.1 s, 3: 3.6 s",
+      "formula": "seconds = digSeconds / (1 + 0.75 × (workers − 1))  → 1: 4.5 s, 2: 2.6 s, 3: 1.8 s (halved 2026-10-11 by Антон: digging is too slow to wait for)",
       "idleJoin": "an idle resident with nothing in the queue joins the nearest cell being dug (up to maxPerCell)",
       "progressBar": "one shared progress ring on the cell, workers stand on different free sides of it",
       "appliesAlsoTo": [
@@ -355,5 +355,14 @@
       "raid_start",
       "shelter"
     ]
+  },
+  "digPriority": {
+    "status": "правило MVP_RULES §22.22, подтверждено Антоном («кольца да», 2026-10-11); цифры оценочные",
+    "cycle": [0, 1, 2, 3, 0],
+    "ringsMeaning": { "3": "первый приоритет, копать сейчас, все бросают", "2": "второй приоритет", "1": "третий приоритет", "0": "без приоритета" },
+    "tapOnClosedCell": "добавляет одно кольцо, с 3 переходит в 0",
+    "swipeOnClosedCell": "добавляет одно кольцо (как один тап)",
+    "ringsDrawnAs": "красные кольца одно над другим, как у датчика",
+    "_note": "приоритет влияет на выбор следующей клетки для жителей и героев; не меняет скорость копки"
   }
 }

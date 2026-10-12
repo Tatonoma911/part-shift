@@ -3,7 +3,7 @@ import { BOARD, LANDSCAPE, VIEW } from './layout';
 
 /** Depth bands: below 0 the sky, 19 and up the HUD/dock, everything between is the board. */
 export const UI_DEPTH = 19;
-const MAX_ZOOM = 3;
+const MAX_ZOOM = 5;
 
 /**
  * Three cameras: a fixed sky camera, a board camera that zooms and pans inside
@@ -43,7 +43,8 @@ export class Cameras {
     this.bounds = { x: x - 20, y: y - 20, w: w + 40, h: h + 40 };
     const c = this.board;
     this.fit = Math.min(grow ? MAX_ZOOM : 1, c.width / this.bounds.w, c.height / this.bounds.h);
-    if (this.fit < 1) this.home = { x: x + w / 2, y: y + h / 2 };
+    // A grown small board (the tutorial) centers on its own field too, not on the board area.
+    if (this.fit < 1 || grow) this.home = { x: x + w / 2, y: y + h / 2 };
     this.zoom = this.fit;
     this.center = { ...this.home };
     this.apply();
@@ -86,6 +87,39 @@ export class Cameras {
     this.zoom = this.fit;
     this.center = { ...this.home };
     this.apply();
+  }
+
+  get fitZoom(): number {
+    return this.fit;
+  }
+
+  sweep(startZoom: number): void {
+    if (startZoom <= this.fit + 0.05) return;
+    this.focus(this.home.x, this.home.y, startZoom);
+    const proxy = { z: startZoom };
+    this.scene.tweens.add({
+      targets: proxy,
+      z: this.fit,
+      duration: 900,
+      ease: 'Quad.easeInOut',
+      onUpdate: () => { this.zoom = proxy.z; this.apply(); },
+      onComplete: () => {
+        this.scene.time.delayedCall(700, () => {
+          this.scene.tweens.add({
+            targets: proxy,
+            z: startZoom,
+            duration: 900,
+            ease: 'Quad.easeInOut',
+            onUpdate: () => { this.zoom = proxy.z; this.apply(); },
+          });
+        });
+      },
+    });
+  }
+
+  /** A one-finger drag on the board: the view follows the finger from here on (touch). */
+  beginPan(p: { x: number; y: number }): void {
+    this.pan = { x: p.x, y: p.y };
   }
 
   panBy(dx: number, dy: number): void {

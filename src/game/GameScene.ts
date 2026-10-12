@@ -10,7 +10,7 @@ import { Voice } from './voice';
 import { MedalToasts, type Tier } from './meta/Awards';
 import { RunTally } from './meta/record';
 import { showResults } from './meta/ResultsScreen';
-import { boonPoolFor, loadMeta, offerHero, roster } from './meta/store';
+import { boonPoolFor, buildingUnlocked, loadMeta, offerHero, roster } from './meta/store';
 import { beforeShift } from './meta/beforeShift';
 import { pickBoon } from './meta/BoonPick';
 import { closeCoach, learning, openGuide, setLearningHooks } from './learn';
@@ -36,14 +36,19 @@ import { techOf } from './Vitals';
 import { armTechs } from './BoardView';
 import eventsJson from '../data/design/events.json';
 import { setBackHandler } from '../platform/native';
-import { CAMPAIGN_TOTAL, districtText, getCampaignWorld, markShiftCleared, shiftReward } from './campaign';
+import { CAMPAIGN_TOTAL, districtText, getCampaignWorld, getFirstUncleared, markShiftCleared, shiftReward } from './campaign';
 import type { PeerSession as OnlineSession } from '../net/peer';
-import { challengeUrl, closeSocial, displayName, openBoard, openDonate, profile, rankOf, recordRun, resultCard, share, shouldNudge, socialOpen, type RecordedRun } from '../social';
+import { AUTHOR_TELEGRAM, challengeUrl, closeSocial, displayName, openBoard, openDonate, profile, rankOf, recordRun, resultCard, share, shouldNudge, socialOpen, type RecordedRun } from '../social';
 import { enterScene } from './motion';
+import { showZoomHint } from './ZoomHint';
 
 const BEST_KEY = 'partshift.best.v1';
 const LOSS_KEY = 'partshift.losses.v1';
 const LONG_PRESS_MS = 480;
+/** A finger that moves farther than this (screen px) is panning the map, not tapping a cell. */
+const TOUCH_SLOP = 12;
+/** A touch pointer (phones and tablets): its tap is decided on release, so a drag can pan. */
+const isTouch = (p: Phaser.Input.Pointer): boolean => (p.event as PointerEvent | undefined)?.pointerType === 'touch' || !!p.event?.type?.startsWith('touch');
 
 type Mode = 'dig' | 'build';
 
@@ -214,6 +219,11 @@ function markFlagHintSeen(): void {
   }
 }
 
+/** «Написать автору»: the author's Telegram in a new tab (link lives in social/config.ts). */
+function openAuthor(): void {
+  if (AUTHOR_TELEGRAM) window.open(AUTHOR_TELEGRAM, '_blank', 'noopener');
+}
+
 export class GameScene extends Phaser.Scene {
   private world!: World;
   private board!: BoardView;
@@ -303,6 +313,8 @@ export class GameScene extends Phaser.Scene {
   private swipeCells: { x: number; y: number }[] = [];
   private lastDragCell = -1;
   private pressTimer: Phaser.Time.TimerEvent | null = null;
+  /** One finger down on the board, not yet a tap or a pan (touch only). */
+  private touchPress: { x: number; y: number; id: number } | null = null;
   private saveTimer = 0;
   private lastCenterHit = -99;
   private lastThreat = 0;
@@ -349,6 +361,8 @@ export class GameScene extends Phaser.Scene {
     const params = new URLSearchParams(location.search);
     const assistParam = params.get('assist');
     const assist = ((['full', 'scanner', 'off'] as const).find((m) => m === assistParam) as ('full' | 'scanner' | 'off') | undefined) ?? 'off'; // v0.7 (MVP_RULES §3.1а): no auto checks, no scanner
+    // Wordless hint that the board zooms (pinch or wheel); the tutorial already teaches the board.
+    if (!st.tutorial) this.time.delayedCall(600, () => showZoomHint(this));
     const saved = st.tutorial || st.fresh ? null : loadSlot(this.slot);
     if (st.tutorial) this.guide = new TutorialGuide();
     // Free play: residents dig only where the player sends them, nothing is queued for them at the start.
@@ -390,6 +404,8 @@ export class GameScene extends Phaser.Scene {
     // Online fields are bigger than the screen: start at the normal cell size over our own center.
     const home = this.online ? this.world.building(this.world.player(this.me).command) : undefined;
     if (home) this.cams.focus(bx + home.x * STEP + CELL / 2, by + home.y * STEP + CELL / 2, 1);
+    // Sweep intro: zoom to comfortable tap size, pan out to show full board, return.
+    if (!this.guide && !home) this.cams.sweep(2.0);
     this.edge = new EdgePointer(this, this.world, this.cams.board, (x, y) => this.board.center(x, y));
     this.dmg = new DamageNumbers(this, (x, y) => this.board.center(x, y), this.cams.board);
     this.events.once('shutdown', () => this.dmg.destroy());
@@ -428,6 +444,9 @@ export class GameScene extends Phaser.Scene {
     // The city's voice: Контроль, ads, hero bubbles (not in the tutorial, it has its own coach).
     this.voice = this.guide ? null : new Voice(this, this.world, this.me, (at) => this.board.speakerAt(at), () => this.toasts.some((b) => b.active));
     this.voice?.start(!saved);
+    if (!this.guide && !saved) this.maybeShowHowToPlay();
+    if (!this.guide && !saved) this.showTapHint(bx + Math.round(bw / 2), by + Math.round(bh / 2));
+    if (!this.guide && !saved) this.showZoomHint(bx + Math.round(bw / 2), by + Math.round(bh * 0.3));
     this.tally = this.guide ? null : new RunTally(this.me);
     // A medal tier earned mid-run: a 2 s plate from the top, the game keeps going (ACHIEVEMENTS.md §3).
     // The tally writes into `world.s.medalEvents`; the HUD drains it into MedalToasts (Awards.ts).
@@ -490,7 +509,7 @@ export class GameScene extends Phaser.Scene {
     }
     this.music.tick();
     this.voice?.update();
-    if (this.guide?.update()) this.showGuideStep();
+    if (this.guide?.update() && !this.ended) this.showGuideStep();
     if (this.spotlight && time > this.spotlight.until) this.spotlight = null;
     if (this.pointTo && time > this.pointTo.until) this.pointTo = null;
     if (this.selected && time > this.selected.until) this.selected = null;
@@ -678,26 +697,35 @@ export class GameScene extends Phaser.Scene {
     );
   }
 
-  /** A tapped medkit: a plate in the toast strip with the one button that heals (Антон 2026-10-11). */
+  /** A tapped medkit: two buttons — «Взять» adds to hero inventory, «Использовать» heals in place. */
   private askMedkit(x: number, y: number): void {
     this.medkitCard?.destroy();
     const width = DOCK.w - 16;
     const label = this.add.text(0, 0, t('medkit.use.hint'), { ...TXT.body(22, INK.graphite, '600'), align: 'center', lineSpacing: 2, wordWrap: { width: width - 36 } }).setOrigin(0.5, 0);
-    const btnW = width - 48, btnH = 56;
+    const gap = 8, btnH = 56, btnW = (width - 48 - gap) / 2;
     const h = 16 + label.height + 14 + btnH + 14;
     const g = this.add.graphics();
     chip(g, -width / 2, -h / 2, width, h, C.paper, 0.97, 14, { color: C.seam, width: 2 });
     label.setPosition(0, -h / 2 + 16);
-    const bx = -btnW / 2, by = h / 2 - 14 - btnH;
-    const btn = this.add.graphics();
-    chip(btn, bx, by, btnW, btnH, C.teal, 1, 14);
-    const btnLabel = this.add.text(0, by + btnH / 2, t('medkit.use.button'), { ...TXT.body(24, INK.white, '800') }).setOrigin(0.5);
-    const hit = this.add.zone(bx, by, btnW, btnH).setOrigin(0).setInteractive({ useHandCursor: true });
+    const by = h / 2 - 14 - btnH;
+    const bxTake = -width / 2 + 24, bxUse = bxTake + btnW + gap;
+    const btnTake = this.add.graphics();
+    chip(btnTake, bxTake, by, btnW, btnH, C.teal, 1, 14);
+    const lblTake = this.add.text(bxTake + btnW / 2, by + btnH / 2, t('medkit.take.button'), { ...TXT.body(22, INK.white, '800') }).setOrigin(0.5);
+    const hitTake = this.add.zone(bxTake, by, btnW, btnH).setOrigin(0).setInteractive({ useHandCursor: true });
+    const btnUse = this.add.graphics();
+    chip(btnUse, bxUse, by, btnW, btnH, C.coral, 1, 14);
+    const lblUse = this.add.text(bxUse + btnW / 2, by + btnH / 2, t('medkit.use.button'), { ...TXT.body(22, INK.white, '800') }).setOrigin(0.5);
+    const hitUse = this.add.zone(bxUse, by, btnW, btnH).setOrigin(0).setInteractive({ useHandCursor: true });
     const yIdeal = DOCK.y - 8 - h / 2;
     const yPos = LANDSCAPE ? yIdeal : Math.max(yIdeal, BOARD.y + BOARD.h + 4 + h / 2);
-    const box = this.add.container(DOCK.x + DOCK.w / 2, yPos, [g, label, btn, btnLabel, hit]).setDepth(21);
+    const box = this.add.container(DOCK.x + DOCK.w / 2, yPos, [g, label, btnTake, lblTake, hitTake, btnUse, lblUse, hitUse]).setDepth(21);
     const close = () => { if (this.medkitCard === box) this.medkitCard = null; box.destroy(); };
-    hit.on('pointerdown', () => {
+    hitTake.on('pointerdown', () => {
+      close();
+      if (this.world.apply({ type: 'takeMedkit', x, y }, this.me).ok) this.say(t('medkit.taken'), 1800);
+    });
+    hitUse.on('pointerdown', () => {
       close();
       if (this.world.apply({ type: 'useMedkit', x, y }, this.me).ok) this.say(t('event.medkit.open'), 1800);
     });
@@ -714,7 +742,7 @@ export class GameScene extends Phaser.Scene {
     this.lastSaid = { text, bad, at: now, until: now + ms };
     this.side?.note(text);
     const width = DOCK.w - 16;
-    const tx = this.add.text(0, 0, text, { ...TXT.body(22, bad ? INK.white : INK.graphite, '600'), align: 'center', lineSpacing: 2, wordWrap: { width: width - 36 } }).setOrigin(0.5);
+    const tx = this.add.text(0, 0, text, { ...TXT.body(26, bad ? INK.white : INK.graphite, '600'), align: 'center', lineSpacing: 2, wordWrap: { width: width - 36 } }).setOrigin(0.5);
     const h = Math.max(58, tx.height + 20);
     const g = this.add.graphics();
     chip(g, -width / 2, -h / 2, width, h, bad ? C.coralInk : C.paper, 0.97, 14, bad ? undefined : { color: C.seam, width: 2 });
@@ -742,7 +770,7 @@ export class GameScene extends Phaser.Scene {
       const p = this.board.center(at.x, at.y);
       const pts = e.amount ?? 25;
       const tx = this.add.text(p.x, p.y - 20, `+${pts}`, { ...TXT.num(34, INK.teal), stroke: '#ffffff', strokeThickness: 7 }).setOrigin(0.5).setDepth(15).setScale(0.6);
-      const sub = this.add.text(p.x, p.y + 12, t(`event.civilians_rescued.one`, { count: 1 }), { ...TXT.body(18, INK.graphite, '700'), stroke: '#ffffff', strokeThickness: 5 }).setOrigin(0.5).setDepth(15);
+      const sub = this.add.text(p.x, p.y + 12, t(`event.civilians_rescued.one`, { count: 1 }), { ...TXT.body(26, INK.graphite, '700'), stroke: '#ffffff', strokeThickness: 5 }).setOrigin(0.5).setDepth(15);
       this.tweens.add({ targets: tx, scale: 1, duration: 200, ease: 'Back.easeOut' });
       this.tweens.add({ targets: [tx, sub], y: '-=80', alpha: 0, delay: 500, duration: 1300, onComplete: () => (tx.destroy(), sub.destroy()) });
     }
@@ -789,6 +817,8 @@ export class GameScene extends Phaser.Scene {
       if (g.finished) analytics.track('tutorial_complete', { seconds: this.world.s.time });
       else analytics.track('tutorial_step', { step: g.stepIndex, step_id: g.step!.id, seconds: this.world.s.time });
     }
+    // A won or lost shift has its own sheet; the guide's last card must not cover it.
+    if (this.ended) return;
     if (g.finished) {
       box.text.setVisible(false);
       box.g.clear();
@@ -799,7 +829,8 @@ export class GameScene extends Phaser.Scene {
         title: t('tutorial.final.title'),
         lines: [t('tutorial.final.line1'), t('tutorial.final.line2'), t('tutorial.final.line3')],
         actions: [
-          { label: t('tutorial.final.go'), act: () => this.scene.start('game', { slot: 1, fresh: !loadSlot(1) }), primary: true },
+          // «На первую смену» opens the campaign's first uncleared shift (squad screen first), not a free run.
+          { label: t('tutorial.final.go'), act: () => this.nextShift(getFirstUncleared()), primary: true },
           { label: t('menu.quit_to_menu'), act: () => this.toMenu() },
         ],
       });
@@ -882,7 +913,7 @@ export class GameScene extends Phaser.Scene {
     this.medals = new MedalToasts(this, HUD.x + HUD.w / 2, HUD.y + HUD.h + 6, UI_DEPTH + 4);
     this.raidTimer = new RaidTimer(this, HUD.x + (LANDSCAPE ? 256 : 240), GOAL.y, LANDSCAPE ? 236 : 226, 44, 21, () => this.callRaidEarly(), HUD.w - (LANDSCAPE ? 256 : 240));
     const goalBg = this.add.graphics().setDepth(20);
-    const goal = this.add.text(HUD.x + HUD.w - 24, GOAL.y + 22, '', TXT.body(23, INK.white, '700')).setOrigin(1, 0.5).setDepth(20);
+    const goal = this.add.text(HUD.x + HUD.w - 24, GOAL.y + 22, '', TXT.body(26, INK.white, '700')).setOrigin(1, 0.5).setDepth(20);
     this.hud = { energy, residents, squad, threat, ring, ringBox, goal, goalBg };
   }
 
@@ -923,7 +954,9 @@ export class GameScene extends Phaser.Scene {
     const earned = (this.world.s as MedalEvents).medalEvents;
     if (earned?.length) for (const e of earned.splice(0)) this.medals.push(e.id, e.tier as Tier);
 
-    const nestsLeft = w.s.cells.filter((c) => (c.content === 'nest' || c.content === 'heavy_nest') && !c.resolved).length;
+    const nestsLeft = w.s.generated
+      ? w.s.cells.filter((c) => (c.content === 'nest' || c.content === 'heavy_nest') && !c.resolved).length
+      : (w.s.rules?.counts?.nests ?? 0);
     let goal = this.start.shiftN
       ? t('hud.nests_left', { n: nestsLeft })
       : t('mode.call.goal', { hero: heroName(w.s.boss.hero) });
@@ -934,7 +967,7 @@ export class GameScene extends Phaser.Scene {
     } else if (!this.start.shiftN && w.s.boss.warned && !w.s.boss.awake && !w.s.boss.dead) {
       goal = t('event.boss_warning');
       bg = C.violet;
-    } else if (this.start.shiftN && nestsLeft === 0) {
+    } else if (this.start.shiftN && nestsLeft === 0 && w.s.generated) {
       bg = C.teal;
     }
     // §22.4: the clean-streak badge sits after the goal while a streak runs.
@@ -1050,12 +1083,12 @@ export class GameScene extends Phaser.Scene {
     // Content area sits above the buttons.
     const ty = DOCK.y + 22;
     const headText = this.add
-      .text(DOCK.x + pad + 8, ty + 40, '', { ...TXT.body(23, INK.graphite, '600'), wordWrap: { width: leftW }, lineSpacing: 2 })
+      .text(DOCK.x + pad + 8, ty + 40, '', { ...TXT.body(26, INK.graphite, '600'), wordWrap: { width: DOCK.w - pad * 2 - 190 }, lineSpacing: 2 })
       .setOrigin(0, 0.5)
       .setDepth(20);
     const cg0 = this.add.graphics();
     chip(cg0, 0, 0, 170, 70, C.graphite, 1, 14);
-    const ctx = this.add.text(85, 35, `✕ ${t('dock.cancel')}`, TXT.body(23, INK.white, '700')).setOrigin(0.5);
+    const ctx = this.add.text(85, 35, `✕ ${t('dock.cancel')}`, TXT.body(26, INK.white, '700')).setOrigin(0.5);
     const chit = this.add.zone(0, 0, 170, 70).setOrigin(0).setInteractive({ useHandCursor: true });
     chit.on('pointerdown', stop(() => this.setGhost(null)));
     const cancel = this.add.container(DOCK.x + pad + leftW - 170, ty + 5, [cg0, ctx, chit]).setDepth(20);
@@ -1084,12 +1117,12 @@ export class GameScene extends Phaser.Scene {
       if (kind === 'mark') drawMark(ig.setScale(0.6), 0, 0, 'danger');
       else drawLamp(ig.setScale(2), kind, -7, -5, 14, 10);
       dig.add(ig);
-      dig.add(this.add.text(lx + 22, ly, t(key), TXT.body(23, INK.graphite, '500')).setOrigin(0, 0.5));
+      dig.add(this.add.text(lx + 22, ly, t(key), TXT.body(26, INK.graphite, '500')).setOrigin(0, 0.5));
     });
     const qx = DOCK.x + pad + leftW - 250;
     const qg = this.add.graphics();
     chip(qg, qx, top + 4, 250, 60, 0xd9f3f8, 1, 12);
-    const queue = this.add.text(qx + 22, top + 34, '', TXT.body(23, INK.deep, '700')).setOrigin(0, 0.5);
+    const queue = this.add.text(qx + 22, top + 34, '', TXT.body(26, INK.deep, '700')).setOrigin(0, 0.5);
     const qx2 = this.add.text(qx + 226, top + 34, '✕', TXT.body(26, INK.deep, '700')).setOrigin(1, 0.5);
     const qhit = this.add.zone(qx, top + 4, 250, 60).setOrigin(0).setInteractive({ useHandCursor: true });
     qhit.on(
@@ -1110,8 +1143,9 @@ export class GameScene extends Phaser.Scene {
 
     this.dock = { head: { text: headText, cancel }, panes: { dig, build }, queue, cards, modeBtns: { build: buildBg } };
 
-    const extraH = LANDSCAPE ? 200 : 300;
-    const catalogBox = { x: DOCK.x, y: DOCK.y - extraH, w: DOCK.w, h: DOCK.h + extraH };
+    // Portrait: the sheet starts under the board, so it never covers the field; it still ends at the dock's bottom.
+    const catalogTop = LANDSCAPE ? DOCK.y - 200 : BOARD.y + BOARD.h + 4;
+    const catalogBox = { x: DOCK.x, y: catalogTop, w: DOCK.w, h: DOCK.y + DOCK.h - catalogTop };
     // The sheet stops above the «Строить» button, so that button stays the one control that closes it.
     const reserveBottom = 0;
     this.drawer = new BuildDrawer(
@@ -1228,6 +1262,11 @@ export class GameScene extends Phaser.Scene {
 
   /** Called when the player picks a building from the catalog drawer. */
   private pickBuilding(o: BuildOption): void {
+    // A building whose blueprint is not found yet cannot be picked at all (MVP_RULES §5.1).
+    if (o.state === 'blueprint') {
+      this.say(t('build.locked_blueprint'), 2800, true);
+      return;
+    }
     this.buildType = o.id;
     this.closeCatalog();
     if (o.state !== 'ok' && o.state !== 'energy') return; // locked buildings can't be ghost-placed
@@ -1237,6 +1276,10 @@ export class GameScene extends Phaser.Scene {
 
   /** Tap on liberated land: show the ghost of the selected building there and the building cards. */
   private openBuild(x: number, y: number): void {
+    if (!buildingUnlocked(loadMeta(), this.buildType)) {
+      this.say(t('build.locked_blueprint'), 2800, true);
+      return;
+    }
     const why = this.world.canBuild(this.me, this.buildType, x, y);
     // Not enough Energy still opens the cards (another building may fit the budget); other refusals explain themselves.
     if (why !== null && why !== 'build.not_enough_energy') {
@@ -1318,6 +1361,10 @@ export class GameScene extends Phaser.Scene {
     this.ghostButtons = this.add
       .container(x, y, [
         ...mk(-48, true, '✓', () => {
+          if (!buildingUnlocked(loadMeta(), this.buildType)) {
+            this.say(t('build.locked_blueprint'), 2800, true);
+            return;
+          }
           const r = this.world.apply({ type: 'build', building: this.buildType, x: at.x, y: at.y }, this.me);
           if (!r.ok) this.say(t(r.reason === 'invalid' ? 'build.invalid_cell' : r.reason), 2800, true);
           this.setGhost(null);
@@ -1497,6 +1544,7 @@ export class GameScene extends Phaser.Scene {
     closeCoach();
     this.trackEnd(victory ? 'victory' : 'defeat');
     if (!this.guide) clearSlot(this.slot);
+    else if (victory) markTutorialDone();
     const shiftN = this.start.shiftN;
     // Campaign victory: flash "СМЕНА ЗАКРЫТА" for 1.5 s, then show the results sheet.
     if (victory && shiftN) {
@@ -1581,6 +1629,7 @@ export class GameScene extends Phaser.Scene {
         extra: [
           ...(rec ? [{ label: t('end.share'), act: () => void this.shareShot() }, { label: t('end.board'), act: () => openBoard({ tab: this.start.daily ? 'day' : 'week' }) }] : []),
           { label: t('end.coffee'), act: () => openDonate(victory ? 'win' : 'lose') },
+          { label: t('author.write'), act: () => openAuthor() },
         ],
       });
       return;
@@ -1595,7 +1644,8 @@ export class GameScene extends Phaser.Scene {
         }),
     };
     // Campaign: primary button is "Следующая смена"; shift 12 leads back to menu.
-    const nextShiftAction = victory && shiftN && shiftN < CAMPAIGN_TOTAL ? () => this.nextShift(shiftN + 1) : null;
+    // The tutorial's win goes on to the campaign's first uncleared shift, like the guide's last card.
+    const nextShiftAction = victory && shiftN && shiftN < CAMPAIGN_TOTAL ? () => this.nextShift(shiftN + 1) : victory && this.guide ? () => this.nextShift(getFirstUncleared()) : null;
     this.overlay?.destroy();
     this.overlay = this.sheet({
       // Comic illustration when the artist's screen is in (style per layer); until then the Command Center sprite, grey on a loss.
@@ -1611,6 +1661,7 @@ export class GameScene extends Phaser.Scene {
           : [{ label: victory ? t('win.again') : t('lose.again'), act: () => this.restart(), primary: true }]),
         ...(rec ? [{ label: t('end.share'), act: () => void this.shareShot(), half: true }, boardBtn] : []),
         { label: t('end.coffee'), act: () => openDonate(victory ? 'win' : 'lose'), half: true, gold: true },
+        ...(AUTHOR_TELEGRAM ? [{ label: t('author.write'), act: () => openAuthor(), half: true }] : []),
         { label: t('menu.quit_to_menu'), act: () => this.toMenu(), half: true },
       ],
     });
@@ -1723,6 +1774,116 @@ export class GameScene extends Phaser.Scene {
   private fmt(seconds: number): string {
     const s = Math.floor(seconds);
     return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
+  }
+
+  /** First launch: a quick 3-line «How to play» sheet (shown once, persisted in localStorage). */
+  private showZoomHint(cx: number, cy: number): void {
+    const KEY = 'partshift.zoomHint.v1';
+    try { if (localStorage.getItem(KEY)) return; } catch { return; }
+    const touch = 'ontouchstart' in window;
+    const color = 0x57d8f2;
+    let gone = false;
+    const dismiss = (items: Phaser.GameObjects.GameObject[]) => {
+      if (gone) return;
+      gone = true;
+      this.tweens.add({
+        targets: items, alpha: 0, duration: 350,
+        onComplete: () => {
+          items.forEach((o) => o.destroy());
+          try { localStorage.setItem(KEY, '1'); } catch { /* ok */ }
+        },
+      });
+    };
+    if (touch) {
+      const r = 26;
+      const g1 = this.add.graphics().setDepth(22);
+      const g2 = this.add.graphics().setDepth(22);
+      const drawFinger = (g: Phaser.GameObjects.Graphics, x: number) => {
+        g.clear();
+        g.lineStyle(3, color, 1); g.fillStyle(color, 0.3);
+        g.fillCircle(x, cy, r); g.strokeCircle(x, cy, r);
+      };
+      const st = { x1: cx - 32, x2: cx + 32 };
+      drawFinger(g1, st.x1); drawFinger(g2, st.x2);
+      this.tweens.add({
+        targets: st, x1: cx - 100, x2: cx + 100, duration: 1000, ease: 'Quad.easeOut',
+        onUpdate: () => { drawFinger(g1, st.x1); drawFinger(g2, st.x2); },
+        onComplete: () => this.time.delayedCall(400, () => dismiss([g1, g2])),
+      });
+      this.time.delayedCall(2200, () => dismiss([g1, g2]));
+    } else {
+      const g = this.add.graphics().setDepth(22);
+      const st = { ay: cy - 44 };
+      const drawMouse = () => {
+        g.clear();
+        g.lineStyle(3, color, 0.9); g.fillStyle(color, 0.15);
+        g.strokeRoundedRect(cx - 18, cy - 30, 36, 52, 10);
+        g.fillRoundedRect(cx - 18, cy - 30, 36, 52, 10);
+        g.fillStyle(color, 0.85); g.fillRoundedRect(cx - 5, cy - 22, 10, 16, 5);
+        g.lineStyle(3, color, 0.9);
+        g.lineBetween(cx, st.ay, cx, st.ay - 16);
+        g.lineBetween(cx, st.ay - 16, cx - 9, st.ay - 8);
+        g.lineBetween(cx, st.ay - 16, cx + 9, st.ay - 8);
+      };
+      drawMouse();
+      this.tweens.add({
+        targets: st, ay: cy - 60, duration: 500, ease: 'Sine.easeInOut', yoyo: true, repeat: 2,
+        onUpdate: drawMouse,
+        onComplete: () => this.time.delayedCall(200, () => dismiss([g])),
+      });
+      this.time.delayedCall(2500, () => dismiss([g]));
+    }
+  }
+
+  private showTapHint(cx: number, cy: number): void {
+    const KEY = 'partshift.tapHint.v1';
+    try { if (localStorage.getItem(KEY)) return; } catch { return; }
+    const r = 46;
+    const circle = this.add.graphics().setDepth(19);
+    const drawCircle = (alpha: number) => {
+      circle.clear();
+      circle.lineStyle(3, 0x57d8f2, alpha);
+      circle.strokeCircle(cx, cy, r);
+      circle.fillStyle(0x57d8f2, alpha * 0.25);
+      circle.fillCircle(cx, cy, r);
+    };
+    drawCircle(0.9);
+    const icon = this.add.text(cx, cy - 6, '👆', { fontSize: '52px' }).setOrigin(0.5).setDepth(20);
+    this.tweens.add({
+      targets: [circle, icon],
+      alpha: { from: 0.35, to: 1 },
+      duration: 650,
+      yoyo: true,
+      repeat: -1,
+      ease: 'Sine.easeInOut',
+    });
+    const dismiss = () => {
+      circle.destroy();
+      icon.destroy();
+      try { localStorage.setItem(KEY, '1'); } catch { /* ok */ }
+    };
+    this.input.once('pointerdown', dismiss);
+  }
+
+  private maybeShowHowToPlay(): void {
+    const KEY = 'partshift.howToPlay.v1';
+    try { if (localStorage.getItem(KEY)) return; } catch { return; }
+    this.overlay?.destroy();
+    this.overlayPaused = true;
+    this.overlay = this.sheet({
+      title: t('howtoplay.title'),
+      lines: [t('howtoplay.line1'), t('howtoplay.line2'), t('howtoplay.line3')],
+      actions: [{
+        label: t('howtoplay.ok'),
+        primary: true,
+        act: () => {
+          this.overlay?.destroy();
+          this.overlay = null;
+          this.overlayPaused = false;
+          try { localStorage.setItem(KEY, '1'); } catch { /* ok */ }
+        },
+      }],
+    });
   }
 
   /** Bottom sheet over the dimmed board (UI_SPEC §5). */
@@ -1844,6 +2005,17 @@ export class GameScene extends Phaser.Scene {
   }
 
   private onDown(p: Phaser.Input.Pointer): void {
+    if (isTouch(p)) {
+      // A second finger makes it a pinch or pan, so the first finger's tap is dropped.
+      const fingers = [this.input.pointer1, this.input.pointer2].filter((q) => q.isDown).length;
+      this.touchPress = fingers >= 2 ? null : { x: p.x, y: p.y, id: p.id };
+      return;
+    }
+    this.press(p);
+  }
+
+  /** The tap on a cell: attack, dig, build, card or long press. Touch taps come here on release. */
+  private press(p: Phaser.Input.Pointer): void {
     if (this.overlay || this.overlayPaused || !this.cams.inBoardView(p) || this.cams.busy) return;
     // The medkit card sits over the board in landscape: its button must not also tap the cell beneath it.
     if (this.medkitCard?.getBounds().contains(p.x, p.y)) return;
@@ -1965,13 +2137,27 @@ export class GameScene extends Phaser.Scene {
       return;
     }
     this.confirmCell = null;
+    // Tap on a queued cell cycles dig priority (1→2→3→0 red rings).
+    if (!c.revealed && (w.player(this.me).queue.includes(k) || w.player(this.me).autoQueue.includes(k))) {
+      w.apply({ type: 'setDigPriority', x, y }, this.me);
+      this.board.tapFlash(x, y);
+      return;
+    }
     // Opened interactive cells say what they are, what they are for and how to use them, in their own colour (Антон 2026-10-11).
-    const info = c.revealed && c.content !== 'medkit' ? INTERACTIVE_INFO[c.content] : undefined;
+    const info = c.revealed && c.content !== 'medkit' && c.content !== 'bonus_capsule' ? INTERACTIVE_INFO[c.content] : undefined;
     if (info) {
       this.spotlight = { x, y, until: this.time.now + 6000, tint: info.tint };
       this.say(t(info.key), 6000);
     }
-    // An opened medkit asks first: «Использовать» heals the heroes around it (hazards.json medkit).
+    // An opened but not yet collected capsule shows «Открыть».
+    if (c.revealed && c.content === 'bonus_capsule' && !c.resolved && (c.stock ?? 0) > 0) {
+      if (w.apply({ type: 'takeCapsule', x, y }, this.me).ok) {
+        this.say(t('capsule.opened'), 2000);
+        this.board.tapFlash(x, y);
+      }
+      return;
+    }
+    // An opened medkit asks first: «Взять» or «Использовать».
     if (c.revealed && c.content === 'medkit') {
       if (c.stock && c.heal === undefined) { this.board.tapFlash(x, y); this.askMedkit(x, y); }
       else if (w.apply({ type: 'useMedkit', x, y }, this.me).ok) { this.say(t('event.medkit.open'), 1800); this.board.tapFlash(x, y); }
@@ -2008,6 +2194,15 @@ export class GameScene extends Phaser.Scene {
   }
 
   private onMove(p: Phaser.Input.Pointer): void {
+    if (isTouch(p)) {
+      // One finger that moves past the slop pans the map (the camera follows it); it never queues digs.
+      const tp = this.touchPress;
+      if (tp && tp.id === p.id && Math.hypot(p.x - tp.x, p.y - tp.y) > TOUCH_SLOP) {
+        this.touchPress = null;
+        this.cams.beginPan(p);
+      }
+      return;
+    }
     if (this.cams.busy) {
       // A second finger turns the gesture into pinch/pan: stop queueing cells.
       this.dragMode = null;
@@ -2022,6 +2217,15 @@ export class GameScene extends Phaser.Scene {
   }
 
   private onUp(p: Phaser.Input.Pointer): void {
+    if (isTouch(p)) {
+      const tp = this.touchPress;
+      this.touchPress = null;
+      if (tp && tp.id === p.id) {
+        this.press({ x: tp.x, y: tp.y, rightButtonDown: () => false, middleButtonDown: () => false } as unknown as Phaser.Input.Pointer);
+        this.dragMode = null;
+      }
+      return;
+    }
     const rc = this.rightClick;
     this.rightClick = null;
     if (rc && Math.hypot(p.x - rc.px, p.y - rc.py) < 10) {

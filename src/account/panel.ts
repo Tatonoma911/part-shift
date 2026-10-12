@@ -119,9 +119,11 @@ export function closeAccountPanel(): void {
   root = null;
 }
 
-/** Shows the panel by itself when a newer run from another device needs the player's choice. */
-export function watchAccountConflicts(): void {
-  account.onChange(() => {
-    if (account.view.conflict && !root) openAccountPanel();
-  });
+/**
+ * Shows the panel when a newer run from another device needs the player's choice.
+ * Called from the main menu only: during a shift the sheet would cover the board on phones,
+ * so the choice waits in the menu until the player gets there.
+ */
+export function openAccountConflictIfAny(): void {
+  if (account.view.conflict && !root) openAccountPanel();
 }

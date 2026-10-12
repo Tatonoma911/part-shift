@@ -1,6 +1,6 @@
 import Phaser from 'phaser';
 import { account } from '../account/cloud';
-import { openAccountPanel } from '../account/panel';
+import { openAccountConflictIfAny, openAccountPanel } from '../account/panel';
 import { config } from '../core/data';
 import { lang, setLang, t } from '../i18n';
 import { introSeen, playIntro } from '../intro';
@@ -30,7 +30,7 @@ import { chip, plate, TXT } from './ui';
 import { drawMenuBackdrop, drawMenuHeroes } from './MenuBackdrop';
 import { resetDialog } from './ResetProgress';
 import { universeButton } from './UniverseScene';
-import { dailySeed, dayId, heroOfWeek, invite, openBoard, openDonate, openFeedback, readChallenge } from '../social';
+import { AUTHOR_TELEGRAM, dailySeed, dayId, heroOfWeek, invite, openBoard, openDonate, openFeedback, readChallenge } from '../social';
 import { enterScene } from './motion';
 
 type Ev = Phaser.Types.Input.EventData;
@@ -92,6 +92,7 @@ export class MenuScene extends Phaser.Scene {
     }
     this.drawBackdrop();
     this.show('main');
+    openAccountConflictIfAny();
     if (roomCode && onlineAvailable()) this.online(roomCode);
     metaPreview(this);
     analytics.where('menu');
@@ -140,10 +141,9 @@ export class MenuScene extends Phaser.Scene {
       .finally(() => {
         analytics.where('menu');
         this.storyPlaying = false;
-        if (this.scene.isActive()) {
-          this.input.enabled = true;
-          sound.playMusic('menu');
-        }
+        // Always give the menu its input back, even if the comic ended in a skip or an error (the comic blocked taps).
+        this.input.enabled = true;
+        if (this.scene.isActive()) sound.playMusic('menu');
       });
   }
 
@@ -253,6 +253,7 @@ export class MenuScene extends Phaser.Scene {
       button(t('online.menu'), onlineAvailable() ? () => this.online() : null, false, onlineAvailable() ? t('online.menu_sub') : t('menu.soon'), 'coop');
       // Meta progress: returned heroes, stats, records, rank (design/META.md §6).
       button(t('dossier.title'), () => this.scene.start('dossier'), false, undefined, undefined, undefined, 'icon.defender');
+      if (AUTHOR_TELEGRAM) button(t('author.write'), () => window.open(AUTHOR_TELEGRAM, '_blank', 'noopener'), false);
       if (last || tutorialDone()) button(t('menu.tutorial'), () => this.play({ tutorial: true }), false, undefined, 'tutorial');
       button(t('menu.guide'), () => openGuide(), false, undefined, undefined, undefined, 'icon.lamp_finds');
       button(t('menu.settings'), () => this.show('settings'), false, undefined, undefined, undefined, 'icon.settings');

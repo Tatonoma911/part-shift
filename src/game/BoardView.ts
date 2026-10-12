@@ -75,8 +75,10 @@ function hash(x: number, y: number): number {
 const RESIDENT_COMBAT_SET = 'defender';
 /** Starter heroes (MVP_RULES §4) whose drawn sheets stand in for workers until v0.7 spawns real heroes. */
 const STARTER_LOOKS = ['standard', 'patch', 'canopy', 'current'];
-/** Our hero dog's sprite scale: half the side, a quarter of the square, so it is not taller than the people (Антон, 2026-10-10). */
-const HERO_DOG_SCALE = 0.5;
+/** Our hero dog and the enemy dog share one sprite scale: both bodies are 54 px tall in their sheets, so both draw at 1× (Антон, 2026-10-11). */
+const DOG_SCALE = 1;
+/** A destroyed building hangs as a wreck this long before it disappears (Антон, 2026-10-11). */
+const RUIN_HANG_MS = 5000;
 /** block_fx / lair_fx are drawn at 2× (a block is ~104 px wide in the frame). */
 const FX2 = 0.5;
 const BLOCK_EL = ['thermo', 'cryo', 'volt', 'impact', 'toxin'];
@@ -125,6 +127,8 @@ export class BoardView {
   readonly height: number;
   private readonly tiles: Phaser.GameObjects.Image[] = [];
   private readonly tileKey: string[] = [];
+  /** Cells whose wreck has hung long enough to vanish: their rubble tile reverts to ground. */
+  private readonly ruinGone = new Set<number>();
   private readonly film: Phaser.GameObjects.Image[] = [];
   private readonly hot = new Map<number, Phaser.GameObjects.Image>();
   private readonly haze = new Map<number, Phaser.GameObjects.Sprite>();
@@ -593,7 +597,7 @@ export class BoardView {
               key = `water_${(frame4 + h) % 4}`;
               break;
             case 'rubble':
-              key = (c.stock ?? 0) > 0 ? `rubble_${h % 2}` : GROUND[h % 8];
+              key = (c.stock ?? 0) > 0 || c.rubble ? `rubble_${h % 2}` : GROUND[h % 8];
               break;
             case 'energy_vein': {
               const left = (c.stock ?? 0) / veinFull;
@@ -633,7 +637,7 @@ export class BoardView {
               key = GROUND[h % 8];
           }
           // Ruins of a lost building: rubble until it is rebuilt at half price.
-          if (c.ruin && c.building === undefined) key = `rubble_${h % 2}`;
+          if (c.ruin && c.building === undefined && !this.ruinGone.has(i)) key = `rubble_${h % 2}`;
         }
         if (this.tileKey[i] !== key) {
           this.tiles[i].setTexture(`tile.${key}`);
@@ -665,7 +669,7 @@ export class BoardView {
         if (!c.revealed) {
           // A capsule peek shows the closed cell's own sensor for a while (MVP_RULES §5.2).
           this.setClues(i, x, y, c.peekUntil !== undefined && s.time < c.peekUntil ? w.clues(x, y) : null);
-          this.drawClosed(og, x, y, px, py, known.get(cellKey(x, y)), risk?.get(i), me.queue.includes(cellKey(x, y)), me.autoQueue.includes(cellKey(x, y)), c.marked ? (c.markKind ?? 'danger') : null, now);
+          this.drawClosed(og, x, y, px, py, known.get(cellKey(x, y)), risk?.get(i), me.queue.includes(cellKey(x, y)), me.autoQueue.includes(cellKey(x, y)), c.marked ? (c.markKind ?? 'danger') : null, now, c.digPriority);
           // Element zone: colour wash + indicator dot on every closed cell so players see which zones open faster.
           if (zoned) {
             // Visible wash of the zone element over the block.
@@ -785,6 +789,7 @@ export class BoardView {
     auto: boolean,
     marked: MarkKind | null,
     now: number,
+    digPriority?: 1 | 2 | 3,
   ): void {
     const cx = px + CELL / 2;
     const cy = py + CELL / 2;
@@ -814,6 +819,14 @@ export class BoardView {
       if (queued) {
         g.fillStyle(C.glow, 1);
         g.fillPoints([new Phaser.Math.Vector2(cx, cy - 7), new Phaser.Math.Vector2(cx + 7, cy), new Phaser.Math.Vector2(cx, cy + 7), new Phaser.Math.Vector2(cx - 7, cy)], true);
+      }
+    }
+    // Priority dig rings: 1–3 concentric red rings drawn outward from the cell centre.
+    if (digPriority) {
+      for (let i = 0; i < digPriority; i++) {
+        const r = 6 + i * 5;
+        g.lineStyle(2, 0xff3030, 0.9 - i * 0.15);
+        g.strokeCircle(cx, cy, r);
       }
     }
     if (marked) drawMark(g, cx, cy, marked);
@@ -992,7 +1005,8 @@ export class BoardView {
         case 'mine': {
           const el = MINE_EL[c.tech ?? 'impact'] ?? 'force';
           const blink = c.fuse !== undefined && Math.floor(now / (c.fuse < 0.5 ? 70 : 160)) % 2 === 0;
-          name = c.resolved ? `mine_${el}_spent` : `mine_${el}_${blink ? 'triggered' : 'armed'}`;
+          // A mine that went off or was defused is used up and leaves the board.
+          name = c.resolved ? null : `mine_${el}_${blink ? 'triggered' : 'armed'}`;
           break;
         }
         case 'bonus_capsule': {
@@ -1003,11 +1017,13 @@ export class BoardView {
           const t0 = this.opened.get(i) ?? now;
           this.opened.set(i, t0);
           const t = now - t0;
-          name = t < 350 ? 'bonus_capsule_opening' : t < 2200 ? 'bonus_capsule_open_glow' : 'bonus_capsule_empty';
+          // Once the glow ends the capsule is used up and leaves the board.
+          name = t < 350 ? 'bonus_capsule_opening' : t < 2200 ? 'bonus_capsule_open_glow' : null;
           break;
         }
         case 'medkit':
-          name = c.heal !== undefined ? (Math.floor(now / 400) % 2 ? 'medkit_use_glow' : 'medkit_open') : c.resolved ? 'medkit_spent' : 'medkit_closed';
+          // A medkit used up or taken to its last charge leaves the board.
+          name = c.heal !== undefined ? (Math.floor(now / 400) % 2 ? 'medkit_use_glow' : 'medkit_open') : c.resolved ? null : 'medkit_closed';
           break;
       }
     }
@@ -1143,13 +1159,18 @@ export class BoardView {
       const lost = this.lost.find((e) => e.x === v.x && e.y === v.y);
       const sheet = `bld_${v.type}`;
       const ruin = `bldg.${v.type}_destroyed`;
+      if (lost) {
+        // The wreck hangs for a few seconds, then vanishes and frees its cell for a new build (Антон, 2026-10-11).
+        const cell = v.y * this.world.s.width + v.x;
+        this.scene.time.delayedCall(RUIN_HANG_MS, () => this.ruinGone.add(cell));
+      }
       if (lost && animSets[sheet]) {
         v.spr.setOrigin(...originOf(sheet)).play(`${sheet}.destroy`);
-        this.scene.tweens.add({ targets: v.spr, alpha: 0, delay: 1400, duration: 600, onComplete: () => v.spr.destroy() });
+        this.scene.tweens.add({ targets: v.spr, alpha: 0, delay: RUIN_HANG_MS, duration: 600, onComplete: () => v.spr.destroy() });
       } else if (lost && this.scene.textures.exists(ruin)) {
         v.spr.stop();
         v.spr.setTexture(ruin).clearTint().setAlpha(1);
-        this.scene.tweens.add({ targets: v.spr, alpha: 0, delay: 1800, duration: 700, onComplete: () => v.spr.destroy() });
+        this.scene.tweens.add({ targets: v.spr, alpha: 0, delay: RUIN_HANG_MS, duration: 700, onComplete: () => v.spr.destroy() });
       } else v.spr.destroy();
     }
     this.lost = [];
@@ -1186,11 +1207,17 @@ export class BoardView {
       }
     }
     if (state === 'construct' && hasSheet) spr.setFrame(Math.min(6, Math.floor((b.built / def.buildSeconds) * 6)));
-    spr.setAlpha(b.complete ? 1 : 0.85);
-    if (b.owner !== this.me) spr.setTint(0xffc2a8);
+    // A placed building that no hero has started yet hangs as a pale ghost; once work begins it firms up (Антон, 2026-10-11).
+    const waiting = !b.complete && b.built <= 0;
+    spr.setAlpha(b.complete ? 1 : waiting ? 0.5 : 0.85);
+    if (waiting) spr.setTint(0xbff6ff);
+    else if (b.owner !== this.me) spr.setTint(0xffc2a8);
+    else spr.clearTint();
     const g = this.topG;
     const p = this.center(b.x, b.y);
     if (b.complete && b.hp < def.hp) this.vitals.draw(g, `b:${b.id}`, p.x - 28, p.y - 46, 56, b.hp / def.hp, 'building', this.scene.time.now);
+    // Construction timer: the bar fills while heroes build it.
+    if (!b.complete) this.vitals.draw(g, `c:${b.id}`, p.x - 28, p.y - 46, 56, Math.max(0, b.built) / def.buildSeconds, 'building', this.scene.time.now);
     void now;
   }
 
@@ -1310,9 +1337,8 @@ export class BoardView {
       if (!v) {
         const set = this.setOf(u);
         const spr = this.scene.add.sprite(fx, fy, set).setOrigin(...originOf(set));
-        // Our hero dog (Патч) is drawn as big as a person; it fits a quarter of the hero's square (Антон, 2026-10-10).
-        // Every unit that uses the dog sheet gets it: squad heroes and the starter residents alike.
-        if (set === 'ally_patch') spr.setScale(HERO_DOG_SCALE);
+        // Our dog (ally_patch) and the enemy dog (patch) must read the same size on the board (Антон, 2026-10-11).
+        if (set === 'ally_patch' || set === 'patch') spr.setScale(DOG_SCALE);
         v = { spr, set, prevX: u.x, prevY: u.y, curX: u.x, curY: u.y, simT: w.s.time, lastCd: u.attackCooldown, oneShot: false, windup: false, anim: '' };
         // The call target stands a size bigger: it must read as the one to beat (QA-014).
         if (u.kind === 'hero' && u.nest && w.cell(...(u.nest.slice(2).split(',').map(Number) as [number, number])).content === 'boss_hatch') {
@@ -1606,7 +1632,11 @@ export class BoardView {
       g.strokePath();
     };
     for (const u of w.s.units) {
-      if (u.task.type === 'dig' && u.path.length === 0) arc(u.task.x, u.task.y, 1 - u.task.progress / config.dig.digSeconds);
+      // The ring reads the cell's shared progress against the cell's own need, so it ends exactly when the dig does.
+      if (u.task.type === 'dig' && u.path.length === 0) {
+        const c = w.cell(u.task.x, u.task.y);
+        arc(u.task.x, u.task.y, 1 - (c.dig ?? 0) / (c.digNeed ?? config.dig.digSeconds));
+      }
     }
     for (const b of w.s.buildings) {
       if (!b.complete && b.built > 0) arc(b.x, b.y, 1 - b.built / w.buildSeconds(b));

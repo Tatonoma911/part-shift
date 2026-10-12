@@ -50,9 +50,13 @@ describe('hazards (hazards.json)', () => {
     expect(c.resolved).toBe(true);
   });
 
-  it('a bonus capsule gives exactly one bonus', () => {
+  it('a bonus capsule waits on the ground and gives exactly one bonus when a hero walks over it', () => {
     const w = siteWorld('bonus_capsule');
-    const opened = run(w, 20).filter((e) => e.type === 'bonus_opened').map((e) => e.text ?? '');
+    expect(run(w, 20).filter((e) => e.type === 'bonus_opened').length).toBe(0);
+    expect(w.cell(2, 1).stock).toBe(1);
+    const hero = { id: 900, owner: 0, kind: 'ally', hero: 'kiln', x: 2, y: 1, hp: 100, base: { hp: 100, damage: 5, defense: 0, speed: 1 }, path: [], task: { type: 'idle' }, parts: {}, attackCooldown: 0, repathTimer: 0 } as unknown as Parameters<typeof w.s.units.push>[0];
+    w.s.units.push(hero);
+    const opened = run(w, 2).filter((e) => e.type === 'bonus_opened').map((e) => e.text ?? '');
     expect(opened.length).toBe(1);
     expect(Object.keys(hazards.bonusCapsule.pool)).toContain(opened[0]);
     expect(w.cell(2, 1).bonus).toBe(opened[0]);

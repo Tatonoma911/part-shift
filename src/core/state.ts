@@ -51,6 +51,8 @@ export interface Cell {
   heal?: number;
   /** Shared dig progress of everyone digging this cell (config.dig.workers). */
   dig?: number;
+  /** Dig work this cell needs in total (rubble and hard cells differ from digSeconds); the progress ring reads it. */
+  digNeed?: number;
   /** Building standing on this cell. */
   building?: number;
   /** Player's "danger here" flag. */
@@ -69,10 +71,14 @@ export interface Cell {
   warned?: boolean;
   /** Seconds left of Canopy's overgrowth (slows residents). */
   overgrown?: number;
+  /** Sealed rubble pile (mapgen): the hex layer above is dug first; the pile itself is dug open after it (mapgen.rubble.durability). */
+  rubble?: boolean;
   /** Ruins of this building type: rebuilding is cheaper and faster (difficulty.json buildingDamage.ruins). */
   ruin?: string;
   /** Elemental zone this cell belongs to (mapgen.cellElements Voronoi). Ground/safe-radius cells have none. */
   element?: Tech;
+  /** Player-assigned dig priority (1–3 red rings); 0 or absent = normal. */
+  digPriority?: 1 | 2 | 3;
 }
 
 /** An opened nest (a structure with HP that releases enemies) or an opened hero lair / boss hatch. */
@@ -124,6 +130,10 @@ export interface Unit {
   target?: string;
   repathTimer: number;
   burn?: { dps: number; left: number; source: number };
+  /** A carried medkit: the unit eats it below 25 % HP (MVP_RULES §22.19). */
+  medkit?: boolean;
+  /** The field medkit cell this unit has already picked a charge from ("x,y"); cleared on leaving it. */
+  atMedkit?: string;
   slow?: { percent: number; left: number };
   /** Chill hits in a row (design/ELEMENTS.md: 3 = frozen). */
   chill?: number;
@@ -233,6 +243,10 @@ export interface Player {
   order: string | null;
   /** Seconds until the next resident appears. */
   spawnTimer: number;
+  /** Hero medkits in the shared Medcenter stock (MVP_RULES §22.19). */
+  medkits?: number;
+  /** Seconds into the next medkit charge. */
+  medkitTimer?: number;
   /** Extra resident places (survivors). */
   capBonus: number;
   /** Residents gathering before they engage, so they don't trickle in one by one (config.residents.rally). */
@@ -291,8 +305,6 @@ export interface RuleOverrides {
   threatEnabled?: boolean;
   bossEnabled?: boolean;
   commandInvulnerable?: boolean;
-  /** The tutorial: a cleared nest does not end the match; the guide's own last card does (FEEL_AUDIT F-15). */
-  holdVictory?: boolean;
   /** The command center may only go here (tutorial). */
   commandFixed?: { x: number; y: number };
   /** Sites laid out around wherever the command center lands (tutorial, design commandPlacement). */

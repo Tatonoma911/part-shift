@@ -48,7 +48,8 @@ export function isSolid(c: Cell): boolean {
 export function walkableForPlayer(s: GameState, x: number, y: number): boolean {
   if (!inBounds(s, x, y)) return false;
   const c = cellAt(s, x, y);
-  return c.revealed && !isSolid(c);
+  // A sealed rubble pile is closed ground until it is dug open, even once its hex layer is open.
+  return c.revealed && !isSolid(c) && !c.rubble;
 }
 
 /** Enemies walk anywhere except water and standing sites; flyers (Seraph) cross water. */
