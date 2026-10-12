@@ -2,14 +2,17 @@ import Phaser from 'phaser';
 
 /**
  * A wordless hint that the board can be zoomed: two fingers pinch on a phone,
- * a mouse wheel turns on a computer. It loops a few times and goes away on the
- * first tap or click, so it never sits in the way of play.
+ * a mouse wheel turns on a computer. It plays one short loop (about 2 s) and
+ * goes away on the first tap or click, and it is shown only once per player.
  */
-const LOOPS = 3;
-const LOOP_MS = 1100;
+const KEY = 'partshift.zoomHintWordless.v1';
+const LOOPS = 1;
+const LOOP_MS = 1000;
 const FADE_MS = 300;
 
 export function showZoomHint(scene: Phaser.Scene): void {
+  try { if (localStorage.getItem(KEY)) return; } catch { return; }
+  try { localStorage.setItem(KEY, '1'); } catch { /* ok: the hint may show again */ }
   const touch = scene.sys.game.device.input.touch;
   const w = scene.scale.width;
   const h = scene.scale.height;
