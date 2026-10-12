@@ -165,16 +165,31 @@ function home(): string {
   const canon = HEROES.filter((h) => h.group === 'canon' && h.id !== 'n73' && h.id !== 'doctor');
   return `
   <section class="hero">
-    <img src="${img('key-art.webp')}" alt="${esc(R('Спасатели HeroOut на развалинах Lumen City', 'HeroOut rescuers on the rubble of Lumen City'))}">
-    <div class="wrap"><div class="hero-card slab fade-in">
-      <span class="caps">LUMEN CITY // ${R('СМЕНА 01', 'SHIFT 01')}</span>
-      <h1>PART<b>SHIFT</b></h1>
-      <p class="lead">${R(
-        'Гель Splice свёл с ума спасателей Lumen City, и теперь они спасают всех так, что приходится убегать. Открывай кварталы, печатай своих героев и забирай у заражённых их руки, ноги и силу.',
-        'Splice gel drove Lumen City’s rescuers mad, and now they rescue everyone so hard that people run. Open blocks, print your own heroes and take the infected’s arms, legs and power.',
-      )}</p>
-      <div class="row"><a class="btn btn-primary btn-lg" href="${playHref()}">${ICON.play}${u('playFree')}</a>${androidSoon(lang, 'btn-lg')}<a class="btn btn-ghost btn-lg" href="#story" data-scroll="story">${R('Узнать историю', 'Read the story')}</a></div>
-    </div></div>
+    <div class="hero-body">
+      <div class="hero-content fade-in">
+        <div class="hero-badge">LUMEN CITY // ${R('СМЕНА 01', 'SHIFT 01')}</div>
+        <div class="hero-seam"></div>
+        <h1>PART<b>SHIFT</b></h1>
+        <p class="lead">${R(
+          'Гель Splice свёл с ума спасателей Lumen City. Открывай кварталы, побеждай заражённых героев и забирай их части тела.',
+          "Splice gel drove Lumen City’s rescuers mad. Open blocks, beat infected heroes and claim their body parts.",
+        )}</p>
+        <div class="row">
+          <a class="btn btn-primary btn-lg" href="${playHref()}">${ICON.play}${u('playFree')}</a>
+          ${androidSoon(lang, 'btn-lg')}
+          <a class="btn btn-ghost btn-lg" href="#story" data-scroll="story">${R('Узнать историю', 'Read the story')}</a>
+        </div>
+      </div>
+      <div class="hero-art">
+        <img src="${img('key-art.webp')}" alt="${esc(R('Спасатели HeroOut на развалинах Lumen City', 'HeroOut rescuers on the rubble of Lumen City'))}">
+      </div>
+    </div>
+    <div class="hero-status">
+      <div class="hero-status-item active"><i></i>LUMEN CITY &mdash; ${R('НА СВЯЗИ', 'ONLINE')}</div>
+      <div class="hero-status-item danger"><i></i>15 ${R('ГЕРОЕВ НА СМЕНЕ', 'HEROES ON SHIFT')}</div>
+      <div class="hero-status-item"><i></i>${R('ГНЁЗД ОСТАЛОСЬ', 'NESTS REMAINING')}: 7</div>
+      <div class="hero-status-item" style="margin-left:auto">HEROOUT // ${R('ПРОТОКОЛ АКТИВЕН', 'PROTOCOL ACTIVE')}</div>
+    </div>
   </section>
 
   <section class="section" id="story"><div class="wrap split">
