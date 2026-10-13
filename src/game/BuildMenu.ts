@@ -224,6 +224,7 @@ const ART_ALIAS: Record<string, string> = {
   jammer:           'splice_jammer',
   backup_lab:       'backup_archive',
   rotation_center:  'limb_rotation_center',
+  limb_workshop:    'workshop',
   forge:            'element_forge',
   civ_shelter:      'residents_shelter',
   repair:           'repair_crew',
