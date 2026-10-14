@@ -7,6 +7,7 @@
 <link rel="stylesheet" href="system.css">
 <link rel="stylesheet" href="gallery.css">
 <style>
+/* Menu layer: comic city and heroes behind, one vector layer on top (INTERFACE_SYSTEM §2). */
 .menu { position: absolute; inset: 0; background: linear-gradient(180deg,#2d4d5e 0%,#0b1117 75%); color: var(--paper); }
 .menu .heroes { position: absolute; inset: 0; display: flex; justify-content: space-around; align-items: flex-end; opacity: .9; }
 .menu .heroes span { width: 30%; height: 60%; background: linear-gradient(180deg,#5b7f90,#1d3445); clip-path: polygon(20% 0,80% 0,100% 30%,100% 100%,0 100%,0 30%); }
@@ -15,9 +16,17 @@
 .menu .logo b { color: var(--seam); font-weight: 900; }
 .menu .list { display: grid; gap: 8px; margin-top: auto; }
 .menu .pair { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-.menu .mode { background: var(--white); color: var(--ink); border-radius: 12px; padding: 12px; display: grid; gap: 6px; min-height: 104px; align-content: start; }
-.menu .mode .h2 { font-size: 15px; }
-.menu .streak { color: var(--amber-ink); background: var(--amber); padding: 2px 8px; border-radius: 999px; font: 800 12px var(--f-body); justify-self: start; }
+/* Mode cards are buttons: same cut corners and label size as .btn, white plate */
+.menu .mode { background: var(--white); color: var(--ink); padding: 12px; display: grid; gap: 6px; min-height: 104px; align-content: start; text-align: left; border: 0; font: inherit; cursor: pointer; clip-path: polygon(8px 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%, 0 8px); }
+.menu .mode .h2 { font: 800 var(--t-h2)/1.3 var(--f-body); }
+.menu .mode .small { color: var(--muted); }
+.menu .mode .tag { justify-self: start; }
+.menu .streak { color: var(--amber-ink); background: var(--amber); padding: 2px 8px; font: 800 var(--t-label) var(--f-body); justify-self: start; border-radius: 999px; }
+.menu .sub { display: block; font: 500 var(--t-label)/1.3 var(--f-body); opacity: .9; }
+.menu .lock { color: #b9c9cf; }
+/* Start screen (step 2): phone column, centred on PC so it never stretches across 1024 px */
+.menu .start { position: absolute; top: 0; bottom: 0; left: 0; right: 0; margin: 0 auto; width: 100%; max-width: 560px; padding: 56px 16px 28px; display: flex; flex-direction: column; gap: 12px; }
+@container (min-width: 720px) { .menu .start { padding: 40px 24px; } }
 @container (min-width: 720px) {
   .menu .wrap { padding: 56px 80px 40px; flex-direction: row; gap: 32px; }
   .menu .left { flex: 1; display: flex; flex-direction: column; justify-content: flex-end; gap: 16px; }
@@ -33,6 +42,7 @@
   <header>
     <h1>Главное меню и старт смены</h1>
     <p>Меню: фон города, три случайных героя в полный рост (комикс-слой), одна главная кнопка и два режима. Всё помещается на любой экран без прокрутки. Старт: режим, сложность, союзники, смена.</p>
+    <p><b>Шкала кнопок.</b> Три размера: 64 px (главный выход с экрана), 56 px (главное действие внизу экрана и подтверждения), 48 px (всё остальное). Форма и шрифт одни.</p>
   </header>
 
   <section class="stage" data-show="phone pc">
@@ -48,10 +58,10 @@
             <p class="cap on-dark">Город в карантине · смена 01</p>
           </div>
           <div class="list">
-            <button class="btn primary block">Срочный вызов</button>
+            <button class="btn primary xl block"><span class="t">Срочный вызов</span><span class="s">Полная смена по всему городу</span></button>
             <div class="pair">
-              <div class="mode"><span class="tag">5 МИН</span><div class="h2">Обеденный вызов</div><p class="small muted">Пять минут, маленькое поле, один герой.</p></div>
-              <div class="mode"><span class="streak">Серия 2</span><div class="h2">Вызов дня</div><p class="small muted">Следующий через 7 ч 12 мин.</p></div>
+              <button class="mode"><span class="tag">5 МИН</span><span class="h2">Обеденный вызов</span><span class="small">Пять минут, маленькое поле, один герой.</span></button>
+              <button class="mode"><span class="streak">Серия 2</span><span class="h2">Вызов дня</span><span class="small">Следующий через 7 ч 12 мин.</span></button>
             </div>
             <div class="pair">
               <button class="btn on-dark-ghost">Досье</button>
@@ -62,7 +72,7 @@
         </div>
       </div>
     </template>
-    <ul class="notes"><li>Герои в меню случайные, по трое на запуск. Демон не главный босс, его в меню нет.</li><li>Одна главная кнопка. Вторичные кнопки на тёмном фоне: полупрозрачные, с обводкой, цель не меньше 48 px.</li></ul>
+    <ul class="notes"><li>Герои в меню случайные, по трое на запуск. Демон не главный босс, его в меню нет.</li><li>Главная кнопка 64 px, вторичные 48 px: полупрозрачные, с обводкой. Режимы тоже кнопки, поэтому у них фокус и подпись для чтения с экрана.</li></ul>
   </section>
 
   <section class="stage" data-show="phone pc">
@@ -71,29 +81,29 @@
     <div class="devices"></div>
     <template>
       <div class="menu" style="background:#0b1117">
-        <div class="wrap" style="padding-top:56px">
-          <div class="row" style="justify-content:space-between"><button class="btn ghost on-dark-ghost">Назад</button><span class="cap on-dark">Смена 01 · шаг 2 из 2</span></div>
+        <div class="start">
+          <div class="row" style="justify-content:space-between"><button class="btn on-dark-ghost">Назад</button><span class="cap on-dark">Смена 01 · шаг 2 из 2</span></div>
           <h1 class="display" style="color:var(--paper);font-size:24px">Кого взять на смену</h1>
-          <div class="tabs" style="background:rgba(244,247,247,.08)"><button class="tab" style="color:var(--paper)">Стажёр</button><button class="tab" aria-selected="true">Смена</button><button class="tab" disabled>Аврал 🔒</button></div>
+          <div class="tabs" style="background:rgba(244,247,247,.08)"><button class="tab" style="color:var(--paper)">Стажёр</button><button class="tab" aria-selected="true">Смена</button><button class="tab" disabled>Аврал · закрыт</button></div>
           <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px">
-            <div class="plate" style="padding:8px;text-align:center;min-height:92px;display:grid;gap:4px;justify-items:center"><span class="portrait won" style="width:44px;height:44px;font-size:13px">Ки</span><span class="small">Килн</span><span class="chip" style="font-size:11px">Занято</span></div>
-            <div style="border-radius:12px;border:2px dashed var(--seam);display:grid;place-items:center;color:var(--seam);font-size:26px;min-height:92px" aria-label="Свободное место">+</div>
-            <div style="border-radius:12px;background:rgba(244,247,247,.06);display:grid;place-items:center;text-align:center;padding:8px;color:#9fb3ba;font-size:12px;min-height:92px">🔒 откроется, когда вернутся 5 героев</div>
+            <div class="plate" style="padding:8px;text-align:center;min-height:92px;display:grid;gap:4px;justify-items:center"><span class="portrait won" style="width:44px;height:44px;font-size:13px">Ки</span><span class="small">Килн</span><span class="chip" style="font-size:13px">Занято</span></div>
+            <div style="border-radius:12px;border:2px dashed var(--seam);display:grid;place-items:center;color:var(--seam);font-size:26px;min-height:92px" role="img" aria-label="Свободное место">+</div>
+            <div class="lock" style="border-radius:12px;background:rgba(244,247,247,.06);display:grid;place-items:center;text-align:center;padding:8px;font-size:13px;min-height:92px">Откроется, когда вернутся 5 героев</div>
           </div>
           <p class="small" style="color:#cdd9dd">Вернувшиеся: тап кладёт в первое свободное место.</p>
           <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:6px">
             <span class="portrait won" style="width:100%;height:auto;aspect-ratio:1;font-size:12px">Ш</span><span class="portrait won" style="width:100%;height:auto;aspect-ratio:1;font-size:12px">Д</span><span class="portrait" style="width:100%;height:auto;aspect-ratio:1;font-size:12px;opacity:.5">Ф</span><span class="portrait" style="width:100%;height:auto;aspect-ratio:1;font-size:12px">К</span><span class="portrait" style="width:100%;height:auto;aspect-ratio:1;font-size:12px">Н</span>
           </div>
-          <div style="margin-top:auto;display:grid;gap:8px"><button class="btn primary block">На смену</button></div>
+          <div style="margin-top:auto;display:grid;gap:8px"><button class="btn primary lg block">На смену</button></div>
         </div>
       </div>
     </template>
-    <ul class="notes"><li>Выбор запоминается (meta.allyChoice). Если никто не вернулся, экран не показывается, сразу старт.</li></ul>
+    <ul class="notes"><li>Выбор запоминается (meta.allyChoice). Если никто не вернулся, экран не показывается, сразу старт.</li><li>Замок на вкладке «Аврал» говорит, что нужно сделать. Цвет не единственный признак.</li></ul>
   </section>
 
   <section class="stage" data-show="phone pc">
     <h2>3. Согласие на статистику (один раз)</h2>
-    <p class="lede">Показываем после первой законченной смены, когда игрок вернулся в меню. Лист закрывает меню целиком, не наполовину. Кнопки одинаковой высоты, без «крестика» в виде главной кнопки.</p>
+    <p class="lede">Показываем после первой законченной смены, когда игрок вернулся в меню. Лист закрывает меню целиком, не наполовину. Обе кнопки одного размера, главная справа снизу по большому пальцу.</p>
     <div class="devices"></div>
     <template>
       <div class="menu" style="background:#0b1117">
@@ -102,11 +112,11 @@
           <p class="cap">Помочь игре?</p>
           <h2 id="st-t" class="h2" style="margin-top:6px">Анонимная статистика: где сложно и где игроки бросают.</h2>
           <p class="small muted" style="margin-top:6px">Без имени и рекламы. Это можно выключить в Настройках.</p>
-          <div style="display:grid;gap:8px;margin-top:14px"><button class="btn primary block">Можно</button><button class="btn ghost block">Не надо</button></div>
+          <div style="display:grid;gap:8px;margin-top:14px"><button class="btn primary lg block">Можно</button><button class="btn ghost lg block">Нет, спасибо</button></div>
         </div>
       </div>
     </template>
-    <ul class="notes"><li>Тексты короче: две строки. Кнопки одинаковой высоты 52 px (в спеке 96 — это высота карточки, не кнопки).</li></ul>
+    <ul class="notes"><li>Текст короче: две строки. Обе кнопки 56 px (lg), одной ширины, без крестика в виде главной кнопки.</li></ul>
   </section>
 
   <ul class="notes"><li><b>Проверка.</b> Меню на 360 × 640 держит главную кнопку видимой без прокрутки; если нет, уменьшается логотип, а не список.</li></ul>
