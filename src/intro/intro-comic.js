@@ -181,8 +181,8 @@ export const SCRIPT = [
       { img: 'heroes_after', area: 'b', fit: 'contain', kb: [1.0, 1.02, 0, 0], fx: 'alarm', beats: [
         { k: 'cap', at: [3, 4], w: 70, ru: 'Сегодня у них чужие руки и чужие ноги. Заражённые сходили с ума один за другим. Герои тоже.', en: 'Today they have someone else’s arms and someone else’s legs. The infected lost their minds one after another. So did the heroes.', sfx: 'threat_level_up' },
       ] },
-      { art: 'dossier', area: 'c', beats: [
-        { k: 'cap', at: [3, 3], w: 94, ru: 'Килн, Линейщик, Фростлайн и Серафим теперь носятся по городу.', en: 'Kiln, Lineman, Frostline and Seraph now tear around the city.', fx: 'stamp' },
+      { img: 'lineup_infected', area: 'c', fit: 'contain', kb: [1.0, 1.03, 0, 0], beats: [
+        { k: 'cap', at: [3, 3], w: 94, ru: 'Килн, Фростлайн, Линейщик и Серафим теперь носятся по городу.', en: 'Kiln, Frostline, Lineman and Seraph now tear around the city.' },
         { k: 'cap', at: [3, 86], w: 94, ru: 'Они до сих пор всех спасают. Просто теперь от их помощи приходится убегать.', en: 'They still rescue everyone. It’s just that now people have to run from their help.' },
       ] },
     ],
